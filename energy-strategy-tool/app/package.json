@@ -1,0 +1,18 @@
+{
+  "name": "dc-energy-optioneering-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Concept-stage data centre energy optioneering tool - core slice (inputs, 8760 dispatch, option generator, scoring, ranked list)",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node tests/run-tests.mjs"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.23.1"
+  }
+}

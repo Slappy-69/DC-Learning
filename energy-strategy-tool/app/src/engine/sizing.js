@@ -1,0 +1,361 @@
+// Sizing rules (BRIEF §9.2): choice vector -> installed capacities, plant list for dispatch,
+// and plain sizing sentences. Every option is sized by the same rules before any check.
+// The grid connection is the offered capacity per period and is never resized.
+
+import { TECH, COOLING, choiceLabel } from './defaults.js';
+import { designDemandByMonth, demandYear } from './context.js';
+import { NA } from './generator.js';
+
+const r1 = (x) => (Math.abs(x) >= 100 ? x.toFixed(0) : x.toFixed(1));
+
+export function programmeMonths(t) {
+  return (t.p.planM || 0) + (t.p.procM || 0) + (t.p.buildM || 0);
+}
+
+function techAvailMonth(ctx, t) {
+  let m = programmeMonths(t);
+  if (t.p.earliestYear) {
+    const em = (t.p.earliestYear - ctx.baseYear) * 12 - (ctx.startMonth - 1);
+    m = Math.max(m, em);
+  }
+  return m;
+}
+
+// Month from which the fuel is available (Infinity = not available at current inputs).
+export function fuelAvailMonth(ctx, fuel) {
+  const u = ctx.inputs.utilities;
+  if (fuel === 'gas') return u.gasAvailable === 'No' ? Infinity : ctx.gasM;
+  if (fuel === 'hydrogen') return u.hydrogenAvailable === 'Yes' ? 0 : Infinity;
+  return 0;
+}
+
+const BRIDGE_TECH = { gasRecip: 'gasRecip', gasTurbine: 'gasTurbine', fuelCell: 'fuelCell', dieselPrime: 'dieselPrime', rented: 'rented' };
+const PRIME_TECH = { chp: 'chp', gasRecip: 'gasRecip', fuelCell: 'fuelCell', smr: 'smr', hydrogen: 'hydrogen' };
+const BACKUP_TECH = { diesel: 'backupDiesel', hvo: 'backupHvo', gas: 'backupGas', bessUps: 'backupHvo' };
+
+export function voltageBand(ctx, mw) {
+  const s = TECH.substation.p;
+  if (mw < s.bandMvMaxMW) return 'mv';
+  if (mw <= s.bandHvMaxMW) return 'hv';
+  return 'ehv';
+}
+
+function unitsWithRedundancy(n, topology, blockSize, catcherN) {
+  const B = Math.ceil(n / blockSize);
+  switch (topology) {
+    case 'N': return { total: n, blocks: B, extra: 0 };
+    case 'N+1': return { total: n + B, blocks: B, extra: B };
+    case '2N': return { total: 2 * n, blocks: B, extra: n };
+    case 'catcher': return { total: n + Math.ceil(B / catcherN), blocks: B, extra: Math.ceil(B / catcherN) };
+    default: return { total: n + B, blocks: B, extra: B };
+  }
+}
+
+export function sizeOption(ctx, v) {
+  const inputs = ctx.inputs;
+  const L = inputs.load;
+  const req = inputs.requirements;
+  const sentences = [];
+  const coolingId = v.C8;
+  const cp = ctx.cooling[coolingId];
+  const cool = COOLING[coolingId];
+  const { arr: designByMonth, peakPUE } = designDemandByMonth(ctx, coolingId);
+  const itMW = L.itMW;
+  const designMW = itMW * (peakPUE + L.ancillaryFrac);
+  sentences.push(`Design facility load: ${r1(itMW)} MW IT × peak PUE ${peakPUE.toFixed(3)} (${cool.name}, design-day ${cool.p.tempBasis === 'wetbulb' ? 'wet-bulb' : 'dry-bulb'} ${(cool.p.tempBasis === 'wetbulb' ? ctx.prof.designWetbulb : ctx.prof.designTemp).toFixed(1)} °C) + ancillary ${(L.ancillaryFrac * 100).toFixed(0)} % = ${r1(designMW)} MW.`);
+
+  // Steady-state year average facility load (for firm prime and PPA sentences).
+  const lastChangeM = Math.max(ctx.lastPhaseM + L.rampMonths, 0);
+  const ssYear = Math.min(Math.ceil((lastChangeM + 1) / 12), Math.floor(ctx.nMonths / 12) - 1);
+  const ssDem = demandYear(ctx, coolingId, ssYear);
+  const avgMW = ssDem.sum / 8760;
+
+  // --- Building massing (for roof PV and the area budget) ---
+  const whitespace = (itMW * 1000) / cool.p.densityKWm2;
+  const gfa = whitespace * L.grossUp;
+  const footprint = gfa / L.storeys;
+  const heightM = L.storeys * L.storeyHeightM + L.roofZoneM;
+
+  // --- Critical load and backup (§9.2) ---
+  const criticalMW = req.backedPct * itMW * (1 + cp.coolPeak);
+  sentences.push(`Critical load for backup: ${(req.backedPct * 100).toFixed(0)} % × (${r1(itMW)} MW IT + ${r1(itMW * cp.coolPeak)} MW mechanical at design) = ${r1(criticalMW)} MW.`);
+  const backup = { tech: null, units: 0, unitMW: 0, mw: 0, nUnits: 0, fuelM3: 0, autonomyH: 0, bessMW: 0, bessMWh: 0, topology: v.C6 };
+  if (v.C5 !== 'none' && v.C5 !== 'retained') {
+    const t = TECH[BACKUP_TECH[v.C5]];
+    backup.tech = t.id;
+    backup.unitMW = t.p.unitMW;
+    const n = Math.ceil(criticalMW / t.p.unitMW - 1e-9);
+    backup.nUnits = n;
+    if (v.C5 === 'bessUps') {
+      backup.units = n;
+      backup.mw = n * t.p.unitMW;
+      const red = unitsWithRedundancy(n, v.C6, req.blockSize, req.catcherN);
+      backup.bessMW = red.extra * t.p.unitMW;
+      backup.bessMWh = backup.bessMW * TECH.bessUps.p.durationH;
+      sentences.push(`BESS-augmented UPS: ${r1(criticalMW)} MW ÷ ${t.p.unitMW} MW = ${n} HVO units (N, no redundant units); the ${v.C6} redundancy (${red.extra} units) is provided by ${r1(backup.bessMW)} MW / ${r1(backup.bessMWh)} MWh BESS.`);
+    } else {
+      const red = unitsWithRedundancy(n, v.C6, req.blockSize, req.catcherN);
+      backup.units = red.total;
+      backup.mw = red.total * t.p.unitMW;
+      sentences.push(`${t.name}: ${r1(criticalMW)} MW ÷ ${t.p.unitMW} MW per unit = ${(criticalMW / t.p.unitMW).toFixed(1)} → ${n} units; ${n} units form ${red.blocks} block${red.blocks === 1 ? '' : 's'} (block size ${req.blockSize}); ${v.C6} adds ${red.extra}; total ${red.total} units (${r1(backup.mw)} MW).`);
+    }
+    // Fuel storage (§9.2): liquid fuel only. Gas gensets rely on the network.
+    if (t.fuel === 'diesel' || t.fuel === 'hvo') {
+      const fs = TECH.fuelStorage.p;
+      const hours = v.C7 === 'belly' ? TECH.fuelStorage.p.bellyHours : Number(v.C7);
+      backup.autonomyH = hours;
+      if (v.C7 === 'belly') {
+        backup.fuelM3 = 0;
+        sentences.push(`Fuel storage: belly tanks only (${hours} h at critical load assumed); no bulk storage.`);
+      } else {
+        const m3 = Math.max(0, (criticalMW * 1000 * hours * fs.dieselLPerKWh) / 1000 - fs.bellyTankM3);
+        backup.fuelM3 = m3;
+        sentences.push(`Fuel storage: ${r1(criticalMW)} MW × ${hours} h × ${fs.dieselLPerKWh} L/kWh = ${Math.round(m3).toLocaleString('en-GB')} m³ (${Math.round(m3 * fs.densityTPerM3).toLocaleString('en-GB')} t).`);
+      }
+    } else {
+      backup.autonomyH = Infinity;
+      sentences.push('Fuel storage: none; gas gensets depend on the gas network during a grid outage.');
+    }
+  } else if (v.C5 === 'none') {
+    sentences.push('Backup: none (flagged).');
+  }
+
+  // --- Grid connection: offered capacity per period, never resized (§9.2) ---
+  const gridByMonth = ctx.gridCap; // shared array: identical for every option
+  const fullMW = inputs.grid.fullMW;
+  const band = voltageBand(ctx, fullMW);
+
+  // --- Firm prime (C4) ---
+  let prime = null;
+  if (v.C4 !== 'none') {
+    const t = TECH[PRIME_TECH[v.C4]];
+    const frac = v.C4 === 'chp' ? t.p.sizeFraction : 1.0;
+    const target = frac * avgMW;
+    const units = Math.max(1, Math.round(target / t.p.unitMW));
+    const mw = units * t.p.unitMW;
+    const avail = techAvailMonth(ctx, t);
+    const fuelM = fuelAvailMonth(ctx, t.fuel);
+    prime = { role: 'prime', tech: t.id, mw, units, unitMW: t.p.unitMW, availMonth: avail, fuelMonth: fuelM };
+    sentences.push(`${t.name} (firm prime): ${(frac * 100).toFixed(0)} % of steady-state average facility load ${r1(avgMW)} MW = ${r1(target)} MW → ${units} × ${t.p.unitMW} MW = ${r1(mw)} MW; available from month ${avail}${fuelM === Infinity ? '; fuel not available at current inputs, so it does not run' : fuelM > avail ? ` (fuel from month ${fuelM})` : ''}.`);
+  }
+
+  // --- Bridging (C1/C2) ---
+  let bridge = null;
+  let bridgeBess = { mw: 0, mwh: 0 };
+  const T = ctx.fullGridM; // grid full-connection month
+  if (v.C1 === 'bridge' || v.C1 === 'islanded') {
+    let S = 0;
+    let sMonth = -1;
+    const horizon = v.C1 === 'islanded' ? ctx.nMonthsTimeline : Math.min(T, ctx.nMonthsTimeline);
+    for (let m = 0; m < Math.max(horizon, 1); m++) {
+      const cap = v.C1 === 'islanded' ? 0 : gridByMonth[m];
+      const s = Math.max(0, designByMonth[m] - cap);
+      if (s > S) { S = s; sMonth = m; }
+    }
+    if (v.C1 === 'islanded') S = Math.max(S, designMW);
+    if (v.C2 === 'bessSolar') {
+      bridgeBess = { mw: S, mwh: S * inputs.settings.bridgeBessHours };
+      sentences.push(`Bridging BESS + solar: largest shortfall ${r1(S)} MW → BESS ${r1(S)} MW / ${r1(bridgeBess.mwh)} MWh (${inputs.settings.bridgeBessHours} h), PV per C10.`);
+    } else if (S > 0) {
+      const t = TECH[BRIDGE_TECH[v.C2]];
+      const n = Math.ceil(S / t.p.unitMW - 1e-9);
+      const extra = Math.ceil(n / req.blockSize);
+      const total = n + extra;
+      const avail = techAvailMonth(ctx, t);
+      const fuelM = fuelAvailMonth(ctx, t.fuel);
+      bridge = { role: 'bridge', tech: t.id, mw: total * t.p.unitMW, units: total, nUnits: n, unitMW: t.p.unitMW, availMonth: avail, fuelMonth: fuelM, shortfallMW: S, shortfallMonth: sMonth };
+      sentences.push(`Bridging ${t.name}: ${v.C1 === 'islanded' ? 'on-site supply of design load' : `largest shortfall (design demand − offered grid) ${r1(S)} MW in month ${sMonth}`} ÷ ${t.p.unitMW} MW = ${n} units + N+1 per block of ${req.blockSize} (+${extra}) = ${total} units (${r1(bridge.mw)} MW); available from month ${avail}${fuelM === Infinity ? '; fuel not available at current inputs, so it does not run' : fuelM > avail ? ` (fuel from month ${fuelM})` : ''}.`);
+      if (v.C1 === 'bridge') sentences.push(`After the grid full-connection date (month ${T}) the bridging plant is: ${choiceLabel('C3', v.C3).toLowerCase()}.`);
+    } else {
+      sentences.push('Bridging: no shortfall between design demand and offered grid capacity before the full-connection date; no bridging plant sized.');
+    }
+    // C5 = Retained bridging plant: the retained plant is the backup, so it is sized by the same
+    // backup rule from the stated resilience requirement (critical load, required topology), taking
+    // the larger of the bridging and backup sizes. Same rule for every such option, applied before any check.
+    if (v.C5 === 'retained') {
+      const topo = req.topology;
+      if (v.C2 === 'bessSolar') {
+        const needMW = Math.max(bridgeBess.mw, criticalMW);
+        const needMWh = Math.max(bridgeBess.mwh, criticalMW * req.autonomyH);
+        if (needMW > bridgeBess.mw + 1e-9 || needMWh > bridgeBess.mwh + 1e-9) {
+          sentences.push(`Retained BESS as backup: sized to the resilience requirement, ${r1(needMW)} MW (critical load) / ${r1(needMWh)} MWh (${req.autonomyH} h autonomy).`);
+        }
+        bridgeBess = { mw: needMW, mwh: needMWh };
+      } else {
+        const t = TECH[BRIDGE_TECH[v.C2]];
+        const nCrit = Math.ceil(criticalMW / t.p.unitMW - 1e-9);
+        const red = unitsWithRedundancy(nCrit, topo, req.blockSize, req.catcherN);
+        if (!bridge) {
+          bridge = { role: 'bridge', tech: t.id, mw: 0, units: 0, nUnits: 0, unitMW: t.p.unitMW, availMonth: techAvailMonth(ctx, t), fuelMonth: fuelAvailMonth(ctx, t.fuel), shortfallMW: 0, shortfallMonth: -1 };
+        }
+        if (red.total > bridge.units || nCrit > bridge.nUnits) {
+          sentences.push(`Retained ${t.name} as backup: ${r1(criticalMW)} MW critical load ÷ ${t.p.unitMW} MW = ${nCrit} units; ${topo} on blocks of ${req.blockSize} adds ${red.extra}; total ${red.total} units (${r1(red.total * t.p.unitMW)} MW), larger than the bridging size, so the retained plant is sized to it.`);
+          bridge.units = Math.max(bridge.units, red.total);
+          bridge.nUnits = Math.max(bridge.nUnits, nCrit);
+          bridge.mw = bridge.units * t.p.unitMW;
+        }
+        if (t.fuel === 'diesel') {
+          const fs = TECH.fuelStorage.p;
+          backup.fuelM3 = Math.max(0, criticalMW * req.autonomyH * fs.dieselLPerKWh - fs.bellyTankM3);
+          backup.autonomyH = req.autonomyH;
+          sentences.push(`Fuel storage for retained HVO-diesel plant: ${r1(criticalMW)} MW × ${req.autonomyH} h × ${fs.dieselLPerKWh} L/kWh = ${Math.round(backup.fuelM3).toLocaleString('en-GB')} m³.`);
+        }
+      }
+    }
+  }
+
+  // --- BESS (C12) ---
+  let bess = { mw: 0, mwh: 0, role: v.C12r === NA ? null : v.C12r };
+  if (v.C12 !== 'none') {
+    const h = Number(v.C12[0]);
+    const pct = Number(v.C12.slice(2)) / 100;
+    bess.mw = pct * designMW;
+    bess.mwh = bess.mw * h;
+    sentences.push(`BESS: ${(pct * 100).toFixed(0)} % of design facility load ${r1(designMW)} MW = ${r1(bess.mw)} MW × ${h} h = ${r1(bess.mwh)} MWh; role ${choiceLabel('C12r', v.C12r).toLowerCase()}; size kept as given.`);
+  }
+  const storage = { mw: bess.mw + bridgeBess.mw, mwh: bess.mwh + bridgeBess.mwh, role: bess.role || (bridgeBess.mw > 0 ? 'bridgingSupport' : null) };
+
+  // --- Area budget (approximation for "fill residual" solar; not a layout, §10 not in this slice) ---
+  const site = inputs.site;
+  const grossM2 = site.areaHa * 10000;
+  const a = Math.sqrt(grossM2 * site.aspect);
+  const b = grossM2 / a;
+  const innerM2 = Math.max(0, a - 2 * site.setbackM) * Math.max(0, b - 2 * site.setbackM);
+  const netM2 = innerM2 * (1 - site.roadsFraction);
+  const sp = TECH.substation.p;
+  let subM2;
+  if (fullMW <= 0) subM2 = 0;
+  else if (band === 'mv') subM2 = sp.m2Per20MVA_mv * (fullMW / 0.9 / 20);
+  else if (band === 'hv') subM2 = (v.C17 === 'GIS' ? sp.haGIS_hv : sp.haAIS_hv) * 10000;
+  else subM2 = (v.C17 === 'GIS' ? sp.haGIS_ehv : sp.haAIS_ehv) * 10000;
+  const gensetFactor = v.C18 === 'double' ? 0.5 : v.C18 === 'inBuilding' ? 0 : 1;
+  const backupM2 = backup.tech ? backup.units * TECH[backup.tech].p.m2PerUnit * gensetFactor : 0;
+  const fuelM2 = backup.fuelM3 * TECH.fuelStorage.p.m2PerM3;
+  const bessM2 = (storage.mwh + backup.bessMWh) * TECH.bess.p.m2PerMWh;
+  const primeM2 = prime && TECH[prime.tech].p.m2PerMW ? prime.mw * TECH[prime.tech].p.m2PerMW : 0;
+  const bridgeM2 = bridge ? bridge.mw * TECH[bridge.tech].p.m2PerMW : 0;
+  const rejectedMW = itMW * (1 + cp.coolPeak + cp.lossFrac);
+  const hrGroundShare = v.C9 === 'ground' ? 1 : v.C9 === 'split' ? 0.5 : 0;
+  const hrM2 = rejectedMW * TECH.heatRejection.p.m2PerMW * hrGroundShare;
+  const hydrogenM2 = 0; // included in m2PerMW for hydrogen
+
+  // Wind (C11)
+  let windMW = 0;
+  let windTurbines = 0;
+  const wt = TECH.wind.p;
+  if (v.C11 === 'fit') {
+    windTurbines = Math.floor(netM2 / 10000 / wt.haPerTurbine);
+    windMW = windTurbines * wt.turbineMW;
+    sentences.push(`Wind (on site): ${(netM2 / 10000).toFixed(1)} ha net ÷ ${wt.haPerTurbine} ha per turbine (spacing; topple and noise buffers not checked without a layout) = ${windTurbines} turbine${windTurbines === 1 ? '' : 's'} × ${wt.turbineMW} MW = ${r1(windMW)} MW.`);
+  } else if (v.C11 === 'offsite') {
+    windTurbines = Math.floor((site.offsiteLandHa || 0) / wt.haPerTurbine);
+    windMW = windTurbines * wt.turbineMW;
+    sentences.push(`Wind (off-site land ${site.offsiteLandHa || 0} ha): ${windTurbines} turbine${windTurbines === 1 ? '' : 's'} × ${wt.turbineMW} MW = ${r1(windMW)} MW.`);
+  }
+  const windM2 = v.C11 === 'fit' ? windTurbines * 1000 : 0; // 0.1 ha pad each
+
+  const othersM2 = footprint + subM2 + backupM2 + fuelM2 + bessM2 + primeM2 + bridgeM2 + hrM2 + windM2 + hydrogenM2;
+  const residualM2 = netM2 - othersM2;
+
+  // Solar (C10)
+  const roofFree = footprint * (1 - (v.C9 === 'roof' ? TECH.heatRejection.p.roofPlantFraction : v.C9 === 'split' ? TECH.heatRejection.p.roofPlantFraction / 2 : 0));
+  const sr = TECH.solarRoof.p;
+  const roofMWp = (roofFree * sr.usableFraction) / sr.m2PerKWp / 1000;
+  let solarRoofMWp = 0;
+  let solarCarportMWp = 0;
+  let solarGroundMWp = 0;
+  if (['roof', 'roofCarport', 'roofResidual'].includes(v.C10)) {
+    solarRoofMWp = roofMWp;
+    sentences.push(`Rooftop PV: roof ${Math.round(footprint).toLocaleString('en-GB')} m²${v.C9 !== 'ground' ? ` less roof plant (${v.C9})` : ''} = ${Math.round(roofFree).toLocaleString('en-GB')} m² free × ${sr.usableFraction * 100} % usable ÷ ${sr.m2PerKWp} m²/kWp = ${roofMWp.toFixed(2)} MWp.`);
+  }
+  if (v.C10 === 'roofCarport') {
+    const cp2 = TECH.solarCarport.p;
+    solarCarportMWp = (innerM2 * site.roadsFraction * cp2.parkingFraction) / cp2.m2PerKWp / 1000;
+    sentences.push(`Carport PV: ${(cp2.parkingFraction * 100).toFixed(0)} % of the roads/parking allowance ÷ ${cp2.m2PerKWp} m²/kWp = ${solarCarportMWp.toFixed(2)} MWp.`);
+  }
+  if (v.C10 === 'roofResidual') {
+    solarGroundMWp = Math.max(0, residualM2) / 10000 / TECH.solarGround.p.haPerMWp;
+    sentences.push(`Ground PV (fill residual): net developable ${(netM2 / 10000).toFixed(2)} ha − other blocks ${(othersM2 / 10000).toFixed(2)} ha = ${(Math.max(0, residualM2) / 10000).toFixed(2)} ha ÷ ${TECH.solarGround.p.haPerMWp} ha/MWp = ${solarGroundMWp.toFixed(2)} MWp (area budget, not a layout).`);
+  }
+  if (v.C10 === 'fixed') {
+    solarGroundMWp = inputs.settings.fixedSolarMWp;
+    sentences.push(`Ground PV (fixed): ${solarGroundMWp} MWp.`);
+  }
+  const solarMWp = solarRoofMWp + solarCarportMWp + solarGroundMWp;
+  const groundSolarM2 = solarGroundMWp * TECH.solarGround.p.haPerMWp * 10000;
+  const landTakeM2 = othersM2 + groundSolarM2;
+
+  // PPA (C13/C14)
+  const ppa = v.C13 === 'none' ? null : { type: v.C13, coverage: Number(v.C14) / 100 };
+  if (ppa) sentences.push(`Offsite PPA (${choiceLabel('C13', v.C13).toLowerCase()}): ${v.C14} % of each year's facility consumption (steady state ≈ ${Math.round(ppa.coverage * ssDem.sum).toLocaleString('en-GB')} MWh/yr), delivered over the grid connection and capped by import capacity.`);
+
+  // Grid sentence: offered capacity, shortfall at design load per period (§9.2).
+  const firmByMonth = new Float64Array(ctx.nMonths);
+  for (let m = 0; m < ctx.nMonths; m++) {
+    let f = 0;
+    if (prime && m >= prime.availMonth && m >= prime.fuelMonth) f += prime.mw;
+    if (bridge && m >= bridge.availMonth && m >= bridge.fuelMonth && bridgeActive(v, m, T)) f += bridge.mw;
+    firmByMonth[m] = f;
+  }
+  const periods = [];
+  let curP = null;
+  for (let m = 0; m < ctx.nMonthsTimeline; m++) {
+    const g = v.C1 === 'islanded' ? 0 : gridByMonth[m];
+    const sf = Math.max(0, designByMonth[m] - firmByMonth[m] - g);
+    const k = `${g}|${sf > 1e-6 ? 1 : 0}`;
+    if (!curP || curP.k !== k) {
+      curP = { k, from: m, to: m, gridMW: gridByMonth[m], maxShort: sf, maxDemand: designByMonth[m], firm: firmByMonth[m] };
+      periods.push(curP);
+    } else {
+      curP.to = m;
+      if (sf > curP.maxShort) { curP.maxShort = sf; curP.maxDemand = designByMonth[m]; curP.firm = firmByMonth[m]; }
+    }
+  }
+  const shortfalls = periods.filter((p) => p.maxShort > 1e-6);
+  sentences.push(`Grid connection: offered import capacity per period (${[...new Set(periods.map((p) => p.gridMW))].map((x) => `${r1(x)} MW`).join(' → ')}), the same for every option and never resized${v.C1 === 'islanded' ? '; used as backup only and not dispatched in normal hours' : ''}. Connection capex on ${r1(fullMW)} MW at full connection (${band.toUpperCase()} band, ${v.C17}).`);
+  for (const p of shortfalls) {
+    sentences.push(`Grid shortfall at design load, months ${p.from}–${p.to}: design load ${r1(p.maxDemand)} MW less ${r1(p.firm)} MW firm on site less ${r1(v.C1 === 'islanded' ? 0 : p.gridMW)} MW grid leaves up to ${r1(p.maxShort)} MW; dispatched as unmet load under "${inputs.settings.gridHandling === 'unmet' ? 'Show unmet load' : 'Show exceedance'}".`);
+  }
+
+  // Plants for dispatch
+  const plants = [];
+  if (prime) plants.push(makePlant(ctx, prime, v, 'prime', T));
+  if (bridge) plants.push(makePlant(ctx, bridge, v, 'bridge', T));
+
+  return {
+    coolingId, peakPUE, designMW, avgMW, criticalMW, itMW,
+    building: { whitespaceM2: whitespace, gfaM2: gfa, footprintM2: footprint, heightM },
+    backup, prime, bridge, bridgeBess, bess, storage,
+    solarMWp, solarRoofMWp, solarCarportMWp, solarGroundMWp, windMW, windTurbines, ppa,
+    grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })) },
+    area: { grossM2, netM2, landTakeM2, residualM2: netM2 - landTakeM2, parts: { building: footprint, substation: subM2, backup: backupM2, fuel: fuelM2, bess: bessM2, prime: primeM2, bridge: bridgeM2, heatRejection: hrM2, wind: windM2, groundSolar: groundSolarM2 } },
+    firmByMonth, designByMonth,
+    plants,
+    sentences,
+    T,
+    rejectedMW,
+  };
+}
+
+export function bridgeActive(v, m, T) {
+  if (v.C1 === 'islanded') return true;
+  if (v.C1 !== 'bridge') return false;
+  if (m < T) return true;
+  return v.C3 === 'prime';
+}
+
+// Dispatch mode per month: 0 = off/unavailable, 1 = economic + cover grid shortfall, 2 = must-run serving all residual load.
+function makePlant(ctx, s, v, role, T) {
+  const t = TECH[s.tech];
+  const mode = new Int8Array(ctx.nMonths);
+  for (let m = 0; m < ctx.nMonths; m++) {
+    if (m < s.availMonth || m < s.fuelMonth) continue;
+    if (role === 'prime') mode[m] = v.C1 === 'islanded' ? 2 : 1;
+    else if (v.C1 === 'islanded') mode[m] = 2;
+    else if (bridgeActive(v, m, T)) mode[m] = 1;
+  }
+  return {
+    role, tech: s.tech, mw: s.mw, unitMW: s.unitMW, msl: t.p.msl || 0, eff: t.p.eff || 1, fuel: t.fuel || null,
+    mode,
+  };
+}
