@@ -338,6 +338,21 @@ REGISTRY['weights.presets'] = {
   briefRef: '§5.7', label: LABEL, derived: false,
 };
 
+// Pareto trade-off view settings (§12.2). View settings only: they never change any score or rank,
+// and are not part of the inputs (so they never trigger a re-run). Labelled under the §23 rule.
+function viewRec(path, value, unit, basis, note) {
+  REGISTRY[path] = {
+    path, value, unit, low: null, high: null, distribution: 'fixed', basis,
+    source: '', year: '', url: '', accessed: '', confidence: 'C', verified: false, sourceToVerify: '', note,
+    briefRef: '§12.2', label: LABEL, derived: false,
+  };
+}
+viewRec('view.pareto.xAxis', 'follows Cost axis metric (LCOE)', '"lcoe" | "npv"', 'judgement', 'Default cost axis of the Pareto scatter follows the scoring cost metric (§12.2 default: cost vs carbon).');
+viewRec('view.pareto.yAxis', 'follows Carbon axis metric (location-based)', '"location" | "market" | "cfe"', 'judgement', 'Default carbon axis of the Pareto scatter follows the scoring carbon metric.');
+viewRec('view.pareto.ttpClasses', 5, 'quantile classes', 'run setting', 'Number of colour classes for time-to-power, quantiles over the scoring set.');
+viewRec('view.pareto.canvasAbove', 500, 'points', 'run setting', 'Points are drawn on Canvas above this count (§4), SVG at or below it.');
+viewRec('view.pareto.display', 'chart', '"chart" | "table"', 'judgement', 'Chart shown first; the table alternative is one click away and holds the same rows.');
+
 // Required inputs: no default in the brief. The app pre-fills the T1 reference example
 // so it can run on load; these are marked "example value — replace" in the UI, not defaults.
 export const REQUIRED_EXAMPLE = {

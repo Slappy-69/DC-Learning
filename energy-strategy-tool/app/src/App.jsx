@@ -3,6 +3,7 @@ import InputsPanel from './components/InputsPanel.jsx';
 import RankedList from './components/RankedList.jsx';
 import RunSummary from './components/RunSummary.jsx';
 import RunProgress from './components/RunProgress.jsx';
+import ParetoView from './components/ParetoView.jsx';
 import { useCompute } from './useCompute.js';
 import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES } from './engine/index.js';
 import { scoreOptions, DEFAULT_VIEW, effectiveWeights } from './engine/scoring.js';
@@ -40,6 +41,7 @@ export default function App() {
   const [progressOpen, setProgressOpen] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const [announce, setAnnounce] = useState('');
+  const [tab, setTab] = useState('options'); // results view tabs (§16): Options, Trade-offs
   const computeKey = useMemo(() => computeKeyOf(inputs), [inputs]);
   const compute = useCompute(inputs, computeKey);
   const prevLeader = useRef(null);
@@ -99,7 +101,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <h1>Concept energy optioneering</h1>
-          <span className="sub">Data centre campus · core slice</span>
+          <span className="sub">Data centre campus · core slice + trade-off view</span>
         </div>
         <div className="topbar-actions">
           <button type="button" className="chip-btn panel-toggle" aria-expanded={panelOpen} aria-controls="inputs-panel" onClick={() => setPanelOpen(!panelOpen)}>{panelOpen ? 'Close inputs' : 'Inputs'}</button>
@@ -147,7 +149,16 @@ export default function App() {
               {run.runFlags.length ? (
                 <ul className="run-flags">{run.runFlags.map((f) => <li key={f.id} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
               ) : null}
-              <RankedList run={run} view={view} setView={setView} start={start} />
+              <div className="tabs" role="tablist" aria-label="Results views">
+                {[['options', 'Options'], ['tradeoffs', 'Trade-offs']].map(([id, label]) => (
+                  <button key={id} type="button" role="tab" id={`tab-${id}`} aria-selected={tab === id} aria-controls={`panel-${id}`} tabIndex={tab === id ? 0 : -1}
+                    className={`tab ${tab === id ? 'on' : ''}`} onClick={() => setTab(id)}
+                    onKeyDown={(e) => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const n = tab === 'options' ? 'tradeoffs' : 'options'; setTab(n); setTimeout(() => document.getElementById(`tab-${n}`)?.focus(), 0); } }}>{label}</button>
+                ))}
+              </div>
+              <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} /> : <ParetoView run={run} view={view} setView={setView} start={start} />}
+              </div>
             </>
           ) : compute.status !== 'error' ? (
             <p className="empty">Options appear here once the required inputs are set: location, site area, IT load, grid capacity now and at full connection, and the full-connection date.</p>
@@ -157,7 +168,7 @@ export default function App() {
 
       <footer className="footer">
         <p>{GUARDRAIL}</p>
-        <p className="sub">Not in this slice: Pareto view, sensitivity, scenarios, site layout and fit status, exports, Monte Carlo ranges, representative-day screening tier. Profiles are synthetic and seeded; every default is indicative — unverified.</p>
+        <p className="sub">Not in this slice: parallel coordinates, choice-impact and radar charts, sensitivity, scenarios, site layout and fit status, exports, Monte Carlo ranges, representative-day screening tier. Profiles are synthetic and seeded; every default is indicative — unverified.</p>
       </footer>
     </div>
   );

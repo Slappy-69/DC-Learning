@@ -15,6 +15,7 @@ import { hashString } from './prng.js';
 import { PROFILE_LABEL } from './profiles.js';
 import { getRegistry } from './defaults.js';
 import { createRunLog, STAGE, hashInputs, shortHash, mergeLogs } from './runlog.js';
+import { paretoView } from './pareto.js';
 
 export const ENGINE_VERSION = '0.1.0-core';
 
@@ -293,9 +294,9 @@ function nowMs() {
   return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
 }
 
-// ---- Hooks for later slices (intentionally not implemented in the core slice) ----
+// ---- Hooks for later slices (null = not implemented yet; paretoView is implemented in pareto.js) ----
 export const HOOKS = Object.freeze({
-  paretoView: null, // (run, axes) => frontier
+  paretoView, // (run, axes, view) => Pareto view model (pareto.js; trade-off slice). Reads scores, never changes them.
   sensitivity: null, // (inputs, run, drivers) => tornado/breakevens
   scenario: null, // (inputs, scenario) => inputs'
   layout: null, // (ctx, option) => blocks + site-fit status

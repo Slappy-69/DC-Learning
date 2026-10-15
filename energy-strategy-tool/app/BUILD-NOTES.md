@@ -159,7 +159,7 @@ Builder-chosen values not given by the brief, all recorded as judgement or run s
 
 ## What is not in this slice
 
-- **Pareto view, parallel coordinates, choice-impact chart, compare view, radar** (§12.2, §12.7). Hook: `HOOKS.paretoView`. Dominance is already marked.
+- **Parallel coordinates, choice-impact chart, compare view, radar** (§12.2, §12.7). The Pareto scatter is now built (see "Slice: Pareto trade-off view" below); `HOOKS.paretoView` is implemented.
 - **Sensitivity, tornado, breakevens, Monte Carlo, rank stability, robust pick, P10–P90 ranges** (§13). Hooks: `HOOKS.sensitivity` and `HOOKS.monteCarlo`. Every default record already carries low and high values and a distribution. Capex shows only the AACE band.
 - **Scenarios** (§13.3). Hook: `HOOKS.scenario`. The escalation inputs exist.
 - **Site layout, plan, massing, site-fit status, unplaced tray, noise proxy, height check per block** (§10). Hook: `HOOKS.layout`. Only an area budget is computed (residual ground PV, plus an info flag when land take exceeds net area). C17/C18 notes state that fit counts are unavailable.
@@ -344,3 +344,76 @@ Opus review of three Haiku verification checks, 2026-10-15. Every call was check
 3. `BUILD-NOTES.md`: "Decisions for the owner" added at the top; the fallback paragraph covers the new paths; a count error that no check had caught, corrected ("What is implemented" said 57,027 valid combinations; the code gives 57,024 valid plus 4 archetypes outside the open choices, 57,028 in total, which agrees with Brief issue 1 and the test output); test block replaced with this review's run; this section.
 
 **Status: ready to show the owner**, with the two decisions above for them to make. What remains is known and out of scope for this slice: no browser check of the new watchdog path in a real browser (it was checked with the Node harness only); §17 timing targets not met without the representative-day tier (Brief issue 2); the slice exclusions listed under "What is not in this slice".
+
+
+## Slice: Pareto trade-off view (§12.2)
+
+Added 2026-10-15. Scope: the Pareto scatter only. No scoring, dispatch or ranking code was changed: `scoring.js`, `dispatch.js`, `evaluate.js` and `generator.js` are untouched, and `run.js` changed only to plug the function into `HOOKS.paretoView`.
+
+### What was built
+
+- **`src/engine/pareto.js`** (pure, no UI). This is `HOOKS.paretoView(run, axes, view)`. It reads the scores, ranks and `dominatedBy` marks that `scoreOptions` has already written, and returns a view model: visible points, the 2-axis frontier, the weighted pick, time-to-power colour classes and the capex range. Helpers: `paretoFrontier` (O(n log n), both axes minimised, exact ties do not dominate each other), `weightedPick` (highest weighted score, ties broken by id in the same order as `rankOptions`), `paretoTableRows`, `PARETO_AXES` and `defaultParetoAxes`.
+- **Two kinds of "dominated", kept apart.** The engine's dominance mark (§7.2 step 6: all four axes plus status) shows as a **hollow** marker. The frontier on the chart is the 2-axis Pareto set for the plotted pair, drawn as a dashed step line. Both are computed over the whole scoring set, so view filters and "Hide dominated options" never move the frontier or the pick (§11 scoring scope).
+- **Axes.** Cost is LCOE or NPV of net cost. Carbon is location-based, market-based, or 1 − hourly CFE. By default the axes follow the scoring Cost and Carbon metrics. The user can pick any pair in the Trade-offs tab, and "Follow scoring metrics" resets it. The axis choice is view state, not an input, so changing it never triggers a run.
+- **Encodings (§12.2).** Colour = time-to-power. Size = capex (marker area proportional to capex). Shape = **resilience status** (circle Meets, triangle Meets with flags, square Does not meet), because site fit is not assessed yet (see open points). Weighted pick = orange double ring plus the text label "Weighted pick #n". The table row is highlighted, and a pick line above the chart names the option and its two axis values.
+- **Weights move the pick without a re-run.** `App.jsx` already re-scores the latest run on a weight change (`scoreOptions` on shallow copies, no dispatch). The Trade-offs tab reads that re-scored run, so the highlight follows the weights. Test 8b measures 27 ms per preset for re-score plus view on 2,000 options. The §17 target is ≤ 100 ms.
+- **Dominated options never hidden by default.** The tab shares the ranking table's view state: one `view` object, the same "Hide dominated options" checkbox, default off, counter and "show" link. `DEFAULT_VIEW` and the `settings.hideDominated` record are unchanged.
+- **Option detail.** Click a point (nearest point within 16 px, so the hit area is bigger than the mark), or focus the chart and use the arrow keys (left/right by cost, up/down by carbon), Home/End, P for the pick, and Enter or Space to open. This opens the existing `OptionDetail` component below the chart. Table rows open it too.
+- **Table alternative.** A "Chart / Table" toggle switches to `ParetoTable`, which has one row per point in the same rank order and the same values (rank, name, score, both axis values, time-to-power, capex, resilience, dominance, frontier, pick), paged at 50. Options with a non-finite axis value (for example infinite LCOE on T3 no-grid options) are listed in the table as "not plotted" and counted in a note above the chart. The chart is a single `role="application"` tab stop. A polite live region reads out the focused point's full description, and a hover/focus tooltip shows the same values.
+- **Phone.** The width comes from a ResizeObserver. Below 520 px the chart goes square, the markers shrink, alternate x ticks are dropped and the controls stack. Checked in headless Chromium at 375 px: no horizontal page scroll, no console errors. Checked the same way at 1400 px in light and dark: keyboard Enter opens the detail, and the table shows 50 rows.
+- **Results tabs.** "Options" (the existing ranked list) and "Trade-offs" (new), with ARIA tabs and arrow-key switching (§16 names these tabs).
+- **Canvas above 500 points (§4).** Up to 500 points the markers are SVG paths. Above that they are drawn on a Canvas under the SVG, and the axes, frontier, pick ring, focus ring and hit-testing stay in SVG. T1 (2,000 points) uses Canvas.
+- **New default records (§23 label rule).** `view.pareto.xAxis`, `view.pareto.yAxis`, `view.pareto.ttpClasses` (5), `view.pareto.canvasAbove` (500) and `view.pareto.display` (chart). All are "indicative — unverified" with basis judgement or run setting. Test 5d now counts 376 records (it was 371).
+
+### Palette decision
+
+The code has **no energy-source colour system** yet. There is no technology colour token in `defaults.js` and no source colours in `styles.css`. The §16 signature palette belongs to the dispatch stacks and site blocks, which are later slices. This chart encodes time-to-power (a magnitude), not energy source, so a source palette would be the wrong tool here anyway. Choices made:
+
+- **Time-to-power: one-hue violet ordinal ramp, 5 steps.** Light theme `#9d74c4 #8659b0 #70429b #592f83 #421c69`. Dark theme `#9466bf #a97fcf #bf9bde #d4b9ec #eadcf8`, so in both themes more contrast with the surface means a longer time-to-power. Violet carries on from the existing `--ax-ttp` axis colour (`#8a4fa3`) in the ranking table, so time-to-power reads as violet throughout the app. Both ramps were run through the dataviz palette validator in `--ordinal` mode against the real surfaces (`#ffffff` and `#1e2125`). All checks pass: monotone lightness, adjacent ΔL ≥ 0.06, single hue (spread 2–4°), and the end nearest the surface at 3.67:1 (light) and 3.78:1 (dark), so every marker clears the 3:1 graphics target. A single hue is colour-blind safe by construction, because the classes differ in lightness, not hue.
+- **Quantile classes, with ties merged.** Time-to-power on T1 is heavily clustered (the 2nd and 50th percentiles are 18 and 24 months). Tied quantile edges are merged, so T1 shows 4 classes spread across the ramp, and the legend prints each class's month range.
+- **Pick and focus.** The pick ring uses the existing `--focus` orange (`#b4560a` light, `#ffb366` dark), which is separate from the violet ramp and from the status colours. The pick always has a text label too, never colour alone. Focus and selection rings use `--focus` and `--accent`.
+- **Status colours stay reserved.** Resilience status uses shape plus a text legend, not the ok/warn/bad colours, so status colours are never reused as a data encoding (§16). Dominated is shown by fill (hollow or solid), which also survives greyscale and forced colours.
+
+### Chart library decision
+
+**Hand-written SVG (plus Canvas above 500 points). Recharts was not added.** The weight was measured: a minimal Recharts 2.15.4 import (ScatterChart, Scatter, axes, ZAxis, Tooltip, Line, grid, ResponsiveContainer) bundles to **112 KB gzipped** on top of React, which is more than the whole current app (`dist/app.js` is 109 KB gzipped after this slice). It also pulls in about 30 packages (d3 modules, lodash and others), and every one of them lands in the single-file build. The JS budget (≤ 1.5 MB gzipped) would still be met, so weight alone is not decisive. The deciding reasons are functional:
+1. §4 requires Canvas above 500 points. Recharts renders SVG only, so T1's 2,000 points would need a custom Canvas layer anyway, and Recharts would end up drawing only the axes.
+2. The keyboard model (arrow keys between points, P for the pick, Enter to open) and the nearest-point hit area would have to be built on top of Recharts' tooltip model, which works by mouse hover.
+3. Tests 8d render the real chart with `react-dom/server` and match every plotted point to a table row. Recharts' `ResponsiveContainer` renders nothing without a measured DOM size, so that test would need a browser.
+
+The chart is about 260 lines (`ParetoChart.jsx`). `package.json` is unchanged.
+
+### Tests added (`tests/run-tests.mjs`, 8a–8d)
+
+- **8a** Pareto set on a hand-checked 8-point example (with a tie and a non-finite point), on 200 random seeded sets against brute force, on a 5-option set scored by `scoreOptions` and read through `HOOKS.paretoView`, and on T1 against brute force.
+- **8b** For each of the 5 weight presets: the pick equals the hand-computed argmax of Σ wᵢ × axis scoreᵢ and equals rank 1. Exactly one point is highlighted. The pick changes across presets (4 distinct picks). The dispatch and economics objects are the same references, and the dispatch counter does not change.
+- **8c** On T1, T3 and the resilience-fail sample: with default settings every option, dominated or not, is in the Pareto view, the ranked list and the ranking (ranks 1..n). Turning on "Hide dominated options" changes only what is shown: scores, ranks, pick and frontier stay the same.
+- **8d** Bundles the real `ParetoChart` and `ParetoTable` with esbuild, renders them to static markup, and checks that every plotted point (`data-id` on its SVG path) has a table row with the same id. The row count equals the number of points in the view, the values agree, and the pick is marked in both. Run on 4 cases: default, NPV vs market with dominated hidden, phone width on T3, and the resilience-fail sample.
+
+### Open points
+
+1. **Shape encodes resilience, not site fit.** §12.2 says marker shape = site-fit status. Site fit is not computed until the layout slice (`HOOKS.layout`). When it is, shape should move to site fit, and resilience could move to an outline style. The chart says this in a note.
+2. **No P10–P90 error crosses.** These depend on the Monte Carlo / uncertainty slice. Points are P50 from the full-year hourly model.
+3. **No brushing on the axes.** That belongs to the parallel-coordinates part of §12.2, which is not in this slice.
+4. **Canvas draws all 2,000 points each time.** Drawing and hit-testing are O(n) per pointer move. Fine at 2,000 points; it may need a spatial index at higher caps.
+5. **Screen-reader walk-through not done.** The chart was checked by keyboard in headless Chromium only. NVDA + Firefox and VoiceOver + Safari (§17) are still to do, and so is an axe audit.
+6. **Pick when "Rank requirement-compliant options first" is on.** The pick stays the highest weighted score (§11 wording, "Pareto pick … match[es] the weighted leader"). With that toggle on, the pick can differ from rank 1, and the pick line says so. If the owner prefers the pick to follow rank 1 instead, it is a one-line change in `weightedPick`.
+
+### Test run (this slice)
+
+`npm run build` exit 0, then `npm test` exit 0, 2026-10-15, Node v22.22.0. **18/18 passed** (the 14 existing tests and 8a–8d). New tests as printed:
+
+```
+PASS  8a. Pareto set (non-dominated on the two plotted axes) is correct on a hand-checked example  (43 ms)
+      hand example frontier A, B, E, D (C, F, G dominated; H not plottable); 200 random sets (4334 points, with ties) match brute force; engine set frontier o1, o2, o4 with o3, o5 marked dominated; T1 LCOE vs location carbon: 11 of 2000 on the frontier, equal to brute force.
+PASS  8b. Weighted pick is the highest weighted score and moves with the weights, with no dispatch re-run  (134 ms)
+      5 weight presets, 4 distinct picks: Balanced → O1YAUJ8J (86.0); Lowest cost → OZ57BJM (88.6); Lowest carbon → O1YAUJ8J (92.0); Speed to market → OLN9RSS (90.8); Lowest risk → OCRJR70 (85.4). Pick = hand-computed argmax = rank 1 every time; dispatch/economics objects identical by reference; dispatch counter 1732 before and after; 27 ms per preset for re-score + view (T1 full run 8.1 s).
+PASS  8c. Dominance marking does not remove any option from the Pareto view, the list or the ranking  (20 ms)
+      T1: 2000/2000 in the view (1950 dominated, best dominated rank 2); hide on → 50 shown + 1950 hidden, scores, ranks, pick and frontier unchanged; T3: 2000/2000 in the view (1910 dominated, best dominated rank 2); hide on → 90 shown + 1910 hidden, scores, ranks, pick and frontier unchanged; T1 + C5 None: 36/36 in the view (13 dominated, best dominated rank 14); hide on → 23 shown + 13 hidden, scores, ranks, pick and frontier unchanged.
+PASS  8d. Every point in the Pareto chart has a matching row in the table alternative (rendered)  (760 ms)
+      T1 default: 2000 points / 2000 rows, 0 missing; T1 NPV vs market, hide dominated: 50 points / 50 rows, 0 missing; T3 1−CFE, phone width: 1974 points / 2000 rows, 0 missing; T1 + C5 None: 36 points / 36 rows, 0 missing.
+
+18/18 tests passed.
+```
+
+The only change to the earlier tests' output: 5d now reports 376 records (judgement 101, run setting 6), up from 371, because of the five new view-setting records. The single-file size in test 7 is now 449.1 KB. During development, two of the new tests failed before they were fixed. 8b's first version asserted that Balanced and Lowest carbon give different picks; on T1 they do not (both pick O1YAUJ8J), so the assertion now compares Balanced with Lowest cost. 8d first failed on a bundling error (`react-dom/server` Node build, dynamic `require("stream")`) and now uses `react-dom/server.browser`.

@@ -25,6 +25,12 @@
 //     "worker.js" reference and no <script src>, <link href> or other relative file reference; the
 //     worker source inlined for the Blob URL is extracted, equals dist/worker.js, parses as
 //     JavaScript, and runs one slice in a Node worker_thread.
+//  8. Pareto trade-off view (HOOKS.paretoView, src/engine/pareto.js):
+//     8a. 2-D Pareto set on a hand-checked example, and on a synthetic screened set scored by the engine.
+//     8b. Weighted pick = highest weighted score (checked by hand from axis scores and weights), and it
+//         moves when the weights change, with no dispatch re-run (dispatch objects untouched, timed).
+//     8c. Dominance marking removes no option from the view or the ranking.
+//     8d. Every point in the rendered chart has a matching row in the rendered table alternative.
 
 import assert from 'node:assert/strict';
 import {
@@ -32,7 +38,9 @@ import {
   applyView, DEFAULT_VIEW, getRegistry, LABEL, generateOptions, effectiveWeights, H,
   runModelSteps, mergeRuns, startPooledRun, toTransferable, STAGES, validateRunLog, stripTimestamps,
   logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY,
+  HOOKS, paretoFrontier, weightedPick, paretoTableRows, PRESETS,
 } from '../src/engine/index.js';
+import { scoreOptions } from '../src/engine/scoring.js';
 import { dispatchAll } from '../src/engine/dispatch.js';
 import { createProgressTracker } from '../src/engine/runlog.js';
 import { Worker } from 'node:worker_threads';
@@ -611,6 +619,196 @@ await test('7. Single-file build: worker inlined as a Blob-URL source string, no
   });
   assert.ok(part.options.length > 0, 'inlined worker returned no options');
   return `single file ${(html.length / 1024).toFixed(1)} KB, 1 inline script, 0 "worker.js" mentions, 0 <script src>, 0 <link href>, 0 relative src/href; inlined worker source ${src.length.toLocaleString('en-GB')} chars, identical to dist/worker.js, parses; run in a worker_thread on slice 1/${SLICES} of T1: ${part.options.length} options, ${part.log.length} log events.`;
+});
+
+// ---------------------------------------------------------------------------
+// 8. Pareto trade-off view
+// ---------------------------------------------------------------------------
+// Shallow copy of a run's options, as the UI does before re-scoring (App.jsx), so the original run
+// keeps its scores. Heavy results (dispatch, sizing, economics, carbon) are shared by reference.
+function rescoreCopy(run, weights) {
+  const options = run.options.map((o) => ({ ...o }));
+  const inputs = { ...run.inputs, weights: { ...weights } };
+  const scoring = scoreOptions(options, inputs);
+  return { ...run, inputs, options, scoring };
+}
+// Minimal synthetic option with the fields scoring and the Pareto view read.
+function synth(id, lcoe, carbon, ttp, deliv, res = 'Meets', capex = 1e8) {
+  return {
+    id, name: `Option ${id}`, archetype: null, custom: false, pinned: false, flags: [],
+    eco: { lcoe, npvCost: lcoe * 1e7, capex }, carbon: { locationG: carbon, marketG: carbon, cfePct: 0.5 },
+    ttp: { metric: ttp }, deliv: { score: deliv }, resilience: { status: res },
+  };
+}
+
+await test('8a. Pareto set (non-dominated on the two plotted axes) is correct on a hand-checked example', () => {
+  assert.equal(typeof HOOKS.paretoView, 'function', 'HOOKS.paretoView is not implemented');
+  // Hand check (both axes lower is better):
+  //  A (1,5)  frontier: lowest x
+  //  B (2,3)  frontier: beats A on y
+  //  E (2,3)  frontier: exact tie with B (ties do not dominate)
+  //  C (3,4)  dominated by B (2 ≤ 3, 3 < 4)
+  //  D (4,1)  frontier: lowest y
+  //  F (5,5)  dominated by A, B, C, D, E
+  //  G (1,6)  dominated by A (same x, higher y)
+  //  H (NaN,1) not plottable, ignored
+  const pts = [['A', 1, 5], ['B', 2, 3], ['C', 3, 4], ['D', 4, 1], ['E', 2, 3], ['F', 5, 5], ['G', 1, 6], ['H', NaN, 1]].map(([id, x, y]) => ({ id, x, y }));
+  const f = paretoFrontier(pts);
+  assert.deepEqual(f, ['A', 'B', 'E', 'D']);
+  // Brute force agrees on 200 random point sets (seeded LCG, ties included by rounding).
+  let seed = 12345; const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+  let checked = 0;
+  for (let t = 0; t < 200; t++) {
+    const P = Array.from({ length: 2 + Math.floor(rnd() * 40) }, (_, i) => ({ id: `p${String(i).padStart(2, '0')}`, x: Math.round(rnd() * 10), y: Math.round(rnd() * 10) }));
+    const brute = P.filter((p) => !P.some((q) => q !== p && q.x <= p.x && q.y <= p.y && (q.x < p.x || q.y < p.y))).map((p) => p.id).sort();
+    assert.deepEqual(paretoFrontier(P).slice().sort(), brute, `random set ${t}`);
+    checked += P.length;
+  }
+  // Same check through the engine: a small screened set scored by scoreOptions, read by HOOKS.paretoView.
+  const opts = [synth('o1', 100, 400, 20, 80), synth('o2', 120, 200, 20, 80), synth('o3', 130, 300, 20, 80), synth('o4', 200, 50, 20, 80), synth('o5', 210, 60, 20, 80)];
+  const run = { options: opts, inputs: { weights: { cost: 35, carbon: 25, ttp: 25, deliverability: 15 }, settings: { costMetric: 'lcoe', carbonMetric: 'location', rankCompliantFirst: false } } };
+  scoreOptions(run.options, run.inputs);
+  const model = HOOKS.paretoView(run, { x: 'lcoe', y: 'location' });
+  // o3 (130, 300) is beaten by o2 (120, 200); o5 (210, 60) by o4 (200, 50).
+  assert.deepEqual(model.frontier, ['o1', 'o2', 'o4']);
+  assert.deepEqual(model.points.filter((p) => p.onFrontier).map((p) => p.id).sort(), ['o1', 'o2', 'o4']);
+  // With equal ttp and deliverability, the engine's 4-axis dominance mark must agree here.
+  assert.deepEqual(opts.filter((o) => o.dominatedBy).map((o) => o.id).sort(), ['o3', 'o5']);
+  // On T1: every frontier option is not beaten on both axes by any screened option.
+  const mT1 = HOOKS.paretoView(runT1, { x: 'lcoe', y: 'location' });
+  const xy = runT1.options.map((o) => ({ id: o.id, x: o.eco.lcoe, y: o.carbon.locationG }));
+  const bruteT1 = xy.filter((p) => !xy.some((q) => q !== p && q.x <= p.x && q.y <= p.y && (q.x < p.x || q.y < p.y))).map((p) => p.id).sort();
+  assert.deepEqual(mT1.frontier.slice().sort(), bruteT1);
+  return `hand example frontier A, B, E, D (C, F, G dominated; H not plottable); 200 random sets (${checked} points, with ties) match brute force; engine set frontier o1, o2, o4 with o3, o5 marked dominated; T1 LCOE vs location carbon: ${mT1.frontier.length} of ${runT1.options.length} on the frontier, equal to brute force.`;
+});
+
+await test('8b. Weighted pick is the highest weighted score and moves with the weights, with no dispatch re-run', () => {
+  const dispatchRunsBefore = runT1.timing.dispatchRuns;
+  const presets = Object.entries(PRESETS);
+  const picks = [];
+  const t0p = performance.now();
+  for (const [name, wts] of presets) {
+    const r = rescoreCopy(runT1, wts);
+    const model = HOOKS.paretoView(r, { x: 'lcoe', y: 'location' });
+    // Independent check: weighted score recomputed by hand from the axis scores and effective weights.
+    const { w } = effectiveWeights(wts);
+    let best = null, bestS = -Infinity;
+    for (const o of r.options) {
+      const s = w.cost * o.axisScores.cost + w.carbon * o.axisScores.carbon + w.ttp * o.axisScores.ttp + w.deliverability * o.axisScores.deliverability;
+      assert.ok(Math.abs(s - o.score) < 1e-9, 'weighted score mismatch');
+      if (s > bestS + 1e-12 || (Math.abs(s - bestS) <= 1e-12 && o.id < best.id)) { bestS = s; best = o; }
+    }
+    assert.equal(model.pickId, best.id, `${name}: pick is not the highest weighted score`);
+    assert.equal(weightedPick(r.options).id, best.id);
+    const rank1 = r.options.find((o) => o.rank === 1);
+    assert.equal(model.pickId, rank1.id, `${name}: pick is not the rank-1 leader`);
+    assert.equal(model.points.filter((p) => p.isPick).length, 1, 'exactly one highlighted point');
+    // Dispatch untouched: the same result objects, shared by reference.
+    for (let i = 0; i < r.options.length; i++) {
+      assert.equal(r.options[i].dispatch, runT1.options[i].dispatch);
+      assert.equal(r.options[i].eco, runT1.options[i].eco);
+    }
+    picks.push([name, best.id, best.name, best.score]);
+  }
+  const ms = performance.now() - t0p;
+  assert.equal(runT1.timing.dispatchRuns, dispatchRunsBefore, 'dispatch counter changed');
+  const distinct = new Set(picks.map((p) => p[1]));
+  assert.ok(distinct.size >= 2, 'the pick did not change across the weight presets');
+  const bal = picks.find((p) => p[0] === 'Balanced'), cheap = picks.find((p) => p[0] === 'Lowest cost');
+  assert.notEqual(bal[1], cheap[1], 'Balanced and Lowest cost give the same pick');
+  // Each preset (re-score + Pareto view on 2,000 options) is far below one 8760-h dispatch run (T1 took seconds).
+  assert.ok(ms / presets.length < 1000, `re-score + view took ${(ms / presets.length).toFixed(0)} ms per preset`);
+  return `${presets.length} weight presets, ${distinct.size} distinct picks: ${picks.map((p) => `${p[0]} → ${p[1]} (${p[3].toFixed(1)})`).join('; ')}. Pick = hand-computed argmax = rank 1 every time; dispatch/economics objects identical by reference; dispatch counter ${dispatchRunsBefore} before and after; ${(ms / presets.length).toFixed(0)} ms per preset for re-score + view (T1 full run ${(runT1Ms / 1000).toFixed(1)} s).`;
+});
+
+await test('8c. Dominance marking does not remove any option from the Pareto view, the list or the ranking', () => {
+  const out = [];
+  for (const [label, run] of [['T1', runT1], ['T3', runT3], ['T1 + C5 None', runFail]]) {
+    const n = run.options.length;
+    const dom = run.options.filter((o) => o.dominatedBy);
+    assert.ok(dom.length > 0, `${label}: no dominated options to test with`);
+    const reg = getRegistry();
+    assert.equal(reg['settings.hideDominated'].value, false);
+    assert.equal(DEFAULT_VIEW.hideDominated, false, 'default view must not hide dominated options');
+    const model = HOOKS.paretoView(run, null); // default view, default axes
+    assert.equal(model.points.length, n, `${label}: Pareto view drops options`);
+    assert.equal(model.hiddenDominated, 0);
+    const ids = new Set(model.points.map((p) => p.id));
+    for (const o of dom) assert.ok(ids.has(o.id), `${label}: dominated ${o.id} missing from the Pareto view`);
+    assert.equal(model.points.filter((p) => p.dominatedBy).length, dom.length, 'dominated marks not carried to the points');
+    // Ranking: every option, dominated or not, has a unique rank 1..n.
+    const ranks = run.options.map((o) => o.rank).sort((a, b) => a - b);
+    assert.deepEqual(ranks, Array.from({ length: n }, (_, i) => i + 1));
+    // The ranked list (applyView default) still lists every option.
+    assert.equal(applyView(run.options, DEFAULT_VIEW).list.length, n);
+    // Switching "Hide dominated options" on changes only what is shown, never a score or rank.
+    const before = run.options.map((o) => [o.id, o.score, o.rank]);
+    const hid = HOOKS.paretoView(run, null, { ...DEFAULT_VIEW, hideDominated: true });
+    assert.equal(hid.points.length + hid.hiddenDominated, n);
+    assert.equal(hid.pickId, model.pickId, 'pick changed when hiding dominated options');
+    assert.deepEqual(hid.frontier, model.frontier, 'frontier changed when hiding dominated options');
+    assert.deepEqual(run.options.map((o) => [o.id, o.score, o.rank]), before);
+    out.push(`${label}: ${n}/${n} in the view (${dom.length} dominated, best dominated rank ${Math.min(...dom.map((o) => o.rank))}); hide on → ${hid.points.length} shown + ${hid.hiddenDominated} hidden, scores, ranks, pick and frontier unchanged`);
+  }
+  return out.join('; ') + '.';
+});
+
+await test('8d. Every point in the Pareto chart has a matching row in the table alternative (rendered)', async () => {
+  // Bundle the real components and render them to static markup with react-dom/server.
+  const esbuild = await import('esbuild');
+  const { mkdtempSync, writeFileSync: wf, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { pathToFileURL, fileURLToPath } = await import('node:url');
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  const dir = mkdtempSync(join(tmpdir(), 'pareto-test-'));
+  try {
+    const entry = join(dir, 'entry.jsx');
+    wf(entry, `import React from 'react'; import { renderToStaticMarkup } from 'react-dom/server.browser';
+      import ParetoChart from ${JSON.stringify(join(root, 'src/components/ParetoChart.jsx'))};
+      import ParetoTable from ${JSON.stringify(join(root, 'src/components/ParetoTable.jsx'))};
+      export function render(model, width) {
+        return {
+          chart: renderToStaticMarkup(React.createElement(ParetoChart, { model, onSelect: () => {}, forceSvg: true, initialWidth: width })),
+          table: renderToStaticMarkup(React.createElement(ParetoTable, { model, pageSize: Infinity })),
+        };
+      }`);
+    const out = join(dir, 'bundle.mjs');
+    await esbuild.build({ entryPoints: [entry], bundle: true, format: 'esm', platform: 'node', outfile: out, jsx: 'automatic', loader: { '.js': 'jsx' }, logLevel: 'silent', nodePaths: [join(root, 'node_modules')], define: { 'process.env.NODE_ENV': '"production"' } });
+    const { render } = await import(pathToFileURL(out).href);
+    const summary = [];
+    const cases = [
+      ['T1 default', runT1, null, DEFAULT_VIEW, 900],
+      ['T1 NPV vs market, hide dominated', runT1, { x: 'npv', y: 'market' }, { ...DEFAULT_VIEW, hideDominated: true }, 900],
+      ['T3 1−CFE, phone width', runT3, { x: 'lcoe', y: 'cfe' }, DEFAULT_VIEW, 360],
+      ['T1 + C5 None', runFail, null, DEFAULT_VIEW, 360],
+    ];
+    for (const [label, run, axes, view, width] of cases) {
+      const model = HOOKS.paretoView(run, axes, view);
+      const { chart, table } = render(model, width);
+      const chartIds = [...chart.matchAll(/<path[^>]*data-id="([^"]+)"/g)].map((m) => m[1]);
+      const rowIds = [...table.matchAll(/<tr[^>]*data-id="([^"]+)"/g)].map((m) => m[1]);
+      assert.equal(chartIds.length, model.plottedCount, `${label}: chart point count`);
+      assert.equal(new Set(chartIds).size, chartIds.length, `${label}: duplicate chart points`);
+      const rowSet = new Set(rowIds);
+      const missing = chartIds.filter((id) => !rowSet.has(id));
+      assert.deepEqual(missing, [], `${label}: chart points without a table row`);
+      assert.equal(rowIds.length, model.points.length, `${label}: table rows ≠ points in the view`);
+      // Same values: each model row matches its point.
+      const rows = paretoTableRows(model);
+      for (let i = 0; i < rows.length; i++) {
+        const pnt = model.points[i];
+        assert.equal(rows[i].id, pnt.id); assert.equal(rows[i].x, pnt.x); assert.equal(rows[i].y, pnt.y); assert.equal(rows[i].score, pnt.score);
+      }
+      // The weighted pick is marked in both.
+      assert.equal(/Weighted pick #/.test(chart), model.pickVisible, `${label}: pick label`);
+      assert.equal((table.match(/class="row-pick/g) || []).length, model.pickVisible ? 1 : 0, `${label}: pick row`);
+      summary.push(`${label}: ${chartIds.length} points / ${rowIds.length} rows, ${missing.length} missing`);
+    }
+    return summary.join('; ') + '.';
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 const passed = results.filter((r) => r.ok).length;
