@@ -13,16 +13,25 @@
 //     plus per-hour SOC recursion soc[h] = soc[h−1] + η·charge − discharge/η, which makes losses explicit.
 //  2. Grid connection never resized: every option's grid connection per month equals the offered
 //     profile; every hour's physical import ≤ offered capacity in "Show unmet load".
-//  3. No option hidden by default: default view shows every screened option; archetypes present.
+//  3. No option hidden by default: default view shows every screened option; archetypes present;
+//     options that do not meet resilience are still shown (exercised by a T1 variant that includes
+//     C5 = None, which must fail the 100 % backed-load requirement).
 //  4. View filters never change score or rank.
 //  5. Extra: determinism (same inputs + seed → identical outputs); exceedance mode removes unmet load.
+//  6. Run event log: completeness (every stage has start and end, contiguous seq, stage order),
+//     identical content (timestamps excluded) across two runs, worker-pool merge and main-thread
+//     fallback, dispatch progress with cache hit/miss, export formats.
 
 import assert from 'node:assert/strict';
 import {
   referenceT1, referenceT3, runModel, normalizeInputs, buildContext, sizeOption, dispatchConfig, dispatchYear,
   applyView, DEFAULT_VIEW, getRegistry, LABEL, generateOptions, effectiveWeights, H,
+  runModelSteps, mergeRuns, startPooledRun, toTransferable, STAGES, validateRunLog, stripTimestamps,
+  logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY,
 } from '../src/engine/index.js';
 import { dispatchAll } from '../src/engine/dispatch.js';
+import { createProgressTracker } from '../src/engine/runlog.js';
+import { Worker } from 'node:worker_threads';
 
 const START = '2027-01';
 const results = [];
@@ -178,11 +187,35 @@ await test('2. Grid connection equals the offered capacity on every option, neve
 // ---------------------------------------------------------------------------
 // 3. No option hidden by default
 // ---------------------------------------------------------------------------
+// Test 3 sample with failing resilience. The T1 and T3 default runs cannot exercise "Does not meet":
+// their default C5 subset is HVO / diesel / retained bridging plant, C6 and C7 are locked to the
+// requirement, and every option is sized to the requirement by the §9.2 backup rule (retained plant
+// by the same rule, BUILD-NOTES "Brief issues" 4), so all 2,000 + 2,000 options meet it by
+// construction (the test was wrong, not the check: see BUILD-NOTES "Test 3"). This variant of T1 adds
+// C5 = None ("Include" in the values-not-generated note) and locks the other open choices so that
+// every combination is screened (no sampling). It contains the must-fail case: C1 = Wait for grid with
+// C5 = None has no on-site firm capacity at all, so against the default requirement of 100 % backed
+// critical load it has 0 MW backed load and MUST be "Does not meet" with "Backed load" named. Every
+// other C5 = None option must also be "Does not meet" with at least one failing item named (§9.7).
+function resilienceFailInputs() {
+  const inp = referenceT1({ analysisStart: START });
+  inp.project.name = 'T1 + C5 None (test 3 resilience-fail sample)';
+  inp.choices = { ...(inp.choices || {}) };
+  inp.choices.C5 = { state: 'open', values: ['hvo', 'diesel', 'retained', 'none'] };
+  for (const [id, val] of [['C3', 'backup'], ['C4', 'none'], ['C8', 'air'], ['C9', 'roof'], ['C10', 'none'], ['C12', 'none'], ['C13', 'none']]) {
+    inp.choices[id] = { state: 'locked', values: [val] };
+  }
+  return inp;
+}
+const runFail = runModel(resilienceFailInputs());
+console.log(`Test-3 resilience-fail sample: ${runFail.options.length} options (sampling ${runFail.generation.sampled ? 'on' : 'off'}).`);
+
 await test('3. No option is hidden by default', () => {
   const reg = getRegistry();
   assert.equal(reg['settings.hideDominated'].value, false, '"Hide dominated options" default must be off');
   assert.equal(reg['settings.hideDominated'].label, LABEL);
-  for (const run of [runT1, runT3]) {
+  const statusCounts = [];
+  for (const run of [runT1, runT3, runFail]) {
     const { list, hiddenDominated, chips } = applyView(run.options, DEFAULT_VIEW);
     assert.equal(list.length, run.options.length, 'default view hides options');
     assert.equal(hiddenDominated, 0);
@@ -194,9 +227,30 @@ await test('3. No option is hidden by default', () => {
     for (const a of ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10a', 'A10b']) {
       assert.ok(arch.has(a), `archetype ${a} missing`);
     }
-    // Options that do not meet resilience or carry major flags are still ranked and shown
-    assert.ok(list.some((o) => o.resilience.status === 'Does not meet'));
+    // Options that carry major flags are still ranked and shown
     assert.ok(list.some((o) => o.flags.some((f) => f.severity === 'major')));
+    statusCounts.push(['Meets', 'Meets with flags', 'Does not meet'].map((st) => list.filter((o) => o.resilience.status === st).length).join('/'));
+  }
+  // Options that do not meet resilience are still ranked and shown (resilience-fail sample).
+  {
+    const { list } = applyView(runFail.options, DEFAULT_VIEW);
+    assert.equal(runFail.generation.sampled, false, 'resilience-fail sample must screen every combination');
+    const none = runFail.options.filter((o) => o.v.C5 === 'none');
+    assert.ok(none.length > 0, 'resilience-fail sample has no C5 = None option');
+    const mustFail = none.filter((o) => o.v.C1 === 'wait');
+    assert.ok(mustFail.length > 0, 'resilience-fail sample has no grid-only option without backup');
+    for (const o of mustFail) {
+      assert.equal(o.resilience.firmMW, 0, `${o.id}: grid-only option without backup has on-site firm capacity`);
+      assert.equal(o.resilience.status, 'Does not meet', `${o.id} (no backup, no on-site plant, 100 % backed required) did not fail resilience`);
+      assert.ok(o.resilience.failing.includes('Backed load'), `${o.id}: failing items ${o.resilience.failing.join(', ')}`);
+    }
+    for (const o of none) {
+      assert.equal(o.resilience.status, 'Does not meet', `${o.id} (C5 = None) did not fail resilience`);
+      assert.ok(o.resilience.failing.length > 0, `${o.id}: "Does not meet" without a named failing item`);
+    }
+    const failing = list.filter((o) => o.resilience.status === 'Does not meet');
+    assert.ok(failing.length > 0, 'no "Does not meet" option in the default view');
+    assert.ok(failing.every((o) => Number.isInteger(o.rank) && Number.isFinite(o.score)), '"Does not meet" option not ranked');
   }
   // Dominated options are ranked like any other
   const dom = runT1.options.filter((o) => o.dominatedBy);
@@ -207,7 +261,8 @@ await test('3. No option is hidden by default', () => {
   assert.ok(gridDep.every((o) => o.unmet.mwh > 0 && o.flags.some((f) => f.id === 'grid-binding') && o.flags.some((f) => f.id === 'target-ttp')));
   const h2 = runT1.options.find((o) => o.archetype === 'A10b');
   assert.ok(h2.flags.some((f) => f.id === 'fuel-h2-unavailable'), 'hydrogen variant flag missing');
-  return `T1: ${runT1.options.length}/${runT1.options.length} shown by default (${dom.length} dominated, all shown and ranked); T3: ${runT3.options.length}/${runT3.options.length} shown; ${gridDep.length} T3 grid-dependent options listed with unmet load + "Grid capacity binding" + time-to-power flags; archetypes present: ${[...new Set(runT1.options.map((o) => o.archetype).filter(Boolean))].join(', ')}.`;
+  const failShown = applyView(runFail.options, DEFAULT_VIEW).list.filter((o) => o.resilience.status === 'Does not meet');
+  return `Resilience Meets/Meets with flags/Does not meet in the default view: T1 ${statusCounts[0]}, T3 ${statusCounts[1]}, T1 + C5 None ${statusCounts[2]}; ${failShown.length} "Does not meet" options shown and ranked (best rank ${Math.min(...failShown.map((o) => o.rank))} of ${runFail.options.length}), incl. ${runFail.options.filter((o) => o.v.C5 === 'none' && o.v.C1 === 'wait').length} grid-only C5 = None at 0 MW backed failing "Backed load"; failing items on the ${runFail.options.filter((o) => o.v.C5 === 'none').length} C5 = None options: ${[...new Set(runFail.options.filter((o) => o.v.C5 === 'none').map((o) => o.resilience.failing.join(' + ')))].join(' | ')}. T1: ${runT1.options.length}/${runT1.options.length} shown by default (${dom.length} dominated, all shown and ranked); T3: ${runT3.options.length}/${runT3.options.length} shown; ${gridDep.length} T3 grid-dependent options listed with unmet load + "Grid capacity binding" + time-to-power flags; archetypes present: ${[...new Set(runT1.options.map((o) => o.archetype).filter(Boolean))].join(', ')}.`;
 });
 
 // ---------------------------------------------------------------------------
@@ -248,8 +303,10 @@ await test('4. Score and rank do not change when a view filter changes', () => {
 // ---------------------------------------------------------------------------
 // 5. Extras: determinism, weights, exceedance mode, labels
 // ---------------------------------------------------------------------------
+let runT1Again = null;
 await test('5a. Determinism: same inputs + seed give identical outputs', () => {
   const again = runModel(referenceT1({ analysisStart: START }));
+  runT1Again = again;
   const a = runT1.options.map((o) => [o.id, o.score, o.eco.lcoe, o.carbon.locationG, o.unmet.mwh]);
   const b = again.options.map((o) => [o.id, o.score, o.eco.lcoe, o.carbon.locationG, o.unmet.mwh]);
   assert.deepEqual(a, b);
@@ -287,6 +344,217 @@ await test('5d. Every default record carries the "indicative — unverified" lab
   assert.equal(bad.length, 0, `records without label/basis: ${bad.map((r) => r.path).join(', ')}`);
   const byBasis = recs.reduce((a, r) => ((a[r.basis] = (a[r.basis] || 0) + 1), a), {});
   return `${recs.length} default records; all "${LABEL}", confidence C, verified false; basis: ${Object.entries(byBasis).map(([k, v]) => `${k} ${v}`).join(', ')}.`;
+});
+
+
+// ---------------------------------------------------------------------------
+// 6. Run event log
+// ---------------------------------------------------------------------------
+const STAGE_IDS = STAGES.map((x) => x.id);
+const strip = (log) => JSON.stringify(stripTimestamps(log));
+
+// Shared structural checks on a single-source log; returns a summary string.
+function checkSingleSourceLog(run, label) {
+  const log = run.log;
+  const v = validateRunLog(log);
+  assert.ok(v.ok, `${label}: ${v.problems.join('; ')}`);
+  // Contiguous sequence numbers
+  log.forEach((e, i) => assert.equal(e.seq, i, `${label}: seq ${e.seq} at index ${i}`));
+  // Stage order exactly as STAGES, each with one start (first) and one end (last)
+  const starts = log.filter((e) => e.event === 'start').map((e) => e.stage);
+  const ends = log.filter((e) => e.event === 'end').map((e) => e.stage);
+  assert.deepEqual(starts, STAGE_IDS, `${label}: start order`);
+  assert.deepEqual(ends, STAGE_IDS, `${label}: end order`);
+  for (const id of STAGE_IDS) {
+    const evs = log.filter((e) => e.stage === id);
+    assert.equal(evs[0].event, 'start', `${label}: ${id} does not begin with start`);
+    assert.equal(evs[evs.length - 1].event, 'end', `${label}: ${id} does not finish with end`);
+    const end = evs[evs.length - 1];
+    // End records items processed, cache hits/misses field and the warnings raised in the stage
+    assert.ok('items' in end.detail && 'cacheHits' in end.detail && 'cacheMisses' in end.detail && 'warnings' in end.detail, `${label}: ${id} end detail incomplete`);
+    assert.equal(end.detail.warnings, evs.filter((e) => e.event === 'warning').length, `${label}: ${id} warning count`);
+    assert.ok(end.t_ms >= evs[0].t_ms, `${label}: ${id} ends before it starts`);
+  }
+  // Every event has exactly the schema fields
+  for (const e of log) assert.deepEqual(Object.keys(e), ['seq', 'stage', 'event', 't_ms', 'count', 'total', 'detail']);
+  // Option generation: every compatibility rule count and the cap/sampling decision
+  const gen = log.filter((e) => e.stage === 'option-generation' && e.event === 'progress');
+  for (const r of run.rules) {
+    const ev = gen.find((e) => e.detail.step === 'compatibility-rule' && e.detail.rule === r.id);
+    assert.ok(ev, `${label}: rule ${r.id} not logged`);
+    assert.equal(ev.detail.removed, r.removed, `${label}: rule ${r.id} count`);
+  }
+  const cap = gen.find((e) => e.detail.step === 'cap');
+  assert.ok(cap && cap.detail.sampled === run.generation.sampled && cap.detail.screened === run.generation.screened && cap.detail.totalCombinations === run.generation.totalCombinations, `${label}: cap decision`);
+  // Dispatch: one progress event per option, options dispatched out of total, configuration key, hit or miss
+  const n = run.options.length;
+  const dp = log.filter((e) => e.stage === 'dispatch' && e.event === 'progress');
+  assert.equal(dp.length, n, `${label}: dispatch progress events`);
+  dp.forEach((e, i) => {
+    assert.equal(e.count, i + 1); assert.equal(e.total, n);
+    assert.match(e.detail.cfg, /^K[0-9a-f]{12}$/);
+    assert.ok(e.detail.cache === 'hit' || e.detail.cache === 'miss');
+  });
+  const misses = dp.filter((e) => e.detail.cache === 'miss');
+  const hits = dp.length - misses.length;
+  const dEnd = log.find((e) => e.stage === 'dispatch' && e.event === 'end');
+  assert.equal(dEnd.detail.cacheHits, hits); assert.equal(dEnd.detail.cacheMisses, misses.length);
+  assert.equal(misses.length, run.timing.dispatchRuns, `${label}: misses vs distinct dispatch runs`);
+  assert.equal(new Set(misses.map((e) => e.detail.cfg)).size, misses.length, `${label}: short configuration ids collide`);
+  assert.equal(new Set(misses.map((e) => e.detail.key)).size, misses.length, `${label}: a configuration was simulated twice`);
+  // A hit always refers to a configuration simulated earlier in the same source
+  const seen = new Set();
+  for (const e of dp) { if (e.detail.cache === 'miss') seen.add(e.detail.cfg); else assert.ok(seen.has(e.detail.cfg), `${label}: hit before miss for ${e.detail.cfg}`); }
+  // Per-option stages report items = options
+  for (const id of ['sizing', 'dispatch', 'time-to-power', 'economics', 'carbon', 'resilience', 'flags', 'deliverability', 'scoring-ranking']) {
+    const end = log.find((e) => e.stage === id && e.event === 'end');
+    assert.equal(end.count, n, `${label}: ${id} items`);
+  }
+  // Non-dispatch per-option progress is count based (every PROGRESS_EVERY items)
+  const sp = log.filter((e) => e.stage === 'sizing' && e.event === 'progress').map((e) => e.count);
+  assert.deepEqual(sp, Array.from({ length: Math.ceil(n / PROGRESS_EVERY) - 1 }, (_, i) => (i + 1) * PROGRESS_EVERY));
+  const res = log.find((e) => e.stage === 'resilience' && e.event === 'end').detail.statuses;
+  const warns = log.filter((e) => e.event === 'warning');
+  return `${log.length} events, seq 0–${log.length - 1} contiguous, ${STAGE_IDS.length}/12 stages start→end in order; dispatch ${dp.length} progress events (${misses.length} miss / ${hits} hit), resilience ${JSON.stringify(res)}, ${warns.length} warnings (${[...new Set(warns.map((e) => e.detail.code))].join(', ')})`;
+}
+
+await test('6a. Event log completeness: every stage has a start and an end, sequence numbers contiguous, stage order as specified (T1, T3 and the test-3 sample)', () => {
+  const a = checkSingleSourceLog(runT1, 'T1');
+  const b = checkSingleSourceLog(runT3, 'T3');
+  const c = checkSingleSourceLog(runFail, 'T1 + C5 None');
+  // The test-3 sample: the resilience stage must report its failing options and raise a warning
+  const rEnd = runFail.log.find((e) => e.stage === 'resilience' && e.event === 'end');
+  assert.equal(rEnd.detail.statuses['Does not meet'], runFail.options.filter((o) => o.resilience.status === 'Does not meet').length);
+  assert.ok(runFail.log.some((e) => e.stage === 'resilience' && e.event === 'warning' && e.detail.code === 'requirement-not-met'));
+  return `T1: ${a}.\n      T3: ${b}.\n      T1 + C5 None: ${c}.`;
+});
+
+await test('6b. Log content (timestamps excluded) is identical across two runs with the same inputs', () => {
+  assert.ok(runT1Again, 'second T1 run from test 5a missing');
+  const A = stripTimestamps(runT1.log);
+  const B = stripTimestamps(runT1Again.log);
+  assert.equal(A.length, B.length);
+  assert.deepEqual(A, B);
+  const tsDiffer = runT1.log.filter((e, i) => e.t_ms !== runT1Again.log[i].t_ms).length;
+  // Content must not depend on input key order either (input hash on sorted keys)
+  const shuffled = JSON.parse(JSON.stringify(referenceT1({ analysisStart: START }), (k, v) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).reverse()) : v)));
+  assert.equal(hashInputs(normalizeInputs(shuffled)), runT1.inputHash, 'input hash depends on key order');
+  const changed = referenceT1({ analysisStart: START }); changed.load.utilisation = 0.81;
+  assert.notEqual(hashInputs(normalizeInputs(changed)), runT1.inputHash, 'input hash ignores an input change');
+  return `${A.length} events identical on two T1 runs excluding t_ms (${tsDiffer} of ${A.length} timestamps differ); input hash ${runT1.inputHash} is independent of key order and changes when an input changes.`;
+});
+
+// Real worker pool: src/worker.js in Node worker_threads, merged exactly as useCompute does.
+async function poolRun(inputs, n) {
+  const t0Abs = performance.timeOrigin + performance.now();
+  const coord = startPooledRun(inputs, { t0Abs });
+  const streamed = Array.from({ length: n }, () => []);
+  const parts = await Promise.all(Array.from({ length: n }, (_, i) => new Promise((resolve, reject) => {
+    const w = new Worker(new URL('./worker-shim.mjs', import.meta.url));
+    w.on('message', (msg) => {
+      if (msg.type === 'events') streamed[i].push(...msg.events);
+      else if (msg.type === 'result') { w.terminate(); resolve(msg.run); }
+      else if (msg.type === 'error') { w.terminate(); reject(new Error(msg.message)); }
+    });
+    w.on('error', reject);
+    w.postMessage({ id: 1, inputs, sliceIndex: i, sliceCount: n, t0Abs });
+  })));
+  const run = mergeRuns(parts, inputs, { log: coord.log });
+  return { run, parts, streamed };
+}
+
+await test('6c. Worker pool: each worker returns its own events; merged log complete, ordered and deterministic; results equal the single-thread run', async () => {
+  const N = 3;
+  const p1 = await poolRun(t1Inputs, N);
+  const p2 = await poolRun(t1Inputs, N);
+  const log = p1.run.log;
+  const v = validateRunLog(log);
+  assert.ok(v.ok, v.problems.join('; '));
+  log.forEach((e, i) => assert.equal(e.seq, i));
+  assert.deepEqual(v.sources, ['main', 'worker 0', 'worker 1', 'worker 2']);
+  // Stage order across the merged log never goes backwards; every source starts and ends each stage it runs
+  for (let i = 1; i < log.length; i++) assert.ok(STAGE_IDS.indexOf(log[i].stage) >= STAGE_IDS.indexOf(log[i - 1].stage), `merged log stage order broken at seq ${i}`);
+  for (let w = 0; w < N; w++) {
+    const src = `worker ${w}`;
+    const own = p1.parts[w].log;
+    assert.ok(own.every((e) => e.detail.source === src));
+    own.forEach((e, i) => assert.equal(e.seq, i, `${src} own seq`));
+    // Streamed copies (live panel) equal the returned log
+    assert.deepEqual(p1.streamed[w], own, `${src}: streamed events differ from returned log`);
+    // Stages 1–11 in each worker, in order, each start→end
+    const ws = own.filter((e) => e.event === 'start').map((e) => e.stage);
+    assert.deepEqual(ws, STAGE_IDS.slice(0, 11), `${src} stage order`);
+    // Merged log keeps every worker event, in the worker's own order (wseq)
+    const inMerged = log.filter((e) => e.detail.source === src).map((e) => e.detail.wseq);
+    assert.deepEqual(inMerged, own.map((e) => e.seq));
+    const dp = own.filter((e) => e.stage === 'dispatch' && e.event === 'progress');
+    assert.equal(dp.length, p1.parts[w].options.length);
+  }
+  // Scoring and ranking once, on main, after all worker stages
+  const sc = log.filter((e) => e.stage === 'scoring-ranking');
+  assert.ok(sc.every((e) => e.detail.source === 'main'));
+  assert.equal(sc[0].event, 'start'); assert.equal(sc[sc.length - 1].event, 'end');
+  const merge = sc.find((e) => e.detail.step === 'merge');
+  // Deterministic across two pool runs (timestamps excluded)
+  assert.equal(strip(p1.run.log), strip(p2.run.log), 'pool log content differs between identical runs');
+  // Results identical to the single-thread run
+  const snap = (r) => r.options.map((o) => `${o.id}:${o.score}:${o.rank}:${o.resilience.status}`).join('|');
+  assert.equal(snap(p1.run), snap(runT1), 'pool results differ from single-thread results');
+  const perWorker = p1.parts.map((p) => { const d = p.log.find((e) => e.stage === 'dispatch' && e.event === 'end').detail; return `${p.options.length} options ${d.cacheMisses} miss/${d.cacheHits} hit`; });
+  return `${N} workers (real src/worker.js in worker_threads): merged ${log.length} events, seq contiguous, sources ${v.sources.join(', ')}; per worker ${perWorker.join('; ')}; ${merge.detail.distinctConfigurations} distinct configurations, ${merge.detail.duplicatedAcrossWorkers} simulated in more than one worker; streamed events = returned events; second pool run identical excluding timestamps; ${runT1.options.length} scores and ranks equal the single-thread run.`;
+});
+
+await test('6d. Main-thread fallback: time-sliced runModelSteps gives the same log content and results, and the progress tracker reaches 100 % on every stage', async () => {
+  const tracker = createProgressTracker({ sources: ['main'] });
+  const live = [];
+  const it = runModelSteps(t1Inputs, { onEvent: (e) => { live.push(e); tracker.ingest([e]); } });
+  let r = it.next();
+  let slices = 0;
+  let midStages = new Set();
+  while (!r.done) {
+    const until = performance.now() + 30;
+    while (!r.done && performance.now() < until) r = it.next();
+    slices++;
+    const snap = tracker.snapshot();
+    if (snap.current) midStages.add(snap.current.id);
+    if (!r.done) await new Promise((res) => setTimeout(res, 0));
+  }
+  const run = r.value;
+  assert.equal(strip(run.log), strip(runT1.log), 'fallback log content differs from the synchronous run');
+  assert.deepEqual(live, run.log, 'onEvent stream differs from the returned log');
+  const t = toTransferable(run);
+  assert.equal(strip(t.log), strip(runT1.log), 'toTransferable drops or changes the log');
+  const snap = tracker.snapshot();
+  assert.ok(snap.stages.every((st) => st.status === 'done' && st.pct === 1), 'tracker does not reach 100 % on every stage');
+  assert.equal(snap.current, null);
+  const d = snap.stages.find((st) => st.id === 'dispatch');
+  assert.equal(d.cacheHits + d.cacheMisses, runT1.options.length);
+  assert.equal(snap.recent.length, 200, 'tracker should keep the last 200 events');
+  assert.deepEqual(snap.recent, run.log.slice(-200));
+  return `${slices} time slices of ≤ 30 ms of work each (plus one item overrun); current stage observed in ${midStages.size} of 12 stages between slices; log content identical to the synchronous run; tracker: 12/12 stages 100 %, dispatch cache ${d.cacheMisses} miss / ${d.cacheHits} hit, last ${snap.recent.length} events kept.`;
+});
+
+await test('6e. Log export: JSON round-trips, CSV has one row per event, file names carry the input hash and a timestamp', () => {
+  const log = runT1.log;
+  const json = logToJSON({ inputHash: runT1.inputHash, engineVersion: runT1.engineVersion }, log);
+  const parsed = JSON.parse(json);
+  assert.deepEqual(parsed.events, log);
+  assert.equal(parsed.eventCount, log.length);
+  assert.equal(parsed.inputHash, runT1.inputHash);
+  assert.deepEqual(parsed.stages, STAGE_IDS);
+  const csv = logToCSV(log);
+  const lines = csv.trimEnd().split('\r\n');
+  assert.equal(lines[0], 'seq,stage,event,t_ms,count,total,detail');
+  assert.equal(lines.length, log.length + 1);
+  // Minimal RFC 4180 parse of one row with a quoted JSON detail
+  const row = lines[1 + log.findIndex((e) => e.stage === 'dispatch' && e.event === 'end')];
+  const m = row.match(/^(\d+),([^,]+),([^,]+),([^,]*),([^,]*),([^,]*),"(.*)"$/);
+  assert.ok(m, `CSV row not parseable: ${row.slice(0, 120)}`);
+  assert.deepEqual(JSON.parse(m[7].replace(/""/g, '"')), log.find((e) => e.stage === 'dispatch' && e.event === 'end').detail);
+  const d = new Date(Date.UTC(2026, 9, 15, 13, 5, 9));
+  assert.equal(logFileName(runT1.inputHash, d, 'json'), `run-log_${runT1.inputHash}_20261015-130509Z.json`);
+  assert.equal(logFileName(runT1.inputHash, d, 'csv', true), `run-log_${runT1.inputHash}_20261015-130509Z_partial.csv`);
+  return `JSON ${(json.length / 1024).toFixed(0)} KB, ${parsed.events.length} events round-trip; CSV ${(csv.length / 1024).toFixed(0)} KB, ${lines.length - 1} rows + header; e.g. ${logFileName(runT1.inputHash, d, 'json')}.`;
 });
 
 const passed = results.filter((r) => r.ok).length;

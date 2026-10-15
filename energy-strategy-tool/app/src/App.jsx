@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import InputsPanel from './components/InputsPanel.jsx';
 import RankedList from './components/RankedList.jsx';
 import RunSummary from './components/RunSummary.jsx';
+import RunProgress from './components/RunProgress.jsx';
 import { useCompute } from './useCompute.js';
 import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES } from './engine/index.js';
 import { scoreOptions, DEFAULT_VIEW, effectiveWeights } from './engine/scoring.js';
@@ -36,6 +37,7 @@ export default function App() {
   const [inputs, setInputs] = useState(() => referenceT1());
   const [view, setView] = useState({ ...DEFAULT_VIEW });
   const [summaryOpen, setSummaryOpen] = useState(true);
+  const [progressOpen, setProgressOpen] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const [announce, setAnnounce] = useState('');
   const computeKey = useMemo(() => computeKeyOf(inputs), [inputs]);
@@ -127,13 +129,16 @@ export default function App() {
 
           <div className="status" role="status" aria-live="polite">
             {compute.status === 'running' ? (
-              <span className="running"><span className="spinner" aria-hidden="true" /> Screening options… {Math.round(compute.progress * 100)} %</span>
+              // Visual only: the run progress panel's live region announces stage changes (not every event).
+              <span className="running" aria-hidden="true"><span className="spinner" /> Screening options: {compute.progress && compute.progress.current ? `${compute.progress.current.label} · ${Math.round(compute.progress.current.pct * 100)} %` : 'starting'}</span>
             ) : compute.status === 'error' ? (
               <span className="flag-text">Run failed: {compute.error}</span>
             ) : compute.status === 'done' ? (
               <span>{announce} Last run {sig(compute.ms / 1000, 2)} s on {compute.mode}.</span>
             ) : null}
           </div>
+
+          <RunProgress compute={compute} open={progressOpen} onToggle={setProgressOpen} />
 
           {run ? (
             <>

@@ -2,7 +2,8 @@
 export * from './defaults.js';
 export * from './generator.js';
 export * from './scoring.js';
-export { runModel, rescore, mergeRuns, toTransferable, HOOKS, ENGINE_VERSION } from './run.js';
+export { runModel, runModelSteps, startPooledRun, rescore, mergeRuns, toTransferable, HOOKS, ENGINE_VERSION, PROGRESS_EVERY } from './run.js';
+export * from './runlog.js';
 export { getProfiles, PROFILE_LABEL, nearestCountry, H } from './profiles.js';
 export { buildContext, demandYear, gridCapByMonth } from './context.js';
 export { sizeOption } from './sizing.js';

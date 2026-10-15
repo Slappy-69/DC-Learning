@@ -112,6 +112,7 @@ export function buildContext(inputs) {
     inputs, country, cdata, prof, seed, nMonths, nMonthsTimeline, gridCap, itInst, shape, baseYear, startMonth,
     cooling, gasPrice, priceMult, priceAdder, carbonMult, carbonPrice, phases, firstPhaseM, lastPhaseM, fullGridM, gasM,
     demandCache: new Map(),
+    demandStats: { hits: 0, misses: 0 }, // run-log counters for the hourly demand cache
   };
   return ctx;
 }
@@ -121,7 +122,8 @@ export function buildContext(inputs) {
 export function demandYear(ctx, coolingId, y) {
   const key = `${coolingId}|${y}`;
   const hit = ctx.demandCache.get(key);
-  if (hit) return hit;
+  if (hit) { if (ctx.demandStats) ctx.demandStats.hits++; return hit; }
+  if (ctx.demandStats) ctx.demandStats.misses++;
   const cp = ctx.cooling[coolingId];
   const anc = ctx.inputs.load.ancillaryFrac;
   const D = new Float64Array(H);

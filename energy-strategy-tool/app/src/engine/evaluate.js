@@ -384,8 +384,12 @@ export function resilience(ctx, v, sz) {
   if (v.C5 === 'bessUps') flags.push(flag('res-bessups', 'minor', 'Resilience', 'BESS-augmented UPS is an emerging approach; redundancy covered by BESS for its duration only'));
   if (v.C5 === 'none') flags.push(flag('res-none', 'major', 'Resilience', 'No backup power technology selected'));
   if (v.C5 === 'dieselPrime') void 0;
+  // C5 = None always fails (unchanged behaviour), and the failing item is now named (§9.7). Before
+  // this fix, an islanded option with C5 = None whose retained plant covered the critical load was
+  // "Does not meet" with no failing item. See BUILD-NOTES "Resilience check fix".
+  if (v.C5 === 'none') items.push({ item: 'Backup technology', ok: false, text: 'none selected (C5 = None); on-site plant counted above is not a designated backup' });
 
-  const fail = items.some((i) => !i.ok) || v.C5 === 'none';
+  const fail = items.some((i) => !i.ok);
   const status = fail ? 'Does not meet' : (gasDependent || v.C5 === 'bessUps') ? 'Meets with flags' : 'Meets';
   const failing = items.filter((i) => !i.ok).map((i) => i.item);
   return { status, items, flags, firmMW, autonomyH, failing };

@@ -218,3 +218,42 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
   .spinner { animation: none; border-top-color: var(--line); }
 }
+
+/* Run progress panel (live stage progress, last 200 events, log download) */
+.run-progress { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 10px; }
+.run-progress > summary { padding: 10px 12px; cursor: pointer; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; font-weight: 600; min-height: 36px; }
+.rp-line { font-weight: 400; color: var(--ink-2); font-size: 13px; overflow-wrap: anywhere; }
+.rp-body { padding: 0 12px 12px; }
+.rp-stages { list-style: none; margin: 0 0 10px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 16px; }
+.rp-stage { display: grid; grid-template-columns: minmax(0, 1fr) 72px 58px; grid-template-areas: "name bar pct" "meta meta meta"; gap: 0 8px; align-items: center; font-size: 13px; padding: 3px 4px; border-radius: 4px; }
+.rp-name { grid-area: name; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-n { display: inline-block; min-width: 1.6em; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.rp-bar { grid-area: bar; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; border: 1px solid var(--line); }
+.rp-bar > span { display: block; height: 100%; background: var(--accent); transition: width .2s linear; }
+.rp-pct { grid-area: pct; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 12px; }
+.rp-meta { grid-area: meta; color: var(--ink-3); font-size: 11px; padding-left: 1.6em; }
+.rp-meta:empty { display: none; }
+.rp-pending { color: var(--ink-3); }
+.rp-running { background: var(--info-bg); }
+.rp-running .rp-name { font-weight: 600; }
+.rp-done .rp-bar > span { background: var(--ok); }
+.rp-log-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+.rp-log-head h3 { margin: 0; font-size: 14px; }
+.rp-log-head .sub { font-weight: 400; color: var(--ink-3); font-size: 12px; }
+.rp-dl-label { font-size: 12px; color: var(--ink-2); align-self: center; }
+.rp-log { height: 240px; overflow-y: auto; overflow-x: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); font: 12px/1.4 var(--mono); padding: 4px 0; margin-top: 4px; overscroll-behavior: contain; }
+.rp-ev { display: grid; grid-template-columns: 64px 64px 128px minmax(0, 1fr); gap: 0 8px; padding: 1px 8px; }
+.rp-ev > span { min-width: 0; }
+.rp-t, .rp-src { color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rp-stg { color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-msg { overflow-wrap: anywhere; }
+.rp-ev-start .rp-msg, .rp-ev-end .rp-msg { font-weight: 600; }
+.rp-ev-warning { background: var(--warn-bg); color: var(--warn); }
+.rp-ev-warning .rp-t, .rp-ev-warning .rp-src, .rp-ev-warning .rp-stg { color: inherit; }
+@media (max-width: 767px) {
+  .rp-stages { grid-template-columns: 1fr; }
+  .rp-log { height: 50vh; max-height: 360px; }
+  .rp-ev { grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "t src stg" "msg msg msg"; padding: 3px 8px; border-bottom: 1px solid var(--line); }
+  .rp-t { grid-area: t; } .rp-src { grid-area: src; } .rp-stg { grid-area: stg; } .rp-msg { grid-area: msg; }
+}
+@media (prefers-reduced-motion: reduce) { .rp-bar > span { transition: none; } }
