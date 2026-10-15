@@ -6,7 +6,12 @@
 // 3. Archetype baselines are always generated, whatever the choice defaults.
 // 4. If the count exceeds the cap and "Sample above cap" is on, keep every archetype,
 //    then seeded Latin hypercube sampling over the remaining valid choice space.
-//    Unscreened combinations are not deleted: switching sampling off screens them all.
+//    The cap (2,000 by default) bounds the whole screened list, archetypes included: every
+//    archetype plus (cap − archetypes) sampled combinations, so 2,000 in total (more only if
+//    the archetypes alone exceed the cap). Combinations not drawn are absent from the option
+//    list: they are not sized, dispatched, scored or shown. The run records the sampling
+//    decision with the screened and total counts: run flag gen-sampling, and warning
+//    cap-sampling in the run event log. Switching sampling off screens them all.
 
 import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel } from './defaults.js';
 import { mulberry32, subSeed, shuffle, hashString } from './prng.js';

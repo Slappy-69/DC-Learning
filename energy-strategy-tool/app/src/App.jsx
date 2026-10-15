@@ -128,6 +128,7 @@ export default function App() {
           </div>
 
           <div className="status" role="status" aria-live="polite">
+            {compute.notice ? <span className="flag-text">{compute.notice} </span> : null}
             {compute.status === 'running' ? (
               // Visual only: the run progress panel's live region announces stage changes (not every event).
               <span className="running" aria-hidden="true"><span className="spinner" /> Screening options: {compute.progress && compute.progress.current ? `${compute.progress.current.label} · ${Math.round(compute.progress.current.pct * 100)} %` : 'starting'}</span>

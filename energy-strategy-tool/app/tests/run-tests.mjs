@@ -21,6 +21,10 @@
 //  6. Run event log: completeness (every stage has start and end, contiguous seq, stage order),
 //     identical content (timestamps excluded) across two runs, worker-pool merge and main-thread
 //     fallback, dispatch progress with cache hit/miss, export formats.
+//  7. Single-file build (dist/energy-tool-single-file.html, run `npm run build` first): no relative
+//     "worker.js" reference and no <script src>, <link href> or other relative file reference; the
+//     worker source inlined for the Blob URL is extracted, equals dist/worker.js, parses as
+//     JavaScript, and runs one slice in a Node worker_thread.
 
 import assert from 'node:assert/strict';
 import {
@@ -32,6 +36,7 @@ import {
 import { dispatchAll } from '../src/engine/dispatch.js';
 import { createProgressTracker } from '../src/engine/runlog.js';
 import { Worker } from 'node:worker_threads';
+import { readFileSync, existsSync } from 'node:fs';
 
 const START = '2027-01';
 const results = [];
@@ -555,6 +560,57 @@ await test('6e. Log export: JSON round-trips, CSV has one row per event, file na
   assert.equal(logFileName(runT1.inputHash, d, 'json'), `run-log_${runT1.inputHash}_20261015-130509Z.json`);
   assert.equal(logFileName(runT1.inputHash, d, 'csv', true), `run-log_${runT1.inputHash}_20261015-130509Z_partial.csv`);
   return `JSON ${(json.length / 1024).toFixed(0)} KB, ${parsed.events.length} events round-trip; CSV ${(csv.length / 1024).toFixed(0)} KB, ${lines.length - 1} rows + header; e.g. ${logFileName(runT1.inputHash, d, 'json')}.`;
+});
+
+// Reads the JS string literal that starts at src[i] (quote char) and returns its value.
+function readStringLiteral(src, i) {
+  const q = src[i];
+  assert.ok(q === '"' || q === "'" || q === '`', `expected a string literal at ${i}, got ${src.slice(i, i + 20)}`);
+  let j = i + 1;
+  while (j < src.length && src[j] !== q) j += src[j] === '\\' ? 2 : 1;
+  assert.ok(j < src.length, 'unterminated string literal');
+  return new Function(`return ${src.slice(i, j + 1)};`)();
+}
+
+await test('7. Single-file build: worker inlined as a Blob-URL source string, no relative "worker.js" or other file reference, inlined source parses and runs', async () => {
+  const htmlPath = new URL('../dist/energy-tool-single-file.html', import.meta.url);
+  assert.ok(existsSync(htmlPath), 'dist/energy-tool-single-file.html missing: run npm run build first');
+  const html = readFileSync(htmlPath, 'utf8');
+  const workerJs = readFileSync(new URL('../dist/worker.js', import.meta.url), 'utf8');
+  // No relative worker.js reference, no external script/stylesheet, no relative src/href.
+  assert.equal(/worker\.js/.test(html), false, 'single file still mentions worker.js');
+  assert.equal(/<script[^>]*\ssrc\s*=/i.test(html), false, '<script src=> present');
+  assert.equal(/<link[^>]*\shref\s*=/i.test(html), false, '<link href=> present');
+  const attrRefs = [...html.matchAll(/\s(?:src|href)\s*=\s*["']([^"']*)["']/gi)].map((m) => m[1]).filter((u) => !/^(data:|blob:|#|https?:|mailto:|javascript:)/i.test(u));
+  assert.deepEqual(attrRefs, [], `relative src/href attributes: ${attrRefs.join(', ')}`);
+  const importRefs = [...html.matchAll(/(?:importScripts\s*\(|import\s*\(|new\s+Worker\s*\(\s*["'])/g)].map((m) => html.slice(m.index, m.index + 40));
+  assert.ok(importRefs.every((r) => !/["']\.{0,2}\/?[\w-]+\.(?:js|mjs|css|json)["']/.test(r)), `file loads: ${importRefs.join(' | ')}`);
+  // Extract the inlined worker source from new Blob([<literal>], ...).
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  assert.equal(scripts.length, 1, `expected one inline script, found ${scripts.length}`);
+  const app = scripts[0];
+  // The worker Blob is the one built from a string literal and passed straight to URL.createObjectURL.
+  const blobMatches = [...app.matchAll(/URL\.createObjectURL\(new Blob\(\[(?=["'`])/g)];
+  assert.equal(blobMatches.length, 1, `expected one URL.createObjectURL(new Blob([<string literal>]) in the app, found ${blobMatches.length}`);
+  const src = readStringLiteral(app, blobMatches[0].index + blobMatches[0][0].length);
+  assert.ok(src.length > 10000, `inlined worker source too short (${src.length} chars)`);
+  assert.equal(src, workerJs, 'inlined worker source differs from dist/worker.js');
+  new Function(src); // throws SyntaxError if it does not parse
+  assert.ok(/self\.onmessage\s*=/.test(src) || /onmessage/.test(src), 'inlined source sets no onmessage handler');
+  // Run the inlined source in a Node worker_thread (self shim) on one small slice of T1.
+  const shim = `const { parentPort } = require('node:worker_threads'); globalThis.self = globalThis; self.postMessage = (m) => parentPort.postMessage(m);\n${src}\nparentPort.on('message', (data) => self.onmessage({ data }));`;
+  const SLICES = 50;
+  const part = await new Promise((resolve, reject) => {
+    const w = new Worker(shim, { eval: true });
+    w.on('message', (msg) => {
+      if (msg.type === 'result') { w.terminate(); resolve(msg.run); }
+      else if (msg.type === 'error') { w.terminate(); reject(new Error(msg.message)); }
+    });
+    w.on('error', reject);
+    w.postMessage({ id: 1, inputs: t1Inputs, sliceIndex: 0, sliceCount: SLICES, t0Abs: performance.timeOrigin + performance.now() });
+  });
+  assert.ok(part.options.length > 0, 'inlined worker returned no options');
+  return `single file ${(html.length / 1024).toFixed(1)} KB, 1 inline script, 0 "worker.js" mentions, 0 <script src>, 0 <link href>, 0 relative src/href; inlined worker source ${src.length.toLocaleString('en-GB')} chars, identical to dist/worker.js, parses; run in a worker_thread on slice 1/${SLICES} of T1: ${part.options.length} options, ${part.log.length} log events.`;
 });
 
 const passed = results.filter((r) => r.ok).length;
