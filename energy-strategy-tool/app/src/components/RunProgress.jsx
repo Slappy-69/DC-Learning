@@ -13,6 +13,9 @@ const pctText = (p) => `${Math.round(p * 100)} %`;
 const HOSTED = typeof __HOSTED__ !== 'undefined' && __HOSTED__;
 
 function download(name, text, type) {
+  // Dropped from the hosted build at build time (__HOSTED__ is defined true there): the host's
+  // frame ignores downloads a page starts itself, and the hosted page copies the log instead.
+  if (__HOSTED__) return;
   const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
