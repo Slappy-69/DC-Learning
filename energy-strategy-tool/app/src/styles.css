@@ -23,6 +23,14 @@
   --ax-carbon: #2f7d4f;
   --ax-ttp: #8a4fa3;
   --ax-deliv: #a2611b;
+  /* Energy sources (dispatch and phasing charts). Validated as a set with the dataviz checks,
+     all pairs, on --surface in each theme; loss is a neutral, critical is the reserved status red. */
+  --src-re: #008300;
+  --src-bess: #2a78d6;
+  --src-firm: #eda100;
+  --src-grid: #e87ba4;
+  --src-loss: #898781;
+  --critical: #d03b3b;
   --radius: 6px;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -35,6 +43,7 @@
     --ok: #8fd3a5; --ok-bg: #1d3325; --warn: #f0c96a; --warn-bg: #3a2f14; --bad: #ff9c94; --bad-bg: #3d1e1c;
     --info: #c0c8d4; --info-bg: #262c34; --unv: #f3d27a; --unv-bg: #3a3017;
     --ax-cost: #7fb6dd; --ax-carbon: #86cfa0; --ax-ttp: #c9a1dc; --ax-deliv: #e3a866;
+    --src-re: #008300; --src-bess: #3987e5; --src-firm: #c98500; --src-grid: #d55181; --src-loss: #898781; --critical: #d03b3b;
     color-scheme: dark;
   }
 }
@@ -44,6 +53,7 @@
   --ok: #8fd3a5; --ok-bg: #1d3325; --warn: #f0c96a; --warn-bg: #3a2f14; --bad: #ff9c94; --bad-bg: #3d1e1c;
   --info: #c0c8d4; --info-bg: #262c34; --unv: #f3d27a; --unv-bg: #3a3017;
   --ax-cost: #7fb6dd; --ax-carbon: #86cfa0; --ax-ttp: #c9a1dc; --ax-deliv: #e3a866;
+  --src-re: #008300; --src-bess: #3987e5; --src-firm: #c98500; --src-grid: #d55181; --src-loss: #898781; --critical: #d03b3b;
   color-scheme: dark;
 }
 
@@ -259,8 +269,8 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 @media (prefers-reduced-motion: reduce) { .rp-bar > span { transition: none; } }
 
 /* Results tabs (§16) */
-.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin: 6px 0 10px; }
-.tab { border: 1px solid transparent; border-bottom: 0; background: none; padding: 8px 14px; min-height: 36px; cursor: pointer; border-radius: var(--radius) var(--radius) 0 0; color: var(--ink-2); font-weight: 600; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin: 6px 0 10px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; max-width: 100%; }
+.tab { flex: 0 0 auto; white-space: nowrap; border: 1px solid transparent; border-bottom: 0; background: none; padding: 8px 14px; min-height: 36px; cursor: pointer; border-radius: var(--radius) var(--radius) 0 0; color: var(--ink-2); font-weight: 600; }
 .tab.on { background: var(--surface); border-color: var(--line); color: var(--ink); margin-bottom: -1px; }
 
 /* Pareto trade-off view (§12.2). Time-to-power ramp: one-hue violet, validated ordinal ramp
@@ -369,3 +379,48 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .rp-copied { color: var(--ok); font-size: 0.85rem; }
 .rp-copy-fallback { display: grid; gap: 6px; margin: 8px 0; }
 .rp-copy-fallback textarea { width: 100%; box-sizing: border-box; font: 12px/1.4 var(--mono); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); }
+
+/* Stacked step charts (StackChart.jsx) */
+.sc { margin: 4px 0 8px; }
+.sc-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 6px; padding: 0; font-size: 12px; color: var(--ink-2); }
+.sc-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.sc-key-area { display: inline-block; width: 12px; height: 10px; border-radius: 2px; }
+.sc-key-line { display: inline-block; width: 14px; height: 0; border-top: 2px solid var(--ink); }
+.sc-key-strip { display: inline-block; width: 12px; height: 6px; border-radius: 1px; background: var(--critical); }
+.sc-key-tip { display: inline-block; width: 12px; height: 3px; border-radius: 1px; }
+.sc-key-none { display: inline-block; width: 12px; }
+.sc-wrap { position: relative; width: 100%; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.sc-wrap:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sc-svg { display: block; touch-action: pan-y; }
+.sc-grid { stroke: var(--line); stroke-width: 1; }
+.sc-zero { stroke: var(--ink-3); stroke-width: 1; }
+.sc-tick, .sc-unit { fill: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.sc-mlabel { fill: var(--ink-2); font-size: 11px; }
+.sc-marker { stroke: var(--ink-3); stroke-width: 1; }
+.sc-band { stroke: var(--surface); stroke-width: 1.5; stroke-linejoin: round; }
+.sc-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.sc-strip { fill: var(--critical); }
+.sc-hoverband { fill: var(--ink); opacity: .08; }
+.sc-cross { stroke: var(--ink-2); stroke-width: 1; }
+.sc-tip { position: absolute; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 8px; font-size: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, .12); z-index: 5; }
+.sc-tip-title { color: var(--ink-2); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+.sc-tip-row { display: grid; grid-template-columns: 14px auto 1fr; align-items: center; gap: 6px; line-height: 1.5; }
+.sc-tip-row strong { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sc-tip-row span:last-child { color: var(--ink-2); min-width: 0; }
+.sc-tip-sub { font-size: 11px; }
+
+/* Dispatch tab */
+.dv-facts { margin: 0 0 8px; color: var(--ink-2); }
+.dv-controls { display: grid; gap: 4px; margin-bottom: 6px; }
+.dv-note { margin: 0; color: var(--ink-2); font-size: 0.88rem; }
+.dv-week { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.dv-week input { width: 4.2em; min-height: 30px; padding: 2px 6px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); }
+.dv-caption { margin: 2px 0 10px; color: var(--ink-2); font-size: 0.85rem; max-width: 75ch; }
+.dv-h4 { margin: 10px 0 2px; font-size: 13px; color: var(--ink-2); }
+.dv-table { margin: 6px 0 10px; }
+.dv-table summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; }
+.dv-scroll { overflow-x: auto; max-width: 100%; }
+.dv-table .dv-scroll { max-height: 420px; overflow-y: auto; }
+.dv-num td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dv-balance th[scope=row] { font-weight: 500; }
+.dv-total th, .dv-total td { font-weight: 700; border-top: 2px solid var(--line); }

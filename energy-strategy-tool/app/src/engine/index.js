@@ -13,3 +13,4 @@ export { paretoView, paretoFrontier, weightedPick, paretoTableRows, defaultParet
 export { tornado, evaluateVector, TORNADO_DRIVERS } from './sensitivity.js';
 export { axisScore } from './scoring.js';
 export { layoutSite, siteGeometry, blockList, BLOCK_RULES } from './site.js';
+export { inspectOption, balanceFromHourly, weekRange, weekPresets, HOURS_PER_WEEK, WEEKS_PER_YEAR } from './inspect.js';

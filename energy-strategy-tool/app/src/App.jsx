@@ -6,6 +6,7 @@ import RunProgress from './components/RunProgress.jsx';
 import ParetoView from './components/ParetoView.jsx';
 import SensitivityView from './components/SensitivityView.jsx';
 import SitePlan from './components/SitePlan.jsx';
+import DispatchView from './components/DispatchView.jsx';
 import { useCompute } from './useCompute.js';
 import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES } from './engine/index.js';
 import { scoreOptions, DEFAULT_VIEW, effectiveWeights } from './engine/scoring.js';
@@ -152,14 +153,14 @@ export default function App() {
                 <ul className="run-flags">{run.runFlags.map((f) => <li key={f.id} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
               ) : null}
               <div className="tabs" role="tablist" aria-label="Results views">
-                {[['options', 'Options'], ['tradeoffs', 'Trade-offs'], ['sensitivity', 'Sensitivity'], ['site', 'Site']].map(([id, label]) => (
+                {[['options', 'Options'], ['tradeoffs', 'Trade-offs'], ['dispatch', 'Dispatch'], ['sensitivity', 'Sensitivity'], ['site', 'Site']].map(([id, label]) => (
                   <button key={id} type="button" role="tab" id={`tab-${id}`} aria-selected={tab === id} aria-controls={`panel-${id}`} tabIndex={tab === id ? 0 : -1}
                     className={`tab ${tab === id ? 'on' : ''}`} onClick={() => setTab(id)}
-                    onKeyDown={(e) => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const ids = ['options', 'tradeoffs', 'sensitivity', 'site']; const i = ids.indexOf(tab); const n = ids[(i + (e.key === 'ArrowRight' ? 1 : ids.length - 1)) % ids.length]; setTab(n); setTimeout(() => document.getElementById(`tab-${n}`)?.focus(), 0); } }}>{label}</button>
+                    onKeyDown={(e) => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const ids = ['options', 'tradeoffs', 'dispatch', 'sensitivity', 'site']; const i = ids.indexOf(tab); const n = ids[(i + (e.key === 'ArrowRight' ? 1 : ids.length - 1)) % ids.length]; setTab(n); setTimeout(() => document.getElementById(`tab-${n}`)?.focus(), 0); } }}>{label}</button>
                 ))}
               </div>
               <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} /> : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} /> : tab === 'sensitivity' ? <SensitivityView run={run} /> : <SitePlan run={run} />}
+                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} /> : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} /> : tab === 'dispatch' ? <DispatchView run={run} /> : tab === 'sensitivity' ? <SensitivityView run={run} /> : <SitePlan run={run} />}
               </div>
             </>
           ) : compute.status !== 'error' ? (

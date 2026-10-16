@@ -39,7 +39,7 @@ import {
   referenceT1, referenceT3, runModel, normalizeInputs, buildContext, sizeOption, dispatchConfig, dispatchYear,
   applyView, DEFAULT_VIEW, getRegistry, LABEL, generateOptions, effectiveWeights, H,
   runModelSteps, mergeRuns, startPooledRun, toTransferable, STAGES, validateRunLog, stripTimestamps,
-  logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY, tornado, TORNADO_DRIVERS, axisScore, layoutSite, siteGeometry,
+  logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY, tornado, TORNADO_DRIVERS, axisScore, layoutSite, siteGeometry, inspectOption, weekRange, weekPresets, WEEKS_PER_YEAR, HOURS_PER_WEEK,
   HOOKS, paretoFrontier, weightedPick, paretoTableRows, PRESETS,
 } from '../src/engine/index.js';
 import { scoreOptions } from '../src/engine/scoring.js';
@@ -893,6 +893,69 @@ await test('11. Hosted page build (dist/energy-tool-hosted.html): page content o
   assert.equal(scripts.length, 2, `expected two inline scripts, found ${scripts.length}`);
   for (const sc of scripts) new Function(sc.replace(/<\\\/script/gi, '</script')); // parses
   return `hosted page ${(html.length / 1024).toFixed(1)} KB: starts with <title>, no document tags, 0 <script src>, 0 <link href>, loading message and copy-log control present.`;
+});
+
+await test('12. Option inspector (src/engine/inspect.js): same figures as the run, closed hourly balance, timeline = time-to-power', () => {
+  const runs = [['T1', runModel(referenceT1(), { source: 'test12' })], ['T3', runModel(referenceT3(), { source: 'test12' })]];
+  const picks = [];
+  for (const [name, run] of runs) {
+    const leader = run.options.reduce((a, b) => (a.rank < b.rank ? a : b));
+    picks.push([`${name} leader`, run, leader]);
+  }
+  // Coverage: an option with a battery, a PPA and firm on-site plant, if the T1 run has one.
+  const t1 = runs[0][1];
+  const rich = t1.options.find((o) => o.sizing.storage.mwh > 0 && o.v.C13 !== 'none' && (o.sizing.prime || o.sizing.bridge));
+  if (rich) picks.push(['T1 battery+PPA+firm', t1, rich]);
+  const MAP = [['re', 'reGenMWh'], ['ppa', 'ppaDeliveredMWh'], ['dis', 'bessDischargeMWh'], ['firm', 'firmMWh'], ['gridCharge', 'gridChargeMWh'],
+    ['unmet', 'unmetMWh'], ['net', 'netDemandMWh'], ['ch', 'bessChargeMWh'], ['curt', 'curtailMWh'], ['exp', 'exportMWh']];
+  const notes = [];
+  for (const [label, run, o] of picks) {
+    const I = inspectOption(run.inputs, o.v);
+    assert.equal(I.years.length, o.dispatch.years.length, `${label}: model year count differs from the run`);
+    let worstRun = 0, worstSum = 0, worstHourly = 0;
+    I.years.forEach((y, i) => {
+      const r = o.dispatch.years[i];
+      // 12a. Same annual figures as the run used for scoring (deterministic re-run).
+      for (const k of ['gridMWh', 'firmMWh', 'unmetMWh', 'reGenMWh', 'bessDischargeMWh', 'curtailMWh', 'exportMWh', 'ppaDeliveredMWh', 'netDemandMWh']) {
+        worstRun = Math.max(worstRun, Math.abs(y.engine[k] - r[k]));
+      }
+      // 12b. Hourly sums equal the engine's annual totals, and the year balances hour by hour.
+      const B = y.balance;
+      for (const [bk, ek] of MAP) worstSum = Math.max(worstSum, Math.abs(B[bk] - y.engine[ek]));
+      worstSum = Math.max(worstSum, Math.abs(B.gridLoad + B.gridCharge - y.engine.gridMWh));
+      assert.ok(Math.abs(B.residual) <= 1e-6 * Math.max(1, B.in), `${label} year ${i + 1}: annual residual ${B.residual}`);
+      worstHourly = Math.max(worstHourly, B.maxHourlyResidual);
+    });
+    assert.equal(worstRun, 0, `${label}: inspector differs from the run by ${worstRun} MWh`);
+    assert.ok(worstSum < 1e-6, `${label}: hourly sums differ from engine annual totals by ${worstSum} MWh`);
+    assert.ok(worstHourly < 1e-6, `${label}: hourly residual ${worstHourly} MWh`);
+    // 12c. Timeline: supply = grid + firm + battery; gap sums to the time-to-power gap; same metric as the run.
+    const tl = I.timeline;
+    let gapSum = 0;
+    for (let m = 0; m < tl.months; m++) {
+      assert.ok(tl.bess[m] >= 0, `${label}: negative battery bridging in month ${m}`);
+      assert.ok(Math.abs(tl.grid[m] + tl.firm[m] + tl.bess[m] - tl.supply[m]) < 1e-9 || tl.supply[m] < tl.grid[m] + tl.firm[m], `${label}: supply split does not add up in month ${m}`);
+      gapSum += tl.gap[m];
+    }
+    assert.ok(Math.abs(gapSum - I.ttp.gapMWm) < 1e-9, `${label}: timeline gap ${gapSum} vs time-to-power gap ${I.ttp.gapMWm}`);
+    assert.ok(Math.abs(I.ttp.metric - o.ttp.metric) < 1e-12, `${label}: time-to-power metric differs from the run`);
+    notes.push(`${label}: ${I.years.length} years, run diff ${worstRun}, sum diff ${worstSum.toExponential(1)}, hourly residual ${worstHourly.toExponential(1)} MWh, gap ${gapSum.toFixed(2)} MW-months`);
+  }
+  // 12d. Weeks: 52 contiguous 168-hour weeks from hour 0; presets name valid weeks; 'most unmet' holds the most unmet.
+  let next = 0;
+  for (let w = 1; w <= WEEKS_PER_YEAR; w++) { const r = weekRange(w); assert.equal(r.from, next); assert.equal(r.to - r.from, HOURS_PER_WEEK); next = r.to; }
+  assert.equal(next, 8736);
+  const I1 = inspectOption(runs[0][1].inputs, picks[0][2].v);
+  const yU = I1.years.find((y) => y.balance.unmet > 1e-6);
+  if (yU) {
+    const pr = weekPresets(yU.hourly);
+    const pu = pr.find((p) => p.id === 'unmet');
+    assert.ok(pu, 'no "most unmet" preset in a year with unmet load');
+    const weekly = Array.from({ length: WEEKS_PER_YEAR }, (_, k) => { const r = weekRange(k + 1); let s2 = 0; for (let h = r.from; h < r.to; h++) s2 += yU.hourly.unmet[h]; return s2; });
+    assert.ok(weekly[pu.week - 1] >= Math.max(...weekly) - 1e-9, 'the "most unmet" week is not the week with the most unmet load');
+    for (const p of pr) assert.ok(p.week >= 1 && p.week <= WEEKS_PER_YEAR);
+  }
+  return notes.join('; ');
 });
 
 const passed = results.filter((r) => r.ok).length;
