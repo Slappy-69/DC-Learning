@@ -39,7 +39,7 @@ export default function SitePlan({ run }) {
             {ranked.map((o) => <option key={o.id} value={o.id}>{`#${o.rank} ${o.name}`}</option>)}
           </select>
         </label>
-        <p className="sens-status">Status: <strong className={L.status === 'Fits' ? 'site-fits' : 'site-nofit'}>{L.status}</strong> · land take {pct.toFixed(0)} % of net developable area · {L.blocks.length} placed{L.unplaced.length ? `, ${L.unplaced.length} unplaced (${Math.round(L.unplacedAreaM2).toLocaleString('en-GB')} m²)` : ''}</p>
+        <p className="sens-status">Status: <strong className={L.status === "Fits" ? "site-fits" : "site-nofit"}>{L.status}</strong>{L.reason ? ` (${L.reason})` : ""} · land take {pct.toFixed(0)} % of net developable area · {L.blocks.length} placed{L.unplaced.length ? `, ${L.unplaced.length} unplaced (${Math.round(L.unplacedAreaM2).toLocaleString('en-GB')} m²)` : ''}</p>
       </div>
 
       <figure className="site-figure">

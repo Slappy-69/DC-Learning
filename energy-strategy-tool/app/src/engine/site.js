@@ -135,6 +135,11 @@ export function layoutSite(inputs, sz, { cellM } = {}) {
   const tallest = blocksM.reduce((m, b) => Math.max(m, b.h), 0);
   const heightOk = tallest <= g.heightLimitM;
   const budgetFits = g.netM2 >= landTakeM2 - 1e-6;
+  const overM2 = landTakeM2 - g.netM2;
+  const reasons = [];
+  if (!budgetFits) reasons.push(`land take exceeds net developable area by ${Math.round(overM2).toLocaleString('en-GB')} m² before any separations`);
+  if (unplaced.length && budgetFits) reasons.push(`${unplaced.length} block${unplaced.length === 1 ? '' : 's'} cannot be placed with their separations`);
+  if (!heightOk) reasons.push(`tallest block ${tallest} m is above the ${g.heightLimitM} m limit`);
   const pvUnplaced = unplaced.some((u) => u.key === 'groundSolar');
   const notes = [
     pvUnplaced
@@ -149,6 +154,7 @@ export function layoutSite(inputs, sz, { cellM } = {}) {
   ].filter(Boolean);
   if (!heightOk) notes.push(`Tallest block ${tallest} m is above the ${g.heightLimitM} m height limit.`);
   const status = unplaced.length === 0 && heightOk ? 'Fits' : 'Does not fit';
+  const reason = status === 'Fits' ? '' : reasons.join('; ');
   const unplacedArea = unplaced.reduce((s, u) => s + u.areaM2, 0);
 
   return {
@@ -162,6 +168,7 @@ export function layoutSite(inputs, sz, { cellM } = {}) {
     budget: { netM2: g.netM2, landTakeM2, residualM2: g.netM2 - landTakeM2, parts: sz.area.parts },
     height: { tallestM: tallest, limitM: g.heightLimitM, ok: heightOk },
     status,
+    reason,
     notes,
   };
 }
