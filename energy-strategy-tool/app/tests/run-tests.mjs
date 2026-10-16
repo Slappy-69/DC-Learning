@@ -941,10 +941,10 @@ await test('12. Option inspector (src/engine/inspect.js): same figures as the ru
     assert.ok(Math.abs(I.ttp.metric - o.ttp.metric) < 1e-12, `${label}: time-to-power metric differs from the run`);
     notes.push(`${label}: ${I.years.length} years, run diff ${worstRun}, sum diff ${worstSum.toExponential(1)}, hourly residual ${worstHourly.toExponential(1)} MWh, gap ${gapSum.toFixed(2)} MW-months`);
   }
-  // 12d. Weeks: 52 contiguous 168-hour weeks from hour 0; presets name valid weeks; 'most unmet' holds the most unmet.
+  // 12d. Weeks: 52 contiguous weeks from hour 0 covering all 8,760 hours (week 52 is 192 h); presets name valid weeks; 'most unmet' holds the most unmet.
   let next = 0;
-  for (let w = 1; w <= WEEKS_PER_YEAR; w++) { const r = weekRange(w); assert.equal(r.from, next); assert.equal(r.to - r.from, HOURS_PER_WEEK); next = r.to; }
-  assert.equal(next, 8736);
+  for (let w = 1; w <= WEEKS_PER_YEAR; w++) { const r = weekRange(w); assert.equal(r.from, next); assert.equal(r.to - r.from, w < WEEKS_PER_YEAR ? HOURS_PER_WEEK : HOURS_PER_WEEK + 24); next = r.to; }
+  assert.equal(next, 8760, 'weeks do not cover the whole year');
   const I1 = inspectOption(runs[0][1].inputs, picks[0][2].v);
   const yU = I1.years.find((y) => y.balance.unmet > 1e-6);
   if (yU) {
@@ -956,6 +956,36 @@ await test('12. Option inspector (src/engine/inspect.js): same figures as the ru
     for (const p of pr) assert.ok(p.week >= 1 && p.week <= WEEKS_PER_YEAR);
   }
   return notes.join('; ');
+});
+
+await test('13. Bridging battery supplies from its programme month in time-to-power and in dispatch (BRIEF §9.8)', () => {
+  const inp = referenceT1();
+  inp.choices = inp.choices || {};
+  inp.choices.C2 = { state: 'open', values: ['gasRecip', 'fuelCell', 'rented', 'bessSolar'] };
+  const run = runModel(inp, { source: 'test13' });
+  const bs = run.options.filter((o) => o.v.C2 === 'bessSolar' && o.sizing.bridgeBess.mw > 0);
+  assert.ok(bs.length > 0, 'no bridging-battery options generated');
+  const withMain = bs.find((o) => o.v.C12 !== 'none');
+  const noMain = bs.find((o) => o.v.C12 === 'none');
+  const notes = [];
+  for (const o of [withMain, noMain].filter(Boolean)) {
+    const avail = o.sizing.bridgeBess.availMonth;
+    assert.ok(Number.isFinite(avail) && avail > 0, `bridging battery availability month missing (${avail})`);
+    const I = inspectOption(run.inputs, o.v);
+    // Time-to-power: no bridging battery before its month; counted from its month while bridging is active.
+    for (let m = 0; m < Math.min(avail, I.timeline.months); m++) assert.equal(I.timeline.bess[m], 0, `bridging battery counted in month ${m} < ${avail}`);
+    // Dispatch: no battery charge or discharge in any hour of a month before the same month.
+    let early = 0;
+    for (const y of I.years) {
+      for (let h = 0; h < y.hourly.dis.length; h++) {
+        const m = y.fromMonth + (h < 8030 ? Math.floor(h / 730) : 11);
+        if (m < avail && (y.hourly.dis[h] > 1e-9 || y.hourly.ch[h] > 1e-9)) early++;
+      }
+    }
+    assert.equal(early, 0, `battery dispatched in ${early} hours before month ${avail}`);
+    notes.push(`${o.v.C12 === 'none' ? 'no main battery' : 'with main battery'}: available month ${avail}, full load month ${I.ttp.fullLoadM}`);
+  }
+  return `${bs.length} bridging-battery options; ${notes.join('; ')}`;
 });
 
 const passed = results.filter((r) => r.ok).length;

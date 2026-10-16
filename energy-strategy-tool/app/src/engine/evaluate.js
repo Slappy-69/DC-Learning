@@ -23,7 +23,8 @@ export function timeToPower(ctx, v, sz) {
   for (let m = 0; m < n; m++) {
     let s = v.C1 === 'islanded' ? 0 : ctx.gridCap[m];
     s += sz.firmByMonth[m];
-    if (v.C2 === 'bessSolar' && bridgeActive(v, m, sz.T)) s += sz.bridgeBess.mw;
+    // Bridging battery counts from its supply-available month (BRIEF §9.8), like every other source.
+    if (v.C2 === 'bessSolar' && bridgeActive(v, m, sz.T) && m >= sz.bridgeBess.availMonth) s += sz.bridgeBess.mw;
     supply[m] = s;
   }
   const ph1 = ctx.phases[0];

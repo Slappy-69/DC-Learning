@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { inspectOption, weekPresets, weekRange, WEEKS_PER_YEAR, HOURS_PER_WEEK } from '../engine/inspect.js';
+import { inspectOption, weekPresets, weekRange, WEEKS_PER_YEAR } from '../engine/inspect.js';
 import { TECH } from '../engine/defaults.js';
 import { sig, monthLabel } from '../format.js';
 import StackChart, { fmtMW } from './StackChart.jsx';
@@ -46,6 +46,7 @@ export default function DispatchView({ run }) {
   const dy = useMemo(() => (I ? defaultYear(I) : { y: 0, why: '' }), [I]);
   const [year, setYear] = useState(dy.y);
   const [week, setWeek] = useState(1);
+  const [weekDraft, setWeekDraft] = useState(null); // text while the week box is being edited
   useEffect(() => {
     if (!I) return;
     setYear(dy.y);
@@ -109,8 +110,9 @@ export default function DispatchView({ run }) {
 
   // ---- Hourly week ----
   const off = wr.from;
+  const nH = wr.to - wr.from;
   const hrTicks = [];
-  for (let d = 0; d < 7; d++) hrTicks.push({ i: d * 24, label: `Day ${Math.floor((off + d * 24) / 24) + 1}` });
+  for (let d = 0; d * 24 < nH; d++) hrTicks.push({ i: d * 24, label: `Day ${Math.floor((off + d * 24) / 24) + 1}` });
   const hrReadout = (i) => {
     const h = off + i;
     const sub = [];
@@ -190,7 +192,7 @@ export default function DispatchView({ run }) {
         <summary>Timeline as a table</summary>
         <div className="dv-scroll">
           <table className="sens-table dv-num">
-            <thead><tr><th scope="col">Month</th><th scope="col">Design load MW</th><th scope="col">Grid MW</th><th scope="col">Firm MW</th><th scope="col">Battery MW</th><th scope="col">Supply MW</th><th scope="col">Power gap MW</th></tr></thead>
+            <thead><tr><th scope="col">Month</th><th scope="col">Design load MW</th><th scope="col">Grid MW</th><th scope="col">Firm MW</th><th scope="col">Battery bridging MW</th><th scope="col">Supply MW</th><th scope="col">Power gap MW</th></tr></thead>
             <tbody>
               {Array.from({ length: tl.months }, (_, m) => (
                 <tr key={m}><th scope="row">{monthLabel(start, m)}</th><td>{sig(tl.design[m], 3)}</td><td>{sig(tl.grid[m], 3)}</td><td>{sig(tl.firm[m], 3)}</td><td>{sig(tl.bess[m], 3)}</td><td>{sig(tl.supply[m], 3)}</td><td>{tl.gap[m] > 0 ? sig(tl.gap[m], 3) : '0'}</td></tr>
@@ -205,7 +207,7 @@ export default function DispatchView({ run }) {
         <div className="btn-row" role="group" aria-label="Model year">
           {I.years.map((yy) => (
             <button key={yy.index} type="button" className="chip-btn" aria-pressed={yy.index === Y.index}
-              onClick={() => { setYear(yy.index); setWeek(defaultWeek(yy.hourly)); }}>
+              onClick={() => { setWeekDraft(null); setYear(yy.index); setWeek(defaultWeek(yy.hourly)); }}>
               Year {yy.index + 1}
             </button>
           ))}
@@ -217,12 +219,19 @@ export default function DispatchView({ run }) {
         </p>
         {yearHasLoad ? (
           <div className="btn-row" role="group" aria-label="Week">
-            <button type="button" className="chip-btn" onClick={() => setWeek(Math.max(1, week - 1))} disabled={week <= 1} aria-label="Previous week">‹</button>
-            <label className="dv-week">Week <input id="dv-week" type="number" min={1} max={WEEKS_PER_YEAR} value={week}
-              onChange={(e) => { const w = Number(e.target.value); if (Number.isFinite(w)) setWeek(Math.min(WEEKS_PER_YEAR, Math.max(1, Math.round(w)))); }} /> of {WEEKS_PER_YEAR}</label>
-            <button type="button" className="chip-btn" onClick={() => setWeek(Math.min(WEEKS_PER_YEAR, week + 1))} disabled={week >= WEEKS_PER_YEAR} aria-label="Next week">›</button>
+            <button type="button" className="chip-btn" onClick={() => { setWeekDraft(null); setWeek(Math.max(1, week - 1)); }} disabled={week <= 1} aria-label="Previous week">‹</button>
+            <label className="dv-week">Week <input id="dv-week" type="number" inputMode="numeric" min={1} max={WEEKS_PER_YEAR} value={weekDraft ?? String(week)}
+              onChange={(e) => {
+                const t = e.target.value;
+                setWeekDraft(t);
+                const w = Number(t);
+                if (t !== '' && Number.isInteger(w) && w >= 1 && w <= WEEKS_PER_YEAR) setWeek(w);
+              }}
+              onBlur={() => setWeekDraft(null)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setWeekDraft(null); }} /> of {WEEKS_PER_YEAR}</label>
+            <button type="button" className="chip-btn" onClick={() => { setWeekDraft(null); setWeek(Math.min(WEEKS_PER_YEAR, week + 1)); }} disabled={week >= WEEKS_PER_YEAR} aria-label="Next week">›</button>
             {presets.map((p) => (
-              <button key={p.id} type="button" className="chip-btn" aria-pressed={week === p.week} onClick={() => setWeek(p.week)}>{p.label} (week {p.week})</button>
+              <button key={p.id} type="button" className="chip-btn" aria-pressed={week === p.week} onClick={() => { setWeekDraft(null); setWeek(p.week); }}>{p.label} (week {p.week})</button>
             ))}
           </div>
         ) : null}
@@ -231,7 +240,7 @@ export default function DispatchView({ run }) {
       {yearHasLoad ? (
         <>
           <StackChart
-            n={HOURS_PER_WEEK}
+            n={nH}
             offset={off}
             pos={[
               { key: 're', label: 'Renewables', color: C.re, values: hs.re },
@@ -252,12 +261,12 @@ export default function DispatchView({ run }) {
             legendItems={hrLegend}
             ariaLabel={`Hourly dispatch, year ${Y.index + 1}, week ${wr.week}, for ${option.name}. Unmet load this week ${MWh(weekUnmet)}.`}
           />
-          <p className="dv-caption">Above the axis: where each hour's energy came from, in merit order from the bottom. Below the axis: energy that did not serve the facility (battery charging, curtailment, export). The line is the facility demand; where it sits above the stack, that part of the demand was not met.</p>
+          <p className="dv-caption">Above the axis: where each hour's energy came from, stacked from the bottom as on-site renewables, battery, firm on-site plant, then grid import (PPA energy arrives over the grid connection, so it sits in the grid band). Below the axis: energy that did not serve the facility (battery charging, curtailment, export). The line is the facility demand; where it sits above the stack, that part of the demand was not met.</p>
           {hasBess ? (
             <>
               <h4 className="dv-h4">Battery charge level (MWh of {sig(I.bess.mwh, 3)} MWh)</h4>
               <StackChart
-                n={HOURS_PER_WEEK}
+                n={nH}
                 offset={off}
                 line={{ label: 'Charge level', values: hs.soc }}
                 xTicks={hrTicks}
@@ -274,7 +283,7 @@ export default function DispatchView({ run }) {
               <table className="sens-table dv-num">
                 <thead><tr><th scope="col">Hour</th><th scope="col">Demand</th><th scope="col">Renewables</th><th scope="col">Battery out</th><th scope="col">Firm</th><th scope="col">Grid to load</th><th scope="col">PPA</th><th scope="col">Grid to battery</th><th scope="col">Unmet</th><th scope="col">Battery in</th><th scope="col">Curtailed</th><th scope="col">Export</th>{hasBess ? <th scope="col">Charge level MWh</th> : null}</tr></thead>
                 <tbody>
-                  {Array.from({ length: HOURS_PER_WEEK }, (_, i) => {
+                  {Array.from({ length: nH }, (_, i) => {
                     const h = off + i;
                     return (
                       <tr key={h}><th scope="row">Day {Math.floor(h / 24) + 1} {pad2(h % 24)}:00</th><td>{sig(hs.net[h], 3)}</td><td>{sig(hs.re[h], 3)}</td><td>{sig(hs.dis[h], 3)}</td><td>{sig(hs.firm[h], 3)}</td><td>{sig(hs.grid[h], 3)}</td><td>{sig(hs.ppa[h], 3)}</td><td>{sig(hs.gridCharge[h], 3)}</td><td>{sig(hs.unmet[h], 3)}</td><td>{sig(hs.ch[h], 3)}</td><td>{sig(hs.curt[h], 3)}</td><td>{sig(hs.exp[h], 3)}</td>{hasBess ? <td>{sig(hs.soc[h], 3)}</td> : null}</tr>
@@ -313,7 +322,7 @@ export default function DispatchView({ run }) {
         <li>Balance: in − out = {B.residual.toExponential(1)} MWh over the year; the largest hourly error is {E.maxBalanceError.toExponential(1)} MWh (engine check: every hour must balance).</li>
         <li>{runDiff == null ? 'The ranking run has no figures for this year.' : runDiff < 1e-6 ? 'These annual figures match the figures the ranking used for this option.' : `These figures differ from the ranking run by up to ${MWh(runDiff)}.`} Re-run in {sig(insp.ms / 1000, 2)} s on this device.</li>
         {I.exceedance ? <li>Grid handling is "Show exceedance": grid import above the offered capacity is allowed and recorded instead of unmet load.</li> : null}
-        <li>Profiles are synthetic (seeded, calibrated to indicative annual targets), not measured data. The last 24 hours of each year are in the totals but not in a week view.</li>
+        <li>Profiles are synthetic (seeded, calibrated to indicative annual targets), not measured data. Week 52 runs to the end of the year (8 days).</li>
       </ul>
     </section>
   );

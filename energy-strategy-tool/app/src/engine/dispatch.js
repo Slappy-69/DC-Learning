@@ -21,6 +21,7 @@
 import { H } from './profiles.js';
 import { demandYear } from './context.js';
 import { TECH, FUEL, PPA } from './defaults.js';
+import { techAvailMonth } from './sizing.js';
 
 export const MERIT_ORDER = [
   'On-site renewables (solar, wind)',
@@ -86,15 +87,15 @@ export function dispatchConfig(ctx, v, sz) {
     maxRunHours: inputs.requirements.maxRunHours,
     solarMWp: sz.solarMWp, solarAvailM: Math.min(sz.solarGroundMWp > 0 ? avail('solarGround') : Infinity, sz.solarRoofMWp > 0 ? avail('solarRoof') : Infinity),
     windMW: sz.windMW, windAvailM: sz.windMW > 0 ? avail('wind') : Infinity,
-    bessMW: sz.storage.mw, bessMWh: sz.storage.mwh, bessAvailM: sz.storage.mw > 0 ? (v.C2 === 'bessSolar' && v.C12 === 'none' ? 0 : avail('bess')) : Infinity,
+    bessMW: sz.storage.mw, bessMWh: sz.storage.mwh, bessAvailM: sz.storage.mw > 0 ? techAvailMonth(ctx, TECH.bess) : Infinity,
     bessRole: sz.storage.role, bessDurN: durationH >= 8 ? 12 : durationH >= 3 ? 4 : durationH >= 1.5 ? 2 : 1,
     rte: TECH.bess.p.rte,
     ppaType: sz.ppa ? sz.ppa.type : null, ppaCoverage: sz.ppa ? sz.ppa.coverage : 0,
     flex: v.C16 === 'on',
     plants,
   };
-  // Bridging BESS + solar: the bridging BESS must be available from the start of bridging.
-  if (v.C2 === 'bessSolar') cfg.bessAvailM = Math.min(cfg.bessAvailM, avail('bess'));
+  // All battery capacity (main and bridging) supplies from the BESS supply-available month (BRIEF §9.8:
+  // project start + planning + procurement + construction), the same month time-to-power uses.
   return cfg;
 }
 

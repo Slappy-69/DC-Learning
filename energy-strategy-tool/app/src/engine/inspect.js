@@ -13,7 +13,7 @@ import { timeToPower } from './evaluate.js';
 import { H } from './profiles.js';
 
 export const HOURS_PER_WEEK = 168;
-export const WEEKS_PER_YEAR = Math.floor(H / HOURS_PER_WEEK); // 52; the last 24 h of the year are in the annual totals only
+export const WEEKS_PER_YEAR = Math.floor(H / HOURS_PER_WEEK); // 52; week 52 runs to the end of the year (192 h)
 
 const sum = (a, from = 0, to = a.length) => {
   let s = 0;
@@ -53,10 +53,11 @@ export function balanceFromHourly(rec) {
   return r;
 }
 
-// Hours of week w (1-based) within a model year.
+// Hours of week w (1-based) within a model year. Week 52 also takes the last 24 hours (8,737–8,760),
+// so every hour of the year is in exactly one week.
 export function weekRange(w) {
   const wk = Math.min(WEEKS_PER_YEAR, Math.max(1, Math.round(w)));
-  return { week: wk, from: (wk - 1) * HOURS_PER_WEEK, to: wk * HOURS_PER_WEEK };
+  return { week: wk, from: (wk - 1) * HOURS_PER_WEEK, to: wk === WEEKS_PER_YEAR ? H : wk * HOURS_PER_WEEK };
 }
 
 // Weeks worth looking at in one model year: peak net demand, most unmet load, most curtailment,

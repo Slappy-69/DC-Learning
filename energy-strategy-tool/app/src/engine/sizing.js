@@ -12,7 +12,9 @@ export function programmeMonths(t) {
   return (t.p.planM || 0) + (t.p.procM || 0) + (t.p.buildM || 0);
 }
 
-function techAvailMonth(ctx, t) {
+// Month a technology can first supply (BRIEF §9.8): programme durations, or its earliest-availability
+// date if later. Used for every source, including batteries, in sizing, time-to-power and dispatch.
+export function techAvailMonth(ctx, t) {
   let m = programmeMonths(t);
   if (t.p.earliestYear) {
     const em = (t.p.earliestYear - ctx.baseYear) * 12 - (ctx.startMonth - 1);
@@ -141,7 +143,8 @@ export function sizeOption(ctx, v) {
 
   // --- Bridging (C1/C2) ---
   let bridge = null;
-  let bridgeBess = { mw: 0, mwh: 0 };
+  const bessAvailMonth = techAvailMonth(ctx, TECH.bess);
+  let bridgeBess = { mw: 0, mwh: 0, availMonth: bessAvailMonth };
   const T = ctx.fullGridM; // grid full-connection month
   if (v.C1 === 'bridge' || v.C1 === 'islanded') {
     let S = 0;
@@ -154,8 +157,8 @@ export function sizeOption(ctx, v) {
     }
     if (v.C1 === 'islanded') S = Math.max(S, designMW);
     if (v.C2 === 'bessSolar') {
-      bridgeBess = { mw: S, mwh: S * inputs.settings.bridgeBessHours };
-      sentences.push(`Bridging BESS + solar: largest shortfall ${r1(S)} MW → BESS ${r1(S)} MW / ${r1(bridgeBess.mwh)} MWh (${inputs.settings.bridgeBessHours} h), PV per C10.`);
+      bridgeBess = { mw: S, mwh: S * inputs.settings.bridgeBessHours, availMonth: bessAvailMonth };
+      sentences.push(`Bridging BESS + solar: largest shortfall ${r1(S)} MW → BESS ${r1(S)} MW / ${r1(bridgeBess.mwh)} MWh (${inputs.settings.bridgeBessHours} h), PV per C10. Available from month ${bessAvailMonth} (BESS planning, procurement and construction).`);
     } else if (S > 0) {
       const t = TECH[BRIDGE_TECH[v.C2]];
       const n = Math.ceil(S / t.p.unitMW - 1e-9);
@@ -180,7 +183,7 @@ export function sizeOption(ctx, v) {
         if (needMW > bridgeBess.mw + 1e-9 || needMWh > bridgeBess.mwh + 1e-9) {
           sentences.push(`Retained BESS as backup: sized to the resilience requirement, ${r1(needMW)} MW (critical load) / ${r1(needMWh)} MWh (${req.autonomyH} h autonomy).`);
         }
-        bridgeBess = { mw: needMW, mwh: needMWh };
+        bridgeBess = { mw: needMW, mwh: needMWh, availMonth: bessAvailMonth };
       } else {
         const t = TECH[BRIDGE_TECH[v.C2]];
         const nCrit = Math.ceil(criticalMW / t.p.unitMW - 1e-9);
