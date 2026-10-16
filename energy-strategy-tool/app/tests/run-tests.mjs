@@ -1,3 +1,5 @@
+import { BLOCK_RULES } from '../src/engine/site.js';
+const RULE_CLR = Object.fromEntries(Object.entries(BLOCK_RULES).map(([k, r]) => [k, r.clr]));
 // Node test script for the core slice. Run: node tests/run-tests.mjs
 // Uses only node:assert; prints real numbers. Exit code 1 on any failure.
 //
@@ -37,7 +39,7 @@ import {
   referenceT1, referenceT3, runModel, normalizeInputs, buildContext, sizeOption, dispatchConfig, dispatchYear,
   applyView, DEFAULT_VIEW, getRegistry, LABEL, generateOptions, effectiveWeights, H,
   runModelSteps, mergeRuns, startPooledRun, toTransferable, STAGES, validateRunLog, stripTimestamps,
-  logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY, tornado, TORNADO_DRIVERS, axisScore,
+  logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY, tornado, TORNADO_DRIVERS, axisScore, layoutSite, siteGeometry,
   HOOKS, paretoFrontier, weightedPick, paretoTableRows, PRESETS,
 } from '../src/engine/index.js';
 import { scoreOptions } from '../src/engine/scoring.js';
@@ -836,6 +838,39 @@ await test('9. Tornado sensitivity (src/engine/sensitivity.js, BRIEF §13.3)', (
   assert.equal(axisScore('deliverability', 3, 1, 3), 100);
   for (const r of t.rows) for (const x of [r.low.score, r.high.score]) assert.ok(x >= 0 && x <= 100, `score ${x} outside 0–100`);
   return `base recomputed to ${t.base.score.toFixed(6)} vs run ${leader.score.toFixed(6)} (diff ${diff.toExponential(1)}); ${t.rows.length} drivers sorted by swing; largest swing ${t.rows[0].label} ${t.rows[0].swing.toFixed(2)} pts`;
+});
+
+await test('10. Site auto-layout (src/engine/site.js, BRIEF §10.4)', () => {
+  const run = runModel(referenceT1(), { source: 'test10' });
+  const leader = run.options.reduce((a, b) => (a.rank < b.rank ? a : b));
+  const L = layoutSite(run.inputs, leader.sizing);
+  const g = siteGeometry(run.inputs);
+  // 10a. Geometry matches the sizing's net developable area (same construction, §5.2).
+  assert.ok(Math.abs(g.netM2 - leader.sizing.area.netM2) / leader.sizing.area.netM2 < 1e-9, 'envelope area differs from sizing net area');
+  // 10b. Every placed block lies inside the envelope and no two placed blocks overlap or breach their separation.
+  const E = L.envelope;
+  for (const b of L.blocks) {
+    assert.ok(b.x >= -1e-9 && b.y >= -1e-9 && b.x + b.w <= E.w + 1e-9 && b.y + b.d <= E.h + 1e-9, `${b.label} outside envelope`);
+  }
+  for (let i = 0; i < L.blocks.length; i++) for (let j = i + 1; j < L.blocks.length; j++) {
+    const a = L.blocks[i], b = L.blocks[j];
+    const gap = Math.max(RULE_CLR[a.key] ?? 0, RULE_CLR[b.key] ?? 0);
+    const sep = a.x + a.w + gap <= b.x || b.x + b.w + gap <= a.x || a.y + a.d + gap <= b.y || b.y + b.d + gap <= a.y;
+    assert.ok(sep, `${a.label} and ${b.label} overlap or are closer than ${gap} m`);
+  }
+  // 10c. Deterministic: the same inputs give the same placement.
+  const L2 = layoutSite(run.inputs, leader.sizing);
+  assert.equal(JSON.stringify(L.blocks), JSON.stringify(L2.blocks));
+  // 10d. Area accounting: placed + unplaced land take equals the sized land take.
+  const sumAll = L.blocks.reduce((s, b) => s + b.areaM2, 0) + L.unplacedAreaM2;
+  assert.ok(Math.abs(sumAll - L.budget.landTakeM2) < 1e-6, 'placed + unplaced does not equal land take');
+  // 10e. A site too small for the sized option is reported as not fitting, with the unplaced area named.
+  const tiny = JSON.parse(JSON.stringify(run.inputs));
+  tiny.site.areaHa = 2;
+  const Ls = layoutSite(tiny, leader.sizing);
+  assert.equal(Ls.status, 'Does not fit');
+  assert.ok(Ls.unplacedAreaM2 > 0, 'no unplaced area reported for a site that cannot fit');
+  return `T1 leader: ${L.blocks.length} blocks placed on a ${L.cellM} m grid, ${L.unplaced.length} unplaced (${Math.round(L.unplacedAreaM2)} m²), status ${L.status}; ${L.blocks.length} pairs checked for separation; 2 ha site: ${Ls.status}, ${Math.round(Ls.unplacedAreaM2)} m² unplaced`;
 });
 
 const passed = results.filter((r) => r.ok).length;

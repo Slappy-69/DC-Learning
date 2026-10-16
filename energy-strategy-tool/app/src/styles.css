@@ -343,3 +343,18 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .sens-notes { color: var(--ink-2); font-size: 0.88rem; padding-left: 18px; }
 .sens-table button, .sens-controls .btn:focus-visible, .sens-select select:focus-visible { outline: 2px solid var(--focus, #2563eb); outline-offset: 2px; }
 @media (max-width: 768px) { .sens-table thead { display: none; } .sens-table tr { display: block; border-bottom: 1px solid var(--line); padding: 6px 0; } .sens-table td { display: flex; justify-content: space-between; border: 0; padding: 2px 0; } }
+
+/* Site tab */
+.site-h3 { font-size: 0.95rem; margin: 18px 0 6px; }
+.site-figure { margin: 12px 0 4px; }
+.site-svg { width: 100%; max-width: 860px; height: auto; display: block; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.site-setback { fill: none; stroke: var(--ink-2); stroke-dasharray: 6 4; stroke-width: 1; }
+.site-roads { fill: var(--line); opacity: 0.6; }
+.site-envelope { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.site-block { stroke: var(--surface); stroke-width: 0.6; opacity: 0.9; }
+.site-label { font-size: 9px; fill: #fff; pointer-events: none; }
+.site-dim { font-size: 10px; fill: var(--ink-2); }
+.site-legend { color: var(--ink-2); font-size: 0.85rem; margin: 6px 0 0; }
+.site-fits { color: #15803d; }
+.site-nofit { color: #b91c1c; }
+.site-tray ul { padding-left: 18px; }

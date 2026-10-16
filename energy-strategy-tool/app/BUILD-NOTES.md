@@ -425,3 +425,13 @@ The only change to the earlier tests' output: 5d now reports 376 records (judgem
 - Test 9: the base recomputation reproduces the run score exactly (diff 0.0), rows are sorted by swing, direction and ETS behaviour are checked. 19/19 pass.
 - UI: "Sensitivity" tab, run on request for one option (default leader). Not yet checked in a browser.
 - Not in this slice: capex by technology, PUE, solar yield, BESS cost, lead times, breakeven table, Monte Carlo, scenarios.
+
+## Slice: site layout, first part (2026-10-16)
+
+- `src/engine/site.js`: rectangular site from area and aspect (same construction as sizing §5.2, so the envelope equals sz.area.netM2), setbacks, a roads and parking strip at the top, blocks from sz.area.parts, and a greedy auto-layout on a 2 m grid (5 m above 50 ha). Blocks are placed in priority order, each at the feasible cell nearest its anchor (POC for substation, building centre for services, envelope centre otherwise). Separation is the larger of the two blocks' clearances. Deterministic.
+- Ground PV is split into arrays of at most 5,000 m² so the residual can fill gaps.
+- Status is "Fits" or "Does not fit" (unplaced block or tallest block above the height limit). "Fits with flags" is not produced yet, because no soft rules are relaxed.
+- `src/components/SitePlan.jsx`: Site tab with a 2D plan, the area budget, the height check and a table alternative. Read-only; computed on the selected option, not in the worker pipeline.
+- Finding: "fill residual" PV sizing takes the full net developable area, so every option with residual PV has 100 % land take and no room for separations. On T1 the leader's PV cannot all be placed (40,000 m² unplaced). This is an open sizing-rule decision, not fixed here: sizing would need to use the placeable area after separations, which changes PV capacity and economics for every option.
+- Not in this slice: drawn boundaries, exclusions, manual editing (§10.5), soft-rule relaxation, wind buffers, noise proxy, expansion headroom, 2.5D.
+- Tests: test 10 (containment, separation for every block pair, determinism, area accounting, 2 ha site does not fit). 20/20 pass. Browser check: Site tab renders, no console errors, no phone overflow.
