@@ -4,12 +4,39 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Concept Energy Optioneering</title>
-  <meta name="description" content="Concept-stage data centre energy optioneering tool: inputs, hourly dispatch, option generation, scoring and ranked list (core slice)." />
+  <meta name="description" content="Concept-stage data centre energy optioneering tool: inputs, hourly dispatch, option generation, scoring, trade-offs, sensitivity and site layout." />
   <link rel="stylesheet" href="app.css" />
 </head>
 <body>
-  <div id="root"></div>
-  <noscript>This tool needs JavaScript.</noscript>
+  <div id="root">
+    <div class="boot" role="status">
+      <p class="boot-title">Loading the energy optioneering tool…</p>
+      <p>The first results take about 10 seconds after the page appears. If this message does not change, this viewer is not running the page's scripts. Open the file in a web browser such as Chrome, Safari, Edge or Firefox instead of a file preview.</p>
+    </div>
+  </div>
+  <noscript><div class="boot"><p class="boot-title">This tool needs JavaScript.</p><p>This viewer has scripts turned off. Open the file in a web browser such as Chrome, Safari, Edge or Firefox.</p></div></noscript>
+  <script>
+    (function () {
+      // Startup errors: shown on the page while the app has not started, or after it stopped
+      // (an empty root). Errors while the app is running are left to the app.
+      function show(msg) {
+        var root = document.getElementById('root');
+        if (!root) return;
+        if (root.childElementCount && !root.querySelector('.boot')) return;
+        var box = document.getElementById('boot-error');
+        if (!box) {
+          box = document.createElement('div');
+          box.id = 'boot-error';
+          box.className = 'boot boot-error';
+          box.setAttribute('role', 'alert');
+          root.appendChild(box);
+        }
+        box.textContent = 'The tool stopped with an error in this browser: ' + msg + '. Reload the page. If it happens again, report this message.';
+      }
+      window.addEventListener('error', function (e) { show((e && e.message) || 'unknown script error'); });
+      window.addEventListener('unhandledrejection', function (e) { var r = e && e.reason; show(String((r && r.message) || r || 'unknown error')); });
+    })();
+  </script>
   <script src="app.js"></script>
 </body>
 </html>

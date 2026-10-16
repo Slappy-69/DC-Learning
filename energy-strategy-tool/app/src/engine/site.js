@@ -38,7 +38,7 @@ export function siteGeometry(inputs) {
 
 // Blocks for one sized option, in priority order, with nominal areas (m²). Ground PV is split into
 // arrays of at most PV_ARRAY_M2 so the residual can fill gaps, as real arrays do.
-export const PV_ARRAY_M2 = 5000;
+export const PV_ARRAY_M2 = 20000;
 export function blockList(sz, g) {
   const parts = sz.area.parts;
   const out = [];
@@ -84,46 +84,70 @@ function anchorFor(key, placed, g) {
   return centre;
 }
 
+// Best feasible cell for a block of the given area and ratio, nearest its anchor. Returns null if none.
+function bestPosition(b, placed, anchor, c, W, H, areaM2) {
+  const bc = Math.ceil(b.bnd / c);
+  let best = null;
+  for (const [wm, hm] of orientations(areaM2, b.ratio)) {
+    const wc = Math.max(1, Math.ceil(wm / c));
+    const hc = Math.max(1, Math.ceil(hm / c));
+    for (let y = bc; y + hc + bc <= H; y++) {
+      for (let x = bc; x + wc + bc <= W; x++) {
+        let ok = true;
+        for (const p of placed) {
+          const gap = Math.ceil(Math.max(b.clr, p.clr) / c);
+          const apart = x + wc + gap <= p.x || p.x + p.wc + gap <= x || y + hc + gap <= p.y || p.y + p.hc + gap <= y;
+          if (!apart) { ok = false; break; }
+        }
+        if (!ok) continue;
+        const cost = ((x + wc / 2) * c - anchor.x) ** 2 + ((y + hc / 2) * c - anchor.y) ** 2;
+        if (!best || cost < best.cost) best = { x, y, wc, hc, cost };
+      }
+    }
+  }
+  return best;
+}
+
 // Greedy auto-layout (BRIEF §10.4): blocks in priority order, each at the feasible cell nearest its
 // anchor. Feasible = inside the envelope with the boundary clearance, and separated from every placed
-// block by the larger of the two clearances. Deterministic (scan order breaks ties).
+// block by the larger of the two clearances. Ground PV is a fill: the largest array that fits is
+// placed, then the next, until the PV area is used or no array fits. Deterministic.
 export function layoutSite(inputs, sz, { cellM } = {}) {
   const g = siteGeometry(inputs);
   const c = cellM || (g.gross / 1e4 > 50 ? 5 : 2);
   const W = Math.floor(g.envW / c);
   const H = Math.floor(g.envH / c);
-  const blocks = blockList(sz, g);
+  const blocks = blockList(sz, g).filter((b) => b.key !== 'groundSolar');
+  const pvArea = Math.max(0, Number(sz.area.parts.groundSolar) || 0);
+  const pv = pvArea > 0 ? { ...BLOCK_RULES.groundSolar, key: 'groundSolar', label: BLOCK_RULES.groundSolar.label, color: BLOCK_RULES.groundSolar.color, h: BLOCK_RULES.groundSolar.h, clr: BLOCK_RULES.groundSolar.clr, bnd: BLOCK_RULES.groundSolar.bnd, ratio: BLOCK_RULES.groundSolar.ratio, areaM2: pvArea } : null;
   const placed = []; // cell-space records
   const unplaced = [];
 
   for (const b of blocks) {
-    const anchor = anchorFor(b.key, placed, g);
-    const bc = Math.ceil(b.bnd / c);
-    let best = null;
-    for (const [wm, hm] of orientations(b.areaM2, b.ratio)) {
-      const wc = Math.max(1, Math.ceil(wm / c));
-      const hc = Math.max(1, Math.ceil(hm / c));
-      for (let y = bc; y + hc + bc <= H; y++) {
-        for (let x = bc; x + wc + bc <= W; x++) {
-          let ok = true;
-          for (const p of placed) {
-            const gap = Math.ceil(Math.max(b.clr, p.clr) / c);
-            const apart = x + wc + gap <= p.x || p.x + p.wc + gap <= x || y + hc + gap <= p.y || p.y + p.hc + gap <= y;
-            if (!apart) { ok = false; break; }
-          }
-          if (!ok) continue;
-          const cx = (x + wc / 2) * c;
-          const cy = (y + hc / 2) * c;
-          const cost = (cx - anchor.x) ** 2 + (cy - anchor.y) ** 2;
-          if (!best || cost < best.cost) best = { x, y, wc, hc, cost };
-        }
+    const best = bestPosition(b, placed, anchorFor(b.key, placed, g), c, W, H, b.areaM2);
+    if (best) placed.push({ ...b, x: best.x, y: best.y, wc: best.wc, hc: best.hc });
+    else unplaced.push({ key: b.key, id: b.id, label: b.label, areaM2: b.areaM2 });
+  }
+
+  // Ground PV fill, largest array first, in steps of 10 % of the PV area down to 1,000 m².
+  if (pv) {
+    let left = pv.areaM2;
+    let n = 0;
+    const minArray = 1000;
+    while (left > 1e-6) {
+      let got = null;
+      let size = Math.min(PV_ARRAY_M2, left);
+      while (size >= minArray && !got) {
+        const cand = bestPosition(pv, placed, { x: g.envW / 2, y: g.envH / 2 }, c, W, H, size);
+        if (cand) got = { size, cand };
+        else size = size > minArray * 1.5 ? Math.max(minArray, size * 0.8) : minArray - 1;
       }
+      if (!got) break;
+      n++;
+      placed.push({ ...pv, id: `groundSolar-${n}`, label: `${pv.label} ${n}`, areaM2: got.size, x: got.cand.x, y: got.cand.y, wc: got.cand.wc, hc: got.cand.hc });
+      left -= got.size;
     }
-    if (best) {
-      placed.push({ ...b, x: best.x, y: best.y, wc: best.wc, hc: best.hc });
-    } else {
-      unplaced.push({ key: b.key, id: b.id, label: b.label, areaM2: b.areaM2 });
-    }
+    if (left > 1e-6) unplaced.push({ key: 'groundSolar', id: 'groundSolar-rest', label: 'Ground PV (no further array fits)', areaM2: left });
   }
 
   const blocksM = placed.map((p) => ({
@@ -131,7 +155,7 @@ export function layoutSite(inputs, sz, { cellM } = {}) {
     x: p.x * c, y: p.y * c, w: p.wc * c, d: p.hc * c,
   }));
 
-  const landTakeM2 = blocks.reduce((s, b) => s + b.areaM2, 0);
+  const landTakeM2 = sz.area.parts && blocksM.reduce((s, b) => s + b.areaM2, 0) + unplaced.reduce((s, u) => s + u.areaM2, 0);
   const tallest = blocksM.reduce((m, b) => Math.max(m, b.h), 0);
   const heightOk = tallest <= g.heightLimitM;
   const budgetFits = g.netM2 >= landTakeM2 - 1e-6;

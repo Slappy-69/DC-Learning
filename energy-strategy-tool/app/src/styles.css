@@ -358,3 +358,14 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .site-fits { color: #15803d; }
 .site-nofit { color: #b91c1c; }
 .site-tray ul { padding-left: 18px; }
+
+/* Loading message shown before the app starts, and startup errors (index.html) */
+.boot { max-width: 40rem; padding-block: 24px; padding-inline: 16px; color: var(--ink); }
+.boot p { margin: 0 0 8px; }
+.boot-title { font-weight: 600; font-size: 1.05rem; }
+.boot-error { color: var(--bad); background: var(--bad-bg); border-radius: var(--radius); padding-block: 12px; padding-inline: 16px; margin-inline: 16px; }
+
+/* Hosted build: copy-log fallback */
+.rp-copied { color: var(--ok); font-size: 0.85rem; }
+.rp-copy-fallback { display: grid; gap: 6px; margin: 8px 0; }
+.rp-copy-fallback textarea { width: 100%; box-sizing: border-box; font: 12px/1.4 var(--mono); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); }

@@ -435,3 +435,12 @@ The only change to the earlier tests' output: 5d now reports 376 records (judgem
 - Finding: "fill residual" PV sizing takes the full net developable area, so every option with residual PV has 100 % land take and no room for separations. On T1 the leader's PV cannot all be placed (40,000 m² unplaced). This is an open sizing-rule decision, not fixed here: sizing would need to use the placeable area after separations, which changes PV capacity and economics for every option.
 - Not in this slice: drawn boundaries, exclusions, manual editing (§10.5), soft-rule relaxation, wind buffers, noise proxy, expansion headroom, 2.5D.
 - Tests: test 10 (containment, separation for every block pair, determinism, area accounting, 2 ha site does not fit). 20/20 pass. Browser check: Site tab renders, no console errors, no phone overflow.
+
+## Loading message, startup errors and hosted page (2026-10-16)
+
+- Reported problem: the single file "doesn't load". In headless Chromium it loads in every case where the viewer runs its scripts (normal, sandboxed frame, workers blocked, phone CPU). With scripts blocked (as some file previews do) the page was blank with no explanation.
+- `index.html` now shows a loading message inside `#root` until the app mounts. If scripts never run, the message stays and says to open the file in a web browser. A small inline handler shows startup errors on the page instead of a blank screen; it stays quiet once the app is running.
+- `dist/energy-tool-hosted.html`: the same app for publishing as a hosted page. Only `<title>`, `<style>` and the body content are kept, because the host adds the document. `__HOSTED__` swaps the run-log download (the host's frame ignores downloads) for copy-to-clipboard, with a select-the-text fallback.
+- Ground PV fill: the layout places the largest PV array that fits, then the next, down to 1,000 m²; arrays keep the 5 m PV clearance between each other. On T1 the leader's PV still leaves 34,514 m² unplaced (the sizing-rule finding above stands).
+- Load checks (headless Chromium, results ready): normal 9 s; sandboxed frame 9 s; host-like frame with a strict policy 10 s; phone CPU ×4 12 s with workers, 56 s if workers are blocked; scripts blocked: loading message stays.
+- Tests: test 7 now expects two inline scripts (startup handler and app); test 11 checks the hosted page. 21/21 pass.

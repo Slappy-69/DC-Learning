@@ -597,8 +597,9 @@ await test('7. Single-file build: worker inlined as a Blob-URL source string, no
   assert.ok(importRefs.every((r) => !/["']\.{0,2}\/?[\w-]+\.(?:js|mjs|css|json)["']/.test(r)), `file loads: ${importRefs.join(' | ')}`);
   // Extract the inlined worker source from new Blob([<literal>], ...).
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
-  assert.equal(scripts.length, 1, `expected one inline script, found ${scripts.length}`);
-  const app = scripts[0];
+  // Two inline scripts: the startup error handler (index.html) and the app bundle (the largest).
+  assert.equal(scripts.length, 2, `expected two inline scripts (startup handler + app), found ${scripts.length}`);
+  const app = scripts.reduce((a, b) => (b.length > a.length ? b : a));
   // The worker Blob is the one built from a string literal and passed straight to URL.createObjectURL.
   const blobMatches = [...app.matchAll(/URL\.createObjectURL\(new Blob\(\[(?=["'`])/g)];
   assert.equal(blobMatches.length, 1, `expected one URL.createObjectURL(new Blob([<string literal>]) in the app, found ${blobMatches.length}`);
@@ -620,7 +621,7 @@ await test('7. Single-file build: worker inlined as a Blob-URL source string, no
     w.postMessage({ id: 1, inputs: t1Inputs, sliceIndex: 0, sliceCount: SLICES, t0Abs: performance.timeOrigin + performance.now() });
   });
   assert.ok(part.options.length > 0, 'inlined worker returned no options');
-  return `single file ${(html.length / 1024).toFixed(1)} KB, 1 inline script, 0 "worker.js" mentions, 0 <script src>, 0 <link href>, 0 relative src/href; inlined worker source ${src.length.toLocaleString('en-GB')} chars, identical to dist/worker.js, parses; run in a worker_thread on slice 1/${SLICES} of T1: ${part.options.length} options, ${part.log.length} log events.`;
+  return `single file ${(html.length / 1024).toFixed(1)} KB, 2 inline scripts (startup handler + app), 0 "worker.js" mentions, 0 <script src>, 0 <link href>, 0 relative src/href; inlined worker source ${src.length.toLocaleString('en-GB')} chars, identical to dist/worker.js, parses; run in a worker_thread on slice 1/${SLICES} of T1: ${part.options.length} options, ${part.log.length} log events.`;
 });
 
 // ---------------------------------------------------------------------------
@@ -871,6 +872,27 @@ await test('10. Site auto-layout (src/engine/site.js, BRIEF §10.4)', () => {
   assert.equal(Ls.status, 'Does not fit');
   assert.ok(Ls.unplacedAreaM2 > 0, 'no unplaced area reported for a site that cannot fit');
   return `T1 leader: ${L.blocks.length} blocks placed on a ${L.cellM} m grid, ${L.unplaced.length} unplaced (${Math.round(L.unplacedAreaM2)} m²), status ${L.status}; ${L.blocks.length} pairs checked for separation; 2 ha site: ${Ls.status}, ${Math.round(Ls.unplacedAreaM2)} m² unplaced`;
+});
+
+await test('11. Hosted page build (dist/energy-tool-hosted.html): page content only, no outside references, copy instead of download', () => {
+  const p = new URL('../dist/energy-tool-hosted.html', import.meta.url);
+  assert.ok(existsSync(p), 'dist/energy-tool-hosted.html missing: run npm run build first');
+  const html = readFileSync(p, 'utf8');
+  // The host wraps the page in its own document, so the file carries no document tags of its own.
+  for (const tag of [/<!doctype/i, /<html[\s>]/i, /<head[\s>]/i, /<body[\s>]/i]) assert.equal(tag.test(html), false, `hosted page contains ${tag}`);
+  assert.ok(/^<title>Concept Energy Optioneering<\/title>/.test(html), 'hosted page does not start with its <title>');
+  assert.equal(/<script[^>]*\ssrc\s*=/i.test(html), false, '<script src=> present');
+  assert.equal(/<link[^>]*\shref\s*=/i.test(html), false, '<link href=> present');
+  assert.equal(/worker\.js/.test(html), false, 'hosted page mentions worker.js');
+  assert.ok(html.includes('Loading the energy optioneering tool'), 'loading message missing');
+  assert.ok(html.includes('Copy run log'), 'hosted page has no copy-log control');
+  // Which label shows is decided at run time by the build flag; the rendered check is in the browser run.
+  const single = readFileSync(new URL('../dist/energy-tool-single-file.html', import.meta.url), 'utf8');
+  assert.ok(single.includes('Download run log'), 'single file has no download control');
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  assert.equal(scripts.length, 2, `expected two inline scripts, found ${scripts.length}`);
+  for (const sc of scripts) new Function(sc.replace(/<\\\/script/gi, '</script')); // parses
+  return `hosted page ${(html.length / 1024).toFixed(1)} KB: starts with <title>, no document tags, 0 <script src>, 0 <link href>, loading message and copy-log control present.`;
 });
 
 const passed = results.filter((r) => r.ok).length;
