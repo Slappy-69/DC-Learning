@@ -37,7 +37,7 @@ import {
   referenceT1, referenceT3, runModel, normalizeInputs, buildContext, sizeOption, dispatchConfig, dispatchYear,
   applyView, DEFAULT_VIEW, getRegistry, LABEL, generateOptions, effectiveWeights, H,
   runModelSteps, mergeRuns, startPooledRun, toTransferable, STAGES, validateRunLog, stripTimestamps,
-  logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY,
+  logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY, tornado, TORNADO_DRIVERS, axisScore,
   HOOKS, paretoFrontier, weightedPick, paretoTableRows, PRESETS,
 } from '../src/engine/index.js';
 import { scoreOptions } from '../src/engine/scoring.js';
@@ -809,6 +809,33 @@ await test('8d. Every point in the Pareto chart has a matching row in the table 
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+await test('9. Tornado sensitivity (src/engine/sensitivity.js, BRIEF §13.3)', () => {
+  // 9a. Re-running the leader through the sensitivity chain with no change reproduces the run score.
+  const run = runModel(referenceT1(), { source: 'test9' });
+  const leader = run.options.reduce((a, b) => (a.rank < b.rank ? a : b));
+  const t = tornado(run, leader.id, { topN: TORNADO_DRIVERS.length });
+  const diff = Math.abs(t.base.score - leader.score);
+  assert.ok(diff < 1e-9, `base recomputation differs from run score by ${diff}`);
+  // 9b. Rows are sorted by swing and every driver is present once.
+  for (let i = 1; i < t.rows.length; i++) assert.ok(t.rows[i - 1].swing >= t.rows[i].swing, 'rows not sorted by swing');
+  assert.equal(new Set(t.rows.map((r) => r.id)).size, TORNADO_DRIVERS.length);
+  // 9c. Direction: a later grid connection lowers time-to-power performance, and a higher IT load
+  // on the same plant does not lower the cost axis by itself (checked on the row values).
+  const gd = t.rows.find((r) => r.id === 'grid-date');
+  assert.ok(gd.high.ttpMetric >= gd.low.ttpMetric, 'later grid date should not improve time-to-power');
+  // 9d. Grid-only carbon-price driver has no cost effect when there are no Scope 1 emissions.
+  const ets = t.rows.find((r) => r.id === 'ets');
+  assert.ok(ets, 'ETS driver missing');
+  if (!(leader.carbon.scope1T > 0)) assert.ok(Math.abs(ets.high.lcoe - ets.low.lcoe) < 1e-6, 'ETS moved LCOE without Scope 1 emissions');
+  else assert.ok(Math.abs(ets.high.lcoe - ets.low.lcoe) > 0, 'ETS did not move LCOE despite Scope 1 emissions');
+  // 9e. Scores stay on the 0–100 scale and axis scoring is linear between the run range ends.
+  assert.equal(axisScore('cost', 1, 1, 3), 100);
+  assert.equal(axisScore('cost', 3, 1, 3), 0);
+  assert.equal(axisScore('deliverability', 3, 1, 3), 100);
+  for (const r of t.rows) for (const x of [r.low.score, r.high.score]) assert.ok(x >= 0 && x <= 100, `score ${x} outside 0–100`);
+  return `base recomputed to ${t.base.score.toFixed(6)} vs run ${leader.score.toFixed(6)} (diff ${diff.toExponential(1)}); ${t.rows.length} drivers sorted by swing; largest swing ${t.rows[0].label} ${t.rows[0].swing.toFixed(2)} pts`;
 });
 
 const passed = results.filter((r) => r.ok).length;

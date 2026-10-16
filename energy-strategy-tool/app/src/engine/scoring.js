@@ -22,6 +22,13 @@ export function axisMetrics(o, settings) {
 
 const LOWER_BETTER = { cost: true, carbon: true, ttp: true, deliverability: false };
 
+// Axis score 0–100 for one metric given the run's range for that axis (same rule as scoreOptions).
+export function axisScore(key, x, lo, hi) {
+  if (!Number.isFinite(x)) return 0;
+  if (hi - lo < 1e-12) return 100;
+  return LOWER_BETTER[key] ? (100 * (hi - x)) / (hi - lo) : (100 * (x - lo)) / (hi - lo);
+}
+
 export function scoreOptions(options, inputs) {
   const { w, equal } = effectiveWeights(inputs.weights);
   const keys = Object.keys(LOWER_BETTER);

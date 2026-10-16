@@ -319,3 +319,27 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
   .pareto-head { flex-direction: column; align-items: stretch; }
   .pc-legend { gap: 6px 12px; }
 }
+
+/* Sensitivity tab (tornado) */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.sens { padding: 12px 0; }
+.sens-title { font-size: 1.05rem; margin: 0 0 6px; }
+.sens-intro { color: var(--ink-2); margin: 0 0 12px; max-width: 70ch; }
+.sens-controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
+.sens-select { display: flex; flex-direction: column; gap: 4px; min-width: min(100%, 360px); }
+.sens-select select { min-height: 36px; padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); }
+.sens-status { margin: 0; color: var(--ink-2); font-size: 0.9rem; flex-basis: 100%; }
+.sens-base { margin: 14px 0 8px; }
+.sens-ok { color: var(--ink-2); }
+.sens-warn { color: var(--warn, #b45309); }
+.sens-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.sens-table th, .sens-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.sens-table thead th { font-size: 0.8rem; color: var(--ink-2); font-weight: 600; }
+.sens-basis { display: block; font-weight: 400; font-size: 0.78rem; color: var(--ink-2); }
+.sens-bar { display: block; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; min-width: 80px; }
+.sens-bar > span { display: block; height: 100%; background: var(--accent, #2563eb); }
+.sens-num { display: block; font-weight: 600; }
+.sens-lcoe { display: block; font-size: 0.78rem; color: var(--ink-2); }
+.sens-notes { color: var(--ink-2); font-size: 0.88rem; padding-left: 18px; }
+.sens-table button, .sens-controls .btn:focus-visible, .sens-select select:focus-visible { outline: 2px solid var(--focus, #2563eb); outline-offset: 2px; }
+@media (max-width: 768px) { .sens-table thead { display: none; } .sens-table tr { display: block; border-bottom: 1px solid var(--line); padding: 6px 0; } .sens-table td { display: flex; justify-content: space-between; border: 0; padding: 2px 0; } }

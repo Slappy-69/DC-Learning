@@ -10,3 +10,5 @@ export { sizeOption } from './sizing.js';
 export { dispatchConfig, dispatchYear, dispatchAll, MERIT_ORDER } from './dispatch.js';
 export { addMonths, monthsBetween } from './dates.js';
 export { paretoView, paretoFrontier, weightedPick, paretoTableRows, defaultParetoAxes, PARETO_AXES, TTP_CLASSES } from './pareto.js';
+export { tornado, evaluateVector, TORNADO_DRIVERS } from './sensitivity.js';
+export { axisScore } from './scoring.js';

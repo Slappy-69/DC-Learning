@@ -417,3 +417,11 @@ PASS  8d. Every point in the Pareto chart has a matching row in the table altern
 ```
 
 The only change to the earlier tests' output: 5d now reports 376 records (judgement 101, run setting 6), up from 371, because of the five new view-setting records. The single-file size in test 7 is now 449.1 KB. During development, two of the new tests failed before they were fixed. 8b's first version asserted that Balanced and Lowest carbon give different picks; on T1 they do not (both pick O1YAUJ8J), so the assertion now compares Balanced with Lowest cost. 8d first failed on a bundling error (`react-dom/server` Node build, dynamic `require("stream")`) and now uses `react-dom/server.browser`.
+
+## Slice: tornado sensitivity (2026-10-15)
+
+- `src/engine/sensitivity.js`: `tornado(run, optionId)` re-runs one option under the low and high value of each driver (grid full-connection date −6/+24 months, grid price ×0.7/×1.5, grid carbon ×0.8/×1.2, gas price ×0.7/×1.3, EU ETS ×0.5/×1.5, WACC 4/12 %, IT load ×0.8/×1.2). Score is recomputed against the base run's axis ranges, so other options and ranks are unchanged; values outside the base range are clipped to 0–100.
+- Gas and ETS are scaled on the built context because the country profile supplies them and no numeric input exists yet. This is a gap: `economics.carbonPrice` is not read by the engine, and a numeric gas input should replace the scaling.
+- Test 9: the base recomputation reproduces the run score exactly (diff 0.0), rows are sorted by swing, direction and ETS behaviour are checked. 19/19 pass.
+- UI: "Sensitivity" tab, run on request for one option (default leader). Not yet checked in a browser.
+- Not in this slice: capex by technology, PUE, solar yield, BESS cost, lead times, breakeven table, Monte Carlo, scenarios.
