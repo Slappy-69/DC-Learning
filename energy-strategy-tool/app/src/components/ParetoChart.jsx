@@ -1,20 +1,24 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { sig, money } from '../format.js';
+import { paretoCanvasAbove } from '../engine/pareto.js';
 import { fmtAxis } from './ParetoTable.jsx';
+import { UnverifiedTag } from './Field.jsx';
 
-// Pareto scatter (BRIEF §12.2), hand-written SVG with a Canvas layer above CANVAS_ABOVE points (§4).
-//  - x = cost metric, y = carbon metric (both lower is better, so better options sit bottom-left).
-//  - colour = time-to-power (5 quantile classes, one-hue violet ramp; more contrast with the surface = longer).
-//  - size = capex (marker area proportional to capex).
+// Pareto scatter (BRIEF §12.2), hand-written SVG with a Canvas layer above view.pareto.canvasAbove
+// plotted points (§4; registry value read at render, default 500).
+//  - x and y = any two axis metrics (default cost vs carbon); each axis states its better direction.
+//  - colour = time-to-power (up to 5 quantile classes, one-hue violet ramp; more contrast with the surface = longer).
+//  - size = capex (marker area grows linearly with capex, from a minimum mark size).
 //  - shape = resilience status (circle Meets, triangle Meets with flags, square Does not meet).
 //    The brief puts site-fit status on shape; site fit is not assessed yet (no layout slice), so the
 //    shape carries resilience status until it is. Recorded in BUILD-NOTES as an open point.
 //  - dominated options (engine dominance mark, 4 axes + status) are hollow; non-dominated are filled.
 //  - the 2-axis Pareto frontier is a step line; the weighted pick has a ring and a text label.
-// Keyboard: the plot is one tab stop. Arrow keys move between points (left/right by cost, up/down by
-// carbon), P jumps to the weighted pick, Enter or Space opens the option detail, Escape clears.
+//  - the highest weighted score is marked separately (dashed ring) only when it is not the pick
+//    ("Rank requirement-compliant options first" on).
+// Keyboard: the plot is one tab stop. Arrow keys move between points (left/right along x, up/down along
+// y), P jumps to the weighted pick, Enter or Space opens the option detail, Escape clears.
 
-export const CANVAS_ABOVE = 500; // indicative — unverified (run setting); §4 says Canvas above 500 points
 const SHAPES = { Meets: 'circle', 'Meets with flags': 'triangle', 'Does not meet': 'square' };
 export const SHAPE_LABEL = { circle: '●', triangle: '▲', square: '■' };
 
@@ -79,7 +83,7 @@ function readColours(el) {
   };
 }
 
-export default function ParetoChart({ model, selectedId, onSelect, forceSvg = false, initialWidth }) {
+export default function ParetoChart({ model, selectedId, onSelect, forceSvg = false, initialWidth, svgId }) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
   const measured = useSize(wrapRef);
@@ -102,7 +106,8 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
   }, []);
 
   const pts = useMemo(() => model.points.filter((p) => p.plotted), [model]);
-  const useCanvas = !forceSvg && pts.length > CANVAS_ABOVE;
+  const canvasAbove = paretoCanvasAbove();
+  const useCanvas = !forceSvg && pts.length > canvasAbove;
   const xt = useMemo(() => niceTicks(model.xAxis.domain[0], model.xAxis.domain[1], Math.max(3, Math.floor(iw / 90))), [model, iw]);
   const yt = useMemo(() => niceTicks(model.yAxis.domain[0], model.yAxis.domain[1], Math.max(3, Math.floor(ih / 60))), [model, ih]);
   const sx = useCallback((v) => m.left + ((v - xt.lo) / (xt.hi - xt.lo)) * iw, [xt, iw, m.left]);
@@ -112,7 +117,7 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
   const radius = useCallback((c) => {
     if (!Number.isFinite(c) || !(cmax > cmin)) return (rMin + rMax) / 2;
     const t = Math.max(0, Math.min(1, (c - cmin) / (cmax - cmin)));
-    return Math.sqrt(rMin * rMin + t * (rMax * rMax - rMin * rMin)); // area ∝ capex
+    return Math.sqrt(rMin * rMin + t * (rMax * rMax - rMin * rMin)); // area linear in capex (affine, from rMin)
   }, [cmin, cmax, rMin, rMax]);
 
   const geo = useMemo(() => pts.map((p) => ({
@@ -123,7 +128,7 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
   const drawOrder = useMemo(() => geo.slice().sort((a, b) => (a.p.dominatedBy ? 0 : 1) - (b.p.dominatedBy ? 0 : 1) || (a.p.onFrontier ? 1 : 0) - (b.p.onFrontier ? 1 : 0) || b.p.rank - a.p.rank), [geo]);
   const byId = useMemo(() => new Map(geo.map((g) => [g.p.id, g])), [geo]);
 
-  // Canvas layer (> CANVAS_ABOVE points).
+  // Canvas layer (more than canvasAbove plotted points).
   useEffect(() => {
     if (!useCanvas) return;
     const cv = canvasRef.current;
@@ -138,10 +143,12 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
     ctx.beginPath(); ctx.rect(m.left, m.top, iw, ih); ctx.clip();
     for (const g of drawOrder) {
       drawShape(ctx, g.shape, g.cx, g.cy, g.r);
+      // Hollow markers are stroked at full opacity: the ramp's lightest step is 3.67:1 (light) / 3.78:1
+      // (dark) against the surface, and lowering the alpha would drop it below the 3:1 graphics target.
       if (g.p.dominatedBy) {
-        ctx.globalAlpha = 0.75; ctx.lineWidth = 1.25; ctx.strokeStyle = g.fill; ctx.stroke();
+        ctx.lineWidth = 1.25; ctx.strokeStyle = g.fill; ctx.stroke();
       } else {
-        ctx.globalAlpha = 1; ctx.fillStyle = g.fill; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = colours.surface; ctx.stroke();
+        ctx.fillStyle = g.fill; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = colours.surface; ctx.stroke();
       }
     }
     ctx.restore();
@@ -158,10 +165,17 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
     const g = nearest(e.clientX - rect.left, e.clientY - rect.top);
     setHoverId(g ? g.p.id : null);
   };
+  // Open the option the tooltip names. Pointer events carry fractional coordinates but click events
+  // whole pixels, so recomputing the nearest point on click could open a neighbour where markers
+  // overlap (found by tests/browser-tests.mjs B4). Without a hover (touch), use the click position.
   const onClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const g = nearest(e.clientX - rect.left, e.clientY - rect.top);
-    if (g) { setFocusId(g.p.id); onSelect(g.p.id); }
+    let id = hoverId && byId.has(hoverId) ? hoverId : null;
+    if (!id) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const g = nearest(e.clientX - rect.left, e.clientY - rect.top);
+      id = g ? g.p.id : null;
+    }
+    if (id) { setFocusId(id); onSelect(id); }
   };
 
   // Keyboard navigation.
@@ -178,7 +192,7 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
     let next = null;
     if (e.key === 'ArrowRight') next = step(byX, 1);
     else if (e.key === 'ArrowLeft') next = step(byX, -1);
-    else if (e.key === 'ArrowUp') next = step(byY, 1); // up the screen = higher carbon
+    else if (e.key === 'ArrowUp') next = step(byY, 1); // up the screen = higher y value
     else if (e.key === 'ArrowDown') next = step(byY, -1);
     else if (e.key === 'Home') next = byX[0].p.id;
     else if (e.key === 'End') next = byX[byX.length - 1].p.id;
@@ -193,6 +207,7 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
   const activeId = hoverId || focusId;
   const active = activeId ? byId.get(activeId) : null;
   const pick = model.pickId ? byId.get(model.pickId) : null;
+  const topG = model.topScoreId ? byId.get(model.topScoreId) : null;
   const sel = selectedId ? byId.get(selectedId) : null;
   const frontierPath = useMemo(() => {
     const f = model.frontierXY.filter((q) => Number.isFinite(q.x) && Number.isFinite(q.y));
@@ -202,7 +217,12 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
     return d;
   }, [model, sx, sy]);
 
-  const describe = (g) => g ? `${g.p.name}. Rank ${g.p.rank}, score ${g.p.score.toFixed(1)}. ${model.xAxis.label} ${fmtAxis(model.xAxis, g.p.x)}; ${model.yAxis.label} ${fmtAxis(model.yAxis, g.p.y)}; time-to-power ${sig(g.p.ttp, 2)} months; capex ${money(g.p.capex, 2)}; resilience ${g.p.resilience}; ${g.p.dominatedBy ? `dominated by #${g.p.dominatedByRank}` : 'not dominated'}${g.p.onFrontier ? '; on the frontier' : ''}${g.p.isPick ? '; weighted pick' : ''}.` : '';
+  const describe = (g) => g ? `${g.p.name}. Rank ${g.p.rank}, score ${g.p.score.toFixed(1)}. ${model.xAxis.label} ${fmtAxis(model.xAxis, g.p.x)}; ${model.yAxis.label} ${fmtAxis(model.yAxis, g.p.y)}; time-to-power ${sig(g.p.ttp, 2)} months; capex ${money(g.p.capex, 2)}; resilience ${g.p.resilience}; ${g.p.dominatedBy ? `dominated by ${g.p.dominatedByName} (rank ${g.p.dominatedByRank})` : 'not dominated'}${g.p.onFrontier ? '; on the frontier' : ''}${g.p.isPick ? '; weighted pick' : ''}${g.p.isTopScore ? '; highest weighted score, ranked below the pick because requirement-compliant options are ranked first' : ''}.` : '';
+  const dirText = (a) => `${a.better} is better`;
+  // Axis titles carry the better direction when they fit (about 6.9 px per character at 12 px semi-bold);
+  // otherwise label and unit only. The direction is always stated in the help text below the chart.
+  const titleFor = (a, len) => { const full = `${a.label} (${a.unit}), ${dirText(a)}`; return full.length * 6.9 <= len ? full : `${a.label} (${a.unit})`; };
+  const xTitle = titleFor(model.xAxis, iw), yTitle = titleFor(model.yAxis, ih);
   const focusRegion = focusId ? describe(byId.get(focusId)) : '';
   const tipLeft = active ? Math.min(Math.max(8, active.cx + 12), width - (phone ? 210 : 260)) : 0;
   const tipTop = active ? (active.cy > height / 2 ? Math.max(4, active.cy - 120) : active.cy + 12) : 0;
@@ -213,8 +233,8 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
         {useCanvas ? <canvas ref={canvasRef} className="pc-canvas" style={{ width, height }} aria-hidden="true" /> : null}
         <svg
           className="pc-svg" width={width} height={height} viewBox={`0 0 ${width} ${height}`}
-          role="application" tabIndex={0}
-          aria-label={`Trade-off chart: ${model.xAxis.label} against ${model.yAxis.label}, ${pts.length} options. Arrow keys move between options, P jumps to the weighted pick, Enter opens the option detail. The same data is in the table view.`}
+          id={svgId} role="application" tabIndex={0}
+          aria-label={`Trade-off chart: ${model.xAxis.label} (${dirText(model.xAxis)}) against ${model.yAxis.label} (${dirText(model.yAxis)}), ${pts.length} options. Arrow keys move between options, P jumps to the weighted pick, Enter opens the option detail. The same data is in the table view.`}
           aria-describedby="pc-help"
           onPointerMove={onMove} onPointerLeave={() => setHoverId(null)} onClick={onClick} onKeyDown={onKey}
           onFocus={() => { if (!focusId && model.pickId && byId.has(model.pickId)) setFocusId(model.pickId); }}
@@ -228,8 +248,8 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
             <line x1={m.left} x2={m.left} y1={m.top} y2={m.top + ih} />
             {xt.ticks.filter((_, i) => !phone || i % 2 === 0).map((t) => <text key={`tx${t}`} x={sx(t)} y={m.top + ih + 16} textAnchor="middle">{tickLabel(model.xAxis, t)}</text>)}
             {yt.ticks.map((t) => <text key={`ty${t}`} x={m.left - 6} y={sy(t) + 4} textAnchor="end">{tickLabel(model.yAxis, t)}</text>)}
-            <text className="pc-axis-title" x={m.left + iw / 2} y={height - 8} textAnchor="middle">{model.xAxis.label} ({model.xAxis.unit}) → lower is better</text>
-            <text className="pc-axis-title" transform={`translate(${phone ? 12 : 14},${m.top + ih / 2}) rotate(-90)`} textAnchor="middle">{model.yAxis.label} ({model.yAxis.unit})</text>
+            <text className="pc-axis-title" x={m.left + iw / 2} y={height - 8} textAnchor="middle">{xTitle}</text>
+            <text className="pc-axis-title" transform={`translate(${phone ? 12 : 14},${m.top + ih / 2}) rotate(-90)`} textAnchor="middle">{yTitle}</text>
           </g>
           <g clipPath="url(#pc-clip)">
             <defs><clipPath id="pc-clip"><rect x={m.left - 10} y={m.top - 10} width={iw + 20} height={ih + 20} /></clipPath></defs>
@@ -243,7 +263,14 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
               </g>
             ) : null}
             {frontierPath ? <path className="pc-frontier" d={frontierPath} aria-hidden="true" /> : null}
-            {sel && sel !== pick ? <circle className="pc-sel" cx={sel.cx} cy={sel.cy} r={sel.r + 5} aria-hidden="true" /> : null}
+            {sel && sel !== pick && sel !== topG ? <circle className="pc-sel" cx={sel.cx} cy={sel.cy} r={sel.r + 5} aria-hidden="true" /> : null}
+            {topG ? (
+              <g className="pc-top" aria-hidden="true">
+                <circle cx={topG.cx} cy={topG.cy} r={topG.r + 6} />
+                <text x={topG.cx > m.left + iw * 0.7 ? topG.cx - topG.r - 10 : topG.cx + topG.r + 10} y={topG.cy + topG.r + 16}
+                  textAnchor={topG.cx > m.left + iw * 0.7 ? 'end' : 'start'}>Highest score #{topG.p.rank}</text>
+              </g>
+            ) : null}
             {pick ? (
               <g className="pc-pick" aria-hidden="true">
                 <circle cx={pick.cx} cy={pick.cy} r={pick.r + 6} />
@@ -261,14 +288,16 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
             <div><strong>{fmtAxis(model.xAxis, active.p.x)}</strong> <span className="pc-tip-k">{model.xAxis.label}</span></div>
             <div><strong>{fmtAxis(model.yAxis, active.p.y)}</strong> <span className="pc-tip-k">{model.yAxis.label}</span></div>
             <div><strong>{sig(active.p.ttp, 2)} months</strong> <span className="pc-tip-k">time-to-power</span> · <strong>{money(active.p.capex, 2)}</strong> <span className="pc-tip-k">capex</span></div>
-            <div><strong>{active.p.score.toFixed(1)}</strong> <span className="pc-tip-k">score</span> · {active.p.resilience}{active.p.dominatedBy ? ` · dominated by #${active.p.dominatedByRank}` : ''}{active.p.onFrontier ? ' · frontier' : ''}</div>
+            <div><strong>{active.p.score.toFixed(1)}</strong> <span className="pc-tip-k">score</span> · {active.p.resilience}{active.p.onFrontier ? ' · frontier' : ''}{active.p.isPick ? ' · weighted pick' : ''}{active.p.isTopScore ? ' · highest weighted score' : ''}</div>
+            {active.p.dominatedBy ? <div className="pc-tip-k">Dominated by #{active.p.dominatedByRank} {active.p.dominatedByName}</div> : null}
             <div className="pc-tip-k">Click or press Enter to open</div>
           </div>
         ) : null}
       </div>
       <p id="pc-help" className="note">
-        Keyboard: focus the chart, then use the arrow keys to move between options (left and right by cost, up and down by carbon), P for the weighted pick, Enter to open its detail.
-        {useCanvas ? ` Drawn on Canvas (more than ${CANVAS_ABOVE} points).` : ''}
+        {model.xAxis.label}: {dirText(model.xAxis)}; {model.yAxis.label}: {dirText(model.yAxis)}.{' '}
+        Keyboard: focus the chart, then use the arrow keys to move between options (left and right along {model.xAxis.label}, up and down along {model.yAxis.label}), Home and End for the ends of the x axis, P for the weighted pick, Enter to open its detail.
+        {useCanvas ? <> Drawn on Canvas (more than {canvasAbove} points) <UnverifiedTag path="view.pareto.canvasAbove" compact descId="pc-canvas-basis" />.</> : ''}
       </p>
       <div className="sr-only" aria-live="polite">{focusRegion}</div>
     </div>

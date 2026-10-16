@@ -3,16 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Concept-stage data centre energy optioneering tool - core slice (inputs, 8760 dispatch, option generator, scoring, ranked list)",
+  "description": "Concept-stage data centre energy optioneering tool - core slice (inputs, 8760 dispatch, option generator, scoring, ranked list) and Pareto trade-off view",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node tests/run-tests.mjs"
+    "test": "node tests/run-tests.mjs",
+    "test:browser": "node tests/browser-tests.mjs"
   },
   "dependencies": {
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "axe-core": "4.10.2",
     "esbuild": "0.23.1"
   }
 }

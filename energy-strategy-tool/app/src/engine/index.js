@@ -9,4 +9,5 @@ export { buildContext, demandYear, gridCapByMonth } from './context.js';
 export { sizeOption } from './sizing.js';
 export { dispatchConfig, dispatchYear, dispatchAll, MERIT_ORDER } from './dispatch.js';
 export { addMonths, monthsBetween } from './dates.js';
-export { paretoView, paretoFrontier, weightedPick, paretoTableRows, defaultParetoAxes, PARETO_AXES, TTP_CLASSES } from './pareto.js';
+export { paretoView, paretoFrontier, weightedPick, highestWeightedScore, paretoTableRows, dominatedLabel, defaultParetoAxes, paretoCanvasAbove, paretoDefaultDisplay, paretoTtpClasses, PARETO_AXES, PARETO_AXIS_LIST, PARETO_AXIS_GROUPS, TTP_RAMP_STEPS } from './pareto.js';
+export { defaultView, viewSetting, tablePageSize, activeFilterChips, activeFilterCount, FLAG_FILTERS } from './view.js';

@@ -78,8 +78,11 @@ export function markDominance(options) {
       if (statusRank(options[j]) < si) continue;
       let allLE = true, anyLT = false;
       for (let k = 0; k < 4; k++) {
-        if (b[k] > a[k] + eps * Math.max(1, Math.abs(a[k]))) { allLE = false; break; }
-        if (b[k] < a[k] - eps * Math.max(1, Math.abs(a[k]))) anyLT = true;
+        // Tolerance on a finite scale: with an infinite metric (LCOE with no delivered energy) the
+        // old form gave Infinity − Infinity = NaN, so a finite (better) value never counted as better.
+        const tol = eps * Math.max(1, Number.isFinite(a[k]) ? Math.abs(a[k]) : 0);
+        if (b[k] > a[k] + tol) { allLE = false; break; }
+        if (b[k] < a[k] - tol) anyLT = true;
       }
       if (allLE && anyLT) { options[i].dominatedBy = options[j].id; break; }
     }

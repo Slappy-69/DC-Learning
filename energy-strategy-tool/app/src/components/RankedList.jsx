@@ -1,19 +1,33 @@
-import React, { useMemo, useState } from 'react';
-import { applyView, DEFAULT_VIEW } from '../engine/scoring.js';
+import React, { useEffect, useMemo, useState } from 'react';
+import { applyView } from '../engine/scoring.js';
+import { defaultView, tablePageSize, FLAG_FILTERS } from '../engine/view.js';
 import { sig, money, monthLabel, pct } from '../format.js';
 import OptionDetail from './OptionDetail.jsx';
+import FilterChips from './FilterChips.jsx';
+import { UnverifiedTag } from './Field.jsx';
 
-const PAGE = 50;
 const RES_STATUSES = ['Meets', 'Meets with flags', 'Does not meet'];
-const COMMON_FLAGS = [
-  ['grid-binding', 'Grid capacity binding'],
-  ['res-backed', 'Backed load not met'],
-  ['res-autonomy', 'Autonomy not met'],
-  ['permit-ied', 'IED threshold'],
-  ['fuel-gas-unknown', 'Gas connection unconfirmed'],
-  ['tech-nascent', 'Nascent technology'],
-  ['target-ttp', 'Time-to-power target missed'],
-];
+
+// Capex ceiling view filter (§11), in € m; commits on blur or Enter; empty = no ceiling.
+function CapexFilter({ value, onCommit }) {
+  const shown = value == null ? '' : String(+(value / 1e6).toPrecision(10));
+  const [draft, setDraft] = useState(shown);
+  useEffect(() => setDraft(shown), [shown]);
+  const commit = () => {
+    const t = draft.trim();
+    if (t === '') { if (value != null) onCommit(null); return; }
+    const x = Number(t);
+    if (!Number.isFinite(x) || x < 0) { setDraft(shown); return; }
+    if (x * 1e6 !== value) onCommit(x * 1e6);
+  };
+  return (
+    <label className="inline-number">
+      <span>Capex at most (€ m)</span>
+      <input type="number" min={0} step="any" inputMode="decimal" placeholder="none" value={draft}
+        onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); }} />
+    </label>
+  );
+}
 
 function sevCounts(flags) {
   const c = { major: 0, minor: 0, info: 0 };
@@ -30,8 +44,10 @@ function ResBadge({ s }) {
 export default function RankedList({ run, view, setView, start }) {
   const [page, setPage] = useState(0);
   const [openId, setOpenId] = useState(null);
-  const { list, chips, hiddenDominated } = useMemo(() => applyView(run.options, view), [run, view]);
+  const { list, hiddenDominated } = useMemo(() => applyView(run.options, view), [run, view]);
   const dominatedCount = useMemo(() => run.options.filter((o) => o.dominatedBy).length, [run]);
+  const PAGE = tablePageSize();
+  const hdDefault = defaultView().hideDominated;
   const pages = Math.max(1, Math.ceil(list.length / PAGE));
   const p = Math.min(page, pages - 1);
   const rows = list.slice(p * PAGE, p * PAGE + PAGE);
@@ -54,30 +70,41 @@ export default function RankedList({ run, view, setView, start }) {
             onClick={() => { setPage(0); setView({ ...view, resilience: toggleIn(view.resilience, s) }); }}>{s}</button>
         ))}
         <label className="inline-select">
-          <span>Flag</span>
+          <span>Show only</span>
+          <select value="" onChange={(e) => { if (e.target.value) { setPage(0); setView({ ...view, flagIds: toggleIn(view.flagIds, e.target.value) }); } }}>
+            <option value="">options with flag…</option>
+            {FLAG_FILTERS.map(([id, l]) => <option key={id} value={id}>{view.flagIds.includes(id) ? '✓ ' : ''}{l}</option>)}
+          </select>
+        </label>
+        <label className="inline-select">
+          <span>Hide</span>
           <select value="" onChange={(e) => { if (e.target.value) { setPage(0); setView({ ...view, hideFlagIds: toggleIn(view.hideFlagIds, e.target.value) }); } }}>
-            <option value="">Hide options with…</option>
-            {COMMON_FLAGS.map(([id, l]) => <option key={id} value={id}>{l}</option>)}
+            <option value="">options with flag…</option>
+            {FLAG_FILTERS.map(([id, l]) => <option key={id} value={id}>{view.hideFlagIds.includes(id) ? '✓ ' : ''}{l}</option>)}
+          </select>
+        </label>
+        <CapexFilter value={view.capexCeiling} onCommit={(v) => { setPage(0); setView({ ...view, capexCeiling: v }); }} />
+        <label className="inline-select">
+          <span>Dominance</span>
+          <select value={view.dominated} onChange={(e) => { setPage(0); setView({ ...view, dominated: e.target.value }); }}>
+            <option value="all">All options</option>
+            <option value="non">Non-dominated only</option>
+            <option value="only">Dominated only</option>
           </select>
         </label>
         <button type="button" className={`chip ${view.archetypesOnly ? 'on' : ''}`} aria-pressed={view.archetypesOnly} onClick={() => { setPage(0); setView({ ...view, archetypesOnly: !view.archetypesOnly }); }}>Archetypes only</button>
         <label className="inline-check">
-          <input type="checkbox" checked={view.hideDominated} onChange={(e) => { setPage(0); setView({ ...view, hideDominated: e.target.checked }); }} />
+          <input type="checkbox" checked={view.hideDominated} onChange={(e) => { setPage(0); setView({ ...view, hideDominated: e.target.checked }); }}
+            aria-describedby={view.hideDominated === hdDefault ? 'ranked-hd-basis' : undefined} />
           <span>Hide dominated options</span>
-          <span className="tag tag-unverified" title="indicative — unverified (judgement); off by default">unverified</span>
+          {view.hideDominated === hdDefault ? <UnverifiedTag path="settings.hideDominated" compact descId="ranked-hd-basis" /> : null}
         </label>
         <label className="inline-search">
           <span className="sr-only">Search option names</span>
           <input type="search" placeholder="Search names" value={view.search} onChange={(e) => { setPage(0); setView({ ...view, search: e.target.value }); }} />
         </label>
       </div>
-      {chips.length || view.hideDominated ? (
-        <div className="chip-row" aria-label="Active view filters">
-          {chips.map((c) => <span key={c} className="active-chip">{c}</span>)}
-          {view.hideDominated ? <span className="active-chip">{hiddenDominated.toLocaleString('en-GB')} dominated options hidden <button type="button" className="link-btn" onClick={() => setView({ ...view, hideDominated: false })}>show</button></span> : null}
-          <button type="button" className="link-btn" onClick={() => { setPage(0); setView({ ...DEFAULT_VIEW }); }}>Clear all filters</button>
-        </div>
-      ) : null}
+      <FilterChips view={view} setView={setView} hiddenDominated={hiddenDominated} onChange={() => setPage(0)} clearAll />
       <p className="note">Showing {list.length.toLocaleString('en-GB')} of {run.options.length.toLocaleString('en-GB')} screened options ({dominatedCount.toLocaleString('en-GB')} dominated, all shown unless hidden). Scores are relative to the scoring set (all screened options); filters change only what is shown.</p>
 
       <div className="table-wrap" role="region" aria-label="Ranked options" tabIndex={0}>
@@ -111,12 +138,12 @@ export default function RankedList({ run, view, setView, start }) {
                       <button type="button" className="row-btn" aria-expanded={open} onClick={() => setOpenId(open ? null : o.id)}>{o.name}</button>
                       <div className="row-tags">
                         {o.archetype ? <span className="badge badge-arch">{o.archetype} {o.archetypeName}</span> : null}
-                        {o.dominatedBy ? <span className="badge badge-dom" title={`Dominated by #${nameById.get(o.dominatedBy)?.rank} ${nameById.get(o.dominatedBy)?.name}`}>Dominated by #{nameById.get(o.dominatedBy)?.rank}</span> : null}
+                        {o.dominatedBy ? (() => { const d = nameById.get(o.dominatedBy); const t = `Dominated by #${d?.rank} ${d?.name}`; return <span className="badge badge-dom" title={t}>{t}</span>; })() : null}
                       </div>
                     </td>
                     <td className="num strong">{o.score.toFixed(1)}</td>
                     <td className="num axis-cell">
-                      <span className="axis-bars" aria-label={`Cost ${o.axisScores.cost.toFixed(0)}, carbon ${o.axisScores.carbon.toFixed(0)}, time-to-power ${o.axisScores.ttp.toFixed(0)}, deliverability ${o.axisScores.deliverability.toFixed(0)}`}>
+                      <span className="axis-bars" role="img" aria-label={`Axis scores: cost ${o.axisScores.cost.toFixed(0)}, carbon ${o.axisScores.carbon.toFixed(0)}, time-to-power ${o.axisScores.ttp.toFixed(0)}, deliverability ${o.axisScores.deliverability.toFixed(0)}`}>
                         {['cost', 'carbon', 'ttp', 'deliverability'].map((k) => (
                           <span key={k} className={`axis-bar ax-${k}`} title={`${k} ${o.axisScores[k].toFixed(0)}`}><span style={{ width: `${o.axisScores[k]}%` }} /></span>
                         ))}
@@ -133,7 +160,7 @@ export default function RankedList({ run, view, setView, start }) {
                     <td className="num"><span className="flag-counts" title={`${c.major} major, ${c.minor} minor, ${c.info} info`}>{c.major ? <span className="fc fc-major">{c.major}</span> : null}{c.minor ? <span className="fc fc-minor">{c.minor}</span> : null}<span className="fc fc-info">{c.info}</span></span></td>
                   </tr>
                   {open ? (
-                    <tr className="detail-row"><td colSpan={13}><OptionDetail o={o} start={start} onClose={() => setOpenId(null)} /></td></tr>
+                    <tr className="detail-row"><td colSpan={13}><OptionDetail o={o} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} /></td></tr>
                   ) : null}
                 </React.Fragment>
               );
@@ -145,6 +172,7 @@ export default function RankedList({ run, view, setView, start }) {
         <button type="button" className="chip-btn" disabled={p === 0} onClick={() => setPage(p - 1)}>Previous</button>
         <span>Page {p + 1} of {pages}</span>
         <button type="button" className="chip-btn" disabled={p >= pages - 1} onClick={() => setPage(p + 1)}>Next</button>
+        <UnverifiedTag path="view.table.pageSize" compact text={`${PAGE} rows per page · unverified`} />
       </nav>
     </div>
   );

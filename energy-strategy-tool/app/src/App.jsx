@@ -5,8 +5,8 @@ import RunSummary from './components/RunSummary.jsx';
 import RunProgress from './components/RunProgress.jsx';
 import ParetoView from './components/ParetoView.jsx';
 import { useCompute } from './useCompute.js';
-import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES } from './engine/index.js';
-import { scoreOptions, DEFAULT_VIEW, effectiveWeights } from './engine/scoring.js';
+import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount } from './engine/index.js';
+import { scoreOptions, effectiveWeights, applyView } from './engine/scoring.js';
 import { GUARDRAIL, sig } from './format.js';
 
 // Inputs that only affect scoring/ranking: changing them re-scores without re-running dispatch (§4).
@@ -36,12 +36,13 @@ function computeKeyOf(inputs) {
 
 export default function App() {
   const [inputs, setInputs] = useState(() => referenceT1());
-  const [view, setView] = useState({ ...DEFAULT_VIEW });
+  const [view, setView] = useState(() => defaultView()); // registry defaults: no filter, hide dominated off
   const [summaryOpen, setSummaryOpen] = useState(true);
   const [progressOpen, setProgressOpen] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const [announce, setAnnounce] = useState('');
   const [tab, setTab] = useState('options'); // results view tabs (§16): Options, Trade-offs
+  const [focusChart, setFocusChart] = useState(false); // "Skip to trade-offs chart" request
   const computeKey = useMemo(() => computeKeyOf(inputs), [inputs]);
   const compute = useCompute(inputs, computeKey);
   const prevLeader = useRef(null);
@@ -59,7 +60,9 @@ export default function App() {
     return r;
   }, [compute.run, inputs.weights, inputs.settings.costMetric, inputs.settings.carbonMetric, inputs.settings.rankCompliantFirst]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const leader = useMemo(() => (run ? run.options.reduce((a, b) => (a.rank < b.rank ? a : b)) : null), [run]);
+  // The leader is the weighted pick (rank 1): the same function the Trade-offs view uses, so the header,
+  // the live region and the highlighted pick always name the same option (AC5).
+  const leader = useMemo(() => (run ? weightedPick(run.options) : null), [run]);
 
   useEffect(() => {
     if (!leader) return;
@@ -91,13 +94,15 @@ export default function App() {
   }, []);
   const { w } = effectiveWeights(inputs.weights);
   const start = run ? run.meta.analysisStart : inputs.project.analysisStart;
-  const viewFilterCount = (view.resilience.length ? 1 : 0) + (view.hideFlagIds.length ? 1 : 0) + (view.archetypesOnly ? 1 : 0) + (view.search ? 1 : 0);
+  const viewFilterCount = activeFilterCount(view);
   const dominated = run ? run.options.filter((o) => o.dominatedBy).length : 0;
-  const shown = run ? (() => { let n = run.options.length; return n; })() : 0;
+  const shown = useMemo(() => (run ? applyView(run.options, view).list.length : 0), [run, view]);
+  const skipToChart = (e) => { e.preventDefault(); setTab('tradeoffs'); setFocusChart(true); };
 
   return (
     <div className="app">
       <a className="skip" href="#results">Skip to results</a>
+      {run ? <a className="skip" href={`#tradeoffs-chart`} onClick={skipToChart}>Skip to trade-offs chart</a> : null}
       <header className="topbar">
         <div className="brand">
           <h1>Concept energy optioneering</h1>
@@ -117,7 +122,7 @@ export default function App() {
 
         <main id="results" className="main" tabIndex={-1}>
           <div className="header-strip" role="region" aria-label="Results header">
-            <div className="hs-item"><span className="hs-k">Options</span><span className="hs-v">{run ? `${shown.toLocaleString('en-GB')} screened / ${run.generation.totalCombinations.toLocaleString('en-GB')} combinations · ${dominated.toLocaleString('en-GB')} dominated` : '—'}</span></div>
+            <div className="hs-item"><span className="hs-k">Options</span><span className="hs-v">{run ? `${shown.toLocaleString('en-GB')} shown / ${run.options.length.toLocaleString('en-GB')} screened / ${run.generation.totalCombinations.toLocaleString('en-GB')} combinations · ${dominated.toLocaleString('en-GB')} dominated` : '—'}</span></div>
             <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">Rank probability not available in this slice (no Monte Carlo)</span></div>
             <div className="hs-item"><span className="hs-k">Model</span><span className="hs-v">Full-year hourly (8760 h)</span><span className="hs-sub">Synthetic profiles · {run ? COUNTRIES[run.country].name : ''}</span></div>
             <div className="hs-item"><span className="hs-k">Settings</span><span className="hs-v">
@@ -126,7 +131,7 @@ export default function App() {
               {inputs.settings.rankCompliantFirst ? <> · <strong>Requirement-compliant options ranked first</strong></> : null}
             </span></div>
             <div className="hs-item"><span className="hs-k">Weights</span><span className="hs-v">Cost {(w.cost * 100).toFixed(0)} · Carbon {(w.carbon * 100).toFixed(0)} · TTP {(w.ttp * 100).toFixed(0)} · Deliv. {(w.deliverability * 100).toFixed(0)} %</span></div>
-            <div className="hs-item"><span className="hs-k">Unverified defaults</span><span className="hs-v">All {unverifiedCount} default records are <span className="tag tag-unverified">{LABEL}</span></span></div>
+            <div className="hs-item"><span className="hs-k">Unverified defaults</span><span className="hs-v">All {unverifiedCount} default records are <span className="tag tag-unverified">{LABEL}</span></span><span className="hs-sub">The count affecting the leader needs a per-option record map (not in this slice)</span></div>
           </div>
 
           <div className="status" role="status" aria-live="polite">
@@ -157,7 +162,7 @@ export default function App() {
                 ))}
               </div>
               <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} /> : <ParetoView run={run} view={view} setView={setView} start={start} />}
+                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} /> : <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} />}
               </div>
             </>
           ) : compute.status !== 'error' ? (

@@ -29,7 +29,7 @@ export default function ParetoTable({ model, page = 0, pageSize = 50, onOpen, op
           <th scope="col" className="num">Time-to-power (months)</th>
           <th scope="col" className="num">Capex</th>
           <th scope="col">Resilience</th>
-          <th scope="col">Dominance (4 axes)</th>
+          <th scope="col">Dominance (4 axes and status)</th>
           <th scope="col">On 2-axis frontier</th>
         </tr>
       </thead>
@@ -42,6 +42,7 @@ export default function ParetoTable({ model, page = 0, pageSize = 50, onOpen, op
                 <button type="button" className="row-btn" aria-expanded={openId === r.id} onClick={() => onOpen(r.id)}>{r.name}</button>
               ) : r.name}
               {r.pick ? <span className="badge badge-pick"><span aria-hidden="true">◎</span> Weighted pick</span> : null}
+              {r.topScore ? <span className="badge badge-top">Highest weighted score</span> : null}
             </th>
             <td className="num strong">{r.score.toFixed(1)}</td>
             <td className="num">{fmtAxis(model.xAxis, r.x)}</td>

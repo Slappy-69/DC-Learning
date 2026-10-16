@@ -140,12 +140,13 @@ export default function InputsPanel({ inputs, update, setWeights }) {
 
 function WeightSlider({ k, label, raw, eff, inputs, onChange }) {
   const id = `w-${k}`;
+  const atDefault = isAtDefault(inputs, `weights.${k}`);
   return (
     <div className="weight">
       <label htmlFor={id}>{label} <span className="eff">{(eff * 100).toFixed(0)} %</span></label>
-      <input id={id} type="range" min={0} max={100} step={1} value={raw}
+      <input id={id} type="range" min={0} max={100} step={1} value={raw} aria-describedby={atDefault ? `${id}-basis` : undefined}
         onChange={(e) => onChange(Number(e.target.value))} aria-valuetext={`raw ${raw}, effective ${(eff * 100).toFixed(0)} percent`} />
-      {isAtDefault(inputs, `weights.${k}`) ? <UnverifiedTag path={`weights.${k}`} compact /> : null}
+      {atDefault ? <UnverifiedTag path={`weights.${k}`} compact descId={`${id}-basis`} /> : null}
     </div>
   );
 }
@@ -155,8 +156,8 @@ function PhasesEditor({ inputs, norm, update }) {
   const phases = norm.load.phases;
   const setPhases = (p) => update('load.phases', p);
   return (
-    <fieldset className="phases">
-      <legend>Phasing {atDefault ? <UnverifiedTag path="load.phases" compact /> : null}</legend>
+    <fieldset className="phases" aria-describedby={atDefault ? 'phases-basis' : undefined}>
+      <legend>Phasing {atDefault ? <UnverifiedTag path="load.phases" compact descId="phases-basis" /> : null}</legend>
       {atDefault ? <p className="note">Default: 1 phase, 100 % of IT at the grid full-connection date.</p> : null}
       <table className="mini">
         <thead><tr><th scope="col">Phase</th><th scope="col">IT MW</th><th scope="col">Date</th><th scope="col"><span className="sr-only">Remove</span></th></tr></thead>
@@ -222,10 +223,10 @@ function ChoiceRow({ ch, inputs, norm, update }) {
   };
   const setLock = (lock) => update(`choices.${ch.id}`, { state: lock ? 'locked' : 'open', values: lock ? [st.values[0]] : st.values });
   return (
-    <fieldset className="choice-row">
+    <fieldset className="choice-row" aria-describedby={atDefault ? `choice-${ch.id}-basis` : undefined}>
       <legend>
         <span className="choice-id">{ch.id}</span> {ch.name}
-        {atDefault ? <UnverifiedTag path={`choices.${ch.id}`} compact /> : null}
+        {atDefault ? <UnverifiedTag path={`choices.${ch.id}`} compact descId={`choice-${ch.id}-basis`} /> : null}
       </legend>
       <div className="chips" role="group" aria-label={`${ch.name} values`}>
         {ch.values.map(([val, label]) => (

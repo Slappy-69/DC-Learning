@@ -31,6 +31,15 @@
 //         moves when the weights change, with no dispatch re-run (dispatch objects untouched, timed).
 //     8c. Dominance marking removes no option from the view or the ranking.
 //     8d. Every point in the rendered chart has a matching row in the rendered table alternative.
+//     8e. Dominance is marked when the dominated option has an infinite cost (regression for the
+//         scoring.js tolerance fix, Pareto review).
+//     8f. Every registered view setting (view.*) and run setting (settings.*) is the value the code
+//         uses: changing the record changes the behaviour, and a view record with no check fails.
+//     8g. AC5: the highlighted pick is the weighted leader (rank 1), the same option as the header
+//         leader, with "Rank requirement-compliant options first" on or off; the highest weighted
+//         score is marked separately when it differs; a pick that is not drawn says why.
+//     8h. Every active view filter is a removable chip; the header filter count matches applyView().
+// Browser checks (Canvas drawing, keyboard, table paging, skip links, axe) are in tests/browser-tests.mjs.
 
 import assert from 'node:assert/strict';
 import {
@@ -39,6 +48,8 @@ import {
   runModelSteps, mergeRuns, startPooledRun, toTransferable, STAGES, validateRunLog, stripTimestamps,
   logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY,
   HOOKS, paretoFrontier, weightedPick, paretoTableRows, PRESETS,
+  highestWeightedScore, defaultView, activeFilterChips, activeFilterCount, paretoTtpClasses, defaultParetoAxes,
+  tablePageSize, buildDefaultInputs,
 } from '../src/engine/index.js';
 import { scoreOptions } from '../src/engine/scoring.js';
 import { dispatchAll } from '../src/engine/dispatch.js';
@@ -679,7 +690,13 @@ await test('8a. Pareto set (non-dominated on the two plotted axes) is correct on
   const xy = runT1.options.map((o) => ({ id: o.id, x: o.eco.lcoe, y: o.carbon.locationG }));
   const bruteT1 = xy.filter((p) => !xy.some((q) => q !== p && q.x <= p.x && q.y <= p.y && (q.x < p.x || q.y < p.y))).map((p) => p.id).sort();
   assert.deepEqual(mT1.frontier.slice().sort(), bruteT1);
-  return `hand example frontier A, B, E, D (C, F, G dominated; H not plottable); 200 random sets (${checked} points, with ties) match brute force; engine set frontier o1, o2, o4 with o3, o5 marked dominated; T1 LCOE vs location carbon: ${mT1.frontier.length} of ${runT1.options.length} on the frontier, equal to brute force.`;
+  // Any two axes (§12.2), including a higher-is-better axis: time-to-power (lower) against deliverability (higher).
+  const mTD = HOOKS.paretoView(runT1, { x: 'ttp', y: 'deliverability' });
+  const td = runT1.options.map((o) => ({ id: o.id, x: o.ttp.metric, y: o.deliv.score }));
+  const bruteTD = td.filter((p) => !td.some((q) => q !== p && q.x <= p.x && q.y >= p.y && (q.x < p.x || q.y > p.y))).map((p) => p.id).sort();
+  assert.deepEqual(mTD.frontier.slice().sort(), bruteTD, 'frontier with a higher-is-better axis');
+  assert.equal(mTD.yAxis.better, 'higher');
+  return `hand example frontier A, B, E, D (C, F, G dominated; H not plottable); 200 random sets (${checked} points, with ties) match brute force; engine set frontier o1, o2, o4 with o3, o5 marked dominated; T1 LCOE vs location carbon: ${mT1.frontier.length} of ${runT1.options.length} on the frontier, equal to brute force; T1 time-to-power vs deliverability (higher is better): ${mTD.frontier.length} on the frontier, equal to brute force.`;
 });
 
 await test('8b. Weighted pick is the highest weighted score and moves with the weights, with no dispatch re-run', () => {
@@ -702,6 +719,8 @@ await test('8b. Weighted pick is the highest weighted score and moves with the w
     assert.equal(weightedPick(r.options).id, best.id);
     const rank1 = r.options.find((o) => o.rank === 1);
     assert.equal(model.pickId, rank1.id, `${name}: pick is not the rank-1 leader`);
+    assert.equal(highestWeightedScore(r.options).id, best.id, `${name}: highest weighted score`);
+    assert.equal(model.topScoreId, null, `${name}: a separate highest-score mark with compliant-first off`);
     assert.equal(model.points.filter((p) => p.isPick).length, 1, 'exactly one highlighted point');
     // Dispatch untouched: the same result objects, shared by reference.
     for (let i = 0; i < r.options.length; i++) {
@@ -753,8 +772,12 @@ await test('8c. Dominance marking does not remove any option from the Pareto vie
   return out.join('; ') + '.';
 });
 
-await test('8d. Every point in the Pareto chart has a matching row in the table alternative (rendered)', async () => {
-  // Bundle the real components and render them to static markup with react-dom/server.
+// Bundle the real view components once with esbuild and render them to static markup with
+// react-dom/server. The bundle has its own module instances, so it also exports its own registry:
+// tests that change a view record to check the behaviour follows (8f) change the bundle's copy.
+let viewBundle = null;
+async function getViewBundle() {
+  if (viewBundle) return viewBundle;
   const esbuild = await import('esbuild');
   const { mkdtempSync, writeFileSync: wf, rmSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
@@ -764,51 +787,306 @@ await test('8d. Every point in the Pareto chart has a matching row in the table 
   const dir = mkdtempSync(join(tmpdir(), 'pareto-test-'));
   try {
     const entry = join(dir, 'entry.jsx');
+    const src = (f) => JSON.stringify(join(root, f));
     wf(entry, `import React from 'react'; import { renderToStaticMarkup } from 'react-dom/server.browser';
-      import ParetoChart from ${JSON.stringify(join(root, 'src/components/ParetoChart.jsx'))};
-      import ParetoTable from ${JSON.stringify(join(root, 'src/components/ParetoTable.jsx'))};
-      export function render(model, width) {
-        return {
-          chart: renderToStaticMarkup(React.createElement(ParetoChart, { model, onSelect: () => {}, forceSvg: true, initialWidth: width })),
-          table: renderToStaticMarkup(React.createElement(ParetoTable, { model, pageSize: Infinity })),
-        };
+      import ParetoChart from ${src('src/components/ParetoChart.jsx')};
+      import ParetoTable from ${src('src/components/ParetoTable.jsx')};
+      import ParetoView from ${src('src/components/ParetoView.jsx')};
+      export { getRegistry } from ${src('src/engine/defaults.js')};
+      export function renderChart(model, width, forceSvg = true) {
+        return renderToStaticMarkup(React.createElement(ParetoChart, { model, onSelect: () => {}, forceSvg, initialWidth: width }));
+      }
+      export function renderTable(model, pageSize = Infinity) {
+        return renderToStaticMarkup(React.createElement(ParetoTable, { model, pageSize }));
+      }
+      export function renderView(run, view) {
+        return renderToStaticMarkup(React.createElement(ParetoView, { run, view, setView: () => {}, start: '2027-01' }));
       }`);
     const out = join(dir, 'bundle.mjs');
     await esbuild.build({ entryPoints: [entry], bundle: true, format: 'esm', platform: 'node', outfile: out, jsx: 'automatic', loader: { '.js': 'jsx' }, logLevel: 'silent', nodePaths: [join(root, 'node_modules')], define: { 'process.env.NODE_ENV': '"production"' } });
-    const { render } = await import(pathToFileURL(out).href);
-    const summary = [];
-    const cases = [
-      ['T1 default', runT1, null, DEFAULT_VIEW, 900],
-      ['T1 NPV vs market, hide dominated', runT1, { x: 'npv', y: 'market' }, { ...DEFAULT_VIEW, hideDominated: true }, 900],
-      ['T3 1−CFE, phone width', runT3, { x: 'lcoe', y: 'cfe' }, DEFAULT_VIEW, 360],
-      ['T1 + C5 None', runFail, null, DEFAULT_VIEW, 360],
-    ];
-    for (const [label, run, axes, view, width] of cases) {
-      const model = HOOKS.paretoView(run, axes, view);
-      const { chart, table } = render(model, width);
-      const chartIds = [...chart.matchAll(/<path[^>]*data-id="([^"]+)"/g)].map((m) => m[1]);
-      const rowIds = [...table.matchAll(/<tr[^>]*data-id="([^"]+)"/g)].map((m) => m[1]);
-      assert.equal(chartIds.length, model.plottedCount, `${label}: chart point count`);
-      assert.equal(new Set(chartIds).size, chartIds.length, `${label}: duplicate chart points`);
-      const rowSet = new Set(rowIds);
-      const missing = chartIds.filter((id) => !rowSet.has(id));
-      assert.deepEqual(missing, [], `${label}: chart points without a table row`);
-      assert.equal(rowIds.length, model.points.length, `${label}: table rows ≠ points in the view`);
-      // Same values: each model row matches its point.
-      const rows = paretoTableRows(model);
-      for (let i = 0; i < rows.length; i++) {
-        const pnt = model.points[i];
-        assert.equal(rows[i].id, pnt.id); assert.equal(rows[i].x, pnt.x); assert.equal(rows[i].y, pnt.y); assert.equal(rows[i].score, pnt.score);
-      }
-      // The weighted pick is marked in both.
-      assert.equal(/Weighted pick #/.test(chart), model.pickVisible, `${label}: pick label`);
-      assert.equal((table.match(/class="row-pick/g) || []).length, model.pickVisible ? 1 : 0, `${label}: pick row`);
-      summary.push(`${label}: ${chartIds.length} points / ${rowIds.length} rows, ${missing.length} missing`);
-    }
-    return summary.join('; ') + '.';
+    viewBundle = await import(pathToFileURL(out).href);
+    return viewBundle;
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+}
+// Set a registry record for the duration of fn, then restore it.
+async function withRecord(registry, path, value, fn) {
+  const r = registry[path];
+  assert.ok(r, `no record ${path}`);
+  const old = r.value;
+  r.value = value;
+  try { return await fn(); } finally { r.value = old; }
+}
+const statusRank = (o) => (o.resilience.status === 'Meets' ? 2 : o.resilience.status === 'Meets with flags' ? 1 : 0);
+
+await test('8d. Every point in the Pareto chart has a matching row in the table alternative (rendered)', async () => {
+  const B = await getViewBundle();
+  const summary = [];
+  const cases = [
+    ['T1 default', runT1, null, DEFAULT_VIEW, 900],
+    ['T1 NPV vs market, hide dominated', runT1, { x: 'npv', y: 'market' }, { ...DEFAULT_VIEW, hideDominated: true }, 900],
+    ['T3 1−CFE, phone width', runT3, { x: 'lcoe', y: 'cfe' }, DEFAULT_VIEW, 360],
+    ['T1 + C5 None', runFail, null, DEFAULT_VIEW, 360],
+    ['T1 time-to-power vs deliverability', runT1, { x: 'ttp', y: 'deliverability' }, DEFAULT_VIEW, 900],
+  ];
+  for (const [label, run, axes, view, width] of cases) {
+    const model = HOOKS.paretoView(run, axes, view);
+    const chart = B.renderChart(model, width);
+    const table = B.renderTable(model);
+    const chartIds = [...chart.matchAll(/<path[^>]*data-id="([^"]+)"/g)].map((m) => m[1]);
+    const rowIds = [...table.matchAll(/<tr[^>]*data-id="([^"]+)"/g)].map((m) => m[1]);
+    assert.equal(chartIds.length, model.plottedCount, `${label}: chart point count`);
+    assert.equal(new Set(chartIds).size, chartIds.length, `${label}: duplicate chart points`);
+    const rowSet = new Set(rowIds);
+    const missing = chartIds.filter((id) => !rowSet.has(id));
+    assert.deepEqual(missing, [], `${label}: chart points without a table row`);
+    assert.equal(rowIds.length, model.points.length, `${label}: table rows ≠ points in the view`);
+    // Same values: each model row matches its point.
+    const rows = paretoTableRows(model);
+    for (let i = 0; i < rows.length; i++) {
+      const pnt = model.points[i];
+      assert.equal(rows[i].id, pnt.id); assert.equal(rows[i].x, pnt.x); assert.equal(rows[i].y, pnt.y); assert.equal(rows[i].score, pnt.score);
+    }
+    // The weighted pick is marked in both: drawn when it is plotted and shown, a table row when shown.
+    assert.equal(/Weighted pick #/.test(chart), model.pickVisible, `${label}: pick label`);
+    assert.equal((table.match(/class="row-pick/g) || []).length, model.pickShown ? 1 : 0, `${label}: pick row`);
+    summary.push(`${label}: ${chartIds.length} points / ${rowIds.length} rows, ${missing.length} missing`);
+  }
+  return summary.join('; ') + '.';
+});
+
+await test('8e. Dominance is marked when the dominated option has an infinite cost (LCOE with no delivered energy)', () => {
+  // Regression for scoring.js markDominance: the tolerance used max(1, |a|) of the dominated option's value,
+  // so with a = Infinity the "strictly better" test became b < Infinity − Infinity = NaN (always false).
+  const W = { cost: 35, carbon: 25, ttp: 25, deliverability: 15 };
+  const S = { costMetric: 'lcoe', carbonMetric: 'location', rankCompliantFirst: false };
+  const cases = [
+    ['infinite cost, equal elsewhere', [synth('a', Infinity, 100, 20, 80), synth('b', 5, 100, 20, 80)], { a: 'b', b: null }],
+    ['the same in mirror order', [synth('a', 5, 100, 20, 80), synth('b', Infinity, 100, 20, 80)], { a: null, b: 'a' }],
+    ['both infinite: a tie, no dominance', [synth('a', Infinity, 100, 20, 80), synth('b', Infinity, 100, 20, 80)], { a: null, b: null }],
+    ['an infinite cost never dominates', [synth('a', 5, 100, 20, 80), synth('b', Infinity, 90, 20, 80)], { a: null, b: null }],
+    ['finite cost with a worse status does not dominate', [synth('a', Infinity, 100, 20, 80, 'Meets'), synth('b', 5, 100, 20, 80, 'Meets with flags')], { a: null, b: null }],
+    ['finite near-tie inside the tolerance does not dominate', [synth('a', 100, 100, 20, 80), synth('b', 100 - 1e-8, 100, 20, 80)], { a: null, b: null }],
+  ];
+  for (const [label, opts, exp] of cases) {
+    scoreOptions(opts, { weights: W, settings: S });
+    const got = Object.fromEntries(opts.map((o) => [o.id, o.dominatedBy]));
+    assert.deepEqual(got, exp, label);
+  }
+  // Through the view: hollow (dominated), listed as not plotted on an LCOE axis, hidden by "Hide dominated options".
+  const run = { options: [synth('a', Infinity, 100, 20, 80), synth('b', 5, 100, 20, 80), synth('c', 7, 90, 20, 80)], inputs: { weights: W, settings: S } };
+  scoreOptions(run.options, run.inputs);
+  const m = HOOKS.paretoView(run, { x: 'lcoe', y: 'location' });
+  const pa = m.points.find((p) => p.id === 'a');
+  assert.equal(pa.dominatedBy, 'b'); assert.equal(pa.plotted, false); assert.deepEqual(m.notPlotted, ['a']);
+  assert.ok(!HOOKS.paretoView(run, { x: 'lcoe', y: 'location' }, { ...defaultView(), hideDominated: true }).points.some((p) => p.id === 'a'));
+  // T3: every infinite-cost option that a finite-cost option with no worse status matches or beats on carbon,
+  // time-to-power and deliverability (exactly) is marked dominated.
+  const inf = runT3.options.filter((o) => !Number.isFinite(o.metrics.cost));
+  let mustBeDominated = 0;
+  for (const o of inf) {
+    const beaten = runT3.options.some((q) => q !== o && Number.isFinite(q.metrics.cost) && statusRank(q) >= statusRank(o)
+      && q.metrics.carbon <= o.metrics.carbon && q.metrics.ttp <= o.metrics.ttp && q.metrics.deliverability >= o.metrics.deliverability);
+    if (beaten) { mustBeDominated++; assert.ok(o.dominatedBy, `T3 ${o.id} (infinite LCOE) is beaten but not marked dominated`); }
+  }
+  return `${cases.length} hand-checked cases as expected (infinite cost dominated by an equal-elsewhere finite cost, both orders; infinite ties and infinite dominators not marked); view: hollow, not plotted, hidden by "Hide dominated options"; T3: ${inf.length} options with infinite LCOE, ${mustBeDominated} of them beaten exactly by a finite-cost option (each marked dominated), ${inf.filter((o) => o.dominatedBy).length} dominated in total.`;
+});
+
+await test('8f. Every registered view setting and run setting is the value the code uses', async () => {
+  const reg = getRegistry();
+  const B = await getViewBundle();
+  const breg = B.getRegistry();
+  const out = [];
+  // (a) Run settings: the engine reads inputs.settings, whose defaults must be the registry values.
+  const inputs = buildDefaultInputs({ analysisStart: START });
+  const settingRecs = Object.keys(reg).filter((k) => k.startsWith('settings.'));
+  for (const k of settingRecs) assert.deepEqual(inputs.settings[k.slice('settings.'.length)], reg[k].value, `${k}: input default differs from the registry value`);
+  for (const k of Object.keys(inputs.settings)) assert.ok(reg[`settings.${k}`], `settings.${k} has no §18 record`);
+  out.push(`${settingRecs.length} settings.* records = input defaults`);
+  // (b) settings.hideDominated drives the initial view (App state, "Clear all filters", paretoView's default).
+  assert.equal(reg['settings.hideDominated'].value, false, '"Hide dominated options" must default to off');
+  assert.equal(defaultView().hideDominated, reg['settings.hideDominated'].value);
+  assert.equal(DEFAULT_VIEW.hideDominated, reg['settings.hideDominated'].value, 'scoring.js DEFAULT_VIEW.hideDominated differs from the settings.hideDominated record');
+  await withRecord(reg, 'settings.hideDominated', true, () => {
+    assert.equal(defaultView().hideDominated, true);
+    const m = HOOKS.paretoView(runT1, null); // default view argument
+    assert.ok(m.hiddenDominated > 0 && m.points.length + m.hiddenDominated === runT1.options.length, 'paretoView default view does not follow settings.hideDominated');
+  });
+  assert.equal(HOOKS.paretoView(runT1, null).hiddenDominated, 0);
+  out.push('hideDominated: record → defaultView() → paretoView default');
+  // (c) view.pareto.ttpClasses: number of time-to-power colour classes.
+  assert.equal(paretoTtpClasses(), reg['view.pareto.ttpClasses'].value);
+  const m5 = HOOKS.paretoView(runT1, null);
+  assert.equal(m5.ttpScale.maxClasses, reg['view.pareto.ttpClasses'].value);
+  assert.ok(m5.ttpScale.classes <= m5.ttpScale.maxClasses);
+  await withRecord(reg, 'view.pareto.ttpClasses', 2, () => {
+    const m2 = HOOKS.paretoView(runT1, null);
+    assert.equal(m2.ttpScale.maxClasses, 2);
+    assert.ok(new Set(m2.points.map((q) => q.ttpClass)).size <= 2, 'more than 2 colour classes with ttpClasses = 2');
+  });
+  await withRecord(reg, 'view.pareto.ttpClasses', 9, () => assert.throws(() => HOOKS.paretoView(runT1, null), /ttpClasses/));
+  out.push(`ttpClasses ${m5.ttpScale.maxClasses} (T1 uses ${m5.ttpScale.classes} after merging tied edges; 2 → ≤ 2)`);
+  // (d) view.pareto.canvasAbove: Canvas strictly above the threshold, SVG at or below it (rendered, no forceSvg).
+  const mT1 = HOOKS.paretoView(runT1, null);
+  const n = mT1.plottedCount;
+  const canvasCount = (html) => (html.match(/<canvas[^>]*class="pc-canvas"/g) || []).length;
+  const pathCount = (html) => (html.match(/<path[^>]*data-id=/g) || []).length;
+  const def = B.renderChart(mT1, 900, false);
+  assert.equal(canvasCount(def), n > breg['view.pareto.canvasAbove'].value ? 1 : 0);
+  assert.ok(def.includes(`more than ${breg['view.pareto.canvasAbove'].value} points`), 'Canvas note does not show the registered threshold');
+  await withRecord(breg, 'view.pareto.canvasAbove', n, () => { const h = B.renderChart(mT1, 900, false); assert.equal(canvasCount(h), 0); assert.equal(pathCount(h), n); });
+  await withRecord(breg, 'view.pareto.canvasAbove', n - 1, () => { const h = B.renderChart(mT1, 900, false); assert.equal(canvasCount(h), 1); assert.equal(pathCount(h), 0); });
+  out.push(`canvasAbove ${breg['view.pareto.canvasAbove'].value}: T1 ${n} points on Canvas; threshold ${n} → SVG, ${n - 1} → Canvas`);
+  // (e) view.pareto.display and (f) view.table.pageSize: the Trade-offs tab's first display and rows per page.
+  const isChart = (h) => /role="application"/.test(h);
+  const isTable = (h) => /class="rank-table pareto-table"/.test(h);
+  const v0 = B.renderView(runT1, defaultView());
+  assert.equal(breg['view.pareto.display'].value, 'chart');
+  assert.ok(isChart(v0) && !isTable(v0), 'Trade-offs does not open on the chart');
+  await withRecord(breg, 'view.pareto.display', 'table', async () => {
+    const v = B.renderView(runT1, defaultView());
+    assert.ok(isTable(v) && !isChart(v), 'view.pareto.display = table did not open the table');
+    const rows = (v.match(/<tr[^>]*data-id=/g) || []).length;
+    assert.equal(rows, breg['view.table.pageSize'].value, 'rows per page differ from view.table.pageSize');
+    await withRecord(breg, 'view.table.pageSize', 7, () => {
+      const v7 = B.renderView(runT1, defaultView());
+      assert.equal((v7.match(/<tr[^>]*data-id=/g) || []).length, 7);
+      assert.ok(v7.includes(`Page <!-- -->1<!-- --> of <!-- -->${Math.ceil(runT1.options.length / 7)}`) || v7.includes(`Page 1 of ${Math.ceil(runT1.options.length / 7)}`), 'pager does not follow view.table.pageSize');
+    });
+  });
+  assert.equal(tablePageSize(), reg['view.table.pageSize'].value);
+  out.push(`display "chart" (record "table" → table first); pageSize ${reg['view.table.pageSize'].value} rows (record 7 → 7 rows)`);
+  // (g) view.pareto.xAxis / yAxis: "follow-scoring" follows the scoring metrics; an axis id fixes the axis.
+  assert.deepEqual(defaultParetoAxes({ costMetric: 'npv', carbonMetric: 'market' }), { x: 'npv', y: 'market' });
+  assert.deepEqual(HOOKS.paretoView(runT1, null).axes, defaultParetoAxes(runT1.inputs.settings));
+  await withRecord(reg, 'view.pareto.xAxis', 'ttp', () => assert.equal(defaultParetoAxes({ costMetric: 'lcoe' }).x, 'ttp'));
+  await withRecord(reg, 'view.pareto.yAxis', 'deliverability', () => assert.equal(HOOKS.paretoView(runT1, null).axes.y, 'deliverability'));
+  await withRecord(reg, 'view.pareto.xAxis', 'nonsense', () => assert.throws(() => defaultParetoAxes({}), /xAxis/));
+  out.push('axes follow-scoring (record "ttp" → x = time-to-power)');
+  // (h) Coverage: every registered view setting has a check above.
+  const probed = ['view.pareto.canvasAbove', 'view.pareto.display', 'view.pareto.ttpClasses', 'view.pareto.xAxis', 'view.pareto.yAxis', 'view.table.pageSize'];
+  assert.deepEqual(Object.keys(reg).filter((k) => k.startsWith('view.')).sort(), probed, 'a registered view setting has no usage check in test 8f');
+  assert.deepEqual(Object.keys(breg).filter((k) => k.startsWith('view.')).sort(), probed);
+  return out.join('; ') + '.';
+});
+
+await test('8g. AC5: the highlighted pick is the weighted leader (rank 1, the header leader) with "Rank requirement-compliant options first" on or off', async () => {
+  const B = await getViewBundle();
+  const W = { cost: 35, carbon: 25, ttp: 25, deliverability: 15 };
+  // x is best on every axis but does not meet the resilience requirement.
+  const mk = (cf) => {
+    const run = { options: [synth('x', 50, 50, 12, 90, 'Does not meet'), synth('y', 60, 60, 18, 80, 'Meets'), synth('z', 70, 55, 20, 70, 'Meets with flags')], inputs: { weights: W, settings: { costMetric: 'lcoe', carbonMetric: 'location', rankCompliantFirst: cf } } };
+    scoreOptions(run.options, run.inputs);
+    return run;
+  };
+  for (const cf of [false, true]) {
+    const run = mk(cf);
+    const m = HOOKS.paretoView(run, { x: 'lcoe', y: 'location' });
+    const rank1 = run.options.find((o) => o.rank === 1);
+    assert.equal(m.pickId, rank1.id); assert.equal(weightedPick(run.options).id, rank1.id); assert.equal(m.leaderId, m.pickId);
+    assert.equal(m.points.filter((q) => q.isPick).length, 1, 'exactly one highlighted pick');
+    assert.equal(highestWeightedScore(run.options).id, 'x');
+    if (!cf) {
+      assert.equal(m.pickId, 'x'); assert.equal(m.topScoreId, null); assert.equal(m.points.filter((q) => q.isTopScore).length, 0);
+    } else {
+      assert.equal(m.pickId, 'y', 'with compliant-first on, the pick must be rank 1');
+      assert.equal(m.topScoreId, 'x'); assert.equal(m.topScoreReason, 'compliant-first');
+      assert.deepEqual(m.points.filter((q) => q.isTopScore).map((q) => q.id), ['x']);
+      const chart = B.renderChart(m, 900);
+      assert.match(chart, /Weighted pick #1/); assert.match(chart, new RegExp(`Highest score #${m.topScoreRank}`));
+      const table = B.renderTable(m);
+      assert.equal((table.match(/class="row-pick/g) || []).length, 1); assert.equal((table.match(/badge-top/g) || []).length, 1);
+      const html = B.renderView(run, defaultView());
+      assert.match(html, /is on and its resilience status is/, 'pick line does not say why the highest score is not the pick');
+    }
+  }
+  // Real data: the test-3 sample (36 options) and a smaller C5 = None sample (other open choices locked to their
+  // first value), every weight preset, toggle off and on.
+  const small = (() => {
+    const inp = referenceT1({ analysisStart: START });
+    const nrm = normalizeInputs(inp);
+    for (const [id, st] of Object.entries(nrm.choices)) if (id !== 'C5' && st.state === 'open') inp.choices[id] = { state: 'locked', values: [st.values[0]] };
+    inp.choices.C5 = { state: 'open', values: [...new Set([...nrm.choices.C5.values, 'none'])] };
+    inp.settings.sampleAboveCap = false;
+    return runModel(inp);
+  })();
+  let divergent = 0, combos = 0;
+  const divergentCases = [];
+  for (const [sampleLabel, sample] of [['T1 + C5 None (test 3)', runFail], [`C5 None, ${small.options.length} options`, small]]) {
+    for (const [presetName, wts] of Object.entries(PRESETS)) {
+      for (const cf of [false, true]) {
+        const options = sample.options.map((o) => ({ ...o }));
+        const inputs = { ...sample.inputs, weights: { ...wts }, settings: { ...sample.inputs.settings, rankCompliantFirst: cf } };
+        scoreOptions(options, inputs);
+        const r = { ...sample, inputs, options };
+        const m = HOOKS.paretoView(r, null);
+        const rank1 = options.find((o) => o.rank === 1);
+        assert.equal(m.pickId, rank1.id); assert.equal(weightedPick(options).id, rank1.id);
+        assert.equal(m.points.filter((q) => q.isPick).length, 1);
+        const top = highestWeightedScore(options);
+        if (top.id !== rank1.id) {
+          divergent++;
+          divergentCases.push(`${sampleLabel}, ${presetName}: top scorer rank ${top.rank} (${top.resilience.status})`);
+          assert.ok(cf && top.resilience.status === 'Does not meet', 'top scorer differs from rank 1 without the compliant-first toggle');
+          assert.equal(m.topScoreId, top.id); assert.equal(m.topScoreReason, 'compliant-first');
+          assert.deepEqual(m.points.filter((q) => q.isTopScore).map((q) => q.id), [top.id]);
+        } else assert.equal(m.topScoreId, null);
+        combos++;
+      }
+    }
+  }
+  assert.ok(divergent >= 1, 'no real-data case where the highest weighted score is not rank 1');
+  // The header leader and the live announcement in App.jsx come from the same function.
+  const appSrc = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  assert.match(appSrc, /weightedPick\(run\.options\)/, 'App.jsx header leader is not derived from weightedPick()');
+  // A pick that is not drawn says why: hidden by "Hide dominated options" (zero-weight tie), by other filters, or not plottable.
+  const tie = { options: [synth('a', 50, 100, 20, 80), synth('b', 40, 100, 20, 80)], inputs: { weights: { cost: 0, carbon: 1, ttp: 0, deliverability: 0 }, settings: { costMetric: 'lcoe', carbonMetric: 'location', rankCompliantFirst: false } } };
+  scoreOptions(tie.options, tie.inputs);
+  assert.equal(tie.options[0].dominatedBy, 'b');
+  const mt = HOOKS.paretoView(tie, { x: 'lcoe', y: 'location' }, { ...defaultView(), hideDominated: true });
+  assert.equal(mt.pickId, 'a'); assert.equal(mt.pickShown, false); assert.equal(mt.pickHiddenBy, 'hide-dominated'); assert.equal(mt.pickDominatedBy.id, 'b');
+  assert.match(B.renderView(tie, { ...defaultView(), hideDominated: true }), /Hide dominated options&quot; hides it|Hide dominated options" hides it/);
+  assert.equal(HOOKS.paretoView(tie, { x: 'lcoe', y: 'location' }, { ...defaultView(), search: 'Option b' }).pickHiddenBy, 'filters');
+  const np = { options: [synth('a', Infinity, 10, 20, 80), synth('b', 40, 50, 20, 80)], inputs: { weights: { cost: 0, carbon: 1, ttp: 0, deliverability: 0 }, settings: { costMetric: 'lcoe', carbonMetric: 'location', rankCompliantFirst: false } } };
+  scoreOptions(np.options, np.inputs);
+  const mn = HOOKS.paretoView(np, { x: 'lcoe', y: 'location' });
+  assert.equal(mn.pickId, 'a'); assert.equal(mn.pickShown, true); assert.equal(mn.pickPlotted, false); assert.equal(mn.pickVisible, false);
+  assert.equal(/Weighted pick #/.test(B.renderChart(mn, 900)), false);
+  assert.match(B.renderView(np, defaultView()), /Not drawn: it has no finite value on an axis/);
+  return `synthetic: toggle off → pick = rank 1 = top scorer, no second mark; toggle on → pick = rank 1 (Meets), top scorer (Does not meet, rank ${mk(true).options.find((o) => o.id === 'x').rank}) marked separately with the reason in the pick line; real samples: ${combos} sample × preset × toggle combinations, pick = rank 1 in all, ${divergent} with a separate highest-score mark (${divergentCases.join('; ')}; toggle on in each); App.jsx leader = weightedPick(); undrawn pick explained (hide-dominated tie, filters, not plottable).`;
+});
+
+await test('8h. Every active view filter is a removable chip, and the header filter count matches applyView()', async () => {
+  const views = [
+    { ...DEFAULT_VIEW, resilience: ['Meets'] },
+    { ...DEFAULT_VIEW, resilience: ['Meets', 'Does not meet'] },
+    { ...DEFAULT_VIEW, flagIds: ['permit-ied'] },
+    { ...DEFAULT_VIEW, hideFlagIds: ['grid-binding', 'tech-nascent'] },
+    { ...DEFAULT_VIEW, capexCeiling: 100e6 },
+    { ...DEFAULT_VIEW, dominated: 'non' },
+    { ...DEFAULT_VIEW, dominated: 'only', hideDominated: true },
+    { ...DEFAULT_VIEW, archetypesOnly: true, search: 'PPA' },
+    { ...DEFAULT_VIEW, resilience: ['Meets with flags'], flagIds: ['grid-binding'], hideFlagIds: ['permit-ied'], capexCeiling: 2e8, dominated: 'non', archetypesOnly: true, search: 'Grid' },
+  ];
+  let chipsChecked = 0;
+  for (const v of views) {
+    const chips = activeFilterChips(v);
+    assert.equal(activeFilterCount(v), applyView(runT1.options, v).chips.length, `filter count ≠ applyView chips for ${JSON.stringify(v)}`);
+    for (const c of chips) {
+      const left = activeFilterChips(c.remove(v)).map((x) => x.id);
+      assert.deepEqual(left, chips.filter((x) => x.id !== c.id).map((x) => x.id), `removing "${c.label}" removed something else`);
+      chipsChecked++;
+    }
+    let w = v;
+    for (let cs = activeFilterChips(w); cs.length; cs = activeFilterChips(w)) w = cs[0].remove(w);
+    assert.equal(applyView(runT1.options, { ...w, hideDominated: false }).list.length, runT1.options.length, 'removing every chip did not restore every option');
+  }
+  assert.ok(activeFilterChips({ ...DEFAULT_VIEW, capexCeiling: 100e6 })[0].label.includes('€100 m'));
+  const B = await getViewBundle();
+  const html = B.renderView(runT1, { ...defaultView(), resilience: ['Meets'], hideFlagIds: ['grid-binding', 'permit-ied'], capexCeiling: 100e6 });
+  assert.equal((html.match(/aria-label="Remove filter: /g) || []).length, 4, 'one remove button per chip on the Trade-offs tab');
+  return `${views.length} view states, ${chipsChecked} chips each removed alone (only that filter goes); filter count = applyView chips in every state; removing every chip restores all ${runT1.options.length} options; Trade-offs renders one remove button per chip.`;
 });
 
 const passed = results.filter((r) => r.ok).length;

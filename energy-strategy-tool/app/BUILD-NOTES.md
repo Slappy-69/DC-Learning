@@ -22,6 +22,8 @@ cd /home/claude/build/app
 npm install          # react 18.3.1, react-dom 18.3.1, esbuild 0.23.1 (all local to this folder)
 npm test             # node tests/run-tests.mjs
 npm run build        # node build.mjs -> dist/
+npm run test:browser # node tests/browser-tests.mjs: Playwright + Chromium + axe-core on dist/energy-tool-single-file.html
+                     # (run the build first; prints SKIP and exits 0 when Playwright or Chromium is not available)
 ```
 
 Open `dist/index.html` through any static server (for example `npx serve dist`). The compute pool uses Web Workers loaded from `worker.js`. If workers cannot be used, the app falls back to the main thread and says so in the status line. This covers a synchronous failure (the `Worker` constructor throws, as some browsers do on `file://`) and an asynchronous one (`worker.js` fails to load or throws, or a message cannot be read: `worker.onerror` / `worker.onmessageerror`). In the asynchronous case every worker is terminated first and the status line reads "Worker failed: workers terminated, running on the main thread instead." Two more paths fall back the same way: a `postMessage` to a worker that throws ("Worker could not be started") and a worker that goes silent with no error event, for example killed by the browser ("Worker stopped responding"). A watchdog catches the silent case: no message from a worker that has not yet returned its result for 30 s. While working, a worker sends events at least every 0.55 s on T1. An engine error reported by a worker ends the run with the error shown; it is not retried on the main thread, which would fail the same way.
@@ -47,6 +49,10 @@ src/
     evaluate.js      time-to-power, cash-flow ledger, carbon/water, resilience, flags, deliverability
     scoring.js       effective weights, 0–100 normalisation, weighted score, dominance, rank,
                      view layer (applyView) that never touches score or rank
+    pareto.js        HOOKS.paretoView: any two axes, 2-D frontier, weighted pick (= rank 1), time-to-power
+                     classes, table rows; view settings read from the registry
+    view.js          view state helpers: registry defaults (defaultView, viewSetting, tablePageSize) and
+                     removable filter chips (activeFilterChips, activeFilterCount)
     run.js           pipeline as stage passes (runModelSteps generator; runModel drains it), dispatch
                      cache, worker slicing/merge, re-score, hooks for later slices
     runlog.js        run event log: stage list, logger, merge, validation, JSON/CSV export,
@@ -57,10 +63,13 @@ src/
   App.jsx            header strip, live region, run summary, ranked list, footer guardrail
   components/        Field (inputs + "indicative — unverified" tag), InputsPanel (steps 1–6 +
                      Choices panel with projected count), RunProgress (live stages, last 200 events,
-                     log download), RunSummary, RankedList, OptionDetail
+                     log download), RunSummary, RankedList, OptionDetail, ParetoView/ParetoChart/
+                     ParetoTable (Trade-offs tab), FilterChips (removable filter chips, both tabs)
   styles.css         tokens, dark mode, visible focus, reduced motion, phone/tablet/desktop layouts
 tests/run-tests.mjs  Node test script (node:assert only)
 tests/worker-shim.mjs runs src/worker.js in a Node worker_thread (test 6c)
+tests/browser-tests.mjs Playwright checks on the built single file (Canvas path, keyboard, paging, skip
+                     links, chips, tablet panel, phone overflow, axe in light and dark)
 build.mjs            esbuild: dist/app.js, dist/worker.js, dist/app.css, dist/index.html, and
                      dist/energy-tool-single-file.html (CSS, JS and worker inlined; worker
                      from a Blob URL)
@@ -123,15 +132,15 @@ With brief defaults on T1, the open choices give 57,024 valid combinations (57,0
 - The weighted score is Σ wᵢ·scoreᵢ.
 - Dominance is marked on (cost, carbon, TTP, deliverability) with no better resilience status.
 - Ranking is by score. "Rank requirement-compliant options first" is off by default.
-- View filters (resilience status, hide-with-flag, archetypes only, search, hide dominated, sort) are applied after scoring by a pure function and never change any score or rank.
+- View filters (resilience status, show only with flag, hide with flag, capex ceiling, dominated status, archetypes only, search, hide dominated, sort) are applied after scoring by a pure function and never change any score or rank. Each active filter is a removable chip on both result tabs. The land-take ceiling filter waits for the site slice (Brief issue 13).
 
 **UI.**
-- The header strip shows option counts (screened, combinations, dominated), leader and score, model badge, sampling and hide-dominated state, filter count, exceedance-mode warning, effective weights, and the unverified-defaults count.
+- The header strip shows option counts (shown, screened, combinations, dominated), leader and score, model badge, sampling and hide-dominated state, filter count, exceedance-mode warning, effective weights, and the unverified-defaults count (all records; the count affecting the leader is not available yet, Brief issue 16). The leader is `weightedPick()`, the same function as the Trade-offs pick.
 - A polite live region announces "Options updated. Leader unchanged" or "New leader: …".
 - The run summary sits above the list and expands automatically when an entry changes.
 - The ranked table is sortable, paged at 50 rows, with axis mini-bars, badges and flag counts. An option detail row shows scores, economics, energy, time-to-power, resilience, deliverability, sizing sentences, flags and the choice vector.
 - The layout is responsive: a sliding inputs panel below 1280 px and single-column fields below 768 px.
-- All controls are native and keyboard-operable, with a visible focus ring, a skip link, `prefers-reduced-motion` support and dark mode.
+- All controls are native and keyboard-operable, with a visible focus ring, skip links ("Skip to results", "Skip to trade-offs chart"), `prefers-reduced-motion` support and dark mode. Text meets 4.5:1 and form-control boundaries 3:1 in both themes. The "indicative — unverified" tags are not tab stops; their basis is the described control's accessible description. Below 1280 px the closed inputs panel is hidden from focus.
 - No browser storage APIs are used.
 
 ## Defaults used and their labels
@@ -150,7 +159,7 @@ Every default is held as a §18 record in `defaults.js` (`getRegistry()`): `{ va
 | Economics | 20 years; WACC 7 %; contingency 10 %; AACE Class 5 −30/+50 %; carbon escalation 2 %/yr real; electricity and gas escalation 0; salvage 50 % | judgement / source |
 | Weights | 35 / 25 / 25 / 15; presets as §5.7 | judgement |
 | Deliverability | −15 Emerging, −40 Nascent, −8 major, −3 minor, −10 gas Unknown, −10 hydrogen, −5 per lead time > 24 months; site-fit penalty off | judgement |
-| Run/view settings | cap 2,000; sample above cap On; grid handling "Show unmet load"; run-hours "Flag only"; cost LCOE; carbon location-based; absolute scaling off; compliant-first off; hide dominated off; wind threshold 20 ha; fixed PV 5 MWp; bridging BESS 24 h; timeline 120 months; max explicit dispatch years 8 | run setting / judgement |
+| Run/view settings | cap 2,000; sample above cap On; grid handling "Show unmet load"; run-hours "Flag only"; cost LCOE; carbon location-based; absolute scaling off; compliant-first off; hide dominated off; wind threshold 20 ha; fixed PV 5 MWp; bridging BESS 24 h; timeline 120 months; max explicit dispatch years 8; table page size 50; Pareto view: axes follow the scoring metrics, up to 5 time-to-power classes, Canvas above 500 points, chart shown first | run setting / judgement |
 | Choices | every §8 default state (C1 to C20 and the C12 role), including C6/C7 locked to the requirement, C8 open/locked by cooling input, C11 wind default, C15 by district heating | judgement |
 | Technology library | capex, O&M, efficiency, min stable load, unit size, life, footprint, programme durations for 18 technologies; fuel prices and emission factors; PPA strikes | source (IRENA, NREL ATB, DEA, Lazard, vendor; to verify) |
 | Country table | 31 synthetic calibration rows (temperature, solar yield, wind CF, price, adder, carbon, gas, carbon price, decarbonisation to 2050); FX rates | source (PVGIS, ERA5, ENTSO-E, Ember, TTF/NBP, ETS, ECB; to verify) |
@@ -166,6 +175,9 @@ Builder-chosen values not given by the brief, all recorded as judgement or run s
 - **Exports** (PDF, Excel, JSON, GeoJSON, PNG, presentation mode), project save/load, undo/redo, snapshots, decision log, plain-English summary (§12.10, §14, §16, §19). Hook: `HOOKS.export`.
 - **Representative-day screening tier and the 8760 verification badge/deviation flag** (§9.1). This slice runs the full 8760-h model for every screened option instead. Every result is therefore labelled "Full-year hourly (8760 h)". Hook: `HOOKS.screeningModel`.
 - Heat reuse costing and revenue (C15), BESS grid-services revenue, the Scope 2 shadow carbon price, embodied carbon, numeric sweeps, custom option builder and pinning, absolute scaling (setting held, not applied), and per-edge setbacks and exclusion zones.
+- **Option card, schematic, key quantities, phasing timeline** (§12.3–§12.6). `OptionDetail` is a basic detail panel (scores, economics, energy, time-to-power, resilience, deliverability, sizing, flags, choice vector, dominance), not the tabbed §12.3 card, and it opens below the chart or the table row, not in the §16 right-hand drawer at 1280 px and wider. Planned with the trade-off views stage (§20 stage 3).
+- **Land-take ceiling view filter** (§11, §2 principle 5). Land take per option comes from the site model (§10), so the filter is deferred to the site slice (Brief issue 13). The capex ceiling filter is built.
+- **Count of unverified defaults affecting the leader** (§12 header). Needs a per-option map from §18 records to options; deferred with §13/§14, which need the same map (Brief issue 16).
 
 ## Test results
 
@@ -184,6 +196,12 @@ See the bottom of this file ("Test run") for the real numbers from `node tests/r
 9. **Time-to-power metric when full load is never reached.** The brief's formula needs "months to full load". **Choice made:** use the timeline horizon (120 months, a run setting) when full load is not reached in it, plus the power-gap term.
 10. **"Supply ≥ demand at the required resilience" for first power** (§9.8) is not defined further. **Choice made:** first and full power test the energy supply only (grid + firm + bridging BESS). Resilience is reported separately by the resilience check.
 11. **Deliverability maturity share**: "energy-weighted and capacity-weighted" with one penalty. **Choice made:** the mean of the capacity share and the steady-state energy share.
+12. **AC5 "weighted leader" is not defined** (Pareto review, 2026-10-16). AC5 says "the highlighted Pareto pick and the plain-English summary always match the weighted leader". The brief never defines "weighted leader". Ranking is "by weighted score" (§11), but "Rank requirement-compliant options first" (§11 (b)) can put a lower-scoring option at rank 1, and the header calls rank 1 the "leader" (§12). **Interpretation (owner's decision, applied):** the weighted leader is rank 1 under the current weights and ranking settings. The highlighted pick, the header "Leader", the live "New leader" announcement and, when it is built, the plain-English summary all use one function, `weightedPick()` in `src/engine/pareto.js`, so they always name the same option. With the toggle off (default) rank 1 is also the highest weighted score. With it on, the highest-weighted-score option can be a "Does not meet" option ranked lower. It is then marked separately: a dashed ring with "Highest score #k" on the chart, a "Highest weighted score" badge in the table, and a pick-line sentence giving its rank and the reason (the toggle is on and its resilience status is "Does not meet"). Test 8g checks this on synthetic and real options. (The slice first kept the pick on the highest weighted score; its note cited "§11 wording", but the wording is AC5's, not §11's.)
+13. **Land-take ceiling view filter** (§11, §2 principle 5) needs land take per option, which comes from the site model (§10). **Choice made:** deferred to the site slice and listed under "What is not in this slice". The other §11 filters have controls: resilience status, show only or hide options with a flag, capex ceiling, dominated status, archetypes, search and "Hide dominated options". Site-fit status is deferred with the site model.
+14. **Options with no finite value on a plotted axis** (for example infinite LCOE when an option delivers no energy, T3 grid-only options) cannot be placed on a scatter. **Choice made:** they are listed in the table alternative as "not plotted (no finite value)", counted in the note above the chart, and kept in the frontier calculation's input (where they cannot be on the frontier). This is not one of the §2 principle 5 reductions: nothing is removed from any list, the ranking or the scoring set, and it does not depend on a constraint breach. The brief does not mention the case.
+15. **"Any two axes" (§12.2).** **Choice made:** the axes are the four §11 axis metrics with their metric variants: LCOE, NPV of net cost, carbon (location-based, market-based, 1 − hourly CFE), time-to-power and deliverability, seven in all. Deliverability is higher-is-better; the 2-D frontier uses each axis's own direction, and the axis titles state it. Choosing the axis already on the other side swaps the two.
+16. **Header "number of unverified defaults affecting the leader"** (§12) needs a map from §18 records to the options that use them (technology records by choice vector, country rows, settings). **Choice made:** the header shows the total number of records (all unverified) and says the leader-specific count is not available in this slice. §13 (inputs with most influence) and §14 item 4 need the same map, so it is deferred to the uncertainty slice.
+17. **"Dominated by [option name]" with generated names** (§7.2 step 6). Option names run to 60–90 characters. **Choice made:** the text is "Dominated by #k name": the rank comes first so it survives truncation. It is one line in the ranked table, truncated visually with the full text in the title and the DOM. It is in full in the trade-off table, the tooltip, the live region and the option detail, which keyboard users can open.
 
 ## Run event log (trackability)
 
@@ -348,28 +366,28 @@ Opus review of three Haiku verification checks, 2026-10-15. Every call was check
 
 ## Slice: Pareto trade-off view (§12.2)
 
-Added 2026-10-15. Scope: the Pareto scatter only. No scoring, dispatch or ranking code was changed: `scoring.js`, `dispatch.js`, `evaluate.js` and `generator.js` are untouched, and `run.js` changed only to plug the function into `HOOKS.paretoView`.
+Added 2026-10-15. Scope: the Pareto scatter only. No scoring, dispatch or ranking code was changed: `scoring.js`, `dispatch.js`, `evaluate.js` and `generator.js` are untouched, and `run.js` changed only to plug the function into `HOOKS.paretoView`. The Opus review of 2026-10-16 corrected this section where it misdescribed the code and changed one expression in `scoring.js` (an infinite-cost dominance miss). See "Review: Pareto slice" at the end.
 
 ### What was built
 
-- **`src/engine/pareto.js`** (pure, no UI). This is `HOOKS.paretoView(run, axes, view)`. It reads the scores, ranks and `dominatedBy` marks that `scoreOptions` has already written, and returns a view model: visible points, the 2-axis frontier, the weighted pick, time-to-power colour classes and the capex range. Helpers: `paretoFrontier` (O(n log n), both axes minimised, exact ties do not dominate each other), `weightedPick` (highest weighted score, ties broken by id in the same order as `rankOptions`), `paretoTableRows`, `PARETO_AXES` and `defaultParetoAxes`.
+- **`src/engine/pareto.js`** (pure, no UI). This is `HOOKS.paretoView(run, axes, view)`. It reads the scores, ranks and `dominatedBy` marks that `scoreOptions` has already written, and returns a view model: visible points, the 2-axis frontier, the weighted pick, time-to-power colour classes and the capex range. Helpers: `paretoFrontier` (O(n log n), both axes minimised, exact ties do not dominate each other; higher-is-better axes are negated first), `weightedPick` (rank 1, the weighted leader; Brief issue 12), `highestWeightedScore` (ties broken by id as in `rankOptions`; marked separately only when it is not rank 1), `paretoTableRows`, `PARETO_AXES` and `defaultParetoAxes`.
 - **Two kinds of "dominated", kept apart.** The engine's dominance mark (§7.2 step 6: all four axes plus status) shows as a **hollow** marker. The frontier on the chart is the 2-axis Pareto set for the plotted pair, drawn as a dashed step line. Both are computed over the whole scoring set, so view filters and "Hide dominated options" never move the frontier or the pick (§11 scoring scope).
-- **Axes.** Cost is LCOE or NPV of net cost. Carbon is location-based, market-based, or 1 − hourly CFE. By default the axes follow the scoring Cost and Carbon metrics. The user can pick any pair in the Trade-offs tab, and "Follow scoring metrics" resets it. The axis choice is view state, not an input, so changing it never triggers a run.
-- **Encodings (§12.2).** Colour = time-to-power. Size = capex (marker area proportional to capex). Shape = **resilience status** (circle Meets, triangle Meets with flags, square Does not meet), because site fit is not assessed yet (see open points). Weighted pick = orange double ring plus the text label "Weighted pick #n". The table row is highlighted, and a pick line above the chart names the option and its two axis values.
+- **Axes (any two, §12.2).** X and Y can each be any of seven axis metrics: LCOE, NPV of net cost, carbon (location-based, market-based, 1 − hourly CFE), time-to-power and deliverability (higher is better; Brief issue 15). By default the axes follow the scoring Cost and Carbon metrics (records `view.pareto.xAxis` / `yAxis` = "follow-scoring"). "Reset to default axes" restores them. The axis choice is view state, not an input, so changing it never triggers a run. (Before the review only cost × carbon could be plotted, although this note already said "any pair".)
+- **Encodings (§12.2).** Colour = time-to-power. Size = capex (marker area grows linearly with capex from a minimum mark: radius 3–9 px, 2.5–7 px on phones; earlier wording "proportional" was not accurate). Shape = **resilience status** (circle Meets, triangle Meets with flags, square Does not meet), because site fit is not assessed yet (see open points). Weighted pick (rank 1) = orange double ring plus the text label "Weighted pick #1". The table row is highlighted, and a pick line above the chart names the option and its two axis values. When "Rank requirement-compliant options first" makes rank 1 differ from the highest weighted score, that option has a dashed ring, "Highest score #k", a table badge and a pick-line sentence with the reason.
 - **Weights move the pick without a re-run.** `App.jsx` already re-scores the latest run on a weight change (`scoreOptions` on shallow copies, no dispatch). The Trade-offs tab reads that re-scored run, so the highlight follows the weights. Test 8b measures 27 ms per preset for re-score plus view on 2,000 options. The §17 target is ≤ 100 ms.
-- **Dominated options never hidden by default.** The tab shares the ranking table's view state: one `view` object, the same "Hide dominated options" checkbox, default off, counter and "show" link. `DEFAULT_VIEW` and the `settings.hideDominated` record are unchanged.
-- **Option detail.** Click a point (nearest point within 16 px, so the hit area is bigger than the mark), or focus the chart and use the arrow keys (left/right by cost, up/down by carbon), Home/End, P for the pick, and Enter or Space to open. This opens the existing `OptionDetail` component below the chart. Table rows open it too.
-- **Table alternative.** A "Chart / Table" toggle switches to `ParetoTable`, which has one row per point in the same rank order and the same values (rank, name, score, both axis values, time-to-power, capex, resilience, dominance, frontier, pick), paged at 50. Options with a non-finite axis value (for example infinite LCOE on T3 no-grid options) are listed in the table as "not plotted" and counted in a note above the chart. The chart is a single `role="application"` tab stop. A polite live region reads out the focused point's full description, and a hover/focus tooltip shows the same values.
+- **Dominated options never hidden by default.** The tab shares the ranking table's view state: one `view` object, the same "Hide dominated options" checkbox, default off, counter and "show" link. The initial view comes from `defaultView()`, which reads the `settings.hideDominated` record (false); `DEFAULT_VIEW` in `scoring.js` is unchanged and test 8f checks it equals the record.
+- **Option detail.** Click a point (the option the tooltip names: nearest within 16 px, so the hit area is bigger than the mark), or focus the chart and use the arrow keys (left/right along x, up/down along y), Home/End, P for the pick, and Enter or Space to open. This opens the existing `OptionDetail` component below the chart; Enter on the chart always opens (the × button closes). Table row buttons toggle it (`aria-expanded`). The review fixed a click/tooltip mismatch: click events carry whole-pixel coordinates and pointer moves fractional ones, so where markers overlap a click could open a neighbour of the option the tooltip named.
+- **Table alternative.** A "Chart / Table" toggle switches to `ParetoTable`, which has one row per point in the same rank order and the same values (rank, name, score, both axis values, time-to-power, capex, resilience, dominance as "Dominated by #k name", frontier, pick), paged at `view.table.pageSize` (50). Options with a non-finite axis value (for example infinite LCOE on T3 no-grid options) are listed in the table as "not plotted" and counted in a note above the chart. The chart is a single `role="application"` tab stop. A polite live region reads out the focused point's full description, and a hover/focus tooltip shows the same values.
 - **Phone.** The width comes from a ResizeObserver. Below 520 px the chart goes square, the markers shrink, alternate x ticks are dropped and the controls stack. Checked in headless Chromium at 375 px: no horizontal page scroll, no console errors. Checked the same way at 1400 px in light and dark: keyboard Enter opens the detail, and the table shows 50 rows.
 - **Results tabs.** "Options" (the existing ranked list) and "Trade-offs" (new), with ARIA tabs and arrow-key switching (§16 names these tabs).
-- **Canvas above 500 points (§4).** Up to 500 points the markers are SVG paths. Above that they are drawn on a Canvas under the SVG, and the axes, frontier, pick ring, focus ring and hit-testing stay in SVG. T1 (2,000 points) uses Canvas.
-- **New default records (§23 label rule).** `view.pareto.xAxis`, `view.pareto.yAxis`, `view.pareto.ttpClasses` (5), `view.pareto.canvasAbove` (500) and `view.pareto.display` (chart). All are "indicative — unverified" with basis judgement or run setting. Test 5d now counts 376 records (it was 371).
+- **Canvas above 500 points (§4).** Up to `view.pareto.canvasAbove` (500) plotted points the markers are SVG paths. Above that they are drawn on a Canvas under the SVG, and the axes, frontier, pick ring, focus ring and hit-testing stay in SVG. T1 (2,000 points) uses Canvas. Browser check B4 tests the Canvas path (pixels at the pick, pointer hit-test); B5 tests the SVG path.
+- **New default records (§23 label rule).** `view.pareto.xAxis` and `view.pareto.yAxis` ("follow-scoring"), `view.pareto.ttpClasses` (5), `view.pareto.canvasAbove` (500), `view.pareto.display` (chart) and, added in the review, `view.table.pageSize` (50, both tables). All are "indicative — unverified" with basis judgement or run setting, and each shows its label in the UI while at its default. Since the review the code reads every one of them from the registry at the point of use (`registryValue`, `src/engine/view.js`); before, the values in use were hard-coded copies. Test 8f changes each record and checks the behaviour follows. Test 5d now counts 377 records.
 
 ### Palette decision
 
 The code has **no energy-source colour system** yet. There is no technology colour token in `defaults.js` and no source colours in `styles.css`. The §16 signature palette belongs to the dispatch stacks and site blocks, which are later slices. This chart encodes time-to-power (a magnitude), not energy source, so a source palette would be the wrong tool here anyway. Choices made:
 
-- **Time-to-power: one-hue violet ordinal ramp, 5 steps.** Light theme `#9d74c4 #8659b0 #70429b #592f83 #421c69`. Dark theme `#9466bf #a97fcf #bf9bde #d4b9ec #eadcf8`, so in both themes more contrast with the surface means a longer time-to-power. Violet carries on from the existing `--ax-ttp` axis colour (`#8a4fa3`) in the ranking table, so time-to-power reads as violet throughout the app. Both ramps were run through the dataviz palette validator in `--ordinal` mode against the real surfaces (`#ffffff` and `#1e2125`). All checks pass: monotone lightness, adjacent ΔL ≥ 0.06, single hue (spread 2–4°), and the end nearest the surface at 3.67:1 (light) and 3.78:1 (dark), so every marker clears the 3:1 graphics target. A single hue is colour-blind safe by construction, because the classes differ in lightness, not hue.
+- **Time-to-power: one-hue violet ordinal ramp, 5 steps** (hollow, dominated markers are stroked at full opacity: at the earlier 0.75 opacity the lightest step fell to 2.5:1 light / 2.7:1 dark). Light theme `#9d74c4 #8659b0 #70429b #592f83 #421c69`. Dark theme `#9466bf #a97fcf #bf9bde #d4b9ec #eadcf8`, so in both themes more contrast with the surface means a longer time-to-power. Violet carries on from the existing `--ax-ttp` axis colour (`#8a4fa3`) in the ranking table, so time-to-power reads as violet throughout the app. Both ramps were run through the dataviz palette validator in `--ordinal` mode against the real surfaces (`#ffffff` and `#1e2125`). All checks pass: monotone lightness, adjacent ΔL ≥ 0.06, single hue (spread 2–4°), and the end nearest the surface at 3.67:1 (light) and 3.78:1 (dark), so every marker clears the 3:1 graphics target. A single hue is colour-blind safe by construction, because the classes differ in lightness, not hue.
 - **Quantile classes, with ties merged.** Time-to-power on T1 is heavily clustered (the 2nd and 50th percentiles are 18 and 24 months). Tied quantile edges are merged, so T1 shows 4 classes spread across the ramp, and the legend prints each class's month range.
 - **Pick and focus.** The pick ring uses the existing `--focus` orange (`#b4560a` light, `#ffb366` dark), which is separate from the violet ramp and from the status colours. The pick always has a text label too, never colour alone. Focus and selection rings use `--focus` and `--accent`.
 - **Status colours stay reserved.** Resilience status uses shape plus a text legend, not the ok/warn/bad colours, so status colours are never reused as a data encoding (§16). Dominated is shown by fill (hollow or solid), which also survives greyscale and forced colours.
@@ -388,7 +406,8 @@ The chart is about 260 lines (`ParetoChart.jsx`). `package.json` is unchanged.
 - **8a** Pareto set on a hand-checked 8-point example (with a tie and a non-finite point), on 200 random seeded sets against brute force, on a 5-option set scored by `scoreOptions` and read through `HOOKS.paretoView`, and on T1 against brute force.
 - **8b** For each of the 5 weight presets: the pick equals the hand-computed argmax of Σ wᵢ × axis scoreᵢ and equals rank 1. Exactly one point is highlighted. The pick changes across presets (4 distinct picks). The dispatch and economics objects are the same references, and the dispatch counter does not change.
 - **8c** On T1, T3 and the resilience-fail sample: with default settings every option, dominated or not, is in the Pareto view, the ranked list and the ranking (ranks 1..n). Turning on "Hide dominated options" changes only what is shown: scores, ranks, pick and frontier stay the same.
-- **8d** Bundles the real `ParetoChart` and `ParetoTable` with esbuild, renders them to static markup, and checks that every plotted point (`data-id` on its SVG path) has a table row with the same id. The row count equals the number of points in the view, the values agree, and the pick is marked in both. Run on 4 cases: default, NPV vs market with dominated hidden, phone width on T3, and the resilience-fail sample.
+- **8d** Bundles the real `ParetoChart` and `ParetoTable` with esbuild, renders them to static markup, and checks that every plotted point (`data-id` on its SVG path) has a table row with the same id. The row count equals the number of points in the view, the values agree, and the pick is marked in both. Run on 5 cases: default, NPV vs market with dominated hidden, phone width on T3, the resilience-fail sample, and time-to-power vs deliverability (added in the review).
+- **8e–8h and `tests/browser-tests.mjs`** were added in the review; see "Review: Pareto slice".
 
 ### Open points
 
@@ -396,12 +415,12 @@ The chart is about 260 lines (`ParetoChart.jsx`). `package.json` is unchanged.
 2. **No P10–P90 error crosses.** These depend on the Monte Carlo / uncertainty slice. Points are P50 from the full-year hourly model.
 3. **No brushing on the axes.** That belongs to the parallel-coordinates part of §12.2, which is not in this slice.
 4. **Canvas draws all 2,000 points each time.** Drawing and hit-testing are O(n) per pointer move. Fine at 2,000 points; it may need a spatial index at higher caps.
-5. **Screen-reader walk-through not done.** The chart was checked by keyboard in headless Chromium only. NVDA + Firefox and VoiceOver + Safari (§17) are still to do, and so is an axe audit.
-6. **Pick when "Rank requirement-compliant options first" is on.** The pick stays the highest weighted score (§11 wording, "Pareto pick … match[es] the weighted leader"). With that toggle on, the pick can differ from rank 1, and the pick line says so. If the owner prefers the pick to follow rank 1 instead, it is a one-line change in `weightedPick`.
+5. **Screen-reader walk-through not done.** The chart is checked by keyboard in headless Chromium (browser checks B2–B4) and axe reports no serious or critical violation in light and dark (B7, B11). NVDA + Firefox and VoiceOver + Safari (§17) are still to do.
+6. **Pick when "Rank requirement-compliant options first" is on.** Resolved in the review: the pick follows rank 1 and the highest weighted score is marked separately (Brief issue 12).
 
-### Test run (this slice)
+### Test run (this slice, historical)
 
-`npm run build` exit 0, then `npm test` exit 0, 2026-10-15, Node v22.22.0. **18/18 passed** (the 14 existing tests and 8a–8d). New tests as printed:
+Superseded by the review's run in "Review: Pareto slice". `npm run build` exit 0, then `npm test` exit 0, 2026-10-15, Node v22.22.0. **18/18 passed** (the 14 existing tests and 8a–8d). New tests as printed:
 
 ```
 PASS  8a. Pareto set (non-dominated on the two plotted axes) is correct on a hand-checked example  (43 ms)
@@ -417,3 +436,106 @@ PASS  8d. Every point in the Pareto chart has a matching row in the table altern
 ```
 
 The only change to the earlier tests' output: 5d now reports 376 records (judgement 101, run setting 6), up from 371, because of the five new view-setting records. The single-file size in test 7 is now 449.1 KB. During development, two of the new tests failed before they were fixed. 8b's first version asserted that Balanced and Lowest carbon give different picks; on T1 they do not (both pick O1YAUJ8J), so the assertion now compares Balanced with Lowest cost. 8d first failed on a bundling error (`react-dom/server` Node build, dynamic `require("stream")`) and now uses `react-dom/server.browser`.
+
+## Review: Pareto slice
+
+Opus review of the three Haiku checks of the Pareto view (H1 claims, H2 brief, H3 browser), 2026-10-16. Full record: `/home/claude/build/verification/pareto/OPUS-review.md`. It has a decision and a reason for every finding, the verifier errors, the mutation check and the test output. Originals of every changed file are in `/tmp/claude-0/-home-claude/a66cf92d-3564-56e6-89ee-bb0870057f0d/scratchpad/pareto-review-backup/`. The repo copy (`/home/claude/dc-learning`) was not changed.
+
+**Decisions: 92 accepted, 0 rejected, 6 deferred** (98 findings). The deferred items are listed under "What is not in this slice" and "Brief issues":
+- site-fit shape;
+- the land-take filter (site slice);
+- the leader-specific defaults count (uncertainty slice);
+- the option-card drawer (option-card work).
+
+**What changed.**
+1. **Contrast (H3).** `--ink-3` (light) `#6b7079` → `#62676f`: lowest 4.65:1 on every light background it sits on (it was 4.07–4.25:1 on surface-2, info, warn and bad). Also fixed:
+   - a new `--control-border` for form-control boundaries (WCAG 1.4.11; the old border was 1.47:1);
+   - hollow markers at full opacity (2.5:1 at 0.75);
+   - `.tag-basis` opacity removed.
+   
+   Every text and graphic token pair was computed for both themes. axe 4.10.2 (WCAG 2.0/2.1/2.2 A and AA rules) reports 0 serious and 0 critical on Trade-offs chart, Trade-offs table and Options, in light and in dark. The run-log rows axe leaves as "needs review" (clipped by the scroll box) are checked from computed styles: lowest 4.86:1 light, 5.00:1 dark.
+2. **Keyboard reach (H3).**
+   - "Skip to trade-offs chart" link: it switches the tab, shows the chart and focuses it.
+   - The "unverified" tags are no longer tab stops; their basis is the described control's accessible description.
+   - The closed off-canvas inputs panel (below 1280 px) is out of the tab order.
+   - Chart: 2 Tab + Enter (results: 1 Tab + Enter). Tab only from the top: 208 presses, down from 261; 174 of them in the inputs panel, down from 228.
+   - Input sections were not collapsed by default. Collapsing would hide the pre-filled example inputs (steps 1–4) and the C11 row that AC13 refers to. The skip links meet WCAG 2.4.1.
+3. **Registry-driven view settings (H1).** `view.pareto.*`, the new `view.table.pageSize` and `settings.hideDominated` are read at the point of use (`registryValue`, `src/engine/view.js`). Test 8f changes each record and checks the behaviour follows, and fails if a `view.*` record has no check.
+4. **AC5 (H2).** The pick is rank 1, from `weightedPick()`, which the header leader and live region also use. When compliant-first puts a "Does not meet" top scorer lower, it is marked separately with the reason (Brief issue 12, test 8g).
+5. **Dominance with infinite cost (H2 D17).** Confirmed with a reproduction and fixed in `scoring.js`: the tolerance uses a finite scale. Regression test 8e. T1 and T3 scores, ranks, dominance, axis scores and metrics are identical before and after on all 4,000 options.
+6. **Other §12.2 deviations (H2).**
+   - Any two of seven axes (direction-aware frontier).
+   - The undrawn pick says why.
+   - "Dominated by #k name".
+   - Status clause in the dominance note.
+   - "Shown" count in the header.
+   - Removable chips on both tabs.
+   - Controls for the capex-ceiling, has-flag and dominated-status filters.
+   - Relative-to-set note on Trade-offs.
+   - Chart Enter opens (not toggles).
+   - "Clear all filters" now keeps the sort order.
+7. **Defect found by the new browser test.** A click opened the nearest marker to the whole-pixel click position, not the one the tooltip named (pointer moves are fractional), so on overlapping markers a click at the pick opened #968. Fixed: the click opens the hovered option.
+8. **Tests.**
+   - Node tests 8e–8h added; 8a, 8b and 8d extended.
+   - `tests/browser-tests.mjs` (`npm run test:browser`): 13 checks covering the Canvas path (pixels, hit-test), the SVG path, keyboard navigation, table paging through all pages, skip links, removable chips, the tablet panel, phone overflow and axe in both themes.
+   - `axe-core` 4.10.2 added as an exact devDependency.
+   - Four mutants (hard-coded Canvas threshold, old pick, old tolerance, hard-coded hide-dominated default) each fail exactly the test that guards them.
+
+Size: `dist/energy-tool-single-file.html` 475 KB (was 449 KB). `dist/worker.js` is 111 KB (was 98 KB) because the worker bundle now keeps `buildDefaultInputs` behind `registryValue`.
+
+**Still open.**
+- Screen-reader walk-through with NVDA + Firefox and VoiceOver + Safari (§17).
+- §17 timing: a weight preset repaints the pick in 96–130 ms in headless Chromium on this 2-core sandbox (target ≤ 100 ms on the 4-core reference machine; measured, not asserted).
+- Core-slice run constants without a §18 record: last 200 events, progress every 250, 30 s watchdog, 200-event / 120 ms stream batches. Not part of this slice.
+- The pre-existing esbuild 0.23.1 dev-server advisory (the build does not use the dev server).
+
+### Test run (review)
+
+`npm run build` exit 0, then `npm test` exit 0, then `npm run test:browser` exit 0, 2026-10-16, Node v22.22.0. Full output with every detail line: `/home/claude/build/verification/pareto/OPUS-review.md`. Result lines:
+
+```
+T1 run: 2000 options screened of 57028 combinations in 10.77 s (single thread, 1732 distinct dispatch runs, 10394 8760-h years)
+T3 run: 2000 options in 10.59 s
+PASS  1. Per-hour energy balance (supply = demand + losses + curtailment + unmet), T1 and T3, full 8760-h years  (3516 ms)
+PASS  2. Grid connection equals the offered capacity on every option, never resized; import never exceeds it in "Show unmet load"  (1014 ms)
+PASS  3. No option is hidden by default  (9 ms)
+PASS  4. Score and rank do not change when a view filter changes  (128 ms)
+PASS  5a. Determinism: same inputs + seed give identical outputs  (8943 ms)
+PASS  5b. Weight change re-ranks without re-dispatch; effective weights sum to 1  (0 ms)
+PASS  5c. "Show exceedance" removes unmet load on T3 and raises "Import exceeds grid capacity"  (1245 ms)
+PASS  5d. Every default record carries the "indicative — unverified" label and a basis  (0 ms)
+PASS  6a. Event log completeness: every stage has a start and an end, sequence numbers contiguous, stage order as specified (T1, T3 and the test-3 sample)  (20 ms)
+PASS  6b. Log content (timestamps excluded) is identical across two runs with the same inputs  (9 ms)
+PASS  6c. Worker pool: each worker returns its own events; merged log complete, ordered and deterministic; results equal the single-thread run  (17316 ms)
+PASS  6d. Main-thread fallback: time-sliced runModelSteps gives the same log content and results, and the progress tracker reaches 100 % on every stage  (11303 ms)
+PASS  6e. Log export: JSON round-trips, CSV has one row per event, file names carry the input hash and a timestamp  (44 ms)
+PASS  7. Single-file build: worker inlined as a Blob-URL source string, no relative "worker.js" or other file reference, inlined source parses and runs  (1468 ms)
+PASS  8a. Pareto set (non-dominated on the two plotted axes) is correct on a hand-checked example  (61 ms)
+PASS  8b. Weighted pick is the highest weighted score and moves with the weights, with no dispatch re-run  (146 ms)
+PASS  8c. Dominance marking does not remove any option from the Pareto view, the list or the ranking  (20 ms)
+PASS  8d. Every point in the Pareto chart has a matching row in the table alternative (rendered)  (1510 ms)
+PASS  8e. Dominance is marked when the dominated option has an infinite cost (LCOE with no delivered energy)  (4 ms)
+PASS  8f. Every registered view setting and run setting is the value the code uses  (148 ms)
+PASS  8g. AC5: the highlighted pick is the weighted leader (rank 1, the header leader) with "Rank requirement-compliant options first" on or off  (70 ms)
+PASS  8h. Every active view filter is a removable chip, and the header filter count matches applyView()  (23 ms)
+22/22 tests passed.
+Timing (single thread, Node v22.22.0): T1 full run 10.77 s for 2000 options; T3 10.59 s.
+```
+
+```
+PASS  B1. Tab order from the top of the page (no skip link): stops before the results and the chart, none hidden  (15.2 s)
+PASS  B2. Skip links: "Skip to results" and "Skip to trade-offs chart" are the first two Tab stops and reach their targets  (0.5 s)
+PASS  B3. Keyboard on the chart: arrows move along the axes, Home/End, P returns to the pick, Enter opens its detail, Escape clears  (3.1 s)
+PASS  B4. Canvas path (more than the registered threshold): points drawn on Canvas, no SVG markers, pixels at the pick, pointer hit-test opens the nearest option  (0.4 s)
+PASS  B5. SVG path (at or below the threshold): with "Hide dominated options" on, markers are SVG paths, one per plotted point, no Canvas  (0.7 s)
+PASS  B6. Table paging: every option reachable, page size as registered, rank order, the pick on page 1  (3.7 s)
+PASS  B7. axe (WCAG 2.0/2.1/2.2 A and AA rules), light theme: Trade-offs table, Trade-offs chart and Options tab have no serious or critical violation  (13.3 s)
+PASS  B8. Removable filter chips: each filter shows a chip with its own remove button; removing it by keyboard keeps focus in the chip row  (1.3 s)
+PASS  B9. A weight preset moves the pick without a re-run (§17 target ≤ 100 ms, measured in the browser)  (0.4 s)
+PASS  B10. No console errors or page errors on the main page  (0.0 s)
+PASS  B11. axe, dark theme (prefers-color-scheme: dark): Trade-offs chart, table and Options tab have no serious or critical violation  (24.4 s)
+PASS  B12. Tablet width (1000 px): the closed inputs panel takes no Tab stop; opened, its controls are reachable  (13.0 s)
+PASS  B13. Phone width (375 px): Trade-offs chart and table cause no horizontal page scroll  (11.9 s)
+13/13 browser checks passed.
+Keyboard: chart in 2 Tab + Enter via the skip link (results: 1 Tab + Enter); Tab only from the top: 208 presses (174 in the inputs panel).
+```

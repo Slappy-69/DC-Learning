@@ -3,7 +3,7 @@ import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
 import { sig, money, monthLabel, pct } from '../format.js';
 
-export default function OptionDetail({ o, start, onClose }) {
+export default function OptionDetail({ o, start, onClose, dominator = null }) {
   const sz = o.sizing;
   const ss = o.dispatch.years[o.dispatch.years.length - 1];
   return (
@@ -13,6 +13,11 @@ export default function OptionDetail({ o, start, onClose }) {
         <button type="button" className="icon-btn" onClick={onClose} aria-label="Close option detail">×</button>
       </header>
       <p className="model-badge">Full-year hourly (8760 h) · synthetic profiles · all defaults indicative — unverified</p>
+      <p className="small">
+        {o.dominatedBy
+          ? <>Dominated by #{dominator ? dominator.rank : '?'} {dominator ? dominator.name : o.dominatedBy}: equal or better on cost, carbon, time-to-power and deliverability, and better on at least one, with no worse resilience status. Still ranked and shown.</>
+          : 'Not dominated on cost, carbon, time-to-power and deliverability.'}
+      </p>
       <div className="detail-grid">
         <div>
           <h4>Scores</h4>
