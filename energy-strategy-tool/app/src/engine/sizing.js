@@ -215,13 +215,20 @@ export function sizeOption(ctx, v) {
   }
   const storage = { mw: bess.mw + bridgeBess.mw, mwh: bess.mwh + bridgeBess.mwh, role: bess.role || (bridgeBess.mw > 0 ? 'bridgingSupport' : null) };
 
-  // --- Area budget (approximation for "fill residual" solar; not a layout, §10 not in this slice) ---
+  // --- Area budget: estimate for "fill residual" solar before the layout; the layout stage (layout.js)
+  // replaces it with the area actually filled (§10.4 "fill residual solar sizing after placement") ---
   const site = inputs.site;
-  const grossM2 = site.areaHa * 10000;
-  const a = Math.sqrt(grossM2 * site.aspect);
-  const b = grossM2 / a;
-  const innerM2 = Math.max(0, a - 2 * site.setbackM) * Math.max(0, b - 2 * site.setbackM);
-  const netM2 = innerM2 * (1 - site.roadsFraction);
+  let grossM2, innerM2, netM2;
+  if (ctx.site) {
+    // Site model (§10.1): boundary polygon or area rectangle, per-edge setbacks and hard exclusions.
+    grossM2 = ctx.site.areas.grossM2; innerM2 = ctx.site.areas.envelopeM2; netM2 = ctx.site.areas.netM2;
+  } else {
+    grossM2 = site.areaHa * 10000;
+    const a = Math.sqrt(grossM2 * site.aspect);
+    const b = grossM2 / a;
+    innerM2 = Math.max(0, a - 2 * site.setbackM) * Math.max(0, b - 2 * site.setbackM);
+    netM2 = innerM2 * (1 - site.roadsFraction);
+  }
   const sp = TECH.substation.p;
   let subM2;
   if (fullMW <= 0) subM2 = 0;
@@ -275,7 +282,7 @@ export function sizeOption(ctx, v) {
   }
   if (v.C10 === 'roofResidual') {
     solarGroundMWp = Math.max(0, residualM2) / 10000 / TECH.solarGround.p.haPerMWp;
-    sentences.push(`Ground PV (fill residual): net developable ${(netM2 / 10000).toFixed(2)} ha − other blocks ${(othersM2 / 10000).toFixed(2)} ha = ${(Math.max(0, residualM2) / 10000).toFixed(2)} ha ÷ ${TECH.solarGround.p.haPerMWp} ha/MWp = ${solarGroundMWp.toFixed(2)} MWp (area budget, not a layout).`);
+    sentences.push(`Ground PV (fill residual), area-budget estimate before layout: net developable ${(netM2 / 10000).toFixed(2)} ha − other blocks ${(othersM2 / 10000).toFixed(2)} ha = ${(Math.max(0, residualM2) / 10000).toFixed(2)} ha ÷ ${TECH.solarGround.p.haPerMWp} ha/MWp = ${solarGroundMWp.toFixed(2)} MWp (replaced by the layout fill, §10.4).`);
   }
   if (v.C10 === 'fixed') {
     solarGroundMWp = inputs.settings.fixedSolarMWp;
@@ -358,4 +365,19 @@ function makePlant(ctx, s, v, role, T) {
     role, tech: s.tech, mw: s.mw, unitMW: s.unitMW, msl: t.p.msl || 0, eff: t.p.eff || 1, fuel: t.fuel || null,
     mode,
   };
+}
+
+// After the layout (§10.4): "fill residual" ground solar is sized from the area it filled. The only sizing
+// that depends on the layout. Updates the sizing in place before dispatch.
+export function applySolarFill(sz, fill) {
+  if (!fill || fill.mode !== 'residual') return sz;
+  const before = sz.solarGroundMWp;
+  sz.solarGroundMWp = fill.mwp;
+  sz.solarMWp = sz.solarRoofMWp + sz.solarCarportMWp + sz.solarGroundMWp;
+  const groundM2 = fill.areaM2;
+  sz.area = { ...sz.area, landTakeM2: sz.area.landTakeM2 - sz.area.parts.groundSolar + groundM2, residualM2: sz.area.netM2 - (sz.area.landTakeM2 - sz.area.parts.groundSolar + groundM2), parts: { ...sz.area.parts, groundSolar: groundM2 } };
+  const i = sz.sentences.findIndex((x) => x.startsWith('Ground PV (fill residual)'));
+  const text = `Ground PV (fill residual), from the layout: ${Math.round(groundM2).toLocaleString('en-GB')} m² of free buildable area after every other block (5 m clearance, strips under ${fill.minArrayM ?? 10} m wide left out, within the net developable area) ÷ ${fill.haPerMWp} ha/MWp = ${sz.solarGroundMWp.toFixed(2)} MWp (area-budget estimate before layout ${before.toFixed(2)} MWp).`;
+  if (i >= 0) sz.sentences[i] = text; else sz.sentences.push(text);
+  return sz;
 }

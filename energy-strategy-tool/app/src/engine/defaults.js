@@ -8,6 +8,7 @@
 // `source`, `year` and `url` stay empty until a person verifies the value.
 
 import { defaultAnalysisStart, addMonths } from './dates.js';
+import { makeProjection, meanLatLon, validateRing } from './geometry.js';
 
 export const LABEL = 'indicative — unverified';
 
@@ -285,6 +286,159 @@ tech('substation', { name: 'Grid connection and on-site substation', role: 'grid
 tech('heatRejection', { name: 'Heat rejection (dry / adiabatic coolers, chillers)', role: 'cooling plant', maturity: 'Commercial', verify: 'Vendor data' }, {
   m2PerMW: [60, 'm² per MW rejected', 40, 100], roofPlantFraction: [0.4, 'fraction of roof if heat rejection on roof', 0.3, 0.6] });
 
+// ---------------------------------------------------------------------------
+// Spatial library (BRIEF §6.1 "Spatial", §6.3 indicative spatial defaults, §10.3). All indicative —
+// unverified. Footprint bases already in TECH (m²/MW, m²/unit, m²/MWh, ha/MWp, substation areas) are
+// not repeated here. Values the brief gives carry basis "source" with the §6.3 source to verify against;
+// values the brief does not give (L:W ratios, unit cell sizes, minimum values for relaxation, sound power
+// levels, the building clearance) are builder judgements and say so.
+// ---------------------------------------------------------------------------
+export const SPATIAL = {};
+function spatial(id, base, params) {
+  SPATIAL[id] = { id, ...base, p: {} };
+  for (const [k, v] of Object.entries(params)) {
+    const [value, unit, low, high, basis = 'source', note = ''] = v;
+    SPATIAL[id].p[k] = rec(`spatial.${id}.${k}`, value, unit, {
+      low, high, basis, ref: '§6.3', note,
+      verify: basis === 'source' ? (base.verify || '') : '',
+      dist: typeof value === 'number' ? 'triangular' : 'fixed',
+    });
+  }
+}
+spatial('building', { name: 'Data hall building', verify: 'Project benchmarks; industry density benchmarks' }, {
+  lw: [1.5, 'length : width', 1, 3, 'judgement', 'Plan proportion of each data hall block. No source.'],
+  clearanceM: [6, 'm to other blocks', 4, 10, 'judgement', 'Fire-tender access route around the building. Not in §6.3; replace with the fire strategy.'],
+  clearanceMinM: [4, 'm (minimum when relaxed)', 3, 6, 'judgement', 'Minimum access width used only when the default cannot be met (option then "Fits with flags").'],
+  maxHallM2: [25000, 'm² footprint per data hall block', 10000, 40000, 'judgement', 'A phase whose footprint exceeds this is split into equal halls.'],
+  splitByPhase: [true, 'toggle', null, null, 'judgement', 'One building block per phase (each phase\'s share of the footprint).'],
+});
+spatial('substation', { name: 'Substation', verify: 'Utility / DNO standards, TSO/DSO design standards, vendor data' }, {
+  lw: [1.5, 'length : width', 1, 3, 'judgement', 'Plan proportion. No source.'],
+  mvHeightM: [6, 'm (11–33 kV)', 5, 8],
+  mvClearanceM: [5, 'm to other blocks (11–33 kV)', 3, 8],
+  mvClearanceMinM: [3, 'm (minimum when relaxed)', 2, 5, 'judgement'],
+  hvAisHeightM: [12, 'm (110–150 kV AIS)', 10, 15],
+  hvGisHeightM: [15, 'm (110–150 kV GIS building)', 12, 18],
+  ehvAisHeightM: [15, 'm (220–400 kV AIS)', 12, 20],
+  ehvGisHeightM: [18, 'm (220–400 kV GIS building)', 15, 22],
+  hvClearanceM: [10, 'm to other blocks (110–400 kV)', 8, 15],
+  hvClearanceMinM: [5, 'm (minimum when relaxed)', 3, 8, 'judgement'],
+  pocPreferredM: [50, 'm preferred maximum distance to the POC (110–150 kV)', 30, 100],
+  noiseLwA: [95, 'dB(A) sound power, 110–400 kV substation (transformers)', 85, 105, 'judgement', 'Screening value; verify with transformer data.'],
+  noiseLwAmv: [85, 'dB(A) sound power, 11–33 kV substation', 75, 95, 'judgement'],
+});
+spatial('genset', { name: 'Standby gensets (containerised)', verify: 'Manufacturer datasheets' }, {
+  unitLw: [2.5, 'length : width of one unit cell', 2, 3.5, 'judgement', 'Unit cell = m² per unit (incl. maintenance access) at this proportion.'],
+  heightM: [7, 'm incl. flue stub', 6, 8],
+  doubleDeckHeightM: [12, 'm (double-deck)', 10, 14, 'source', 'Source to verify against: manufacturer / project precedent.'],
+  doubleDeckFootprintFactor: [0.5, '× footprint per unit (double-deck)', 0.5, 0.6, 'source', '"Halves footprint per unit" (§6.3).'],
+  clearanceM: [3, 'm between units / arrays', 2, 5],
+  clearanceMinM: [1.5, 'm (minimum when relaxed)', 1, 3, 'judgement'],
+  maxDistBuildingM: [30, 'm maximum distance to the building', 15, 50, 'source', '"Adjacent to building (≤ 30 m)" (§6.3).'],
+  noiseLwA: [101, 'dB(A) sound power per unit (acoustic container)', 95, 110, 'judgement', 'Screening value; verify with the manufacturer datasheet.'],
+});
+spatial('fuel', { name: 'Bulk fuel storage (bunded)', verify: 'Fuel storage regulations by country; fire engineer' }, {
+  lw: [2, 'length : width', 1, 4, 'judgement'],
+  heightM: [7, 'm', 5, 9],
+  clearanceM: [3, 'm to other blocks', 2, 5, 'judgement'],
+  clearanceMinM: [1.5, 'm (minimum when relaxed)', 1, 3, 'judgement'],
+  sepBuildingM: [6, 'm to the data hall building', 4, 10],
+  sepBuildingMinM: [3, 'm (minimum when relaxed)', 2, 6, 'judgement', 'For example with a fire wall; fire engineer to confirm.'],
+  sepBoundaryM: [10, 'm to the site boundary', 6, 15],
+  sepBoundaryMinM: [6, 'm (minimum when relaxed)', 3, 10, 'judgement'],
+});
+spatial('bess', { name: 'BESS (Li-ion, containerised incl. PCS/MV)', verify: 'NFPA 855 (current edition), FM Global DS 5-33, vendor UL 9540A data' }, {
+  unitMWh: [4, 'MWh per container (array unit)', 2, 6, 'judgement', 'Array unit for the row/column arrangement; the footprint basis is m²/MWh (TECH).'],
+  unitLw: [2, 'length : width of one unit cell', 1.5, 3, 'judgement'],
+  heightM: [3.5, 'm', 3, 4],
+  clearanceM: [3, 'm between units / arrays', 1, 5],
+  clearanceMinM: [1.5, 'm (minimum when relaxed)', 1, 3, 'judgement', 'Less than 3 m only where UL 9540A test data supports it.'],
+  sepBuildingM: [10, 'm to occupied buildings (data hall)', 5, 15],
+  sepBuildingMinM: [3, 'm (minimum when relaxed)', 1.5, 5, 'judgement', 'Reduced separation needs test data or a fire-rated barrier.'],
+  noiseLwA: [85, 'dB(A) sound power per container (PCS and HVAC)', 75, 95, 'judgement'],
+});
+spatial('gasEngine', { name: 'Gas engine plant (recips, CHP, rented, HVO-diesel prime)', verify: 'Danish Energy Agency Technology Catalogue; vendor data' }, {
+  unitLw: [1.5, 'length : width of one unit cell', 1, 3, 'judgement'],
+  heightM: [12, 'm engine hall (recips, CHP)', 9, 15],
+  containerHeightM: [7, 'm (containerised rented / HVO-diesel units)', 5, 9, 'judgement'],
+  clearanceM: [5, 'm to other blocks', 3, 8, 'judgement'],
+  clearanceMinM: [3, 'm (minimum when relaxed)', 2, 5, 'judgement'],
+  sepBoundaryM: [15, 'm to the site boundary', 10, 25],
+  sepBoundaryMinM: [10, 'm (minimum when relaxed)', 5, 15, 'judgement'],
+  noiseLwA: [105, 'dB(A) sound power per engine unit (attenuated hall or container)', 95, 112, 'judgement'],
+});
+spatial('turbine', { name: 'Gas turbine plant', verify: 'Danish Energy Agency Technology Catalogue; vendor data' }, {
+  unitLw: [2, 'length : width of one unit cell', 1.5, 3, 'judgement'],
+  heightM: [15, 'm', 12, 20],
+  clearanceM: [5, 'm to other blocks', 3, 8, 'judgement'],
+  clearanceMinM: [3, 'm (minimum when relaxed)', 2, 5, 'judgement'],
+  sepBoundaryM: [15, 'm to the site boundary', 10, 25],
+  sepBoundaryMinM: [10, 'm (minimum when relaxed)', 5, 15, 'judgement'],
+  noiseLwA: [108, 'dB(A) sound power per turbine (enclosed)', 100, 115, 'judgement'],
+});
+spatial('fuelCell', { name: 'SOFC fuel cells', verify: 'Vendor data' }, {
+  unitLw: [2, 'length : width of one unit cell', 1.5, 3, 'judgement'],
+  heightM: [4, 'm', 3, 5],
+  clearanceM: [5, 'm to other blocks', 3, 8],
+  clearanceMinM: [3, 'm (minimum when relaxed)', 2, 5, 'judgement'],
+  noiseLwA: [75, 'dB(A) sound power per MW', 65, 85, 'judgement'],
+});
+spatial('hydrogen', { name: 'Hydrogen storage and gensets', verify: 'National hazardous-substance regulation; specialist input' }, {
+  unitLw: [2, 'length : width of one unit cell', 1.5, 3, 'judgement'],
+  heightM: [6, 'm', 4, 8],
+  clearanceM: [25, 'm hazardous-area separation (indicative)', 15, 50, 'source', 'Not relaxed by the layout; flagged always.'],
+  noiseLwA: [95, 'dB(A) sound power per MW', 85, 105, 'judgement'],
+});
+spatial('heatRejection', { name: 'Heat rejection (dry / adiabatic coolers, chillers)', verify: 'Vendor data' }, {
+  moduleMW: [5, 'MW rejected per array unit', 1, 10, 'judgement', 'Array unit for the row/column arrangement; footprint basis m²/MW rejected (TECH).'],
+  unitLw: [2, 'length : width of one unit cell', 1.5, 3, 'judgement'],
+  heightM: [4, 'm', 3, 6],
+  clearanceM: [3, 'm (airflow clearance)', 2, 6],
+  clearanceMinM: [1.5, 'm (minimum when relaxed)', 1, 3, 'judgement'],
+  noiseLwAperMW: [88, 'dB(A) sound power per MW rejected', 80, 95, 'judgement', 'Ground or roof heat rejection runs day and night.'],
+});
+spatial('solarGround', { name: 'Solar PV ground-mount', verify: 'NREL land-use study (Ong et al., 2013) plus recent European project data' }, {
+  heightM: [3, 'm', 2, 4],
+  clearanceM: [5, 'm to other blocks', 3, 8],
+  minArrayM: [10, 'm minimum width of a fill area', 6, 20, 'judgement', 'Residual strips narrower than this are not filled.'],
+});
+spatial('solarRoof', { name: 'Solar PV rooftop', verify: 'Vendor data, fire-access guidance' }, {
+  heightAboveRoofM: [1, 'm above the roof', 0.5, 1.5],
+  edgeSetbackM: [1.5, 'm roof-edge setback', 1, 3],
+});
+spatial('wind', { name: 'Wind onshore', verify: 'National planning guidance' }, {
+  padM2: [1000, 'm² pad per turbine (0.1 ha)', 600, 2000],
+  noiseBufferM: [500, 'm to noise-sensitive receptors', 300, 800],
+  noiseLwA: [105, 'dB(A) sound power per turbine', 100, 110, 'judgement'],
+});
+spatial('smr', { name: 'Small modular reactor', verify: 'Vendor and regulator publications' }, {
+  haPer100MW: [1, 'ha per 100 MWe (3 ha per ~300 MWe unit)', 0.7, 2],
+  heightM: [40, 'm', 30, 60],
+  placement: ['offsite', '"offsite" | "onsite"', null, null, 'judgement', 'Not placed within a typical campus boundary by default (§6.2).'],
+});
+spatial('unitArrays', { name: 'Unit-based arrays (gensets, BESS, engines, heat rejection)', verify: '' }, {
+  maxUnits: [12, 'units per array block', 4, 24, 'judgement', 'Units are grouped into arrays of at most this many.'],
+  maxArrayM2: [4000, 'm² maximum array block', 1500, 10000, 'judgement', 'Large units (engines, turbines) are grouped into fewer units per array so that no array block exceeds this area (at least one unit per array).'],
+  rows: [2, 'rows per array', 1, 4, 'judgement', 'Row/column arrangement of the units in an array (§10.3).'],
+});
+spatial('noise', { name: 'Noise proxy (screening, not an acoustic assessment)', verify: 'ISO 9613-2 (geometric divergence term only)' }, {
+  hemisphericalDb: [8, 'dB: Lp = Lw − 20·log10(r) − 8 (hemispherical spreading)', 8, 11, 'source', 'Geometric spreading only; no barrier, ground or air absorption.'],
+});
+
+// Exclusion zone types (§5.2): each has a hard/soft default; soft exclusions can be used by ground solar
+// only (site.softUsableBySolar). Judgement defaults: only flood zones are soft.
+export const EXCLUSION_TYPES = {};
+for (const [id, label, hard, note] of [
+  ['easement', 'Easement / wayleave', true, 'Overhead lines and buried services; no plant over a wayleave without consent.'],
+  ['flood', 'Flood zone', false, 'Soft: raised ground solar can often use flood zones; critical plant cannot.'],
+  ['ecology', 'Ecology', true, ''],
+  ['tree', 'Tree protection', true, 'Root protection areas.'],
+  ['structure', 'Existing structure', true, ''],
+  ['other', 'Other', true, ''],
+]) {
+  EXCLUSION_TYPES[id] = { id, label, hard: rec(`site.exclusionType.${id}.hard`, hard, 'hard (true) / soft (false)', { basis: 'judgement', ref: '§5.2', note }) };
+}
+
 // Fuels and carbon factors
 export const FUEL = {
   gasTransportAdder: rec('fuel.gasTransportAdder', 4, '€/MWh_th', { low: 2, high: 8, verify: 'National gas transport tariffs', ref: '§5.4' }),
@@ -378,10 +532,21 @@ export function buildDefaultInputs(opts = {}) {
     site: {
       areaHa: REQUIRED_EXAMPLE['site.areaHa'],
       aspect: rec('site.aspect', 1.5, 'ratio', { low: 1, high: 3, basis: 'judgement', note: 'No source.', ref: '§5.2' }),
+      boundary: rec('site.boundary', null, '{ points: [[lat, lon], …], source } or null', { basis: 'judgement', ref: '§5.2', note: 'null = rectangle from the site area and aspect ratio, long side east–west, centred on the project location. A drawn, typed or imported polygon replaces it and sets the site area.' }),
       setbackM: rec('site.setbackM', 10, 'm', { low: 5, high: 20, basis: 'judgement', note: 'No source; replace with local planning requirement.', ref: '§5.2' }),
+      setbackByEdge: rec('site.setbackByEdge', null, 'm per boundary edge (null entries = uniform setback)', { basis: 'judgement', ref: '§5.2', note: 'Per-edge override of the uniform boundary setback; null = uniform on every edge.' }),
       heightLimitM: rec('site.heightLimitM', 25, 'm', { low: 15, high: 40, basis: 'judgement', ref: '§5.2' }),
-      roadsFraction: rec('site.roadsFraction', 0.15, 'fraction of net developable area', { low: 0.1, high: 0.25, basis: 'judgement', ref: '§5.2' }),
+      heightZones: rec('site.heightZones', [], 'list of { name, limitM, points }', { basis: 'judgement', ref: '§5.2', note: 'Per-zone override of the height limit; none by default.' }),
+      exclusions: rec('site.exclusions', [], 'list of { name, type, hard, points }', { basis: 'judgement', ref: '§5.2', note: 'None by default.' }),
+      softUsableBySolar: rec('site.softUsableBySolar', true, 'toggle', { basis: 'judgement', ref: '§5.2', note: 'Soft exclusions can be used by ground solar only (configurable). Off: soft exclusions are treated like hard ones for placement.' }),
+      poc: rec('site.poc', null, '[lat, lon] or null', { basis: 'judgement', ref: '§5.2', note: 'The brief default is the boundary point nearest the map\'s nearest road. This offline tool has no road data, so the default POC is the default access point (mid-point of the longest edge), standing in for the road side. Replace with the real POC.' }),
+      gasMain: rec('site.gasMain', null, '[lat, lon] or null', { basis: 'judgement', ref: '§5.2', note: 'None: gas off-site, location unknown.' }),
+      access: rec('site.access', null, 'list of [lat, lon] or null', { basis: 'judgement', ref: '§5.2', note: 'null = one access point at the mid-point of the longest edge.' }),
+      receptors: rec('site.receptors', [], 'list of { name, point } or { name, points }', { basis: 'judgement', ref: '§5.2', note: 'None by default; used for distance-based noise flags only.' }),
+      roadsFraction: rec('site.roadsFraction', 0.15, 'fraction of net developable area', { low: 0.1, high: 0.25, basis: 'judgement', ref: '§5.2', note: 'Applied to the buildable envelope area: allowance = fraction × envelope, net developable = envelope − allowance (the brief\'s definition is circular). Held back as a land budget, not a located area.' }),
       offsiteLandHa: rec('site.offsiteLandHa', 0, 'ha', { basis: 'judgement', ref: '§5.2' }),
+      offsiteDistanceKm: rec('site.offsiteDistanceKm', 2, 'km private-wire distance', { low: 0.5, high: 10, basis: 'judgement', ref: '§5.2', note: 'Used only when off-site land or off-site plant exists; replace with the real route length.' }),
+      groundConditions: rec('site.groundConditions', 'assumed suitable', 'free text', { basis: 'judgement', ref: '§5.2', note: 'Note only; no geotechnical modelling (flat site, §10.1).' }),
     },
     load: {
       itMW: REQUIRED_EXAMPLE['load.itMW'],
@@ -438,6 +603,8 @@ export function buildDefaultInputs(opts = {}) {
       testRunHours: rec('requirements.testRunHours', 12, 'h/yr per unit', { low: 6, high: 24, basis: 'judgement', ref: '§9.4' }),
       testRunLoad: rec('requirements.testRunLoad', 0.75, 'fraction of rating', { low: 0.5, high: 1, basis: 'judgement', ref: '§9.4' }),
       bessUpsGensetFraction: rec('requirements.bessUpsGensetFraction', 1.0, 'genset capacity as fraction of critical load at topology N', { basis: 'judgement', ref: '§8 C5', note: 'BESS-augmented UPS replaces redundant genset units with BESS for its duration.' }),
+      landTakeCeilingHa: rec('requirements.landTakeCeilingHa', null, 'ha on-site land take (null = net developable area)', { basis: 'judgement', derived: true, ref: '§5.5', note: 'Flag only. At the default it coincides with the "Does not fit" status; a lower value raises the minor flag "land take above ceiling" without changing the site-fit status.' }),
+      noiseNightDbA: rec('requirements.noiseNightDbA', 45, 'dB(A) at receptors, night', { low: 35, high: 55, basis: 'judgement', ref: '§10.6', note: 'No source; replace with the local planning or environmental noise criterion. Screening proxy, not an acoustic assessment.' }),
     },
     economics: {
       periodYears: rec('economics.periodYears', 20, 'yr', { low: 15, high: 25, basis: 'judgement', ref: '§5.6' }),
@@ -467,7 +634,9 @@ export function buildDefaultInputs(opts = {}) {
       hydrogenPenalty: rec('deliverability.hydrogenPenalty', 10, 'points', { basis: 'judgement', ref: '§9.9' }),
       leadTimePenalty: rec('deliverability.leadTimePenalty', 5, 'points per technology', { basis: 'judgement', ref: '§9.9' }),
       leadTimeThresholdM: rec('deliverability.leadTimeThresholdM', 24, 'months procurement', { basis: 'judgement', ref: '§9.9' }),
-      siteFitPenalty: rec('deliverability.siteFitPenalty', false, 'toggle', { basis: 'judgement', ref: '§9.9', note: 'Off by default. Site fit is not assessed in this slice (no layout).' }),
+      siteFitPenalty: rec('deliverability.siteFitPenalty', false, 'toggle', { basis: 'judgement', ref: '§9.9', note: 'Off by default: site fit has no effect on the deliverability or weighted score. On: the axis is labelled "Deliverability (incl. site fit)".' }),
+      siteFitFlagsPenalty: rec('deliverability.siteFitFlagsPenalty', 10, 'points for "Fits with flags"', { basis: 'judgement', ref: '§9.9', note: 'Applies only when the site-fit penalty is on.' }),
+      siteFitNoFitPenalty: rec('deliverability.siteFitNoFitPenalty', 25, 'points for "Does not fit"', { basis: 'judgement', ref: '§9.9', note: 'Applies only when the site-fit penalty is on.' }),
     },
     settings: {
       generationCap: rec('settings.generationCap', 2000, 'options', { basis: 'run setting', ref: '§7.2' }),
@@ -485,6 +654,9 @@ export function buildDefaultInputs(opts = {}) {
       timelineMonths: rec('settings.timelineMonths', 120, 'months', { basis: 'run setting', ref: '§9.8', note: 'Time-to-power horizon.' }),
       maxDispatchYears: rec('settings.maxDispatchYears', 8, 'years', { basis: 'run setting', ref: '§9.1', note: 'Distinct 8760-h dispatch years before steady state is assumed.' }),
       autonomyBasis: rec('settings.autonomyBasis', 'critical load', '', { basis: 'judgement', ref: '§9.2' }),
+      layoutCellM: rec('settings.layoutCellM', 2, 'm raster cell', { basis: 'run setting', ref: '§10.4', note: 'Auto-layout raster cell size; chosen for the §17 layout timing, not from a source.' }),
+      layoutCellLargeM: rec('settings.layoutCellLargeM', 5, 'm raster cell (large sites)', { basis: 'run setting', ref: '§10.4' }),
+      layoutLargeSiteHa: rec('settings.layoutLargeSiteHa', 50, 'ha gross site area above which the large cell is used', { basis: 'run setting', ref: '§10.4' }),
     },
   };
   // Phasing default: 1 phase, 100 % at grid full-connection date (§5.3). null = follow the rule.
@@ -502,11 +674,29 @@ export function normalizeInputs(inputs) {
   if (!Array.isArray(out.load.phases) || out.load.phases.length === 0) {
     out.load.phases = [{ itMW: out.load.itMW, date: out.grid.fullDate }];
   }
+  // Site area: a valid boundary polygon sets it (§5.2 "R (one of)"); otherwise the entered area is used
+  // with the aspect ratio. areaFromBoundary records which one applies (the C11 wind default and the
+  // sizing area budget read site.areaHa).
+  out.site.areaFromBoundary = false;
+  const b = boundaryAreaHa(out.site.boundary);
+  if (b != null) { out.site.areaHa = b; out.site.areaFromBoundary = true; }
+  out.requirements.landTakeCeilingHa = out.requirements.landTakeCeilingHa ?? null;
   out.choices = out.choices || {};
   for (const c of CHOICES) {
     if (!out.choices[c.id]) out.choices[c.id] = defaultChoiceState(c.id, out);
   }
   return out;
+}
+
+// Area (ha) of a site boundary given as { points: [[lat, lon], …] }, or null if it is missing or invalid.
+export function boundaryAreaHa(boundary) {
+  if (!boundary || !Array.isArray(boundary.points) || boundary.points.length < 3) return null;
+  const pts = boundary.points.filter((p) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]));
+  if (pts.length < 3) return null;
+  const [la, lo] = meanLatLon(pts);
+  const P = makeProjection(la, lo);
+  const v = validateRing(pts.map(P.toXY));
+  return v.ok ? v.area / 10000 : null;
 }
 
 // T1 reference project (§21): 100 MW IT, 4 × 25 MW phases, 15 ha, grid 20 MW now, 120 MW in 30 months.
@@ -526,6 +716,31 @@ export function referenceT3(opts = {}) {
   inputs.grid.nowMW = 0;
   inputs.grid.fullMW = 0;
   inputs.grid.fullDate = addMonths(inputs.project.analysisStart, 60);
+  return inputs;
+}
+
+// T2 tight site (§21): as T1 on 6 ha with a 15 m height limit.
+export function referenceT2(opts = {}) {
+  const inputs = referenceT1(opts);
+  inputs.project.name = 'T2 tight site (example)';
+  inputs.site.areaHa = 6;
+  inputs.site.heightLimitM = 15;
+  return inputs;
+}
+
+// T4 small edge (§21): 5 MW IT, 1 ha urban site, grid available now. The brief gives no grid capacity or
+// phase date: 8 MW now and at full connection (above the ~7 MW design facility load) and one 5 MW phase
+// at month 12 are builder choices (BUILD-NOTES "Slice: Site").
+export function referenceT4(opts = {}) {
+  const inputs = buildDefaultInputs(opts);
+  const s = inputs.project.analysisStart;
+  inputs.project.name = 'T4 small edge (example)';
+  inputs.site.areaHa = 1;
+  inputs.load.itMW = 5;
+  inputs.grid.nowMW = 8;
+  inputs.grid.fullMW = 8;
+  inputs.grid.fullDate = s;
+  inputs.load.phases = [{ itMW: 5, date: addMonths(s, 12) }];
   return inputs;
 }
 

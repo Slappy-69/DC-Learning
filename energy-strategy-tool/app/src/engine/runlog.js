@@ -21,6 +21,7 @@ export const STAGES = [
   { id: 'context-build', label: 'Context build' },
   { id: 'option-generation', label: 'Option generation' },
   { id: 'sizing', label: 'Per-option sizing' },
+  { id: 'layout', label: 'Site layout' },
   { id: 'dispatch', label: 'Dispatch (8760 h)' },
   { id: 'time-to-power', label: 'Time-to-power' },
   { id: 'economics', label: 'Economics' },
@@ -36,6 +37,7 @@ export const STAGE = Object.freeze({
   context: 'context-build',
   generation: 'option-generation',
   sizing: 'sizing',
+  layout: 'layout',
   dispatch: 'dispatch',
   ttp: 'time-to-power',
   economics: 'economics',
@@ -210,6 +212,7 @@ export function describeEvent(e) {
     s += ` · ${d.warnings} warning${d.warnings === 1 ? '' : 's'}`;
     if (e.stage === 'scoring-ranking' && d.leader) s += ` · leader ${d.leader} (${d.leaderScore})`;
     if (e.stage === 'resilience' && d.statuses) s += ` · ${Object.entries(d.statuses).map(([k, v]) => `${k} ${n0(v)}`).join(', ')}`;
+    if (e.stage === 'layout' && d.statuses) s += ` · ${n0(d.distinctLayouts)} distinct layouts · ${Object.entries(d.statuses).map(([k, v]) => `${k} ${n0(v)}`).join(', ')}`;
     return s;
   }
   // progress
@@ -221,6 +224,9 @@ export function describeEvent(e) {
     case 'cap': return `cap ${n0(d.cap)}: ${d.decision} · ${n0(d.screened)} of ${n0(d.totalCombinations)} screened${d.lhsRepaired ? ` · ${n0(d.lhsRepaired)} LHS draws repaired` : ''}`;
     case 'slice': return `slice ${d.sliceIndex + 1} of ${d.sliceCount}: ${n0(e.count)} of ${n0(e.total)} options`;
     case 'merge': return `merged ${d.workers} worker slices · ${n0(d.options)} options · ${n0(d.distinctConfigurations)} distinct configurations, ${n0(d.duplicatedAcrossWorkers)} simulated in more than one worker`;
+    case 'blocks': return `blocks built for ${n0(d.options)} options · ${n0(d.distinctLayouts)} distinct block sets (cache ${n0(d.cacheHits)} hit / ${n0(d.cacheMisses)} miss)`;
+    case 'layout': return `${n0(e.count)}/${n0(e.total)} distinct layouts placed · ${n0(d.placements)} block placements, ${n0(d.searches)} searches`;
+    case 'site-fit': return `site fit for ${n0(e.count)} options · ${Object.entries(d.statuses || {}).map(([k, v]) => `${k} ${n0(v)}`).join(', ')}`;
     default: return `${n0(e.count)}/${n0(e.total)}`;
   }
 }

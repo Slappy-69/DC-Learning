@@ -56,6 +56,7 @@ import { dispatchAll } from '../src/engine/dispatch.js';
 import { createProgressTracker } from '../src/engine/runlog.js';
 import { Worker } from 'node:worker_threads';
 import { readFileSync, existsSync } from 'node:fs';
+import { geometryTests, siteModelTests, blockTests, layoutTests } from './site-tests.mjs';
 
 const START = '2027-01';
 const results = [];
@@ -430,7 +431,7 @@ function checkSingleSourceLog(run, label) {
   const seen = new Set();
   for (const e of dp) { if (e.detail.cache === 'miss') seen.add(e.detail.cfg); else assert.ok(seen.has(e.detail.cfg), `${label}: hit before miss for ${e.detail.cfg}`); }
   // Per-option stages report items = options
-  for (const id of ['sizing', 'dispatch', 'time-to-power', 'economics', 'carbon', 'resilience', 'flags', 'deliverability', 'scoring-ranking']) {
+  for (const id of ['sizing', 'layout', 'dispatch', 'time-to-power', 'economics', 'carbon', 'resilience', 'flags', 'deliverability', 'scoring-ranking']) {
     const end = log.find((e) => e.stage === id && e.event === 'end');
     assert.equal(end.count, n, `${label}: ${id} items`);
   }
@@ -439,7 +440,7 @@ function checkSingleSourceLog(run, label) {
   assert.deepEqual(sp, Array.from({ length: Math.ceil(n / PROGRESS_EVERY) - 1 }, (_, i) => (i + 1) * PROGRESS_EVERY));
   const res = log.find((e) => e.stage === 'resilience' && e.event === 'end').detail.statuses;
   const warns = log.filter((e) => e.event === 'warning');
-  return `${log.length} events, seq 0–${log.length - 1} contiguous, ${STAGE_IDS.length}/12 stages start→end in order; dispatch ${dp.length} progress events (${misses.length} miss / ${hits} hit), resilience ${JSON.stringify(res)}, ${warns.length} warnings (${[...new Set(warns.map((e) => e.detail.code))].join(', ')})`;
+  return `${log.length} events, seq 0–${log.length - 1} contiguous, ${STAGE_IDS.length}/${STAGE_IDS.length} stages start→end in order; dispatch ${dp.length} progress events (${misses.length} miss / ${hits} hit), resilience ${JSON.stringify(res)}, ${warns.length} warnings (${[...new Set(warns.map((e) => e.detail.code))].join(', ')})`;
 }
 
 await test('6a. Event log completeness: every stage has a start and an end, sequence numbers contiguous, stage order as specified (T1, T3 and the test-3 sample)', () => {
@@ -505,9 +506,10 @@ await test('6c. Worker pool: each worker returns its own events; merged log comp
     own.forEach((e, i) => assert.equal(e.seq, i, `${src} own seq`));
     // Streamed copies (live panel) equal the returned log
     assert.deepEqual(p1.streamed[w], own, `${src}: streamed events differ from returned log`);
-    // Stages 1–11 in each worker, in order, each start→end
+    // Every stage except scoring and ranking runs in each worker, in order, each start→end. (The site slice
+    // added the "layout" stage after sizing, so workers now run 12 stages; this was slice(0, 11) before.)
     const ws = own.filter((e) => e.event === 'start').map((e) => e.stage);
-    assert.deepEqual(ws, STAGE_IDS.slice(0, 11), `${src} stage order`);
+    assert.deepEqual(ws, STAGE_IDS.filter((x) => x !== 'scoring-ranking'), `${src} stage order`);
     // Merged log keeps every worker event, in the worker's own order (wseq)
     const inMerged = log.filter((e) => e.detail.source === src).map((e) => e.detail.wseq);
     assert.deepEqual(inMerged, own.map((e) => e.seq));
@@ -555,7 +557,7 @@ await test('6d. Main-thread fallback: time-sliced runModelSteps gives the same l
   assert.equal(d.cacheHits + d.cacheMisses, runT1.options.length);
   assert.equal(snap.recent.length, 200, 'tracker should keep the last 200 events');
   assert.deepEqual(snap.recent, run.log.slice(-200));
-  return `${slices} time slices of ≤ 30 ms of work each (plus one item overrun); current stage observed in ${midStages.size} of 12 stages between slices; log content identical to the synchronous run; tracker: 12/12 stages 100 %, dispatch cache ${d.cacheMisses} miss / ${d.cacheHits} hit, last ${snap.recent.length} events kept.`;
+  return `${slices} time slices of ≤ 30 ms of work each (plus one item overrun); current stage observed in ${midStages.size} of ${STAGE_IDS.length} stages between slices; log content identical to the synchronous run; tracker: ${snap.stages.length}/${STAGE_IDS.length} stages 100 %, dispatch cache ${d.cacheMisses} miss / ${d.cacheHits} hit, last ${snap.recent.length} events kept.`;
 });
 
 await test('6e. Log export: JSON round-trips, CSV has one row per event, file names carry the input hash and a timestamp', () => {
@@ -1088,6 +1090,15 @@ await test('8h. Every active view filter is a removable chip, and the header fil
   assert.equal((html.match(/aria-label="Remove filter: /g) || []).length, 4, 'one remove button per chip on the Trade-offs tab');
   return `${views.length} view states, ${chipsChecked} chips each removed alone (only that filter goes); filter count = applyView chips in every state; removing every chip restores all ${runT1.options.length} options; Trade-offs renders one remove button per chip.`;
 });
+
+// ---------------------------------------------------------------------------
+// 9. Site slice (§10): geometry kernel, site model, blocks, auto-layout, site fit (tests/site-tests.mjs)
+// ---------------------------------------------------------------------------
+await geometryTests(test);
+await siteModelTests(test);
+const siteRuns = { runT1, runT3, START };
+await blockTests(test, siteRuns);
+await layoutTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

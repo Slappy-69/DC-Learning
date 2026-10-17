@@ -3,7 +3,38 @@ import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
 import { sig, money, monthLabel, pct } from '../format.js';
 
-export default function OptionDetail({ o, start, onClose, dominator = null }) {
+function FitBadge({ s }) {
+  const cls = s === 'Fits' ? 'ok' : s === 'Fits with flags' ? 'warn' : 'bad';
+  const icon = s === 'Fits' ? '✓' : s === 'Fits with flags' ? '!' : '✗';
+  return <span className={`badge badge-${cls}`}><span aria-hidden="true">{icon}</span> {s}</span>;
+}
+
+// Site fit (§10.6) summary for the option detail; the full outputs and the plan are on the Site tab.
+function SiteFitSummary({ o, onShowSite }) {
+  const f = o.siteFit;
+  if (!f) return null;
+  return (
+    <div className="detail-site">
+      <h4>Site fit <FitBadge s={f.status} /></h4>
+      {f.reasons.length ? <ul className="plain small">{f.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul> : <p className="small">Every block placed with the default clearances, separations and height limits.</p>}
+      {f.unplaced.length ? (
+        <p className="small"><strong>Unplaced tray:</strong> {f.unplaced.map((u) => `${u.name} (${u.areaM2.toLocaleString('en-GB')} m²; ${u.reason})`).join('; ')}.</p>
+      ) : null}
+      <table className="mini">
+        <tbody>
+          <tr><th scope="row">Land take on site</th><td className="num">{sig(f.landTakeHa, 3)} ha of {sig(f.netM2 / 10000, 3)} ha net developable{f.budgetShortfallM2 > 0 ? ` (${f.budgetShortfallM2.toLocaleString('en-GB')} m² beyond 100 %)` : ''}</td></tr>
+          {f.fillM2 > 0 ? <tr><th scope="row">Ground PV fill</th><td className="num">{f.fillM2.toLocaleString('en-GB')} m² → {sig(f.fillMWp, 3)} MWp</td></tr> : null}
+          <tr><th scope="row">Residual net area</th><td className="num">{f.residualM2.toLocaleString('en-GB')} m²</td></tr>
+          {f.offsite.length ? <tr><th scope="row">Off site</th><td className="num">{f.offsite.map((x) => `${x.name}: ${sig(x.landHa, 2)} ha, ${x.distanceKm} km private wire`).join('; ')}</td></tr> : null}
+          <tr><th scope="row">Expansion headroom (estimate)</th><td className="num">{sig(f.expansionMW, 2)} MW IT</td></tr>
+        </tbody>
+      </table>
+      {onShowSite ? <button type="button" className="link-btn" onClick={() => onShowSite(o.id)}>Show this option's layout on the Site tab</button> : null}
+    </div>
+  );
+}
+
+export default function OptionDetail({ o, start, onClose, dominator = null, onShowSite = null }) {
   const sz = o.sizing;
   const ss = o.dispatch.years[o.dispatch.years.length - 1];
   return (
@@ -15,7 +46,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null }) {
       <p className="model-badge">Full-year hourly (8760 h) · synthetic profiles · all defaults indicative — unverified</p>
       <p className="small">
         {o.dominatedBy
-          ? <>Dominated by #{dominator ? dominator.rank : '?'} {dominator ? dominator.name : o.dominatedBy}: equal or better on cost, carbon, time-to-power and deliverability, and better on at least one, with no worse resilience status. Still ranked and shown.</>
+          ? <>Dominated by #{dominator ? dominator.rank : '?'} {dominator ? dominator.name : o.dominatedBy}: equal or better on cost, carbon, time-to-power and deliverability, and better on at least one, with no worse resilience or site-fit status. Still ranked and shown.</>
           : 'Not dominated on cost, carbon, time-to-power and deliverability.'}
       </p>
       <div className="detail-grid">
@@ -27,9 +58,10 @@ export default function OptionDetail({ o, start, onClose, dominator = null }) {
               <tr><th scope="row">Cost</th><td className="num">{o.axisScores.cost.toFixed(0)}</td></tr>
               <tr><th scope="row">Carbon</th><td className="num">{o.axisScores.carbon.toFixed(0)}</td></tr>
               <tr><th scope="row">Time-to-power</th><td className="num">{o.axisScores.ttp.toFixed(0)}</td></tr>
-              <tr><th scope="row">Deliverability</th><td className="num">{o.axisScores.deliverability.toFixed(0)}</td></tr>
+              <tr><th scope="row">{o.deliv.includesSiteFit ? 'Deliverability (incl. site fit)' : 'Deliverability'}</th><td className="num">{o.axisScores.deliverability.toFixed(0)}</td></tr>
             </tbody>
           </table>
+          <SiteFitSummary o={o} onShowSite={onShowSite} />
           <h4>Economics</h4>
           <table className="mini">
             <tbody>
@@ -79,7 +111,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null }) {
           </table>
           <h4>Resilience: {o.resilience.status}</h4>
           <ul className="plain small">{o.resilience.items.map((i) => <li key={i.item}>{i.ok ? '✓' : '✗'} <strong>{i.item}:</strong> {i.text}</li>)}</ul>
-          <h4>Deliverability {sig(o.deliv.score, 2)}</h4>
+          <h4>{o.deliv.includesSiteFit ? 'Deliverability (incl. site fit)' : 'Deliverability'} {sig(o.deliv.score, 2)}</h4>
           <ul className="plain small">{o.deliv.items.map((i) => <li key={i.item}>{i.item}: {i.points.toFixed(1)}</li>)}</ul>
         </div>
       </div>

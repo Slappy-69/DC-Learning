@@ -37,6 +37,11 @@ export const FLAG_FILTERS = [
   ['fuel-gas-unknown', 'Gas connection unconfirmed'],
   ['tech-nascent', 'Nascent technology'],
   ['target-ttp', 'Time-to-power target missed'],
+  ['site-does-not-fit', 'Does not fit (site)'],
+  ['site-relaxed', 'Separation relaxed'],
+  ['site-height', 'Height limit exceeded'],
+  ['site-noise', 'Noise proxy above threshold'],
+  ['target-landtake', 'Land take above ceiling'],
 ];
 const flagLabel = (id) => (FLAG_FILTERS.find((f) => f[0] === id) || [id, id])[1];
 
@@ -50,9 +55,11 @@ export function activeFilterChips(view) {
   const v = { ...DEFAULT_VIEW, ...view };
   const chips = [];
   for (const s of v.resilience) chips.push({ id: `res:${s}`, kind: 'resilience', label: `Resilience: ${s}`, remove: (w) => ({ ...w, resilience: w.resilience.filter((x) => x !== s) }) });
+  for (const s of v.siteFit || []) chips.push({ id: `fit:${s}`, kind: 'siteFit', label: `Site fit: ${s}`, remove: (w) => ({ ...w, siteFit: (w.siteFit || []).filter((x) => x !== s) }) });
   for (const f of v.flagIds) chips.push({ id: `has:${f}`, kind: 'flagIds', label: `Has flag: ${flagLabel(f)}`, remove: (w) => ({ ...w, flagIds: w.flagIds.filter((x) => x !== f) }) });
   for (const f of v.hideFlagIds) chips.push({ id: `without:${f}`, kind: 'hideFlagIds', label: `Without flag: ${flagLabel(f)}`, remove: (w) => ({ ...w, hideFlagIds: w.hideFlagIds.filter((x) => x !== f) }) });
   if (v.capexCeiling != null) chips.push({ id: 'capex', kind: 'capexCeiling', label: `Capex ≤ ${moneyM(v.capexCeiling)}`, remove: (w) => ({ ...w, capexCeiling: null }) });
+  if (v.landTakeCeilingHa != null) chips.push({ id: 'landTake', kind: 'landTakeCeilingHa', label: `Land take ≤ ${Number(v.landTakeCeilingHa.toPrecision(4)).toLocaleString('en-GB')} ha`, remove: (w) => ({ ...w, landTakeCeilingHa: null }) });
   if (v.dominated === 'only') chips.push({ id: 'dom', kind: 'dominated', label: 'Dominated only', remove: (w) => ({ ...w, dominated: 'all' }) });
   if (v.dominated === 'non') chips.push({ id: 'dom', kind: 'dominated', label: 'Non-dominated only', remove: (w) => ({ ...w, dominated: 'all' }) });
   if (v.archetypesOnly) chips.push({ id: 'arch', kind: 'archetypesOnly', label: 'Archetypes only', remove: (w) => ({ ...w, archetypesOnly: false }) });

@@ -115,7 +115,7 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
 
       <p className="note">
         {model.points.length.toLocaleString('en-GB')} of {model.scoringSetSize.toLocaleString('en-GB')} screened options shown
-        ({model.dominatedCount.toLocaleString('en-GB')} dominated on all four axes with no better resilience status, drawn hollow{view.hideDominated ? `; ${model.hiddenDominated.toLocaleString('en-GB')} hidden` : ', all shown'}).
+        ({model.dominatedCount.toLocaleString('en-GB')} dominated on all four axes with no better resilience or site-fit status, drawn hollow{view.hideDominated ? `; ${model.hiddenDominated.toLocaleString('en-GB')} hidden` : ', all shown'}).
         {' '}{model.frontier.length} options are on the two-axis frontier.
         {model.notPlotted.length ? ` ${model.notPlotted.length} options have no finite value on an axis and are listed in the table only.` : ''}
         {' '}Scores are relative to the scoring set (all screened options). The frontier and the pick are computed over every screened option, so filters do not move them.
@@ -138,10 +138,10 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
               </span>
             </div>
             <div className="lg-group">
-              <span className="lg-title">Shape: resilience</span>
-              <span><span aria-hidden="true">{SHAPE_LABEL.circle}</span> Meets</span>
-              <span><span aria-hidden="true">{SHAPE_LABEL.triangle}</span> Meets with flags</span>
-              <span><span aria-hidden="true">{SHAPE_LABEL.square}</span> Does not meet</span>
+              <span className="lg-title">Shape: site fit</span>
+              <span><span aria-hidden="true">{SHAPE_LABEL.circle}</span> Fits</span>
+              <span><span aria-hidden="true">{SHAPE_LABEL.triangle}</span> Fits with flags</span>
+              <span><span aria-hidden="true">{SHAPE_LABEL.square}</span> Does not fit</span>
             </div>
             <div className="lg-group">
               <span className="lg-title">Fill</span>
@@ -158,7 +158,7 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
               {model.topScoreId ? <span><span className="lg-ring lg-ring-top" aria-hidden="true" /> Highest weighted score</span> : null}
             </div>
           </div>
-          <p className="note">Shape shows resilience status until site fit is assessed (the brief puts site-fit status on shape; there is no layout yet). Points are P50 values from the full-year hourly model; P10–P90 error crosses arrive with the uncertainty slice.</p>
+          <p className="note">Shape shows site-fit status (§12.2); resilience status is in the tooltip and the table. Site fit is a status, not a weight: it does not change any score or rank, and options that do not fit stay in the chart. Points are P50 values from the full-year hourly model; P10–P90 error crosses arrive with the uncertainty slice.</p>
         </>
       ) : (
         <>

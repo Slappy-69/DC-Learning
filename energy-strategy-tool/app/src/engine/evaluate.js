@@ -483,15 +483,13 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   if (techs.some((t) => t.maturity === 'Nascent')) flags.push(flag('tech-nascent', 'info', 'Technology', `Nascent technology in the option (${techs.filter((t) => t.maturity === 'Nascent').map((t) => t.name).join(', ')})`));
   if (sz.prime && sz.prime.availMonth > ctx.lastPhaseM) flags.push(flag('tech-late', 'minor', 'Technology', `${TECH[sz.prime.tech].name}: earliest availability (month ${sz.prime.availMonth}) after the full-load target date (month ${ctx.lastPhaseM})`));
 
-  // Site (area budget only; layout not in this slice)
-  if (sz.area.landTakeM2 > sz.area.netM2 + 1e-6) flags.push(flag('site-area-budget', 'info', 'Site fit', `Area budget: land take ${(sz.area.landTakeM2 / 10000).toFixed(2)} ha > net developable ${(sz.area.netM2 / 10000).toFixed(2)} ha (area sum only; site layout and fit status are not assessed in this slice)`));
-
+  // Site fit flags come from the layout (sitefit.js) and are added in the flags stage of the run.
   return flags;
 }
 
 const MATURITY = (id) => (TECH[id] ? TECH[id].maturity : 'Commercial');
 
-export function deliverability(ctx, v, sz, disp, flags) {
+export function deliverability(ctx, v, sz, disp, flags, siteFit = null) {
   const P = ctx.inputs.deliverability;
   // Capacity shares
   const cap = [];
@@ -524,7 +522,13 @@ export function deliverability(ctx, v, sz, disp, flags) {
   const techIds = new Set(cap.map((c) => c[0]).filter((id) => TECH[id] && TECH[id].p.procM !== undefined));
   const longLead = [...techIds].filter((id) => TECH[id].p.procM > P.leadTimeThresholdM);
   if (longLead.length) items.push({ item: `Procurement lead time > ${P.leadTimeThresholdM} months: ${longLead.map((id) => TECH[id].name).join(', ')}`, value: longLead.length, points: -P.leadTimePenalty * longLead.length });
-  // Optional site-fit penalty: off by default; site fit not assessed in this slice so it has no effect.
+  // Optional site-fit penalty (§9.9), off by default: only then does site fit enter the score, and the axis is
+  // labelled "Deliverability (incl. site fit)". Site-fit flags never count as permitting flags above.
+  const penaltyOn = !!P.siteFitPenalty;
+  if (penaltyOn && siteFit && siteFit.status !== 'Fits') {
+    const pts = siteFit.status === 'Does not fit' ? P.siteFitNoFitPenalty : P.siteFitFlagsPenalty;
+    items.push({ item: `Site fit: ${siteFit.status} (optional site-fit penalty on)`, value: 1, points: -pts });
+  }
   const score = Math.max(0, Math.min(100, 100 + items.reduce((s, i) => s + i.points, 0)));
-  return { score, items, emergingShare: emerging, nascentShare: nascent };
+  return { score, items, emergingShare: emerging, nascentShare: nascent, includesSiteFit: penaltyOn };
 }

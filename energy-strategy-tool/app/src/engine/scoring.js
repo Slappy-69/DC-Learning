@@ -61,21 +61,28 @@ function statusRank(o) {
   const r = o.resilience.status === 'Meets' ? 2 : o.resilience.status === 'Meets with flags' ? 1 : 0;
   return r;
 }
+// Site-fit status rank (§7.2 step 6). Options without a site-fit result (synthetic test options) rank equal.
+function siteRank(o) {
+  if (!o.siteFit) return 1;
+  return o.siteFit.status === 'Fits' ? 2 : o.siteFit.status === 'Fits with flags' ? 1 : 0;
+}
 
-// Pareto-dominated on (cost, carbon, ttp, deliverability) AND no better resilience (or site-fit) status.
-// Site fit is not assessed in this slice, so only resilience status is compared.
+// Pareto-dominated on (cost, carbon, ttp, deliverability) AND no better resilience or site-fit status
+// (§7.2 step 6): j dominates i only if j's resilience and site-fit statuses are both at least as good.
+// Dominance is a mark, not a score: it never changes a score or rank.
 export function markDominance(options) {
   const n = options.length;
   const m = options.map((o) => [o.metrics.cost, o.metrics.carbon, o.metrics.ttp, -o.metrics.deliverability]);
+  const sr = options.map(statusRank), fr = options.map(siteRank);
   const eps = 1e-9;
   for (let i = 0; i < n; i++) {
     options[i].dominatedBy = null;
     const a = m[i];
-    const si = statusRank(options[i]);
+    const si = sr[i], fi = fr[i];
     for (let j = 0; j < n; j++) {
       if (i === j) continue;
       const b = m[j];
-      if (statusRank(options[j]) < si) continue;
+      if (sr[j] < si || fr[j] < fi) continue;
       let allLE = true, anyLT = false;
       for (let k = 0; k < 4; k++) {
         // Tolerance on a finite scale: with an infinite metric (LCOE with no delivered energy) the
@@ -107,9 +114,11 @@ export function rankOptions(options, compliantFirst) {
 // ---------------------------------------------------------------------------
 export const DEFAULT_VIEW = Object.freeze({
   resilience: [], // statuses to show; empty = all
+  siteFit: [], // site-fit statuses to show; empty = all (§11)
   flagIds: [], // show only options carrying any of these flag ids; empty = all
   hideFlagIds: [], // hide options carrying any of these
   capexCeiling: null,
+  landTakeCeilingHa: null, // show only options with on-site land take at or below this (ha); null = no filter (§11)
   dominated: 'all', // 'all' | 'only' | 'non'
   hideDominated: false,
   archetypesOnly: false,
@@ -123,9 +132,11 @@ export function applyView(options, view) {
   const chips = [];
   let list = options;
   if (v.resilience.length) { list = list.filter((o) => v.resilience.includes(o.resilience.status)); chips.push(`Resilience: ${v.resilience.join(', ')}`); }
+  if (v.siteFit.length) { list = list.filter((o) => o.siteFit && v.siteFit.includes(o.siteFit.status)); chips.push(`Site fit: ${v.siteFit.join(', ')}`); }
   if (v.flagIds.length) { list = list.filter((o) => o.flags.some((f) => v.flagIds.includes(f.id))); chips.push(`Has flag: ${v.flagIds.join(', ')}`); }
   if (v.hideFlagIds.length) { list = list.filter((o) => !o.flags.some((f) => v.hideFlagIds.includes(f.id))); chips.push(`Without flag: ${v.hideFlagIds.join(', ')}`); }
   if (v.capexCeiling != null) { list = list.filter((o) => o.eco.capex <= v.capexCeiling); chips.push(`Capex ≤ ${v.capexCeiling}`); }
+  if (v.landTakeCeilingHa != null) { list = list.filter((o) => o.siteFit && o.siteFit.landTakeHa <= v.landTakeCeilingHa + 1e-9); chips.push(`Land take ≤ ${v.landTakeCeilingHa} ha`); }
   if (v.dominated === 'only') { list = list.filter((o) => o.dominatedBy); chips.push('Dominated only'); }
   if (v.dominated === 'non') { list = list.filter((o) => !o.dominatedBy); chips.push('Non-dominated only'); }
   if (v.archetypesOnly) { list = list.filter((o) => o.archetype); chips.push('Archetypes only'); }
@@ -158,6 +169,8 @@ const SORTERS = {
   ttp: (o) => o.ttp.metric,
   deliverability: (o) => -o.deliv.score,
   unmet: (o) => o.unmet.mwh,
+  landTake: (o) => (o.siteFit ? o.siteFit.landTakeM2 : Infinity),
+  siteFit: (o) => (o.siteFit ? ['Fits', 'Fits with flags', 'Does not fit'].indexOf(o.siteFit.status) : 3),
   flags: (o) => o.flags.length,
   name: (o) => o.name,
 };

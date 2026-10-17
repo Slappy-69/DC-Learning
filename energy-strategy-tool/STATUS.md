@@ -16,7 +16,7 @@ Last updated: 2026-10-16.
 |---|---|---|
 | `main` | Brief v2, core, run log, single-file build, Pareto view (484a042) | Pareto unverified on main |
 | `feature/pareto-verification` | Pareto view verified and fixed, verification reports, this file | Not merged; the owner merges |
-| `feature/site-layout` | Site slice (brief stage 2), stacked on the branch above | Next |
+| `feature/site-layout` | Site slice (brief stage 2), stacked on the branch above | In progress: work-in-progress checkpoints, unverified |
 
 Branches are stacked: merging the newest one into `main` brings in everything below it.
 
@@ -31,7 +31,7 @@ Branches are stacked: merging the newest one into `main` brings in everything be
 
 ## Next, in the brief's build order (§20)
 
-1. **Site (stage 2):** boundary draw/import, setbacks, exclusions, height limit, building massing, plant blocks and auto-layout, site-fit status, area budget, 2D plan, small multiples. In progress.
+1. **Site (stage 2):** boundary draw/import, setbacks, exclusions, height limit, building massing, plant blocks and auto-layout, site-fit status, area budget, 2D plan, small multiples. In progress. Checkpoint 2026-10-16 evening: S1 geometry, S2 site model with T2/T4 fixtures, S3 blocks and S4 auto-layout done (`npm test` 27/27); S5 site-fit integration partly done; S6 views (2D plan, site input UI, small multiples) not started. Builder's own progress notes: `app/SITE-PROGRESS.md`. Stopped twice by the plan's usage limit and resumed.
 2. **Rest of the trade-off views (stage 3):** parallel coordinates with brushing, choice-impact chart, option card, compare view, phasing timeline, schematic, key quantities.
 3. **Verification tier (stage 4):** representative-day screening, background 8760-hour verification of the top 10, dispatch visualisations.
 4. **Uncertainty and sensitivity (stage 5):** ranges, Monte Carlo, rank stability, robust pick, tornado, breakevens, scenarios.

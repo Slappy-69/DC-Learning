@@ -7,7 +7,7 @@
 import { buildContext } from './context.js';
 import { normalizeInputs } from './defaults.js';
 import { generateOptions, optionName, RULES, RULE_D } from './generator.js';
-import { sizeOption } from './sizing.js';
+import { sizeOption, applySolarFill } from './sizing.js';
 import { dispatchConfig, dispatchKey, dispatchAll, MERIT_ORDER } from './dispatch.js';
 import { timeToPower, economics, carbon, resilience, optionFlags, deliverability, flag } from './evaluate.js';
 import { scoreOptions } from './scoring.js';
@@ -16,8 +16,13 @@ import { PROFILE_LABEL } from './profiles.js';
 import { getRegistry } from './defaults.js';
 import { createRunLog, STAGE, hashInputs, shortHash, mergeLogs } from './runlog.js';
 import { paretoView } from './pareto.js';
+import { siteSummary } from './site.js';
+import { buildBlocks, blockSetKey } from './blocks.js';
+import { layoutManySteps } from './layout.js';
+import { layoutFacts, siteFitOf } from './sitefit.js';
+import { layoutForOption } from './siteapi.js';
 
-export const ENGINE_VERSION = '0.1.0-core';
+export const ENGINE_VERSION = '0.2.0-site';
 
 // Items between "progress" events for the per-option stages other than dispatch (dispatch reports
 // every option). Count-based, so the log content does not depend on machine speed.
@@ -51,9 +56,11 @@ export function* runModelSteps(rawInputs, opts = {}) {
   const ctx = buildContext(inputs);
   log.warning(STAGE.context, 'profiles-synthetic', `${PROFILE_LABEL} (country ${ctx.country})`);
   log.warning(STAGE.context, 'defaults-unverified', `All ${Object.keys(getRegistry()).length} default records are indicative — unverified`);
+  for (const w of ctx.site.warnings) log.warning(STAGE.context, `site-${w.code}`, w.message);
   log.end(STAGE.context, 1, 1, {
     country: ctx.country, months: ctx.nMonths, timelineMonths: ctx.nMonthsTimeline, coolingProfiles: Object.keys(ctx.cooling).length,
     phases: ctx.phases.length, firstPhaseMonth: ctx.firstPhaseM, lastPhaseMonth: ctx.lastPhaseM, fullGridMonth: ctx.fullGridM,
+    site: siteSummary(ctx.site),
   });
   yield;
 
@@ -100,7 +107,63 @@ export function* runModelSteps(rawInputs, opts = {}) {
     return { cacheHits: d1.hits - d0.hits, cacheMisses: d1.misses - d0.misses, cache: 'hourly demand by cooling approach and model year' };
   });
 
-  // ---- 5. Dispatch (8760 h), cached by configuration key ----
+  // ---- 5. Site layout (§10.3 blocks, §10.4 auto-layout, §10.6 site fit), cached by block-set key ----
+  // Blocks are built per option; options with the same block set share one layout, and the distinct sets
+  // are laid out as one batch that places shared leading blocks once (layout.js). "Fill residual" solar is
+  // sized from the layout here, before dispatch (the only sizing that depends on the layout).
+  {
+    const site = ctx.site;
+    log.start(STAGE.layout, n, { cache: 'layout block-set key', cellM: site.grid.cell, nx: site.grid.nx, ny: site.grid.ny, envelopeM2: Math.round(site.areas.envelopeM2), netM2: Math.round(site.areas.netM2) });
+    const keyIndex = new Map();
+    const sets = [];
+    for (let i = 0; i < n; i++) {
+      const r = recs[i];
+      r.bs = buildBlocks(ctx, r.g.v, r.sz);
+      r.layoutKey = blockSetKey(r.bs);
+      let k = keyIndex.get(r.layoutKey);
+      if (k === undefined) { k = sets.length; keyIndex.set(r.layoutKey, k); sets.push(r.bs); }
+      r.layoutIdx = k;
+      if ((i + 1) % YIELD_EVERY === 0) yield;
+    }
+    const misses = sets.length, hits = n - misses;
+    log.progress(STAGE.layout, n, n, { step: 'blocks', options: n, distinctLayouts: misses, cacheHits: hits, cacheMisses: misses });
+    let lastReported = 0;
+    const layouts = yield* layoutManySteps(site, sets, {
+      yieldEvery: 5,
+      onProgress: (done, total, st) => {
+        if (done === total || done - lastReported >= PROGRESS_EVERY) {
+          if (done < total) log.progress(STAGE.layout, done, total, { step: 'layout', placements: st.placements, searches: st.searches });
+          lastReported = done;
+        }
+      },
+    });
+    const facts = new Array(sets.length);
+    const statuses = { Fits: 0, 'Fits with flags': 0, 'Does not fit': 0 };
+    let relaxedRules = 0, unplacedBlocks = 0;
+    for (let i = 0; i < n; i++) {
+      const r = recs[i];
+      const L = layouts[r.layoutIdx];
+      if (!facts[r.layoutIdx]) facts[r.layoutIdx] = layoutFacts(site, r.bs, L);
+      if (L.fill) applySolarFill(r.sz, L.fill);
+      r.layout = L;
+      r.siteFit = siteFitOf(ctx, site, r.bs, L, facts[r.layoutIdx], r.g.v, r.sz);
+      statuses[r.siteFit.status]++;
+      relaxedRules += r.siteFit.relaxed.length;
+      unplacedBlocks += r.siteFit.unplaced.length;
+      if ((i + 1) % YIELD_EVERY === 0) yield;
+    }
+    log.progress(STAGE.layout, n, n, { step: 'site-fit', statuses: { ...statuses } });
+    if (statuses['Does not fit']) log.warning(STAGE.layout, 'site-does-not-fit', `${statuses['Does not fit']} of ${n} options do not fit the site (flagged with the area shortfall; still ranked and shown)`, { options: statuses['Does not fit'] });
+    if (statuses['Fits with flags']) log.warning(STAGE.layout, 'site-fits-with-flags', `${statuses['Fits with flags']} of ${n} options fit only with flags (relaxed rules or limits exceeded, named on each option)`, { options: statuses['Fits with flags'] });
+    const st = layouts.stats;
+    log.end(STAGE.layout, n, n, {
+      cacheHits: hits, cacheMisses: misses, distinctLayouts: misses, placements: st.placements, searches: st.searches, maskBuilds: st.maskBuilds, solarFills: st.fills,
+      statuses: { ...statuses }, unplacedBlocks, relaxedRules, cellM: site.grid.cell,
+    });
+  }
+  yield;
+
+  // ---- 6. Dispatch (8760 h), cached by configuration key ----
   const dispCache = new Map(); // key -> { disp, first: option id that was simulated, short }
   let hits = 0;
   let misses = 0;
@@ -141,44 +204,46 @@ export function* runModelSteps(rawInputs, opts = {}) {
   }
   yield;
 
-  // ---- 6. Time-to-power ----
+  // ---- 7. Time-to-power ----
   let notFull = 0;
   yield* pass(STAGE.ttp, (r) => { r.ttp = timeToPower(ctx, r.g.v, r.sz); if (!r.ttp.reachedFull) notFull++; }, () => {
     if (notFull) log.warning(STAGE.ttp, 'full-load-not-reached', `${notFull} of ${n} options do not reach full load within the ${ctx.nMonthsTimeline}-month timeline`, { options: notFull });
     return { notReachingFullLoad: notFull };
   });
 
-  // ---- 7. Economics ----
+  // ---- 8. Economics ----
   let nonFinite = 0;
   yield* pass(STAGE.economics, (r) => { r.eco = economics(ctx, r.g.v, r.sz, r.disp, r.ttp); if (!Number.isFinite(r.eco.lcoe)) nonFinite++; }, () => {
     if (nonFinite) log.warning(STAGE.economics, 'lcoe-non-finite', `${nonFinite} options have no delivered energy, so LCOE is not finite`, { options: nonFinite });
     return { ledgers: n };
   });
 
-  // ---- 8. Carbon and water ----
+  // ---- 9. Carbon and water ----
   yield* pass(STAGE.carbon, (r) => { r.carb = carbon(ctx, r.sz, r.eco, r.disp); });
 
-  // ---- 9. Resilience ----
+  // ---- 10. Resilience ----
   const statuses = { Meets: 0, 'Meets with flags': 0, 'Does not meet': 0 };
   yield* pass(STAGE.resilience, (r) => { r.res = resilience(ctx, r.g.v, r.sz); statuses[r.res.status]++; }, () => {
     if (statuses['Does not meet']) log.warning(STAGE.resilience, 'requirement-not-met', `${statuses['Does not meet']} of ${n} options do not meet the resilience requirement (flagged; still ranked and shown)`, { options: statuses['Does not meet'] });
     return { statuses: { ...statuses } };
   });
 
-  // ---- 10. Flags ----
+  // ---- 11. Flags ----
   let withMajor = 0;
   yield* pass(STAGE.flags, (r) => {
     r.flags = optionFlags(ctx, r.g.v, r.sz, r.disp, r.ttp, r.eco, r.carb, r.res);
+    // Site-fit flags (§15 "Site fit"); none carries permitting: true, so they never enter deliverability.
+    r.flags.push(...r.siteFit.flags);
     // Data flag on every option (all defaults are C-tagged in this slice)
     r.flags.push(flag('data-unverified', 'info', 'Data', 'Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles'));
     if (r.flags.some((f) => f.severity === 'major')) withMajor++;
   }, () => ({ optionsWithMajorFlags: withMajor }));
 
-  // ---- 11. Deliverability ----
+  // ---- 12. Deliverability ----
   const options = [];
   yield* pass(STAGE.deliverability, (r) => {
     const { g, sz, disp, ttp, eco, carb, res, flags } = r;
-    const deliv = deliverability(ctx, g.v, sz, disp, flags);
+    const deliv = deliverability(ctx, g.v, sz, disp, flags, r.siteFit);
     const unmet = {
       mwh: disp.years.reduce((a, y) => a + y.unmetMWh, 0),
       hours: disp.years.reduce((a, y) => a + y.unmetHours, 0),
@@ -188,15 +253,17 @@ export function* runModelSteps(rawInputs, opts = {}) {
     options.push({
       id: r.id, key: g.key, v: g.v, archetype: g.archetype, archetypeName: g.archetypeName, custom: false, pinned: false,
       name: optionName(g.v, sz), sizing: sz, dispatchKey: r.cfgKey, dispatch: disp, ttp, eco, carbon: carb, resilience: res, flags, deliv, unmet,
+      siteFit: r.siteFit, layoutKey: r.layoutKey,
       model: 'Full-year hourly (8760 h)',
     });
   });
   const t3 = nowMs();
 
-  // ---- 12. Scoring and ranking (whole screened set; in the worker pool this runs in mergeRuns) ----
+  // ---- 13. Scoring and ranking (whole screened set; in the worker pool this runs in mergeRuns) ----
   const scoring = opts.skipScore ? null : scoreAndLog(log, options, inputs, null);
   const t4 = nowMs();
 
+  if (!opts.skipScore) s.valuesNotGenerated = withSiteFitNotes(s.valuesNotGenerated, options);
   const runFlags = [];
   const removedImpossible = s.removedByRule.a + s.removedByRule.b + s.removedByRule.c + s.removedByRule.e;
   runFlags.push(flag('gen-rules', 'info', 'Generation', `Compatibility rules: ${removedImpossible.toLocaleString('en-GB')} impossible combinations not generated; ${s.removedByRule.d.toLocaleString('en-GB')} collapsed as n/a`));
@@ -279,9 +346,24 @@ export function mergeRuns(parts, inputs, opts = {}) {
   const dispatchRuns = parts.reduce((a, p) => a + p.timing.dispatchRuns, 0);
   merged.timing = { ...base.timing, evaluateMs: Math.max(...parts.map((p) => p.timing.evaluateMs)), dispatchRuns, distinctConfigurations: distinct, workers: parts.length };
   merged.scoring = scoreAndLog(log, options, normalizeInputs(inputs), { workers: parts.length, options: options.length, distinctConfigurations: distinct, duplicatedAcrossWorkers: dispatchRuns - distinct });
+  merged.generation = { ...base.generation, valuesNotGenerated: withSiteFitNotes(base.generation.valuesNotGenerated, options) };
   merged.log = mergeLogs([log.events, ...parts.map((p) => p.log || [])]);
   merged.dispatchKeys = undefined;
   return merged;
+}
+
+// Run summary "values not generated" notes for C17 and C18 (§8): when any screened option does not fit,
+// the entry says how many, next to its Include control. The choice itself never opens automatically.
+export function withSiteFitNotes(vng, options) {
+  const nNoFit = options.filter((o) => o.siteFit && o.siteFit.status === 'Does not fit').length;
+  return vng.map((c) => {
+    if (c.id !== 'C17' && c.id !== 'C18') return c;
+    const base = c.id === 'C17' ? 'GIS reduces substation footprint.' : 'Double-deck and in-building arrangements reduce genset footprint.';
+    const note = nNoFit > 0
+      ? `${nNoFit.toLocaleString('en-GB')} option${nNoFit === 1 ? '' : 's'} do${nNoFit === 1 ? 'es' : ''} not fit; ${c.id === 'C17' ? 'GIS reduces substation footprint' : 'double-deck and in-building arrangements reduce genset footprint'}.`
+      : `All screened options fit the site. ${base}`;
+    return { ...c, note, doesNotFit: nNoFit };
+  });
 }
 
 // Re-score only (weights or scoring settings changed): no dispatch (§4 incremental recompute).
@@ -299,7 +381,7 @@ export const HOOKS = Object.freeze({
   paretoView, // (run, axes, view) => Pareto view model (pareto.js; trade-off slice). Reads scores, never changes them.
   sensitivity: null, // (inputs, run, drivers) => tornado/breakevens
   scenario: null, // (inputs, scenario) => inputs'
-  layout: null, // (ctx, option) => blocks + site-fit status
+  layout: layoutForOption, // (site, inputs, option) => { blocks, layout, facts, siteFit } (siteapi.js; site slice)
   export: null, // (run, format) => file
   monteCarlo: null, // (inputs, run, n) => P10/P50/P90
   screeningModel: null, // representative-day tier (§9.1); this slice runs 8760 for all options

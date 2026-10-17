@@ -5,6 +5,7 @@ import { COUNTRIES, COOLING, TECH, FUEL } from './defaults.js';
 import { getProfiles, coolingProfile, nearestCountry, H } from './profiles.js';
 import { monthsBetween, yearOf, parseYM } from './dates.js';
 import { mulberry32, subSeed } from './prng.js';
+import { buildSiteModel } from './site.js';
 
 export function resolveCountry(inputs) {
   const c = inputs.project.country;
@@ -113,6 +114,7 @@ export function buildContext(inputs) {
     cooling, gasPrice, priceMult, priceAdder, carbonMult, carbonPrice, phases, firstPhaseM, lastPhaseM, fullGridM, gasM,
     demandCache: new Map(),
     demandStats: { hits: 0, misses: 0 }, // run-log counters for the hourly demand cache
+    site: buildSiteModel(inputs), // site model and buildable-envelope raster (§10.1), shared by every option
   };
   return ctx;
 }

@@ -6,8 +6,8 @@
 //
 // Two different "Pareto" notions appear and are kept apart:
 //  - Dominance mark (engine, §7.2 step 6): `o.dominatedBy`, on all four axes (cost, carbon,
-//    time-to-power, deliverability) with no better resilience status. Set by scoring.js; shown
-//    here as a hollow marker.
+//    time-to-power, deliverability) with no better resilience or site-fit status. Set by scoring.js;
+//    shown here as a hollow marker.
 //  - 2-D frontier (this view, §12.2): options not dominated on the two plotted axes, each in its
 //    own "better" direction. Drawn as a step line. It is computed over the whole scoring set
 //    (every screened option), so view filters never move it, in line with the §11 scoring scope.
@@ -182,6 +182,9 @@ export function paretoView(run, axes, view = defaultView()) {
       ttpClass: rampIndex(classOf(o.ttp.metric, ttpQ.breaks), ttpQ.breaks.length + 1),
       capex: o.eco.capex,
       resilience: o.resilience.status,
+      // §12.2 marker shape = site-fit status (moved from resilience when the site slice added site fit).
+      siteFit: o.siteFit ? o.siteFit.status : null,
+      landTakeHa: o.siteFit ? o.siteFit.landTakeHa : null,
       dominatedBy: o.dominatedBy || null,
       dominatedByName: dom ? dom.name : null,
       dominatedByRank: dom ? dom.rank : null,
@@ -263,6 +266,8 @@ export function paretoTableRows(model) {
     ttp: p.ttp,
     capex: p.capex,
     resilience: p.resilience,
+    siteFit: p.siteFit,
+    landTakeHa: p.landTakeHa,
     dominated: dominatedLabel(p),
     frontier: p.onFrontier,
     pick: p.isPick,
