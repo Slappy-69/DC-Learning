@@ -42,3 +42,14 @@ Detailed reports from 2026-10-16 onwards are in the per-slice folders next to th
 | Haiku check 2 (brief §12.2) | Haiku | 45 requirements: 19 implemented, 15 partial, 10 deferred, 1 missing (land-take filter); 10 unrecorded deviations incl. a possible infinite-cost dominance bug; AC5 ambiguous |
 | Haiku check 3 (browser, accessibility) | Haiku | FAIL: axe colour-contrast (27 nodes, run-progress log); chart reached only after 261 Tab presses (30 after the skip link). No console errors; no horizontal scroll at 375 px |
 | Opus review (2026-10-16) | Opus | 98 findings: 92 accepted, 0 rejected, 6 deferred (need site, uncertainty or option-card slices). Contrast tokens fixed; skip link to chart (2 Tab + Enter); settings read from the registry; AC5 pick = rank 1; infinite-cost dominance bug confirmed and fixed (T1/T3 outputs unchanged); browser test suite added. npm test 22/22, npm run test:browser 13/13, axe 0 serious/critical in light and dark. Re-run independently by the orchestrator before commit: same results. Interrupted once by the plan's usage limit and resumed |
+
+## Site slice (2026-10-16/17, branch feature/site-layout)
+
+| Step | Model | Result |
+|---|---|---|
+| Build | Opus | Six stages (geometry, site model with T2/T4, blocks, auto-layout, site-fit outputs, Site tab with plan, drawing, import, small multiples). Stopped twice by the plan's usage limit and resumed. `npm test` 31/31, `npm run test:browser` 18/18. Checkpoints 87291e3 and 4f386b7 |
+| Haiku check 1 (claims, regression, independent invariants) | Haiku | 31/31; 8 of 9 checks verified. Independent checker: 0 invariant violations across 8,000 layouts; baseline comparison reproduces BUILD-NOTES (leaders unchanged; 804 T1 and 719 T3 rank changes). "Failed" check 6b was a verifier-design error: site area legitimately changes residual-PV sizing (§10.4); status alone changes nothing. Found a wrong PPA statement in BUILD-NOTES |
+| Haiku check 2 (brief §10) | Haiku | 91 requirements: 63 implemented, 15 partial, 8 deferred, 5 missing (gas connection cost, POC cable length, access-driven roads allowance, carport PV, screen-reader walk-through). 28 deviations, 13 unrecorded. Height rule ambiguous |
+| Haiku check 3 (browser, phone, accessibility) | Haiku | Browser suite 18/18; axe 0 violations light and dark; drawing and GeoJSON import work; no console errors. FAIL: desktop horizontal overflow from the "Option shown" select; plan 36 Tab presses after the skip link; B9 never asserts its target (166 ms measured) |
+| Orchestrator review of screenshots | Opus | On a phone, results and the plan start ~6,000 px down below the progress panel, log and run summary; header wording on site fit misleading |
+| Opus review | Opus | In progress |
