@@ -503,3 +503,264 @@ export async function layoutTests(test, ctxRuns) {
     return out.join('; ') + '.';
   });
 }
+
+// ---------------------------------------------------------------------------------------------------------
+// 9e–9g, 9i: site-fit outputs (§10.6), AC7 on T2, site fit never changes a score or rank with the penalty
+// off, and the Site tab's rendered structure.
+// ---------------------------------------------------------------------------------------------------------
+import { deliverability } from '../src/engine/evaluate.js';
+import { scoreOptions, applyView, DEFAULT_VIEW } from '../src/engine/scoring.js';
+import { defaultView } from '../src/engine/view.js';
+import { defaultChoiceState } from '../src/engine/defaults.js';
+
+const lpRef = (lw, r) => lw - 20 * Math.log10(Math.max(1, r)) - 8;
+const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+
+// A one-off layout result for layoutFacts/siteFitOf: boxes (uv) for the given blocks, nothing unplaced.
+function fakeLayout(site, boxes) {
+  const c = site.grid.cell;
+  const placed = boxes.map((b, index) => ({ index, x0: b[0], y0: b[1], x1: b[2], y1: b[3], i0: 0, j0: 0, i1: 1, j1: 1, rot: 0, level: 0, broken: [] }));
+  const area = boxes.reduce((a, b) => a + (b[2] - b[0]) * (b[3] - b[1]), 0);
+  return { cell: c, placed, unplaced: [], fill: null, placedM2: area, requiredM2: area, netM2: site.areas.netM2 };
+}
+
+function pickOptions(run) {
+  const out = new Map();
+  const add = (o) => { if (o) out.set(o.id, o); };
+  add(run.options.reduce((a, b) => (a.rank < b.rank ? a : b)));
+  for (const o of run.options) if (o.archetype) add(o);
+  for (const s of ['Fits', 'Fits with flags', 'Does not fit']) add(run.options.find((o) => o.siteFit.status === s));
+  for (let i = 0; i < run.options.length; i += Math.max(1, Math.floor(run.options.length / 25))) add(run.options[i]);
+  return [...out.values()];
+}
+
+export async function siteFitTests(test, ctxRuns) {
+  const { runT1, START, getViewBundle } = ctxRuns;
+  const runT2 = ctxRuns.runT2 || (ctxRuns.runT2 = runModel(referenceT2({ analysisStart: START })));
+  const runT4 = ctxRuns.runT4 || (ctxRuns.runT4 = runModel(referenceT4({ analysisStart: START })));
+  const runTC = ctxRuns.runTC || (ctxRuns.runTC = runModel(constrainedT1(START)));
+
+  await test('9e. Site-fit outputs (§10.6): area budget, land take, residual, height per zone, separation checklist, noise proxy (hand-checked), roof use, expansion headroom, land-take ceiling flag', () => {
+    const out = [];
+    // (a) Noise proxy, hand-checked: Lp = Lw − 20·log10(r) − 8. Two continuous 100 dB(A) sources 100 m from a
+    // receptor: 100 − 40 − 8 = 52.0 dB(A) each, together 52 + 10·log10(2) = 55.0 dB(A). A standby 105 dB(A)
+    // genset array 200 m away: 105 − 46.02 − 8 = 50.98 → 51.0 dB(A), reported separately.
+    const inp = normalizeInputs(referenceT1({ analysisStart: START }));
+    const at = llAt(inp.project.lat, inp.project.lon);
+    const a = Math.sqrt(150000 * 1.5) / 2;
+    inp.site.receptors = [{ name: 'Test receptor', point: at(a + 60, 0) }];
+    const site = buildSiteModel(inp);
+    const rc = site.points.receptors[0].uv;
+    const box = (c) => [c[0] - 5, c[1] - 5, c[0] + 5, c[1] + 5];
+    const centres = [[rc[0] - 100, rc[1]], [rc[0] - 80, rc[1] + 60], [rc[0] - 200, rc[1]]];
+    const mk = (i, lwA, kind) => ({ type: 'genset', source: 'diesel', name: `Source ${i + 1}`, w: 10, h: 10, areaM2: 100, heightM: 3, clearanceM: 0, boundaryM: 0, noise: { lwA, kind } });
+    const bs = { ground: [mk(0, 100, 'continuous'), mk(1, 100, 'continuous'), mk(2, 105, 'standby')], roof: [], offsite: [], fill: null };
+    const L = fakeLayout(site, centres.map(box));
+    const fx = layoutFacts(site, bs, L);
+    assert.equal(fx.noise.label, 'screening proxy, not an acoustic assessment');
+    assert.deepEqual(fx.noise.sources.map((s) => s.receptorM), [100, 100, 200]);
+    assert.deepEqual(fx.noise.sources.map((s) => s.atReceptorDbA), [52, 52, 51]);
+    assert.deepEqual(fx.noise.receptorLevels, [{ name: 'Test receptor', normalDbA: 55, standbyDbA: 51 }]);
+    const ctx = lightContext(inp, site);
+    const sf45 = siteFitOf(ctx, site, bs, L, fx, {}, { itMW: 100 });
+    const nf = sf45.flags.find((f) => f.id === 'site-noise');
+    assert.ok(nf && nf.category === 'Permitting' && nf.permitting === false && nf.siteDerived === true && /55 dB\(A\)/.test(nf.message) && nf.message.includes('screening proxy, not an acoustic assessment'), 'noise flag above 45 dB(A)');
+    assert.equal(sf45.status, 'Fits with flags');
+    const sf56 = siteFitOf({ ...ctx, inputs: { ...inp, requirements: { ...inp.requirements, noiseNightDbA: 56 } } }, site, bs, L, fx, {}, { itMW: 100 });
+    assert.ok(!sf56.flags.some((f) => f.id === 'site-noise'));
+    assert.equal(sf56.status, 'Fits');
+    out.push('noise hand check: 2 × 100 dB(A) at 100 m → 52.0 each, 55.0 together; standby 105 dB(A) at 200 m → 51.0 (separate); flag at 45 dB(A) threshold (category Permitting, not counted as permitting), none at 56 dB(A)');
+    // (b) Land-take ceiling flag (§5.5 ceiling, flag only).
+    const ceil = (ha) => siteFitOf({ ...ctx, inputs: { ...inp, requirements: { ...inp.requirements, landTakeCeilingHa: ha, noiseNightDbA: 56 } } }, site, bs, L, fx, {}, { itMW: 100 });
+    assert.ok(ceil(0.01).flags.some((f) => f.id === 'target-landtake' && f.category === 'Targets and ceilings'));
+    assert.ok(!ceil(1).flags.some((f) => f.id === 'target-landtake'));
+    assert.equal(ceil(0.01).status, 'Fits', 'the land-take ceiling is a flag, not a site-fit status');
+    out.push('land-take ceiling 0.01 ha → flag (status unchanged), 1 ha → none');
+
+    // (c) Consistency of every §10.6 output on real runs (recomputed through HOOKS.layout).
+    let checked = 0, rows = 0;
+    for (const [label, run] of [['T1', runT1], ['T1 + constraints', runTC], ['T2', runT2], ['T4', runT4]]) {
+      const st = buildSiteModel(run.inputs);
+      for (const o of pickOptions(run)) {
+        const re = HOOKS.layout(st, run.inputs, o);
+        const sf = re.siteFit, f2 = re.facts;
+        const sumP = f2.parts.reduce((s, p) => s + p.placedM2, 0), sumU = f2.parts.reduce((s, p) => s + p.unplacedM2, 0);
+        near(sumP + sumU, sf.landTakeM2, f2.parts.length + 1, `${label} ${o.id}: area budget total vs land take`);
+        near(sumU, sf.unplacedM2, f2.parts.length + 1, `${label} ${o.id}: not-placed parts vs shortfall`);
+        near(sf.budgetShortfallM2, Math.max(0, sf.landTakeM2 - sf.netM2), 2, `${label} ${o.id}: shortfall beyond 100 %`);
+        near(sf.residualM2, Math.max(0, sf.netM2 - sf.placedM2 - sf.fillM2), 2, `${label} ${o.id}: residual area`);
+        near(sf.offsiteHa, re.bs.offsite.reduce((s, x) => s + x.landHa, 0), 1e-9, `${label} ${o.id}: off-site land`);
+        assert.equal(sf.status, o.siteFit.status);
+        // Height per zone: the site row always exists; exceeded iff the tallest element is above the limit.
+        assert.equal(f2.heights[0].id, 'site');
+        for (const h of f2.heights) if (h.tallestM != null) assert.equal(h.status, h.tallestM > h.limitM + 1e-9 ? 'exceeded' : 'pass');
+        if (f2.heights.some((h) => h.status === 'exceeded')) assert.notEqual(sf.status, 'Fits', `${label} ${o.id}: height exceeded but "Fits"`);
+        // Separation checklist: statuses follow the numbers (rounded to 0.1 m); a minimum is never broken.
+        for (const x of f2.separations) {
+          rows++;
+          if (x.kind === 'separation' || x.kind === 'boundary') {
+            if (x.status === 'pass') assert.ok(x.actualM >= x.requiredM - 0.06, `${label}: ${x.label} pass at ${x.actualM} < ${x.requiredM}`);
+            else if (x.status === 'relaxed') assert.ok(x.actualM < x.requiredM + 0.06 && x.actualM >= x.minM - 0.06, `${label}: ${x.label} relaxed at ${x.actualM}`);
+            else assert.fail(`${label} ${o.id}: separation minimum broken: ${x.label} ${x.actualM} m (minimum ${x.minM} m)`);
+          }
+        }
+        const relaxedRows = f2.separations.filter((x) => (x.kind === 'separation' || x.kind === 'boundary') && x.status === 'relaxed');
+        const relaxedNamed = sf.relaxed.filter((x) => x.rule === 'separation' || x.rule === 'boundary');
+        assert.equal(relaxedRows.length > 0, relaxedNamed.length > 0, `${label} ${o.id}: checklist relaxed rows (${relaxedRows.length}) vs named relaxed rules (${relaxedNamed.length})`);
+        if (relaxedNamed.length) assert.ok(sf.flags.some((x) => x.id === 'site-relaxed') && sf.status !== 'Fits');
+        // Roof use and expansion headroom.
+        near(sf.roof.freeM2, sf.roof.roofM2 - sf.roof.plantM2 - sf.roof.pvM2 - sf.roof.edgeM2, 3, `${label} ${o.id}: roof split`);
+        assert.equal(sf.roof.overAllocated, sf.roof.freeM2 < -1);
+        if (sf.status === 'Does not fit') assert.equal(sf.expansionMW, 0); else assert.ok(sf.expansionMW >= 0);
+        checked++;
+      }
+    }
+    // Constraints show up: the 12 m aviation zone row and a receptor level on the constrained T1 leader.
+    const tcSite = buildSiteModel(runTC.inputs);
+    const tcLead = runTC.options.reduce((x, y) => (x.rank < y.rank ? x : y));
+    const tl = HOOKS.layout(tcSite, runTC.inputs, tcLead);
+    assert.ok(tl.facts.heights.some((h) => h.name === 'Aviation zone' && h.limitM === 12));
+    assert.equal(tl.facts.noise.receptorLevels.length, 1);
+    for (const s of tl.facts.noise.sources) if (s.receptorM != null) near(s.atReceptorDbA, lpRef(s.lwA, s.receptorM), 0.15, 'receptor level from the formula');
+    out.push(`${checked} options on T1, T1 + constraints, T2 and T4: budget parts = land take, shortfall beyond 100 %, residual, off-site land, height rows, ${rows} separation rows (no minimum broken; relaxed rows ⇔ named relaxed rules), roof split, expansion 0 when not fitting`);
+    return out.join('; ') + '.';
+  });
+
+  await test('9f. AC7 on T2: an archetype shows "Does not fit" with a named shortfall; C17/C18 stay at defaults with "N options do not fit" notes; including C17 GIS and C18 double-deck yields options that fit or fit with flags; no option hidden', async () => {
+    const out = [];
+    const n = runT2.options.length;
+    const noFit = runT2.options.filter((o) => o.siteFit.status === 'Does not fit');
+    const arch = runT2.options.filter((o) => o.archetype && o.siteFit.status === 'Does not fit');
+    assert.ok(arch.length >= 1, 'no archetype shows "Does not fit" on T2');
+    for (const o of arch) {
+      const fl = o.flags.find((f) => f.id === 'site-does-not-fit');
+      assert.ok(fl && fl.severity === 'major' && /area shortfall [\d,]+ m²/.test(fl.message), `${o.archetype}: no named shortfall`);
+      assert.ok(o.siteFit.unplaced.length && o.siteFit.unplaced.every((u) => fl.message.includes(u.name)), `${o.archetype}: unplaced blocks not named`);
+    }
+    const a0 = arch[0];
+    out.push(`T2: ${noFit.length} of ${n} options do not fit; ${arch.length} archetypes do, e.g. ${a0.archetype} "${a0.siteFit.reasons[0]}" (${a0.siteFit.unplaced.map((u) => u.name).join(', ')})`);
+    // C17 and C18 at their defaults: only AIS and single-deck generated; the notes give the count.
+    assert.deepEqual(runT2.inputs.choices.C17, defaultChoiceState('C17', runT2.inputs));
+    assert.deepEqual(runT2.inputs.choices.C18, defaultChoiceState('C18', runT2.inputs));
+    assert.ok(runT2.options.every((o) => ['AIS', 'n/a'].includes(o.v.C17) && ['single', 'n/a'].includes(o.v.C18)), 'C17/C18 values beyond the defaults were generated');
+    const vng = runT2.generation.valuesNotGenerated;
+    for (const id of ['C17', 'C18']) {
+      const e = vng.find((x) => x.id === id);
+      assert.ok(e && e.doesNotFit === noFit.length && e.note.startsWith(`${noFit.length.toLocaleString('en-GB')} options do not fit`), `${id} note: ${e && e.note}`);
+    }
+    const B = await getViewBundle();
+    const html = B.renderSummary(runT2);
+    const notes = [...html.matchAll(/class="sub site-note">([^<]*)</g)].map((m) => m[1]);
+    assert.equal(notes.length, 2, 'run summary does not show the C17 and C18 notes');
+    assert.ok(notes.every((t) => t.startsWith(`${noFit.length.toLocaleString('en-GB')} options do not fit`)));
+    out.push(`C17/C18 at defaults; run summary notes: "${notes[0]}" / "${notes[1]}"`);
+    // No option hidden: with default settings "Hide dominated options" is off and every option is listed.
+    assert.equal(defaultView().hideDominated, false);
+    assert.equal(applyView(runT2.options, defaultView()).list.length, n, 'default view hides options');
+    assert.deepEqual(runT2.options.map((o) => o.rank).sort((x, y) => x - y), Array.from({ length: n }, (_, i) => i + 1), 'ranks are not 1…N');
+    // Including C17 GIS and C18 double-deck (the run summary's Include, AC7 wording).
+    const inc = referenceT2({ analysisStart: START });
+    inc.choices = { ...normalizeInputs(inc).choices, C17: { state: 'open', values: ['AIS', 'GIS'] }, C18: { state: 'open', values: ['single', 'double'] } };
+    const runInc = runModel(inc);
+    const fit = runInc.options.filter((o) => o.siteFit.status !== 'Does not fit');
+    assert.ok(fit.length >= 1, 'including GIS and double-deck gives no option that fits or fits with flags');
+    assert.ok(fit.every((o) => o.v.C17 === 'GIS'), 'a fitting option without GIS');
+    assert.equal(applyView(runInc.options, defaultView()).list.length, runInc.options.length);
+    const byStatus = { Fits: 0, 'Fits with flags': 0, 'Does not fit': 0 };
+    for (const o of runInc.options) byStatus[o.siteFit.status]++;
+    out.push(`with C17 GIS + C18 double-deck included (${runInc.generation.totalCombinations.toLocaleString('en-GB')} combinations, ${runInc.options.length} screened${runInc.generation.sampled ? ', sampled' : ''}): ${byStatus.Fits} fit, ${byStatus['Fits with flags']} fit with flags (e.g. "${fit[0].name}": ${fit[0].siteFit.reasons[0].slice(0, 90)}…), ${byStatus['Does not fit']} do not fit; every option listed in both runs (hide dominated off, ranks 1…N)`);
+    return out.join('; ') + '.';
+  });
+
+  await test('9g. Site fit never changes a score or rank while the site-fit penalty is off; with the penalty on, deliverability drops by 10/25 points and the axis reads "Deliverability (incl. site fit)"', async () => {
+    const out = [];
+    const ctx = runT1.ctx;
+    assert.equal(!!ctx.inputs.deliverability.siteFitPenalty, false, 'the site-fit penalty must default to off');
+    // (a) Deliverability with the penalty off ignores site fit and the site-fit flags.
+    let same = 0;
+    for (const o of runT1.options) {
+      const d0 = deliverability(ctx, o.v, o.sizing, o.dispatch, o.flags, o.siteFit);
+      const noSite = o.flags.filter((f) => !f.siteFit && f.id !== 'target-landtake');
+      for (const [flags, sf] of [[o.flags, null], [noSite, null], [o.flags, { status: 'Does not fit' }], [noSite, { status: 'Fits' }]]) {
+        const d = deliverability(ctx, o.v, o.sizing, o.dispatch, flags, sf);
+        assert.equal(d.score, d0.score, `${o.id}: deliverability depends on site fit with the penalty off`);
+      }
+      assert.equal(d0.score, o.deliv.score);
+      assert.equal(o.deliv.includesSiteFit, false);
+      same++;
+    }
+    out.push(`T1: deliverability of all ${same} options identical with site fit real, removed or scrambled and with the site-fit flags removed`);
+    // (b) Scores and ranks with site fit scrambled or removed are identical (re-scored set).
+    const base = new Map(runT1.options.map((o) => [o.id, [o.score, o.rank]]));
+    const statuses = ['Fits', 'Fits with flags', 'Does not fit'];
+    for (const mode of ['removed', 'scrambled', 'all-no-fit']) {
+      const opts = runT1.options.map((o, i) => ({ ...o, siteFit: mode === 'removed' ? null : { ...o.siteFit, status: mode === 'all-no-fit' ? 'Does not fit' : statuses[(i * 7) % 3] } }));
+      scoreOptions(opts, runT1.inputs);
+      for (const o of opts) assert.deepEqual([o.score, o.rank], base.get(o.id), `${mode}: score or rank of ${o.id} changed`);
+    }
+    out.push('scores and ranks identical with site fit removed, scrambled or all "Does not fit" (dominance may differ: it includes site fit, §7.2 step 6)');
+    // (c) View filters by site fit and land take never change a score or rank.
+    const v = applyView(runT1.options, { ...DEFAULT_VIEW, siteFit: ['Fits'], landTakeCeilingHa: 8 });
+    assert.ok(v.list.length < runT1.options.length && v.list.every((o) => o.siteFit.status === 'Fits' && o.siteFit.landTakeHa <= 8));
+    assert.ok(runT1.options.every((o) => o.score === base.get(o.id)[0] && o.rank === base.get(o.id)[1]));
+    // (d) Penalty on (T4): only deliverability changes, by the registered points, and the label says so.
+    const inpP = referenceT4({ analysisStart: START });
+    inpP.deliverability.siteFitPenalty = true;
+    const runP = runModel(inpP);
+    const offById = new Map(runT4.options.map((o) => [o.id, o]));
+    const P = runP.inputs.deliverability;
+    let dropped = 0, rankChanged = 0;
+    for (const o of runP.options) {
+      const q = offById.get(o.id);
+      assert.ok(q, `${o.id} missing without the penalty`);
+      assert.equal(o.siteFit.status, q.siteFit.status, 'site fit depends on the penalty');
+      assert.equal(o.eco.lcoe, q.eco.lcoe); assert.equal(o.eco.capex, q.eco.capex); assert.equal(o.metrics.ttp, q.metrics.ttp); assert.equal(o.metrics.carbon, q.metrics.carbon);
+      const pts = o.siteFit.status === 'Does not fit' ? P.siteFitNoFitPenalty : o.siteFit.status === 'Fits with flags' ? P.siteFitFlagsPenalty : 0;
+      near(o.deliv.score, Math.max(0, q.deliv.score - pts), 1e-9, `${o.id}: penalty ${pts}`);
+      assert.equal(o.deliv.includesSiteFit, true);
+      if (pts) dropped++;
+      if (o.rank !== q.rank) rankChanged++;
+    }
+    assert.ok(dropped > 0 && rankChanged > 0);
+    const B = await getViewBundle();
+    const det = B.renderOptionDetail(runP.options[0]);
+    assert.ok(det.includes('Deliverability (incl. site fit)'), 'option detail does not label the axis "Deliverability (incl. site fit)"');
+    assert.ok(!B.renderOptionDetail(runT4.options[0]).includes('incl. site fit'));
+    out.push(`T4 with the penalty on: ${dropped} of ${runP.options.length} options lose ${P.siteFitFlagsPenalty}/${P.siteFitNoFitPenalty} deliverability points, ${rankChanged} ranks change, LCOE/capex/time-to-power and statuses unchanged; detail reads "Deliverability (incl. site fit)" (off: "Deliverability")`);
+    return out.join('; ') + '.';
+  });
+
+  await test('9i. Site tab (server render): plan with layers, scale bar and north arrow, one drawn block per placed block, site-fit panel, unplaced tray, plan as a table with every block, small multiples, editor', async () => {
+    const B = await getViewBundle();
+    const out = [];
+    for (const [label, run] of [['T2', runT2], ['T1 + constraints', runTC], ['T4', runT4]]) {
+      const lead = run.options.reduce((x, y) => (x.rank < y.rank ? x : y));
+      const html = B.renderSite(run, run.inputs);
+      const st = buildSiteModel(run.inputs);
+      const re = HOOKS.layout(st, run.inputs, lead);
+      const svgTag = (html.match(/<svg[^>]*id="site-plan"[^>]*>/) || [''])[0];
+      assert.ok(/role="application"/.test(svgTag) && /tabindex="0"/.test(svgTag) && /aria-describedby="site-plan-desc"/.test(svgTag), `${label}: plan svg is not a focusable application with a description`);
+      assert.ok(svgTag.includes(`aria-label="Site plan of #1 `), `${label}: plan label does not name the option`);
+      const i0 = html.indexOf('id="site-plan"');
+      const mainSvg = html.slice(i0, html.indexOf('</svg>', i0));
+      const drawn = (mainSvg.match(/<g data-block="/g) || []).length;
+      assert.equal(drawn, re.layout.placed.length, `${label}: drawn blocks ≠ placed blocks`);
+      for (const k of ['sp-scale', 'sp-north', 'sp-boundary', 'sp-setback']) assert.ok(html.includes(`class="${k}`), `${label}: ${k} missing`);
+      assert.equal((html.match(/<fieldset class="sp-layers">[\s\S]*?<\/fieldset>/)[0].match(/type="checkbox"/g) || []).length, 9, `${label}: layer toggles`);
+      for (const t of ['Area budget', 'Height check', 'Separation checklist', 'screening proxy, not an acoustic assessment', 'Roof use', 'Expansion headroom', 'Residual net area']) assert.ok(html.includes(t), `${label}: "${t}" missing in the site-fit panel`);
+      if (re.siteFit.unplaced.length) {
+        assert.ok(html.includes('Unplaced tray'), `${label}: no unplaced tray`);
+        for (const u of re.siteFit.unplaced) assert.ok(html.includes(esc(u.name)), `${label}: unplaced ${u.name} not listed`);
+      }
+      const table = html.match(/<table class="mini blocks-table"[\s\S]*?<\/table>/)[0];
+      const trs = (table.match(/<tr/g) || []).length - 1; // minus the header row
+      assert.equal(trs, B.blockRows(st, re).length, `${label}: table rows ≠ blocks`);
+      assert.equal(trs, re.layout.placed.length + re.layout.unplaced.length + (re.layout.fill ? 1 : 0) + re.bs.roof.length + re.bs.offsite.length);
+      assert.ok(/class="blocks-table-wrap" role="region"[^>]*tabindex="0"/.test(html), `${label}: the table's scroll region is not focusable`);
+      for (const t of ['Draw boundary on the plan', 'accept=".geojson,.json,.kml', 'Boundary corners, one', 'Setbacks', 'Exclusions and height zones', 'Grid POC, gas main, access and receptors']) assert.ok(html.includes(t), `${label}: editor "${t}" missing`);
+      assert.equal((html.match(/class="multiple"/g) || []).length, Math.min(6, run.options.length));
+      out.push(`${label}: leader ${re.siteFit.status}, ${drawn} blocks drawn = placed, ${trs} table rows (placed ${re.layout.placed.length}, unplaced ${re.layout.unplaced.length}, fill ${re.layout.fill ? 1 : 0}, roof ${re.bs.roof.length}, off-site ${re.bs.offsite.length})`);
+    }
+    return out.join('; ') + '.';
+  });
+}

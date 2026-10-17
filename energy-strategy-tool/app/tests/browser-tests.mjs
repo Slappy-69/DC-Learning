@@ -5,13 +5,15 @@
 // available, the script prints SKIP with the reason and exits 0; it never installs browsers.
 // Covers what the Node suite cannot: the Canvas drawing path (> view.pareto.canvasAbove points) and its
 // pointer hit-testing, keyboard navigation on the chart, table paging, skip links and tab order,
-// removable filter chips, the off-canvas inputs panel at tablet width, phone overflow, and an axe audit
-// (WCAG 2.0/2.1/2.2 A and AA rules) in light and dark themes.
+// removable filter chips, the off-canvas inputs panel at tablet width, phone overflow, an axe audit
+// (WCAG 2.0/2.1/2.2 A and AA rules) in light and dark themes, and the Site tab (phone width with touch
+// drawing, keyboard reach of the plan and its table, keyboard drawing, axe light and dark).
 //
 // Exit code 1 if any check fails.
 
 import { createRequire } from 'node:module';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync, unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 
@@ -33,7 +35,10 @@ function tryResolve(name) {
 
 const results = [];
 let failures = 0;
+// BROWSER_ONLY=<regex> runs only the matching checks (development aid; the full run is the default).
+const ONLY = process.env.BROWSER_ONLY ? new RegExp(process.env.BROWSER_ONLY) : null;
 async function check(name, fn) {
+  if (ONLY && !ONLY.test(name)) return;
   const t0 = Date.now();
   try {
     const info = await fn();
@@ -81,8 +86,8 @@ try { browser = await launch(); } catch (e) {
 }
 console.log(`Browser tests on ${pathToFileURL(FILE).href}\nChromium ${browser.version()}, Playwright ${pw.chromium ? require(require.resolve('playwright/package.json')).version : '?'}, axe-core ${AXE ? require(AXE.replace(/axe\.min\.js$/, 'package.json')).version : 'not found'}`);
 
-async function openPage({ width = 1400, height = 900, colorScheme = 'light', isMobile = false } = {}) {
-  const ctx = await browser.newContext({ viewport: { width, height }, colorScheme, isMobile, deviceScaleFactor: 1 });
+async function openPage({ width = 1400, height = 900, colorScheme = 'light', isMobile = false, hasTouch = false } = {}) {
+  const ctx = await browser.newContext({ viewport: { width, height }, colorScheme, isMobile, hasTouch, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   page.setDefaultTimeout(60000);
   const errors = [];
@@ -100,6 +105,22 @@ async function openPage({ width = 1400, height = 900, colorScheme = 'light', isM
   return { ctx, page, errors, loadS: (Date.now() - t0) / 1000, status };
 }
 const tradeoffsTab = (page) => page.getByRole('tab', { name: 'Trade-offs', exact: true });
+const siteTab = (page) => page.getByRole('tab', { name: 'Site', exact: true });
+// Site tab helpers: wait for the thumbnails, open every collapsible section, wait for a re-run after a site edit.
+async function openSite(page) {
+  await siteTab(page).click();
+  await page.waitForSelector('#site-plan');
+  await page.waitForFunction(() => !document.querySelector('.mult-wait'), null, { timeout: 60000, polling: 200 });
+}
+const openAllSiteDetails = (page) => page.evaluate(() => document.querySelectorAll('.site details').forEach((d) => { d.open = true; }));
+async function waitSiteRerun(page, editorText) {
+  await page.waitForFunction((t) => {
+    const ed = document.querySelector('.site-editor');
+    const st = document.querySelector('.status');
+    return ed && ed.textContent.includes(t) && !document.querySelector('.site-stale') && st && /Last run/.test(st.textContent) && !/Screening options/.test(st.textContent);
+  }, editorText, { timeout: 180000, polling: 250 });
+}
+const pageWidths = (page) => page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
 const optionsTab = (page) => page.getByRole('tab', { name: 'Options', exact: true });
 async function active(page) {
   return page.evaluate(() => {
@@ -529,6 +550,191 @@ await check('B13. Phone width (375 px): Trade-offs chart and table cause no hori
   ok(w1[0] <= w1[1] && w2[0] <= w2[1], `scrollWidth/clientWidth chart ${w1.join('/')}, table ${w2.join('/')}`);
   ok(errors.length === 0, errors.join(' | '));
   return `chart ${w1.join('/')} px, table ${w2.join('/')} px (scrollWidth/clientWidth); the wide table scrolls inside its own region.`;
+});
+
+// ---------------------------------------------------------------------------
+// Site tab (§10.7): phone width with touch drawing, keyboard, axe light and dark.
+// ---------------------------------------------------------------------------
+await check('B14. Phone width (375 px, touch): the Site tab causes no horizontal page scroll with every section open; a boundary drawn by tapping re-screens the options', async () => {
+  const { ctx, page, errors } = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true });
+  await openSite(page);
+  await openAllSiteDetails(page);
+  await page.waitForTimeout(300);
+  const w1 = await pageWidths(page);
+  const plan = await page.evaluate(() => { const r = document.getElementById('site-plan').getBoundingClientRect(); return { left: r.left, right: r.right, vw: innerWidth }; });
+  ok(w1[0] <= w1[1], `Site tab: scrollWidth ${w1[0]} > clientWidth ${w1[1]}`);
+  ok(plan.left >= 0 && plan.right <= plan.vw, `plan ${plan.left.toFixed(0)}–${plan.right.toFixed(0)} px outside the ${plan.vw} px screen`);
+  // Tap-to-draw: four taps on the plan, then Finish.
+  await page.getByRole('button', { name: 'Draw boundary on the plan' }).tap();
+  await page.waitForSelector('.draw-banner');
+  await page.locator('#site-plan').scrollIntoViewIfNeeded();
+  const box = await page.locator('#site-plan').boundingBox();
+  for (const [fx, fy] of [[0.2, 0.25], [0.8, 0.25], [0.8, 0.75], [0.2, 0.75]]) { await page.touchscreen.tap(box.x + fx * box.width, box.y + fy * box.height); await page.waitForTimeout(100); }
+  const banner = (await page.locator('.draw-banner').innerText()).replace(/\s+/g, ' ');
+  ok(/4 so far/.test(banner), `taps did not add 4 corners: "${banner.slice(0, 120)}"`);
+  const w2 = await pageWidths(page);
+  await page.getByRole('button', { name: 'Finish shape' }).tap();
+  await waitSiteRerun(page, 'Drawn polygon: 4 edges');
+  const rs = await page.evaluate(() => (document.querySelector('.run-summary') || {}).textContent || '');
+  ok(/drawn polygon \(4 edges\)/.test(rs), 'run summary does not report the drawn boundary');
+  const area = await page.evaluate(() => { const m = document.querySelector('.site-editor').textContent.match(/4 edges, ([\d.]+) ha/); return m ? Number(m[1]) : null; });
+  await openAllSiteDetails(page);
+  const w3 = await pageWidths(page);
+  await ctx.close();
+  ok(w2[0] <= w2[1] && w3[0] <= w3[1], `horizontal scroll while drawing (${w2.join('/')}) or after (${w3.join('/')})`);
+  ok(errors.length === 0, errors.join(' | '));
+  return `scrollWidth/clientWidth ${w1.join('/')} px with every section open, plan ${Math.round(plan.right - plan.left)} px wide; 4 taps + Finish → drawn 4-edge boundary of ${area} ha, options re-screened (run summary: "drawn polygon (4 edges)"); drawing ${w2.join('/')} px, after ${w3.join('/')} px.`;
+});
+
+await check('B15. Keyboard on the Site tab: Tab reaches the plan; arrow keys focus blocks with dimensions, tooltip, live text and the matching table row; the table alternative is reachable; a boundary can be drawn with the keyboard alone', async () => {
+  const { ctx, page, errors } = await openPage();
+  await page.locator('#tab-options').focus();
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await page.waitForSelector('#site-plan');
+  ok((await active(page)).id === 'tab-site', 'ArrowRight × 2 from Options did not focus the Site tab');
+  let presses = 0, onPlan = false;
+  const stops = [];
+  while (presses < 40 && !onPlan) {
+    await page.keyboard.press('Tab'); presses++;
+    const a = await active(page);
+    ok(a.visible, `Tab stop ${presses} (${a.tag}) is not visible`);
+    stops.push(a.tag);
+    onPlan = a.id === 'site-plan';
+  }
+  ok(onPlan, `plan not reached in ${presses} Tab presses (${stops.join(', ')})`);
+  ok((await active(page)).focusVisible, 'plan focused without a visible focus indicator');
+  const read = () => page.evaluate(() => ({
+    active: document.querySelectorAll('#site-plan .sp-active').length, dims: [...document.querySelectorAll('#site-plan .sp-dim text')].map((t) => t.textContent),
+    tip: (document.querySelector('.sp-tip strong') || {}).textContent || '', live: (document.querySelector('.site-plan > [aria-live]') || {}).textContent || '',
+    row: (document.querySelector('.blocks-table tr.on th') || {}).textContent || '',
+  }));
+  await page.keyboard.press('ArrowRight'); await page.waitForTimeout(150);
+  const s1 = await read();
+  const name1 = s1.live.split('. ')[0];
+  ok(s1.active === 1 && s1.dims.length === 2 && s1.dims.every((t) => / m$/.test(t)), `focused block: ${JSON.stringify(s1)}`);
+  ok(/m²/.test(s1.live) && /east/.test(s1.live) && /north/.test(s1.live), `live text "${s1.live}"`);
+  ok(s1.tip === name1 && s1.row === name1, `tooltip "${s1.tip}" / table row "${s1.row}" / live "${name1}" differ`);
+  await page.keyboard.press('ArrowRight'); await page.waitForTimeout(100);
+  const s2 = await read();
+  ok(s2.live !== s1.live, 'ArrowRight did not move to the next block');
+  await page.keyboard.press('End'); await page.waitForTimeout(100);
+  const sEnd = await read();
+  await page.keyboard.press('Home'); await page.waitForTimeout(100);
+  ok((await read()).live === s1.live, 'Home did not return to the first block');
+  await page.keyboard.press('Escape'); await page.waitForTimeout(100);
+  ok((await read()).active === 0, 'Escape did not clear the focused block');
+  // The table alternative: the next Tab stop is the "plan as a table" link; following it, Tab reaches the table region.
+  await page.keyboard.press('Tab');
+  const link = await active(page);
+  ok(/The plan as a table/.test(link.text), `Tab after the plan went to "${link.text}"`);
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  const inTable = await page.evaluate(() => document.activeElement.classList.contains('blocks-table-wrap'));
+  ok(inTable, 'the table region was not the next Tab stop after the link target');
+  const rows = await page.locator('.blocks-table tbody tr').count();
+  // Keyboard drawing: the Draw button moves focus to the plan; arrows move the crosshair, Enter adds corners, F finishes.
+  await page.getByRole('button', { name: 'Draw boundary on the plan' }).focus();
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'site-plan', null, { timeout: 5000 });
+  await page.keyboard.press('Enter');
+  for (let i = 0; i < 12; i++) await page.keyboard.press('Shift+ArrowRight');
+  await page.keyboard.press('Enter');
+  for (let i = 0; i < 12; i++) await page.keyboard.press('Shift+ArrowUp');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(100);
+  const liveDraw = (await read()).live;
+  ok(/Drawing: 3 points/.test(liveDraw), `live text while drawing: "${liveDraw}"`);
+  await page.keyboard.press('f');
+  await waitSiteRerun(page, 'Drawn polygon: 3 edges');
+  const area = await page.evaluate(() => { const m = document.querySelector('.site-editor').textContent.match(/3 edges, ([\d.]+) ha/); return m ? Number(m[1]) : null; });
+  ok(Math.abs(area - 0.72) < 0.02, `keyboard triangle 120 × 120 m should be 0.72 ha, got ${area}`);
+  await ctx.close();
+  ok(errors.length === 0, errors.join(' | '));
+  return `${presses} Tab presses from the Site tab to the plan (${stops.join(' → ')}), focus visible; ArrowRight → "${name1}" with dimensions ${s1.dims.join(' × ')}, tooltip and table row match; End → "${sEnd.live.split('. ')[0]}"; Home back; Escape clears; Tab → "The plan as a table" link → Enter → Tab → table region (${rows} rows); keyboard drawing: Enter, 12 × Shift+→, Enter, 12 × Shift+↑, Enter, F → 3-edge boundary of ${area} ha (120 × 120 m triangle), options re-screened.`;
+});
+
+await check('B16. GeoJSON import on the Site tab: each feature gets a "use as" choice (guessed from its name), and applying sets the boundary, a soft flood exclusion, the POC and a receptor, then re-screens the options', async () => {
+  const { ctx, page, errors } = await openPage();
+  await openSite(page);
+  // A 0.007° × 0.0036° boundary (about 240 × 400 m) around the current site, a flood zone, a POC and a dwelling.
+  const corners = await page.evaluate(() => document.querySelector('.site-editor .typed textarea').value.trim().split('\n').map((l) => l.split(',').map(Number)));
+  const lat0 = corners.reduce((a, c) => a + c[0], 0) / corners.length, lon0 = corners.reduce((a, c) => a + c[1], 0) / corners.length;
+  const dLat = 0.0018, dLon = 0.0035;
+  const box = (x0, y0, x1, y1) => [[[lon0 + x0 * dLon, lat0 + y0 * dLat], [lon0 + x1 * dLon, lat0 + y0 * dLat], [lon0 + x1 * dLon, lat0 + y1 * dLat], [lon0 + x0 * dLon, lat0 + y1 * dLat], [lon0 + x0 * dLon, lat0 + y0 * dLat]]];
+  const gj = { type: 'FeatureCollection', features: [
+    { type: 'Feature', properties: { name: 'Site boundary' }, geometry: { type: 'Polygon', coordinates: box(-1, -1, 1, 1) } },
+    { type: 'Feature', properties: { name: 'Flood zone 2' }, geometry: { type: 'Polygon', coordinates: box(0.4, -0.9, 0.9, -0.3) } },
+    { type: 'Feature', properties: { name: 'Grid POC' }, geometry: { type: 'Point', coordinates: [lon0 - dLon, lat0] } },
+    { type: 'Feature', properties: { name: 'Dwelling' }, geometry: { type: 'Point', coordinates: [lon0 + 1.5 * dLon, lat0] } },
+  ] };
+  const file = join(tmpdir(), `site-import-${process.pid}.geojson`);
+  writeFileSync(file, JSON.stringify(gj));
+  await page.locator('.import-geo input[type=file]').setInputFiles(file);
+  await page.waitForSelector('.import-list table');
+  unlinkSync(file); // after the page has read it (Chromium reads the file when the page asks for its text)
+  const uses = await page.locator('.import-list select').evaluateAll((ss) => ss.map((x) => x.value));
+  ok(JSON.stringify(uses) === JSON.stringify(['boundary', 'excl:flood', 'poc', 'receptor']), `guessed uses ${uses.join(', ')}`);
+  await page.getByRole('button', { name: 'Apply import' }).click();
+  const msg = (await page.locator('.import-geo [role=status]').innerText()).trim();
+  ok(/Applied 4 of 4 features/.test(msg), `import message "${msg}"`);
+  await waitSiteRerun(page, 'Imported polygon: 4 edges');
+  const r = await page.evaluate(() => ({
+    rs: [...document.querySelectorAll('.run-summary li')].map((l) => l.textContent.replace(/\s+/g, ' ')).filter((t) => /^Boundary|^Exclusions/.test(t)),
+    facts: [...document.querySelectorAll('.site-facts tr')].map((tr) => tr.textContent.replace(/\s+/g, ' ')),
+    receptorRow: [...document.querySelectorAll('.fit-panel tr')].map((tr) => tr.textContent.replace(/\s+/g, ' ')).find((t) => /^Dwelling/.test(t)) || '',
+  }));
+  await ctx.close();
+  ok(r.rs.some((t) => /imported polygon \(4 edges\)/.test(t)) && r.rs.some((t) => /Exclusions 1 \(0 hard\).*receptors 1/.test(t)), `run summary: ${r.rs.join(' | ')}`);
+  ok(r.facts.some((t) => /Flood zone 2.*Flood zone, soft/.test(t)) && r.facts.some((t) => /^Grid POC/.test(t) && !/default/.test(t)), `site facts: ${r.facts.slice(0, 8).join(' | ')}`);
+  ok(/dB\(A\)/.test(r.receptorRow), `no noise level at the imported receptor: "${r.receptorRow}"`);
+  ok(errors.length === 0, errors.join(' | '));
+  return `uses guessed ${uses.join(', ')}; "${msg}"; re-screened: ${r.rs[0].slice(0, 110)}…; receptor row "${r.receptorRow.slice(0, 70)}".`;
+});
+
+async function siteAxe(colorScheme) {
+  const { ctx, page, errors } = await openPage({ colorScheme });
+  await openSite(page);
+  await openAllSiteDetails(page);
+  const out = [];
+  out.push(await runAxe(page, `Site tab, leader (${colorScheme})`));
+  const review = await verifyNeedsReviewContrast(page);
+  const noFit = await page.evaluate(() => { const o = [...document.querySelectorAll('.site-head select option')].find((x) => /Does not fit/.test(x.textContent)); return o ? o.value : null; });
+  if (noFit) {
+    await page.locator('.site-head select').selectOption(noFit);
+    await page.waitForSelector('.fit-panel h4:has-text("Unplaced tray")');
+    await openAllSiteDetails(page);
+    out.push(await runAxe(page, `Site tab, an option that does not fit (${colorScheme})`));
+  }
+  await page.getByRole('button', { name: 'Draw boundary on the plan' }).click();
+  await page.waitForSelector('.draw-banner');
+  const box = await page.locator('#site-plan').boundingBox();
+  await page.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.3);
+  await page.mouse.click(box.x + box.width * 0.6, box.y + box.height * 0.3);
+  out.push(await runAxe(page, `Site tab, drawing (${colorScheme})`));
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  const body = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  await ctx.close();
+  return { out, errors, body, review };
+}
+await check('B17. axe, light theme: Site tab (plan, layers, legend, editor with every section open, site-fit panel incl. unplaced tray, small multiples, table) and drawing mode have no serious or critical violation', async () => {
+  if (!AXE) return { skip: 'axe-core is not installed.' };
+  const { out, errors, review } = await siteAxe('light');
+  const bad = out.flatMap((r) => serious(r).map((v) => `${r.label}: ${v.impact} ${v.id} ×${v.nodes} (${v.target}) ${v.msg}`));
+  ok(bad.length === 0, bad.join(' | '));
+  ok(review.below.length === 0, `needs-review text below the contrast minimum: ${review.below.slice(0, 5).join(' | ')}`);
+  ok(errors.length === 0, errors.join(' | '));
+  return [...out.map(axeLine), reviewLine('Site tab (light)', review)].join('\n      ');
+});
+await check('B18. axe, dark theme: the same Site tab states have no serious or critical violation', async () => {
+  if (!AXE) return { skip: 'axe-core is not installed.' };
+  const { out, errors, body, review } = await siteAxe('dark');
+  ok(/21, 23, 26/.test(body), `dark theme not applied (body ${body})`);
+  const bad = out.flatMap((r) => serious(r).map((v) => `${r.label}: ${v.impact} ${v.id} ×${v.nodes} (${v.target}) ${v.msg}`));
+  ok(bad.length === 0, bad.join(' | '));
+  ok(review.below.length === 0, `needs-review text below the contrast minimum: ${review.below.slice(0, 5).join(' | ')}`);
+  ok(errors.length === 0, errors.join(' | '));
+  return [...out.map(axeLine), reviewLine('Site tab (dark)', review)].join('\n      ');
 });
 
 await browser.close();

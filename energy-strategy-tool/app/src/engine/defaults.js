@@ -496,11 +496,11 @@ REGISTRY['weights.presets'] = {
 // change any score or rank, and are not part of the inputs (so they never trigger a re-run). Labelled
 // under the §23 rule. The code reads each value from here at the point of use (registryValue, and
 // engine/view-defaults.js), so the record and the behaviour cannot drift apart; test 8f checks it.
-function viewRec(path, value, unit, basis, note) {
+function viewRec(path, value, unit, basis, note, briefRef = '§12.2') {
   REGISTRY[path] = {
     path, value, unit, low: null, high: null, distribution: 'fixed', basis,
     source: '', year: '', url: '', accessed: '', confidence: 'C', verified: false, sourceToVerify: '', note,
-    briefRef: '§12.2', label: LABEL, derived: false,
+    briefRef, label: LABEL, derived: false,
   };
 }
 viewRec('view.pareto.xAxis', 'follow-scoring', '"follow-scoring" | "lcoe" | "npv" | "location" | "market" | "cfe" | "ttp" | "deliverability"', 'judgement', 'Default x axis of the Pareto scatter. "follow-scoring" = the Cost axis metric (settings.costMetric, default LCOE); §12.2 default: cost vs carbon.');
@@ -508,6 +508,7 @@ viewRec('view.pareto.yAxis', 'follow-scoring', '"follow-scoring" | "lcoe" | "npv
 viewRec('view.pareto.ttpClasses', 5, 'quantile classes', 'run setting', 'Number of colour classes for time-to-power, quantiles over the scoring set.');
 viewRec('view.pareto.canvasAbove', 500, 'points', 'run setting', 'Points are drawn on Canvas above this count (§4), SVG at or below it.');
 viewRec('view.pareto.display', 'chart', '"chart" | "table"', 'judgement', 'Chart shown first; the table alternative is one click away and holds the same rows.');
+viewRec('view.site.smallMultiples', 6, 'plans', 'run setting', 'Number of top-ranked options drawn as small-multiple plans on the Site tab, all at the same scale (§10.7 "thumbnails of pinned or top options"; pinning is not in this slice). 0 hides them.', '§10.7');
 viewRec('view.table.pageSize', 50, 'rows per page', 'run setting', 'Rows per page in the ranked table and the trade-off table; every page is reachable with the pager.');
 
 // Required inputs: no default in the brief. The app pre-fills the T1 reference example

@@ -107,6 +107,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
     return { cacheHits: d1.hits - d0.hits, cacheMisses: d1.misses - d0.misses, cache: 'hourly demand by cooling approach and model year' };
   });
 
+  let layoutSummary = null;
   // ---- 5. Site layout (§10.3 blocks, §10.4 auto-layout, §10.6 site fit), cached by block-set key ----
   // Blocks are built per option; options with the same block set share one layout, and the distinct sets
   // are laid out as one batch that places shared leading blocks once (layout.js). "Fill residual" solar is
@@ -156,6 +157,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
     if (statuses['Does not fit']) log.warning(STAGE.layout, 'site-does-not-fit', `${statuses['Does not fit']} of ${n} options do not fit the site (flagged with the area shortfall; still ranked and shown)`, { options: statuses['Does not fit'] });
     if (statuses['Fits with flags']) log.warning(STAGE.layout, 'site-fits-with-flags', `${statuses['Fits with flags']} of ${n} options fit only with flags (relaxed rules or limits exceeded, named on each option)`, { options: statuses['Fits with flags'] });
     const st = layouts.stats;
+    layoutSummary = { cacheHits: hits, cacheMisses: misses, distinctLayouts: misses, placements: st.placements, searches: st.searches, maskBuilds: st.maskBuilds, solarFills: st.fills, unplacedBlocks, relaxedRules, cellM: site.grid.cell };
     log.end(STAGE.layout, n, n, {
       cacheHits: hits, cacheMisses: misses, distinctLayouts: misses, placements: st.placements, searches: st.searches, maskBuilds: st.maskBuilds, solarFills: st.fills,
       statuses: { ...statuses }, unplacedBlocks, relaxedRules, cellM: site.grid.cell,
@@ -288,6 +290,8 @@ export function* runModelSteps(rawInputs, opts = {}) {
     meritOrder: MERIT_ORDER,
     dispatchHandling: { grid: inputs.settings.gridHandling, runHours: inputs.settings.runHourHandling },
     profileLabel: PROFILE_LABEL,
+    site: { ...siteSummary(ctx.site), warningMessages: ctx.site.warnings.map((w) => w.message) },
+    layoutSummary,
     country: ctx.country,
     profileStats: ctx.prof.stats,
     log: log.events,
@@ -347,6 +351,11 @@ export function mergeRuns(parts, inputs, opts = {}) {
   merged.timing = { ...base.timing, evaluateMs: Math.max(...parts.map((p) => p.timing.evaluateMs)), dispatchRuns, distinctConfigurations: distinct, workers: parts.length };
   merged.scoring = scoreAndLog(log, options, normalizeInputs(inputs), { workers: parts.length, options: options.length, distinctConfigurations: distinct, duplicatedAcrossWorkers: dispatchRuns - distinct });
   merged.generation = { ...base.generation, valuesNotGenerated: withSiteFitNotes(base.generation.valuesNotGenerated, options) };
+  // Layout cache counts summed over the workers (each worker caches its own slice).
+  if (parts.every((p) => p.layoutSummary)) {
+    const sum = (k) => parts.reduce((a, p) => a + p.layoutSummary[k], 0);
+    merged.layoutSummary = { ...base.layoutSummary, cacheHits: sum('cacheHits'), cacheMisses: sum('cacheMisses'), distinctLayouts: new Set(options.map((o) => o.layoutKey)).size, placements: sum('placements'), searches: sum('searches'), maskBuilds: sum('maskBuilds'), solarFills: sum('solarFills'), unplacedBlocks: sum('unplacedBlocks'), relaxedRules: sum('relaxedRules'), workers: parts.length };
+  }
   merged.log = mergeLogs([log.events, ...parts.map((p) => p.log || [])]);
   merged.dispatchKeys = undefined;
   return merged;

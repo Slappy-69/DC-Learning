@@ -27,17 +27,30 @@ export default function InputsPanel({ inputs, update, setWeights }) {
       </Section>
 
       <Section title="2 · Site" defaultOpen>
-        <NumberField label="Site area" unit="ha" value={inputs.site.areaHa} onCommit={set('site.areaHa')} required min={0.1} />
+        {norm.site.areaFromBoundary ? (
+          <p className="note">Site area {norm.site.areaHa.toFixed(2)} ha, from the {inputs.site.boundary.source || 'drawn'} boundary polygon. Use the Site tab to change or remove it.</p>
+        ) : (
+          <>
+            <NumberField label="Site area" unit="ha" value={inputs.site.areaHa} onCommit={set('site.areaHa')} required min={0.1} />
+            <NumberField label="Aspect ratio" unit=": 1" value={inputs.site.aspect} onCommit={set('site.aspect')} path="site.aspect" inputs={inputs} min={1} max={10}
+              hint="Area + aspect gives a rectangle, long side east–west. Draw, type or import a boundary on the Site tab instead." />
+          </>
+        )}
         <div className="row2">
-          <NumberField label="Aspect ratio" unit=": 1" value={inputs.site.aspect} onCommit={set('site.aspect')} path="site.aspect" inputs={inputs} min={1} max={10} />
           <NumberField label="Boundary setback" unit="m" value={inputs.site.setbackM} onCommit={set('site.setbackM')} path="site.setbackM" inputs={inputs} min={0} />
+          <NumberField label="Height limit" unit="m" value={inputs.site.heightLimitM} onCommit={set('site.heightLimitM')} path="site.heightLimitM" inputs={inputs} min={0} />
         </div>
         <div className="row2">
-          <NumberField label="Height limit" unit="m" value={inputs.site.heightLimitM} onCommit={set('site.heightLimitM')} path="site.heightLimitM" inputs={inputs} min={0} />
           <NumberField label="Roads, parking, landscaping" unit="%" scale={100} value={inputs.site.roadsFraction} onCommit={set('site.roadsFraction')} path="site.roadsFraction" inputs={inputs} min={0} max={0.9} />
+          <NumberField label="Noise threshold at receptors (night)" unit="dB(A)" value={inputs.requirements.noiseNightDbA} onCommit={set('requirements.noiseNightDbA')} path="requirements.noiseNightDbA" inputs={inputs} min={0} max={100} />
         </div>
-        <NumberField label="Off-site land for generation" unit="ha" value={inputs.site.offsiteLandHa} onCommit={set('site.offsiteLandHa')} path="site.offsiteLandHa" inputs={inputs} min={0} />
-        <p className="note">Site layout and fit status are not part of this slice. Area is used for the ground-solar area budget, the wind count and an area-budget info flag.</p>
+        <div className="row2">
+          <NumberField label="Off-site land for generation" unit="ha" value={inputs.site.offsiteLandHa} onCommit={set('site.offsiteLandHa')} path="site.offsiteLandHa" inputs={inputs} min={0} />
+          <NumberField label="Private-wire distance to off-site land" unit="km" value={inputs.site.offsiteDistanceKm} onCommit={set('site.offsiteDistanceKm')} path="site.offsiteDistanceKm" inputs={inputs} min={0} />
+        </div>
+        <ToggleField label="Soft exclusions can be used by ground solar" checked={inputs.site.softUsableBySolar} onCommit={set('site.softUsableBySolar')} path="site.softUsableBySolar" inputs={inputs} />
+        <TextField label="Ground conditions (note)" value={inputs.site.groundConditions} onCommit={set('site.groundConditions')} path="site.groundConditions" inputs={inputs} />
+        <p className="note">Boundary polygon, per-edge setbacks, exclusion zones, height zones, grid point of connection, gas main, access and noise receptors are edited on the Site tab (draw on the plan, type coordinates or import GeoJSON/KML). {inputs.site.exclusions.length} exclusion zone{inputs.site.exclusions.length === 1 ? '' : 's'}, {inputs.site.heightZones.length} height zone{inputs.site.heightZones.length === 1 ? '' : 's'}, {inputs.site.receptors.length} receptor{inputs.site.receptors.length === 1 ? '' : 's'}.</p>
       </Section>
 
       <Section title="3 · Load and building" defaultOpen>
@@ -92,6 +105,8 @@ export default function InputsPanel({ inputs, update, setWeights }) {
         </div>
         <NumberField label="Carbon target (annual average cap)" unit="gCO₂e/kWh" value={inputs.requirements.carbonTarget} onCommit={set('requirements.carbonTarget')} path="requirements.carbonTarget" inputs={inputs} nullable min={0} />
         <NumberField label="Capex ceiling" unit="€ m" scale={1e-6} value={inputs.requirements.capexCeiling} onCommit={set('requirements.capexCeiling')} path="requirements.capexCeiling" inputs={inputs} nullable min={0} />
+        <NumberField label="Land-take ceiling (on site)" unit="ha" value={inputs.requirements.landTakeCeilingHa} onCommit={set('requirements.landTakeCeilingHa')} path="requirements.landTakeCeilingHa" inputs={inputs} nullable min={0}
+          hint="Flag only. Empty = the net developable area (where it coincides with &quot;Does not fit&quot;); a lower value raises a minor flag without changing the site-fit status." />
         <NumberField label="Max annual run-hours, on-site combustion" unit="h/yr" value={inputs.requirements.maxRunHours} onCommit={set('requirements.maxRunHours')} path="requirements.maxRunHours" inputs={inputs} nullable min={0} />
 
         <fieldset className="weights">
@@ -124,10 +139,17 @@ export default function InputsPanel({ inputs, update, setWeights }) {
         <SelectField label="Carbon axis metric" value={inputs.settings.carbonMetric} onCommit={set('settings.carbonMetric')} path="settings.carbonMetric" inputs={inputs}
           options={[['location', 'Location-based'], ['market', 'Market-based'], ['cfe', '1 − hourly CFE %']]} />
         <ToggleField label="Rank requirement-compliant options first" checked={inputs.settings.rankCompliantFirst} onCommit={set('settings.rankCompliantFirst')} path="settings.rankCompliantFirst" inputs={inputs} />
+        <ToggleField label="Include site-fit penalty in deliverability" checked={inputs.deliverability.siteFitPenalty} onCommit={set('deliverability.siteFitPenalty')} path="deliverability.siteFitPenalty" inputs={inputs}
+          hint={`Off by default: site fit is a status, not a weight. On: −${inputs.deliverability.siteFitFlagsPenalty} for "Fits with flags", −${inputs.deliverability.siteFitNoFitPenalty} for "Does not fit", and the axis reads "Deliverability (incl. site fit)".`} />
         <NumberField label="Generation cap" unit="options" value={inputs.settings.generationCap} onCommit={(v) => update('settings.generationCap', Math.round(v))} path="settings.generationCap" inputs={inputs} min={20} step={1} />
         <ToggleField label="Sample above cap" checked={inputs.settings.sampleAboveCap} onCommit={set('settings.sampleAboveCap')} path="settings.sampleAboveCap" inputs={inputs}
           hint="Off screens every combination (slow above the cap)." />
         <NumberField label="Wind default site threshold" unit="ha" value={inputs.settings.windSiteThresholdHa} onCommit={(v) => { update('settings.windSiteThresholdHa', v); update('choices.C11', null); }} path="settings.windSiteThresholdHa" inputs={inputs} min={0} />
+        <div className="row2">
+          <NumberField label="Layout raster cell" unit="m" value={inputs.settings.layoutCellM} onCommit={set('settings.layoutCellM')} path="settings.layoutCellM" inputs={inputs} min={1} max={10} />
+          <NumberField label="Raster cell above the threshold" unit="m" value={inputs.settings.layoutCellLargeM} onCommit={set('settings.layoutCellLargeM')} path="settings.layoutCellLargeM" inputs={inputs} min={1} max={20} />
+        </div>
+        <NumberField label="Large-site threshold for the raster" unit="ha" value={inputs.settings.layoutLargeSiteHa} onCommit={set('settings.layoutLargeSiteHa')} path="settings.layoutLargeSiteHa" inputs={inputs} min={1} />
         <div className="row2">
           <NumberField label="WACC (real)" unit="%" scale={100} value={inputs.economics.wacc} onCommit={set('economics.wacc')} path="economics.wacc" inputs={inputs} min={0} max={0.3} />
           <NumberField label="Evaluation period" unit="yr" value={inputs.economics.periodYears} onCommit={(v) => update('economics.periodYears', Math.round(v))} path="economics.periodYears" inputs={inputs} min={5} max={40} step={1} />

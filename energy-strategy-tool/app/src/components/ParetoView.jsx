@@ -36,7 +36,7 @@ function AxisSelect({ label, value, onChange, describedBy }) {
   );
 }
 
-export default function ParetoView({ run, view, setView, start, focusChart = false, onChartFocused }) {
+export default function ParetoView({ run, view, setView, start, focusChart = false, onChartFocused, onShowSite = null }) {
   const settings = run.inputs.settings;
   const defaultDisplay = paretoDefaultDisplay();
   const pageSize = tablePageSize();
@@ -176,7 +176,7 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
 
       {open ? (
         <div className="pareto-detail">
-          <OptionDetail o={open} start={start} dominator={open.dominatedBy ? byId.get(open.dominatedBy) : null} onClose={() => setOpenId(null)} />
+          <OptionDetail o={open} start={start} dominator={open.dominatedBy ? byId.get(open.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={onShowSite} />
         </div>
       ) : null}
     </section>

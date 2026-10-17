@@ -5,6 +5,8 @@ import { LABEL } from '../engine/defaults.js';
 // generated" with Include controls, sampling state and counts, dispatch handling modes.
 export default function RunSummary({ run, onInclude, onSamplingOff, open, onToggle }) {
   const g = run.generation;
+  const fit = { Fits: 0, 'Fits with flags': 0, 'Does not fit': 0 };
+  for (const o of run.options) if (o.siteFit) fit[o.siteFit.status]++;
   return (
     <details className="run-summary" open={open} onToggle={(e) => onToggle(e.currentTarget.open)}>
       <summary>
@@ -51,10 +53,22 @@ export default function RunSummary({ run, onInclude, onSamplingOff, open, onTogg
                   <strong>{c.id} {c.name}:</strong> {c.omitted.map((o) => `${o.label}${o.reason === 'excluded by user' ? ' (excluded by user)' : ''}`).join(', ')} not generated
                   {' '}({[...new Set(c.omitted.map((o) => o.reason))].filter((r) => r !== 'excluded by user').join(', ') || 'excluded by user'})
                   {' '}<button type="button" className="link-btn" onClick={() => onInclude(c.id, c.omitted.map((o) => o.value))}>{c.id === 'C11' ? 'Include wind' : 'Include'}</button>
-                  {c.note ? <div className="sub">{c.note}</div> : null}
+                  {c.note ? <div className={c.doesNotFit ? 'sub site-note' : 'sub'}>{c.note}</div> : null}
                 </li>
               ))}
             </ul>
+          </section>
+          <section aria-labelledby="rs-site">
+            <h3 id="rs-site">Site layout</h3>
+            {run.site ? (
+              <ul className="plain">
+                <li>Boundary: {run.site.source === 'area' ? 'rectangle from the site area and aspect ratio' : `${run.site.source} polygon`} ({run.site.edges} edges); gross {(run.site.grossM2 / 10000).toFixed(2)} ha, buildable envelope {(run.site.envelopeM2 / 10000).toFixed(2)} ha, net developable {(run.site.netM2 / 10000).toFixed(2)} ha after the roads, parking and landscaping allowance.</li>
+                <li>Exclusions {run.site.exclusions} ({run.site.hardExclusions} hard), height zones {run.site.heightZones}, receptors {run.site.receptors}. Raster {run.site.cellM} m cells ({run.site.nx} × {run.site.ny}) <span className="tag tag-unverified" title="run setting">{LABEL}</span>.</li>
+                <li>Site fit: <strong>{fit.Fits.toLocaleString('en-GB')}</strong> fit, <strong>{fit['Fits with flags'].toLocaleString('en-GB')}</strong> fit with flags, <strong>{fit['Does not fit'].toLocaleString('en-GB')}</strong> do not fit. Site fit is a status, not a weight; no option is hidden or demoted for not fitting. Site-fit penalty in deliverability: <strong>{run.inputs.deliverability && run.inputs.deliverability.siteFitPenalty ? 'on' : 'off'}</strong> <span className="tag tag-unverified" title="judgement">{LABEL}</span>.</li>
+                {run.layoutSummary ? <li>Auto-layout: {run.layoutSummary.distinctLayouts.toLocaleString('en-GB')} distinct layouts for {run.options.length.toLocaleString('en-GB')} options (options with the same blocks share one layout); {run.layoutSummary.placements.toLocaleString('en-GB')} block placements; "fill residual" solar sized from the layout.</li> : null}
+                {run.site.warningMessages && run.site.warningMessages.length ? <li className="flag-text">{run.site.warningMessages.join(' ')}</li> : null}
+              </ul>
+            ) : <p className="small">No site model in this run.</p>}
           </section>
           <section aria-labelledby="rs-disp">
             <h3 id="rs-disp">Dispatch</h3>

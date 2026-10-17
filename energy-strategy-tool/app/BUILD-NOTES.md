@@ -53,6 +53,13 @@ src/
                      classes, table rows; view settings read from the registry
     view.js          view state helpers: registry defaults (defaultView, viewSetting, tablePageSize) and
                      removable filter chips (activeFilterChips, activeFilterCount)
+    geometry.js      (site slice) projection, areas, validity, offsets, clipping and differences,
+                     integral image, GeoJSON/KML import and export
+    site.js          (site slice) site model: boundary, setbacks, exclusions, zones, points, raster
+    blocks.js        (site slice) option → blocks (§10.3), block-set key
+    layout.js        (site slice) auto-layout (§10.4), batch with prefix sharing, solar fill
+    sitefit.js       (site slice) §10.6 outputs and site-fit flags
+    siteapi.js       (site slice) layoutForOption = HOOKS.layout (plan and detail on demand)
     run.js           pipeline as stage passes (runModelSteps generator; runModel drains it), dispatch
                      cache, worker slicing/merge, re-score, hooks for later slices
     runlog.js        run event log: stage list, logger, merge, validation, JSON/CSV export,
@@ -64,18 +71,21 @@ src/
   components/        Field (inputs + "indicative — unverified" tag), InputsPanel (steps 1–6 +
                      Choices panel with projected count), RunProgress (live stages, last 200 events,
                      log download), RunSummary, RankedList, OptionDetail, ParetoView/ParetoChart/
-                     ParetoTable (Trade-offs tab), FilterChips (removable filter chips, both tabs)
+                     ParetoTable (Trade-offs tab), FilterChips (removable filter chips, both tabs),
+                     SiteView + site/SitePlan, SiteFitPanel, SiteEditor, BlocksTable (Site tab)
   styles.css         tokens, dark mode, visible focus, reduced motion, phone/tablet/desktop layouts
 tests/run-tests.mjs  Node test script (node:assert only)
+tests/site-tests.mjs site slice tests 9a–9i, called from run-tests.mjs
 tests/worker-shim.mjs runs src/worker.js in a Node worker_thread (test 6c)
 tests/browser-tests.mjs Playwright checks on the built single file (Canvas path, keyboard, paging, skip
-                     links, chips, tablet panel, phone overflow, axe in light and dark)
+                     links, chips, tablet panel, phone overflow, axe in light and dark; Site tab: phone
+                     tap drawing, keyboard plan/table/drawing, GeoJSON import, axe in light and dark)
 build.mjs            esbuild: dist/app.js, dist/worker.js, dist/app.css, dist/index.html, and
                      dist/energy-tool-single-file.html (CSS, JS and worker inlined; worker
                      from a Blob URL)
 ```
 
-Data flow: inputs (UI keeps `null` for "at default" on derived defaults) → `normalizeInputs` → `buildContext` → `generateOptions` → per option `sizeOption` → `dispatchConfig` → `dispatchAll` (cached by configuration key, so options that differ only in non-dispatch choices share one dispatch) → `timeToPower`, `economics`, `carbon`, `resilience`, `optionFlags`, `deliverability` → `scoreOptions` over the whole screened set → `applyView` for display only.
+Data flow: inputs (UI keeps `null` for "at default" on derived defaults) → `normalizeInputs` → `buildContext` (with the site model) → `generateOptions` → per option `sizeOption` → `buildBlocks` → layout (batched, cached by block-set key; "fill residual" solar sized from it) → site fit → `dispatchConfig` → `dispatchAll` (cached by configuration key, so options that differ only in non-dispatch choices share one dispatch) → `timeToPower`, `economics`, `carbon`, `resilience`, `optionFlags`, `deliverability` → `scoreOptions` over the whole screened set → `applyView` for display only.
 
 Incremental recompute: a change to weights, cost/carbon axis metric or "rank compliant first" re-scores the existing run on the main thread with no dispatch. Any other input change re-runs the pipeline in the worker pool; in-flight workers are terminated first.
 
@@ -539,3 +549,372 @@ PASS  B13. Phone width (375 px): Trade-offs chart and table cause no horizontal 
 13/13 browser checks passed.
 Keyboard: chart in 2 Tab + Enter via the skip link (results: 1 Tab + Enter); Tab only from the top: 208 presses (174 in the inputs panel).
 ```
+
+## Slice: Site (§10)
+
+Added 2026-10-16. Scope: brief §20 stage 2, the site slice: site model (§5.2, §10.1), blocks (§10.3), auto-layout (§10.4), site-fit outputs (§10.6), site views (§10.7, 2D plan, small multiples, table alternative) and the integration of site fit into the run, the ranked list, the option detail, the Pareto view and the run summary. Built on the Pareto-slice code (commit 60fe41a); the orchestrator checkpointed the work in progress as 87291e3 on `feature/site-layout`. This slice made no change to git (no commit, checkout, branch or index change). The one git command run was a read-only `git archive 60fe41a energy-strategy-tool/app` into the scratchpad (`baseline60fe41a/`), to run the baseline for the comparison below.
+
+### What was built
+
+**Engine (new files, pure, no UI)**
+- `src/engine/geometry.js`: own geometry kernel (no Turf or Clipper, so the single file stays offline and small). Local equirectangular projection on WGS84 radii, signed areas, ellipsoid quad area, ring validation (self-intersection, spikes, minimum area), point/segment/box distances, point-in-polygon, minimum-area rectangle, inward offset with per-edge distances (mitre at convex vertices, arc at reflex vertices with equal setbacks), convex clipping, Greiner–Hormann difference with deterministic perturbation for shared edges, integral image, GeoJSON and KML import and export.
+- `src/engine/site.js`: site model. Boundary from a drawn, typed or imported polygon, or the area + aspect rectangle (long side east–west, on the project location). Per-edge setbacks in the user's edge order. Typed exclusions (hard/soft per type, overridable per zone), height zones, POC, gas main, access points, noise receptors (points or areas), off-site land and private-wire distance. Derived: gross area, buildable envelope polygon (setbacks, then hard exclusions cut out), raster envelope, roads/parking/landscaping allowance, net developable area. Raster in a frame aligned with the site's minimum-area rectangle.
+- `src/engine/blocks.js`: option → blocks. Data halls (one block per phase, split above 25,000 m², massing from the §5.3 density, gross-up and storeys), substation (AIS/GIS by voltage band), backup gensets as unit arrays (single-deck, double-deck, or a plant room added to the halls), fuel storage, firm plant (gas engines, turbines, fuel cells, hydrogen), BESS containers, ground heat rejection modules, wind pads, rooftop PV and roof plant (on the halls, counted in the building height), off-site tray (SMR by default, off-site wind), and the ground-solar fill (fixed MWp, or "fill residual").
+- `src/engine/layout.js`: the auto-layout (algorithm below), batch layout with prefix sharing, cache by block-set key.
+- `src/engine/sitefit.js`: §10.6 outputs and the §15 "Site fit" flags (below).
+- `src/engine/siteapi.js`: `layoutForOption()` = `HOOKS.layout`, the same code path the run uses, for the plan and the detail on demand.
+
+**Engine (changed):** `defaults.js` (site inputs, spatial library, exclusion types, layout run settings, noise threshold, land-take ceiling, site-fit penalty points, T2 and T4 fixtures, `view.site.smallMultiples`; `normalizeInputs` takes the site area from a valid boundary), `context.js` (site model in the run context), `run.js` (new "layout" stage, site warnings in the context stage, site-fit flags, C17/C18 notes, `HOOKS.layout`, engine version 0.2.0-site), `runlog.js` (stage list and event texts), `sizing.js`, `evaluate.js`, `scoring.js` (each change listed below), `view.js` (site-fit and land-take chips, site flags in the flag filter), `pareto.js` (points carry site fit and land take), `index.js` (exports).
+
+**UI:** a **Site** results tab (`SiteView.jsx`, `site/SitePlan.jsx`, `site/SiteFitPanel.jsx`, `site/SiteEditor.jsx`, `site/BlocksTable.jsx`); site-fit badge and land-take column, filters and sorts in the ranked list; site-fit summary with the unplaced tray and a "Show this option's layout on the Site tab" button in the option detail; Pareto marker shape = site fit (circle Fits, triangle Fits with flags, square Does not fit) with the legend, tooltip, description and table column; header strip site-fit counts and the penalty state; run summary "Site layout" section and the C17/C18 notes; inputs panel site settings, land-take ceiling, noise threshold, site-fit penalty toggle and raster settings.
+
+**Site tab (§10.7).**
+- 2D plan, north up, plain plan (no tiles), with layer toggles: boundary, setbacks, exclusions and height zones (hatched; zone limits labelled), blocks (energy-source colour + hatch + short text label where it fits), clearance rings, flags (flag-coloured outline and "!"), POC/access/gas/receptors, dimensions, edge numbers. Scale bar and north arrow.
+- Dimensions and a details tooltip on hover **and** on keyboard focus: the plan is one `role="application"` tab stop; arrow keys move between blocks in placement order (Home, End, Escape); a polite live region reads the block's name, size, area, height, clearance, position and any relaxed rule; the matching table row is highlighted. On narrow plans the tooltip sits under the plan.
+- Site input that works on a phone: area + aspect rectangle; tap (or click) to draw the boundary, exclusions, height zones and receptor areas, and to place the POC, gas main, access points and receptors; the same with the keyboard (crosshair: arrows 1 m, Shift 10 m, Enter adds, Backspace undoes, F finishes, Escape cancels); typed coordinates ("lat, lon" per line) for the boundary and in every drawing mode; GeoJSON or KML import with a "use as" choice per feature. Per-edge setbacks table, exclusion and zone lists with type, hard/soft and limit editing.
+- Site-fit panel (§10.6) for the shown option; small multiples of the top `view.site.smallMultiples` (6) options at one scale (thumbnails laid out one per tick after mount); "Plan as a table" (the text alternative: every block with centre E/N, size, area, height, clearance and status, then the site facts), reachable from the plan with one link.
+- The plan always shows the current site inputs. While a site edit is being re-screened the blocks are hidden and a notice says the layouts update when the run finishes.
+
+**Site fit in the run.** Distribution at defaults: T1 963 Fits, 23 Fits with flags, 1,014 Does not fit (2,000 options; the top 20 by rank all fit); T2 (6 ha, 15 m) 0 / 0 / 2,000; T4 (5 MW, 1 ha) 272 / 6 / 1,722. No option is hidden or demoted for not fitting; with the penalty off no score or rank depends on site fit (test 9g).
+
+### Algorithm (§10.4)
+
+1. **Raster.** The buildable envelope is rasterised in the layout frame (u along the site's minimum-area rectangle): 2 m cells, 5 m above 50 ha gross (run settings). A cell is buildable only if the whole cell is inside the boundary, at least its edge's setback from every boundary edge (exact per-edge distance per cell), and touches no hard exclusion, so every placed block lies inside the envelope with no tolerance. Per cell the raster also keeps soft-exclusion membership, the height limit (lowest zone touched; the site limit unless wholly inside a zone) and the distance to the boundary.
+2. **Order** (`PRIORITY`, the brief's list): data halls; substation; backup gensets and fuel storage; firm generation; BESS; ground heat rejection; wind; then ground solar fills what is left.
+3. **Anchor costs** (lowest cost wins; ties: lower row, then column, then unrotated): first hall farthest from the POC, further halls next to placed halls; substation nearest the POC; gensets within 30 m of a hall, then farthest from receptors when there are any, else nearest the halls; fuel next to the gensets, then toward the access point; firm plant nearest the gas main when it burns gas, else farthest from receptors, else next to the substation; BESS next to the substation; ground heat rejection next to the halls (farthest from receptors when there are any); wind farthest from the boundary and halls.
+4. **Rules.** For each block a forbidden mask is painted: outside the envelope, soft exclusions (except for solar where allowed), cells within the boundary separation, cells above the height limit, and the true rectangle of every placed block dilated by the required separation (the larger of the two clearance rings or a pairwise rule such as BESS-to-building 10 m or fuel-to-building 6 m). A vertical free-run array over the mask makes one row scan find every free position of a rectangle (the equivalent of an integral-image test); rows are visited in order of their cost lower bound and the scan stops when no row can beat the best.
+5. **Relaxation** (soft rules only, `LAYOUT_LEVELS`): L0 default rules; L1 separations at their minimum values; L2 height limit exceeded; L3 both; L4 also soft exclusions. A block goes in at the first level that works; every rule it breaks at its position is recorded and named ("Fits with flags"). Hydrogen's 25 m hazardous-area separation is never relaxed; wind topple and noise buffers are flag-only.
+6. **Land budget.** The roads/parking/landscaping allowance is held back as a budget, not a located area: a block that would take the placed land take above the net developable area is not placed.
+7. **Unplaced tray.** A block with no position at L4 (or over budget) goes to the tray with its area; the option "Does not fit", and the flag names every unplaced block and the shortfall in m².
+8. **Solar fill** (§10.4 "iteration with sizing"). Ground PV takes the remaining buildable cells with its 5 m clearance, leaving out strips under 10 m wide, within the remaining net budget. For "fill residual" options the ground PV MWp is then the filled area ÷ 1.2 ha/MWp (technology library; `applySolarFill`, before dispatch); for "fixed" PV a shortfall is unplaced area. No other sizing depends on the layout.
+9. **Batch and cache.** Options with the same block-set key share one layout (T1: 2,000 options → 1,324 distinct layouts). The distinct sets are laid out as one batch sorted so shared leading blocks are placed once (a stack of placement states: the 1,324 T1 sets hold 30,299 blocks, but only 2,956 placement attempts run), with a memo of failed searches. Each result equals the single-set run (test 9d checks 31 sets). Deterministic: no randomness, fixed tie-breaks.
+10. **Timing.** T1 layout stage 3.5 s single thread for 2,000 options (2.6 ms per distinct layout including the facts and site fit; §17 target ≤ 20 ms per option on a 15 ha site).
+
+### Site-fit outputs (§10.6) and flags
+
+- **Status**: "Does not fit" when any block (or fixed ground PV area) is unplaced; else "Fits with flags" when a rule was relaxed, a height limit is exceeded (height is soft in placement: an over-height block is placed and flagged), the roof is over-allocated, a wind buffer is not met, hydrogen or an SMR is present, off-site land falls short of what the option needs, or the noise proxy is above the threshold at a receptor; else "Fits".
+- **Area budget bar** by energy source against the net developable area, with the not-placed part beyond 100 % hatched in the flag colour, and the same numbers as a table. **Land take** on site (all blocks + ground PV, placed or not) and off site; **shortfall** beyond 100 %; **residual** net area; **expansion headroom** = residual net area ÷ land take per MW IT of the IT-scaling blocks (an estimate; 0 when the option does not fit).
+- **Height check** per zone (site limit and each zone): tallest element (building + roof zone, stacks, wind tip) and pass/exceeded.
+- **Separation checklist**: each rule with its required, minimum and achieved distance and pass / relaxed / fail (a layout never breaks a minimum: test 9e), plus the genset-distance rule, the POC preference for the substation and the wind buffers.
+- **Noise proxy**, labelled "screening proxy, not an acoustic assessment": Lp = Lw − 20·log10(r) − 8 (hemispherical spreading only); distance and level from each noisy block to the nearest receptor and to the boundary; receptor levels for normal operation and for standby gensets separately; flag above `requirements.noiseNightDbA` (45 dB(A) at night) at receptors only. The highest normal-operation level on the boundary is reported for information.
+- **Roof use**: roof area split into plant, PV, edge setback and free (over-allocation flagged).
+- **Flags** (§15 "Site fit"): `site-does-not-fit` (major), `site-relaxed`, `site-height`, `site-soft`, `site-genset-distance`, `site-wind-buffer`, `site-hydrogen`, `site-offsite-land`, `site-roof`, `site-noise` (minor), `site-soft-solar`, `site-smr` (info); `target-landtake` (Targets and ceilings, minor) when a land-take ceiling is set and exceeded. None of them carries `permitting: true`, so none enters deliverability (see judgement call 13).
+
+### New defaults and labels
+
+112 new §18 records, all "indicative — unverified", confidence C, `verified: false` (basis: judgement 70, source 38, run setting 4); test 5d now counts 489 records. Two existing records changed only their note: `site.roadsFraction` (the allowance is applied to the envelope, because the brief's definition is circular) and `deliverability.siteFitPenalty` (now effective). No existing value changed. The 38 "source" records name the source to verify against (utility and TSO/DSO design standards, manufacturer datasheets, NFPA 855 / FM Global DS 5-33 / UL 9540A, national fuel-storage and hazardous-substance rules, the Danish Energy Agency technology catalogue, an NREL land-use study, ISO 9613-2 for the spreading term); none is verified. Every record is listed here (generated from the registry):
+
+| Record | Value | Unit | Basis | Brief | Label |
+|---|---|---|---|---|---|
+| `deliverability.siteFitFlagsPenalty` | 10 | points for "Fits with flags" | judgement | §9.9 | indicative — unverified |
+| `deliverability.siteFitNoFitPenalty` | 25 | points for "Does not fit" | judgement | §9.9 | indicative — unverified |
+| `requirements.landTakeCeilingHa` | null | ha on-site land take (null = net developable area) | judgement | §5.5 | indicative — unverified |
+| `requirements.noiseNightDbA` | 45 | dB(A) at receptors, night | judgement | §10.6 | indicative — unverified |
+| `settings.layoutCellLargeM` | 5 | m raster cell (large sites) | run setting | §10.4 | indicative — unverified |
+| `settings.layoutCellM` | 2 | m raster cell | run setting | §10.4 | indicative — unverified |
+| `settings.layoutLargeSiteHa` | 50 | ha gross site area above which the large cell is used | run setting | §10.4 | indicative — unverified |
+| `site.access` | null | list of [lat, lon] or null | judgement | §5.2 | indicative — unverified |
+| `site.boundary` | null | { points: [[lat, lon], …], source } or null | judgement | §5.2 | indicative — unverified |
+| `site.exclusionType.easement.hard` | true | hard (true) / soft (false) | judgement | §5.2 | indicative — unverified |
+| `site.exclusionType.ecology.hard` | true | hard (true) / soft (false) | judgement | §5.2 | indicative — unverified |
+| `site.exclusionType.flood.hard` | false | hard (true) / soft (false) | judgement | §5.2 | indicative — unverified |
+| `site.exclusionType.other.hard` | true | hard (true) / soft (false) | judgement | §5.2 | indicative — unverified |
+| `site.exclusionType.structure.hard` | true | hard (true) / soft (false) | judgement | §5.2 | indicative — unverified |
+| `site.exclusionType.tree.hard` | true | hard (true) / soft (false) | judgement | §5.2 | indicative — unverified |
+| `site.exclusions` | [] | list of { name, type, hard, points } | judgement | §5.2 | indicative — unverified |
+| `site.gasMain` | null | [lat, lon] or null | judgement | §5.2 | indicative — unverified |
+| `site.groundConditions` | assumed suitable | free text | judgement | §5.2 | indicative — unverified |
+| `site.heightZones` | [] | list of { name, limitM, points } | judgement | §5.2 | indicative — unverified |
+| `site.offsiteDistanceKm` | 2 | km private-wire distance | judgement | §5.2 | indicative — unverified |
+| `site.poc` | null | [lat, lon] or null | judgement | §5.2 | indicative — unverified |
+| `site.receptors` | [] | list of { name, point } or { name, points } | judgement | §5.2 | indicative — unverified |
+| `site.setbackByEdge` | null | m per boundary edge (null entries = uniform setback) | judgement | §5.2 | indicative — unverified |
+| `site.softUsableBySolar` | true | toggle | judgement | §5.2 | indicative — unverified |
+| `spatial.bess.clearanceM` | 3 | m between units / arrays | source | §6.3 | indicative — unverified |
+| `spatial.bess.clearanceMinM` | 1.5 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.bess.heightM` | 3.5 | m | source | §6.3 | indicative — unverified |
+| `spatial.bess.noiseLwA` | 85 | dB(A) sound power per container (PCS and HVAC) | judgement | §6.3 | indicative — unverified |
+| `spatial.bess.sepBuildingM` | 10 | m to occupied buildings (data hall) | source | §6.3 | indicative — unverified |
+| `spatial.bess.sepBuildingMinM` | 3 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.bess.unitLw` | 2 | length : width of one unit cell | judgement | §6.3 | indicative — unverified |
+| `spatial.bess.unitMWh` | 4 | MWh per container (array unit) | judgement | §6.3 | indicative — unverified |
+| `spatial.building.clearanceM` | 6 | m to other blocks | judgement | §6.3 | indicative — unverified |
+| `spatial.building.clearanceMinM` | 4 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.building.lw` | 1.5 | length : width | judgement | §6.3 | indicative — unverified |
+| `spatial.building.maxHallM2` | 25000 | m² footprint per data hall block | judgement | §6.3 | indicative — unverified |
+| `spatial.building.splitByPhase` | true | toggle | judgement | §6.3 | indicative — unverified |
+| `spatial.fuel.clearanceM` | 3 | m to other blocks | judgement | §6.3 | indicative — unverified |
+| `spatial.fuel.clearanceMinM` | 1.5 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.fuel.heightM` | 7 | m | source | §6.3 | indicative — unverified |
+| `spatial.fuel.lw` | 2 | length : width | judgement | §6.3 | indicative — unverified |
+| `spatial.fuel.sepBoundaryM` | 10 | m to the site boundary | source | §6.3 | indicative — unverified |
+| `spatial.fuel.sepBoundaryMinM` | 6 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.fuel.sepBuildingM` | 6 | m to the data hall building | source | §6.3 | indicative — unverified |
+| `spatial.fuel.sepBuildingMinM` | 3 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.fuelCell.clearanceM` | 5 | m to other blocks | source | §6.3 | indicative — unverified |
+| `spatial.fuelCell.clearanceMinM` | 3 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.fuelCell.heightM` | 4 | m | source | §6.3 | indicative — unverified |
+| `spatial.fuelCell.noiseLwA` | 75 | dB(A) sound power per MW | judgement | §6.3 | indicative — unverified |
+| `spatial.fuelCell.unitLw` | 2 | length : width of one unit cell | judgement | §6.3 | indicative — unverified |
+| `spatial.gasEngine.clearanceM` | 5 | m to other blocks | judgement | §6.3 | indicative — unverified |
+| `spatial.gasEngine.clearanceMinM` | 3 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.gasEngine.containerHeightM` | 7 | m (containerised rented / HVO-diesel units) | judgement | §6.3 | indicative — unverified |
+| `spatial.gasEngine.heightM` | 12 | m engine hall (recips, CHP) | source | §6.3 | indicative — unverified |
+| `spatial.gasEngine.noiseLwA` | 105 | dB(A) sound power per engine unit (attenuated hall or container) | judgement | §6.3 | indicative — unverified |
+| `spatial.gasEngine.sepBoundaryM` | 15 | m to the site boundary | source | §6.3 | indicative — unverified |
+| `spatial.gasEngine.sepBoundaryMinM` | 10 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.gasEngine.unitLw` | 1.5 | length : width of one unit cell | judgement | §6.3 | indicative — unverified |
+| `spatial.genset.clearanceM` | 3 | m between units / arrays | source | §6.3 | indicative — unverified |
+| `spatial.genset.clearanceMinM` | 1.5 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.genset.doubleDeckFootprintFactor` | 0.5 | × footprint per unit (double-deck) | source | §6.3 | indicative — unverified |
+| `spatial.genset.doubleDeckHeightM` | 12 | m (double-deck) | source | §6.3 | indicative — unverified |
+| `spatial.genset.heightM` | 7 | m incl. flue stub | source | §6.3 | indicative — unverified |
+| `spatial.genset.maxDistBuildingM` | 30 | m maximum distance to the building | source | §6.3 | indicative — unverified |
+| `spatial.genset.noiseLwA` | 101 | dB(A) sound power per unit (acoustic container) | judgement | §6.3 | indicative — unverified |
+| `spatial.genset.unitLw` | 2.5 | length : width of one unit cell | judgement | §6.3 | indicative — unverified |
+| `spatial.heatRejection.clearanceM` | 3 | m (airflow clearance) | source | §6.3 | indicative — unverified |
+| `spatial.heatRejection.clearanceMinM` | 1.5 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.heatRejection.heightM` | 4 | m | source | §6.3 | indicative — unverified |
+| `spatial.heatRejection.moduleMW` | 5 | MW rejected per array unit | judgement | §6.3 | indicative — unverified |
+| `spatial.heatRejection.noiseLwAperMW` | 88 | dB(A) sound power per MW rejected | judgement | §6.3 | indicative — unverified |
+| `spatial.heatRejection.unitLw` | 2 | length : width of one unit cell | judgement | §6.3 | indicative — unverified |
+| `spatial.hydrogen.clearanceM` | 25 | m hazardous-area separation (indicative) | source | §6.3 | indicative — unverified |
+| `spatial.hydrogen.heightM` | 6 | m | source | §6.3 | indicative — unverified |
+| `spatial.hydrogen.noiseLwA` | 95 | dB(A) sound power per MW | judgement | §6.3 | indicative — unverified |
+| `spatial.hydrogen.unitLw` | 2 | length : width of one unit cell | judgement | §6.3 | indicative — unverified |
+| `spatial.noise.hemisphericalDb` | 8 | dB: Lp = Lw − 20·log10(r) − 8 (hemispherical spreading) | source | §6.3 | indicative — unverified |
+| `spatial.smr.haPer100MW` | 1 | ha per 100 MWe (3 ha per ~300 MWe unit) | source | §6.3 | indicative — unverified |
+| `spatial.smr.heightM` | 40 | m | source | §6.3 | indicative — unverified |
+| `spatial.smr.placement` | offsite | "offsite" \| "onsite" | judgement | §6.3 | indicative — unverified |
+| `spatial.solarGround.clearanceM` | 5 | m to other blocks | source | §6.3 | indicative — unverified |
+| `spatial.solarGround.heightM` | 3 | m | source | §6.3 | indicative — unverified |
+| `spatial.solarGround.minArrayM` | 10 | m minimum width of a fill area | judgement | §6.3 | indicative — unverified |
+| `spatial.solarRoof.edgeSetbackM` | 1.5 | m roof-edge setback | source | §6.3 | indicative — unverified |
+| `spatial.solarRoof.heightAboveRoofM` | 1 | m above the roof | source | §6.3 | indicative — unverified |
+| `spatial.substation.ehvAisHeightM` | 15 | m (220–400 kV AIS) | source | §6.3 | indicative — unverified |
+| `spatial.substation.ehvGisHeightM` | 18 | m (220–400 kV GIS building) | source | §6.3 | indicative — unverified |
+| `spatial.substation.hvAisHeightM` | 12 | m (110–150 kV AIS) | source | §6.3 | indicative — unverified |
+| `spatial.substation.hvClearanceM` | 10 | m to other blocks (110–400 kV) | source | §6.3 | indicative — unverified |
+| `spatial.substation.hvClearanceMinM` | 5 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.substation.hvGisHeightM` | 15 | m (110–150 kV GIS building) | source | §6.3 | indicative — unverified |
+| `spatial.substation.lw` | 1.5 | length : width | judgement | §6.3 | indicative — unverified |
+| `spatial.substation.mvClearanceM` | 5 | m to other blocks (11–33 kV) | source | §6.3 | indicative — unverified |
+| `spatial.substation.mvClearanceMinM` | 3 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.substation.mvHeightM` | 6 | m (11–33 kV) | source | §6.3 | indicative — unverified |
+| `spatial.substation.noiseLwA` | 95 | dB(A) sound power, 110–400 kV substation (transformers) | judgement | §6.3 | indicative — unverified |
+| `spatial.substation.noiseLwAmv` | 85 | dB(A) sound power, 11–33 kV substation | judgement | §6.3 | indicative — unverified |
+| `spatial.substation.pocPreferredM` | 50 | m preferred maximum distance to the POC (110–150 kV) | source | §6.3 | indicative — unverified |
+| `spatial.turbine.clearanceM` | 5 | m to other blocks | judgement | §6.3 | indicative — unverified |
+| `spatial.turbine.clearanceMinM` | 3 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.turbine.heightM` | 15 | m | source | §6.3 | indicative — unverified |
+| `spatial.turbine.noiseLwA` | 108 | dB(A) sound power per turbine (enclosed) | judgement | §6.3 | indicative — unverified |
+| `spatial.turbine.sepBoundaryM` | 15 | m to the site boundary | source | §6.3 | indicative — unverified |
+| `spatial.turbine.sepBoundaryMinM` | 10 | m (minimum when relaxed) | judgement | §6.3 | indicative — unverified |
+| `spatial.turbine.unitLw` | 2 | length : width of one unit cell | judgement | §6.3 | indicative — unverified |
+| `spatial.unitArrays.maxArrayM2` | 4000 | m² maximum array block | judgement | §6.3 | indicative — unverified |
+| `spatial.unitArrays.maxUnits` | 12 | units per array block | judgement | §6.3 | indicative — unverified |
+| `spatial.unitArrays.rows` | 2 | rows per array | judgement | §6.3 | indicative — unverified |
+| `spatial.wind.noiseBufferM` | 500 | m to noise-sensitive receptors | source | §6.3 | indicative — unverified |
+| `spatial.wind.noiseLwA` | 105 | dB(A) sound power per turbine | judgement | §6.3 | indicative — unverified |
+| `spatial.wind.padM2` | 1000 | m² pad per turbine (0.1 ha) | source | §6.3 | indicative — unverified |
+| `view.site.smallMultiples` | 6 | plans | run setting | §10.7 | indicative — unverified |
+
+Labels added to the UI: the statuses "Fits", "Fits with flags", "Does not fit" (always icon ✓ / ! / ✗ plus text, in the status colours, never the source colours); "screening proxy, not an acoustic assessment" on every noise figure; "Deliverability (incl. site fit)" on the axis, the weights line and the option detail when the site-fit penalty is on; "Site layouts are concept-stage proxies, not a design. Every spatial default is indicative — unverified." under the site-fit panel; the "unverified" tag on the site input fields at their defaults (inputs panel and Site tab editor) and on the raster settings in the run summary.
+
+### Changes to `scoring.js`, `sizing.js` and `evaluate.js`
+
+**`scoring.js`**
+1. `siteRank()` added; `markDominance()` now lets option j dominate option i only if j's site-fit status is at least as good as i's (as already done for resilience). Reason: §7.2 step 6, "Pareto-dominated … AND no better resilience or site-fit status"; the core slice compared resilience only because site fit did not exist. Dominance is a mark, not a score: no score or rank changes (test 9g). Effect at defaults: T1 dominated 1,950 → 1,947, T3 1,910 → 1,895 (these counts also move with the metric changes below).
+2. `DEFAULT_VIEW` gains `siteFit: []` and `landTakeCeilingHa: null`; `applyView()` filters by them and adds a chip for each. Reason: §11 "the user can filter the view by site-fit status … or land-take ceiling". View only: filters never change a score or rank (tests 4, 8h, 9g).
+3. `SORTERS` gain `landTake` and `siteFit`, for the ranked list's new columns. View only.
+
+**`sizing.js`**
+1. The area budget reads the site model's gross area, buildable envelope (per-edge setbacks and hard exclusions) and net developable area when the run context has one (it always does in a run); the old rectangle formula remains for a context without a site model. Reason: §5.2 derived areas. For the T1/T3 area rectangle with a uniform setback the two give the same numbers, so the pre-layout estimate did not change.
+2. The "fill residual" sizing sentence now reads "area-budget estimate before layout … (replaced by the layout fill, §10.4)". Reason: it is replaced by step 3.
+3. New `applySolarFill(sz, fill)`: after the layout, "fill residual" ground PV MWp = filled area ÷ ha/MWp; `solarMWp`, the area parts, land take and residual follow, and the sentence states the layout figure next to the estimate. Reason: §10.4 "'fill residual' solar sizing is computed after the other blocks are placed. No other sizing depends on layout." This is the only sizing change and the cause of every difference from the baseline below.
+
+**`evaluate.js`**
+1. The `site-area-budget` info flag (area sum vs net area, "site layout and fit status are not assessed in this slice") is removed. Reason: replaced by the layout-based site-fit flags (§15). It was info severity, so it never entered deliverability.
+2. `deliverability(ctx, v, sz, disp, flags, siteFit)`: when `deliverability.siteFitPenalty` is on (off by default) an option loses 10 points for "Fits with flags" and 25 for "Does not fit", and the result carries `includesSiteFit` for the "Deliverability (incl. site fit)" label. Reason: §9.9 optional site-fit penalty, §11 label. With the penalty off the formula is the baseline's, item for item (test 9g checks all 2,000 T1 options with site fit real, removed and scrambled).
+
+### Changes to existing tests (all still pass)
+
+- **6a** (per-option stage list): `layout` added between `sizing` and `dispatch`, because the run has a new per-option stage; the summary text now prints `STAGE_IDS.length` (13) instead of a hard-coded 12.
+- **6c** (worker pool): the expected worker stage list was `STAGE_IDS.slice(0, 11)` (the first 11 of 12 stages); it is now every stage except scoring and ranking, because the stage list grew to 13 with "layout" and workers now run 12 stages. The assertion is otherwise unchanged.
+- **6d**: text only (stage counts from `STAGE_IDS.length`).
+- **8f**: `view.site.smallMultiples` added to the probed list with a usage check (rendered Site tab: 6 thumbnails, the top 6 by rank; record 3 → 3, 0 → none), because the test fails by design when a `view.*` record has no check.
+- **8h**: four view states with site-fit and land-take filters added, plus a render check of their chips.
+- **Browser tests**: `openPage` takes `hasTouch` (for B14); `BROWSER_ONLY=<regex>` runs a subset (development aid; the default runs everything). B1–B13 unchanged; B1 still passes with three tabs (ArrowRight from Options selects Trade-offs). New: B14 phone width with tap drawing, B15 keyboard (plan, table, keyboard drawing), B16 GeoJSON import, B17/B18 axe light/dark on the Site tab (leader, an option that does not fit, drawing mode) with the needs-review contrast check.
+
+### Comparison with the pre-slice baseline (60fe41a), T1 and T3
+
+Both engines run in the same Node process on the same inputs (`referenceT1` / `referenceT3`, start 2027-01); options matched by id (same 2,000 ids in both, nothing missing).
+
+| | T1 | T3 |
+|---|---|---|
+| "Fill residual" ground PV options (C10 = roof + residual) | 685 | 685 |
+| … whose ground PV MWp changed | 685 (−1.50 to +1.24 MWp, mean −0.06) | 685 (−1.61 to +1.70 MWp, mean −0.07) |
+| Options with a different LCOE | 685, all fill-residual (largest change 0.12 %) | 685, all fill-residual (73 above 0.1 %, 17 above 1 %; largest 0.61 → 0.86 €/MWh on an option whose LCOE is near zero, ground PV 0.57 → 1.15 MWp) |
+| Options with a different capex | 685 (largest 1.2 %) | 685 (largest 2.3 %) |
+| Carbon metric changed | 685 | 685 |
+| Deliverability changed | 353 (fill-residual options that also have emerging technology: the capacity and energy shares change with the PV size) | 353 |
+| Time-to-power changed | 0 | 0 |
+| The other 1,315 options | LCOE, capex, carbon, deliverability and time-to-power identical | identical |
+| Weighted score changed | 2,000 (largest 0.074 points) | 1,999 (largest 0.015 points) |
+| Rank changed | 804 (largest 7 places; top 20 unchanged) | 719 (largest 19 places) |
+| Leader | unchanged: O1YAUJ8J "Grid · Diesel N+1 · DLC · PV 7.7 MWp · PPA hybrid 100 %", 85.964 → 85.963 (its ground PV 7.8 → 7.7 MWp total) | unchanged: O1Q4ILX5, 70.891 → 70.892 |
+| Distinct dispatch configurations | 1,732 → 1,769 | 1,721 → 1,748 |
+
+Causes, and nothing else:
+1. **Fill-residual solar sized after layout** (`applySolarFill`, §10.4): the layout fills the real free cells (5 m clearance, strips under 10 m dropped, conservative raster) instead of the area sum, so those 685 options get a different ground PV MWp, hence capex, LCOE, carbon and, where emerging technology is present, deliverability. Different PV sizes also give 37 (T1) and 27 (T3) more distinct dispatch configurations.
+2. **Relative scoring scale** (§11, scores are relative to the set): cause 1 moved the axis extremes (T1: cost maximum 286.2598 → 286.2541 €/MWh, carbon minimum 112.1599 → 112.1764 g/kWh, deliverability maximum 97.1008 → 97.0979; T3: deliverability maximum 95.1396 → 95.1375), so every option's normalised scores shift slightly and close neighbours swap ranks.
+3. Site-fit status itself changes no score or rank (penalty off), and options without fill-residual PV have identical metrics.
+
+### Energy-source colour system (§16) and the palette validator
+
+The site blocks use the eight categorical hexes of the reference palette (light `#2a78d6 #eb6834 #1baf7a #eda100 #e87ba4 #008300 #6250d6 #e34948`, dark `#3987e5 #d95926 #199e70 #c98500 #d55181 #008300 #9085e9 #e66767`), assigned by convention: grid/substation blue, diesel gensets and their fuel store orange (fuel with a different hatch), gas red, BESS aqua, fuel cells green, solar yellow, nuclear magenta, hydrogen violet, wind the grid blue (with its own hatch). Data halls and heat-rejection plant are infrastructure, not energy sources, and use two neutrals (light `#d7d2c6` / `#a9a59b`, dark `#5a5e66` / `#80858d`). Validator (`validate_palette.js`, surfaces = the plan's envelope fill `#fbfaf6` light, `#2a2e34` dark):
+
+- Eight hexes, adjacent pairs (the check for stacks and bars): **pass** in both modes (worst adjacent CVD ΔE 9.1 light / 8.4 dark, normal-vision 19.6 / 19.3). Contrast below 3:1 for aqua, yellow, magenta (light) and green (dark): relief = every block's ink outline, text label, hatch, legend and table.
+- Eight hexes, `--pairs all` (the right check for a plan, where any two blocks can touch): **fail** in both modes (light: green–orange CVD ΔE 3.2, red–orange normal 7.1; dark: magenta–aqua CVD 1.6, red–orange 7.1). The reference says no ordering of eight colours passes all pairs; such forms cap at three colours or need composite encoding.
+- First three slots (blue, orange, aqua) all pairs: pass. The most common trio on T1 plans, grid + diesel + gas (blue, orange, red): fail (orange–red normal ΔE 7.1).
+
+Decisions: (1) colour is never the only carrier on the plan (§16 "site blocks have hatch patterns"): each source has its own hatch (gas 135° vs diesel 45° diagonals, fuel a plus grid, BESS a square grid, solar vertical, fuel cells dashes, heat rejection dots, hydrogen large dots, nuclear diagonal cross, wind rings), a short text label on every block large enough (Hall, Sub, Gen, Fuel, BESS, Eng, GT, FC, H₂, HR, WT), a legend, the tooltip and live text, and the table; (2) heat rejection was moved from violet to a neutral, which removes the worst frequent collapse (grid–heat rejection, blue–violet, CVD ΔE 1.9 dark, in 1,340 of 2,000 T1 plans); (3) re-assigning hues to maximise separation of the pairs that co-occur was evaluated over all 40,320 assignments: the best raises the co-occurrence-weighted pass rate from 73 % to 83 % but puts diesel in green and BESS in violet, so the conventional assignment was kept. With heat rejection neutral and the fuel store sharing the diesel hue, a T1 plan shows a median of 4 source hues (maximum 6; 595 of 2,000 plans show 3 or fewer) besides the two neutrals.
+
+### Judgement calls (each also in `SITE-PROGRESS.md`)
+
+1. Own geometry kernel instead of Turf/Clipper (offline single file, size); Greiner–Hormann with deterministic perturbation for degenerate cases.
+2. Local equirectangular projection on WGS84 radii (M, N at the origin latitude), about the boundary centroid, or the project location for the area rectangle.
+3. Offsets: mitre at convex vertices; arc at reflex vertices with equal setbacks (exact erosion); mitre at reflex vertices with unequal setbacks (conservative). The raster applies exact per-edge distances per cell.
+4. The raster is conservative: a cell is buildable only if the whole square is inside the envelope and touches no hard exclusion. A cell takes the lowest height limit it touches, and the site limit unless it lies wholly inside a zone (zones override the site limit up or down).
+5. Roads/parking/landscaping allowance = fraction × envelope (the brief defines it as a fraction of the net developable area, which is circular); net developable = envelope − allowance; enforced as a land budget in placement, not as a located area.
+6. Default POC = the default access point (no road data offline, so "nearest boundary point to the nearest road" cannot be computed); default access = mid-point of the longest edge.
+7. Exclusion type defaults: only flood zones are soft.
+8. T2 fixture: T1 with 6 ha and a 15 m height limit. T4 fixture: 5 MW, 1 ha, grid 8 MW now and at full connection (date = start), one 5 MW phase at month 12.
+9. Building: one block per phase, split above 25,000 m²; building clearance 6 m (fire access); first hall farthest from the POC, further halls next to placed halls.
+10. Unit arrays: at most 12 units, 2 rows, 4,000 m² per array (engines and turbines get fewer units per array); double-deck = two units per position (half the footprint per unit, 12 m high); in-building gensets add a plant room to the halls.
+11. The height limit is soft in placement (prefer compliant cells, else place and flag): an over-height block makes "Fits with flags", never "Does not fit". At the defaults (2 storeys × 6 m + 4 m roof zone = 16 m) every hall exceeds T2's 15 m limit.
+12. Relaxation levels L0–L4 with a minimum value per rule (judgement); hydrogen's 25 m never relaxed; wind topple and noise buffers flag-only.
+13. Noise proxy: hemispherical spreading only; normal operation and standby gensets reported separately; flag only at receptors (boundary level shown for information). The noise flag has category Permitting (§15) but `permitting: false`: it does not enter deliverability, because §5.7/§11 keep site fit out of the score by default and the proxy is not a permitting determination.
+14. SMR off site by default (1 ha per 100 MWe); an SMR, hydrogen and an off-site land shortfall each give "Fits with flags".
+15. Dominance includes site-fit status (§7.2 step 6).
+16. The run keeps a compact site-fit summary per option; the plan and the §10.6 detail are recomputed on demand through `HOOKS.layout` (the same code path; 9d checks they agree).
+17. Performance: batch layout with prefix sharing, failure memo, cost-bounded row/column search.
+18. Site tab: the plan always shows the current site inputs, with blocks only when the run matches them (site key); layouts for the plan and the thumbnails are recomputed on demand and cached per run and option.
+19. Typed coordinates are "lat, lon" per line with a decimal point. GeoJSON/KML import offers a "use as" choice per feature, pre-set from its name (first polygon = boundary); holes in an imported boundary become hard exclusions (type Other); an off-site polygon sets only the off-site area (not drawn).
+20. A new boundary resets the per-edge setbacks (the edge count and order change).
+21. Heat rejection and data halls draw in neutrals (see the palette section); hydrogen takes violet.
+22. Option selector lists every option in rank order (no extra constant); the leader is shown unless another option is chosen (from the selector, a thumbnail, or "Show this option's layout" in the option detail).
+23. The site-fit penalty points (10 for "Fits with flags", 25 for "Does not fit") are judgement; the penalty stays off by default.
+
+### Deferred to stage 7 (recorded, not built)
+
+- §10.5 manual layout editing (drag, rotate, re-arrange, live rule checks, keyboard moves, saved manual layouts) and "manual block editing is disabled with a notice" on phones (nothing to disable yet).
+- 2.5D massing with the height-limit plane and sun position (§10.7, optional).
+- Online map tiles and the image/PDF underlay scaled by two reference points (§10.2, §5.2); the plan is the default plain plan.
+- User-drawn building footprint override (§5.3).
+- Heat reuse plant blocks (§10.4 step 2.6): heat reuse is not sized or costed yet (C15 locked to None by default).
+- Pinned options in the small multiples (pinning does not exist yet); undo/redo for site edits (§16; no undo exists in the app yet); export of the site and layout as GeoJSON or images (§12.10 exports).
+
+### Open points
+
+1. **Near-margin spatial failures.** 280 of the 1,014 T1 options that do not fit need less land than the net developable area: the conservative raster, separations and anchor heuristics leave no position for one block. The plan shows why; manual editing (stage 7) is the brief's remedy.
+2. **Half of T1 does not fit on 15 ha at the default densities**: air cooling 457 of 513, evaporative 334 of 482, immersion 148 of 507, DLC 75 of 498. The building footprint follows the §5.3 density, gross-up and storeys defaults (indicative); worth checking with the client's building data before reading much into it.
+3. **AC7 margin.** On T2 with C17 GIS and C18 double-deck included, 2 of the 2,000 sampled options (196,996 combinations) fit with flags (both DLC with a PPA hybrid; the halls exceed 15 m). Deterministic, so the test is stable, but thin; locking cooling to DLC gives more fitting options.
+4. **§17 timing.** Auto-layout per option is well inside 20 ms. The whole T1 run is 9.4–11.8 s single thread in Node (layout 3.5 s, dispatch 5.2 s) against the 3.0 s screening target, which the core slice already missed (Brief issue 2); in headless Chromium on this 2-core sandbox the run takes 13 s on 1 worker. A site edit re-screens every option (fill-residual solar changes dispatch), so "site edit → all layouts ≤ 1.0 s" is not met either.
+5. **Noise and stack-height flags vs deliverability** (judgement call 13): §15 lists "noise proxy above threshold" and "stack height above height limit" under Permitting, and §9.9 counts permitting flags in deliverability, while §5.7/§11 keep site fit out of the score unless the penalty is on. This build keeps both out of deliverability: the noise flag is category Permitting with `permitting: false` (it carries the note "Screening flag, not a permitting determination"), and a stack above the limit is part of the site-fit "Height limit exceeded" flag. Owner decision whether either should count.
+6. **Palette**: plans fail the all-pairs colour checks, as any eight-colour palette would; identity relies on hatch, label, legend and table. Future dispatch stacks should stack sources in the palette's slot order to keep the adjacent-pair guarantee.
+7. **Spatial library values in the UI.** The 87 spatial records are labelled in the registry and covered by test 5d, and the Site tab says every spatial default is indicative — unverified, but there is no per-value library page yet.
+8. **Screen-reader walk-through** of the Site tab with NVDA + Firefox and VoiceOver + Safari (§17) not done; checked with axe, keyboard and the live-region text in headless Chromium.
+9. **Large sites.** The 5 m raster above 50 ha (T5) is in place but T5 itself is not a fixture in this slice.
+
+### Test run (this slice)
+
+`npm run build` exit 0 (`dist/energy-tool-single-file.html` 711.4 KB, worker 182.7 KB). `npm test` exit 0, 2026-10-16, Node v22.22.0: **31/31 passed** (the 22 existing tests and 9a–9i). `npm run test:browser` exit 0: **18/18 passed** (B1–B13 existing, B14–B18 new); Chromium 141.0.7390.37, Playwright 1.56.0, axe-core 4.10.2.
+
+**T1 run time.** `npm test`: T1 full run 10.68 s for 2000 options, T3 11.08 s (single thread; the baseline suite printed 10.03 s and 10.59–10.77 s on earlier days). Measured separately in fresh processes, three T1 runs each: this slice 11.8, 11.5, 9.4 s, with the layout stage 3.47 s in the last run, so **about 5.9 s without the layout stage**; the baseline engine on the same machine 6.7, 8.1, 6.1 s.
+
+```
+T1 run: 2000 options screened of 57028 combinations in 10.68 s (single thread, 1769 distinct dispatch runs, 10616 8760-h years)
+T3 run: 2000 options in 11.08 s
+PASS  1. Per-hour energy balance (supply = demand + losses + curtailment + unmet), T1 and T3, full 8760-h years  (2369 ms)
+PASS  2. Grid connection equals the offered capacity on every option, never resized; import never exceeds it in "Show unmet load"  (1011 ms)
+PASS  3. No option is hidden by default  (12 ms)
+PASS  4. Score and rank do not change when a view filter changes  (104 ms)
+PASS  5a. Determinism: same inputs + seed give identical outputs  (11373 ms)
+PASS  5b. Weight change re-ranks without re-dispatch; effective weights sum to 1  (0 ms)
+PASS  5c. "Show exceedance" removes unmet load on T3 and raises "Import exceeds grid capacity"  (1552 ms)
+PASS  5d. Every default record carries the "indicative — unverified" label and a basis  (0 ms)
+      489 default records; all "indicative — unverified", confidence C, verified false; basis: source 307, judgement 171, run setting 11.
+PASS  6a. Event log completeness: every stage has a start and an end, sequence numbers contiguous, stage order as specified (T1, T3 and the test-3 sample)  (15 ms)
+PASS  6b. Log content (timestamps excluded) is identical across two runs with the same inputs  (9 ms)
+PASS  6c. Worker pool: each worker returns its own events; merged log complete, ordered and deterministic; results equal the single-thread run  (23580 ms)
+PASS  6d. Main-thread fallback: time-sliced runModelSteps gives the same log content and results, and the progress tracker reaches 100 % on every stage  (10994 ms)
+PASS  6e. Log export: JSON round-trips, CSV has one row per event, file names carry the input hash and a timestamp  (32 ms)
+PASS  7. Single-file build: worker inlined as a Blob-URL source string, no relative "worker.js" or other file reference, inlined source parses and runs  (1857 ms)
+PASS  8a. Pareto set (non-dominated on the two plotted axes) is correct on a hand-checked example  (42 ms)
+PASS  8b. Weighted pick is the highest weighted score and moves with the weights, with no dispatch re-run  (97 ms)
+PASS  8c. Dominance marking does not remove any option from the Pareto view, the list or the ranking  (18 ms)
+PASS  8d. Every point in the Pareto chart has a matching row in the table alternative (rendered)  (861 ms)
+PASS  8e. Dominance is marked when the dominated option has an infinite cost (LCOE with no delivered energy)  (3 ms)
+PASS  8f. Every registered view setting and run setting is the value the code uses  (307 ms)
+PASS  8g. AC5: the highlighted pick is the weighted leader (rank 1, the header leader) with "Rank requirement-compliant options first" on or off  (204 ms)
+PASS  8h. Every active view filter is a removable chip, and the header filter count matches applyView()  (31 ms)
+PASS  9a. Geometry kernel: projection, areas, validity, point-in-polygon, offsets, differences, raster, import round-trips (hand-checked values)  (9 ms)
+      0.01°×0.01° at 52.3° N: 759167.0 m² (ellipsoid 759167.0, 1.3e-7 %; sphere hand check 756199, 0.39 %); offsets 50,400 / 38,400 / L 22,421.46 (arc) and 22,400 (mitre) m²; 30×20 with 10 m collapses; 12 difference cases exact (holes merged, splits, shared edges perturbed); GeoJSON and KML round trips identical; CDATA/altitude KML parsed; projected coordinates rejected with a warning.
+PASS  9b. Site model: area + aspect rectangle, polygon boundary, per-edge setbacks, exclusions, height zones, points, raster, fixtures and records  (191 ms)
+      T1: gross 150,000, envelope 134588.6 (raster 134384), net 114400.3 m², 238×159 cells of 2 m; polygon site: 14.000 ha from the boundary, easement splits the envelope in 2 (−5600.0 m²), flood zone soft (10404 m² soft cells), 7630 cells under the 12 m zone; 117 site/spatial/layout records, all "indicative — unverified" (judgement 76, source 38, run setting 3).
+PASS  9c. Blocks (§10.3): building massing from the §5.3 density rules, unit arrays, substation, fuel, rooftop blocks, off-site tray  (57 ms)
+      A1 (air): 4 halls × 18,333 m² at 16 m, AIS substation 12,000 m², 5 genset arrays (52 units), fuel 239 m², roof plant 29,333 m²; double-deck 3 arrays at 12 m; in-building adds 5200 m² to the halls; GIS 4,000 m²; A3 BESS 6 arrays (69 containers); A10a SMR off-site 0.80 ha.
+PASS  9d. Layout invariants on T1, T2, T4 and T1 with constraints: no overlaps, inside the envelope and outside hard exclusions, separations met or named, unplaced → "Does not fit" with a shortfall, deterministic  (19954 ms)
+      T1: 1324 distinct layouts (2000 options), 25,717 placed blocks checked, 1759 relaxed rules named, 4582 unplaced blocks, batch 3046 ms; 48 options recomputed alone through HOOKS.layout match the run; T2: 1324 distinct layouts (2000 options), 11,230 placed blocks checked, 5394 relaxed rules named, 19069 unplaced blocks, batch 915 ms; 48 options recomputed alone through HOOKS.layout match the run; T4: 895 distinct layouts (2000 options), 3,797 placed blocks checked, 199 relaxed rules named, 1588 unplaced blocks, batch 102 ms; 48 options recomputed alone through HOOKS.layout match the run; T1 + constraints: 364 distinct layouts (400 options), 6,567 placed blocks checked, 399 relaxed rules named, 1686 unplaced blocks, batch 2319 ms; 48 options recomputed alone through HOOKS.layout match the run; T1 + constraints: two batches identical; 31 single-set layouts equal the batch; two full runs give identical site fit and solar fill.
+PASS  9h. Run log: the "layout" stage has start, progress and end with counts and cache hits/misses; sequence numbers contiguous; content deterministic  (3322 ms)
+      T1: 11 layout events (7 progress), 1324 distinct layouts / 676 cache hits, 2956 placements, statuses {"Fits":963,"Fits with flags":23,"Does not fit":1014}, warnings site-does-not-fit, site-fits-with-flags; T2: 10 layout events (7 progress), 1324 distinct layouts / 676 cache hits, 2956 placements, statuses {"Fits":0,"Fits with flags":0,"Does not fit":2000}, warnings site-does-not-fit; T4: 9 layout events (5 progress), 895 distinct layouts / 1105 cache hits, 680 placements, statuses {"Fits":272,"Fits with flags":6,"Does not fit":1722}, warnings site-does-not-fit, site-fits-with-flags; T4 log identical on two runs (timestamps excluded).
+PASS  9e. Site-fit outputs (§10.6): area budget, land take, residual, height per zone, separation checklist, noise proxy (hand-checked), roof use, expansion headroom, land-take ceiling flag  (1841 ms)
+      noise hand check: 2 × 100 dB(A) at 100 m → 52.0 each, 55.0 together; standby 105 dB(A) at 200 m → 51.0 (separate); flag at 45 dB(A) threshold (category Permitting, not counted as permitting), none at 56 dB(A); land-take ceiling 0.01 ha → flag (status unchanged), 1 ha → none; 144 options on T1, T1 + constraints, T2 and T4: budget parts = land take, shortfall beyond 100 %, residual, off-site land, height rows, 1120 separation rows (no minimum broken; relaxed rows ⇔ named relaxed rules), roof split, expansion 0 when not fitting.
+PASS  9f. AC7 on T2: an archetype shows "Does not fit" with a named shortfall; C17/C18 stay at defaults with "N options do not fit" notes; including C17 GIS and C18 double-deck yields options that fit or fit with flags; no option hidden  (9316 ms)
+      T2: 2000 of 2000 options do not fit; 11 archetypes do, e.g. A1 "Does not fit: 3 blocks not placed, 54,999 m² short" (Data hall 2 of 4 (phase 2), Data hall 3 of 4 (phase 3), Data hall 4 of 4 (phase 4)); C17/C18 at defaults; run summary notes: "2,000 options do not fit; GIS reduces substation footprint." / "2,000 options do not fit; double-deck and in-building arrangements reduce genset footprint."; with C17 GIS + C18 double-deck included (196,996 combinations, 2000 screened, sampled): 0 fit, 2 fit with flags (e.g. "Grid · HVO N+1 · DLC · PPA hybrid 100 %": 4 rules relaxed: Data hall 1 of 4 (phase 1): height 16 m above the 15 m height limit; Data…), 1998 do not fit; every option listed in both runs (hide dominated off, ranks 1…N).
+PASS  9g. Site fit never changes a score or rank while the site-fit penalty is off; with the penalty on, deliverability drops by 10/25 points and the axis reads "Deliverability (incl. site fit)"  (3134 ms)
+      T1: deliverability of all 2000 options identical with site fit real, removed or scrambled and with the site-fit flags removed; scores and ranks identical with site fit removed, scrambled or all "Does not fit" (dominance may differ: it includes site fit, §7.2 step 6); T4 with the penalty on: 1728 of 2000 options lose 10/25 deliverability points, 1978 ranks change, LCOE/capex/time-to-power and statuses unchanged; detail reads "Deliverability (incl. site fit)" (off: "Deliverability").
+PASS  9i. Site tab (server render): plan with layers, scale bar and north arrow, one drawn block per placed block, site-fit panel, unplaced tray, plan as a table with every block, small multiples, editor  (393 ms)
+      T2: leader Does not fit, 9 blocks drawn = placed, 14 table rows (placed 9, unplaced 3, fill 1, roof 1, off-site 0); T1 + constraints: leader Fits with flags, 13 blocks drawn = placed, 14 table rows (placed 13, unplaced 0, fill 0, roof 1, off-site 0); T4: leader Fits, 4 blocks drawn = placed, 7 table rows (placed 4, unplaced 0, fill 1, roof 2, off-site 0).
+31/31 tests passed.
+Timing (single thread, Node v22.22.0): T1 full run 10.68 s for 2000 options; T3 11.08 s.
+```
+
+```
+PASS  B1. Tab order from the top of the page (no skip link): stops before the results and the chart, none hidden  (15.9 s)
+PASS  B2. Skip links: "Skip to results" and "Skip to trade-offs chart" are the first two Tab stops and reach their targets  (0.5 s)
+PASS  B3. Keyboard on the chart: arrows move along the axes, Home/End, P returns to the pick, Enter opens its detail, Escape clears  (3.0 s)
+PASS  B4. Canvas path (more than the registered threshold): points drawn on Canvas, no SVG markers, pixels at the pick, pointer hit-test opens the nearest option  (0.4 s)
+PASS  B5. SVG path (at or below the threshold): with "Hide dominated options" on, markers are SVG paths, one per plotted point, no Canvas  (0.8 s)
+PASS  B6. Table paging: every option reachable, page size as registered, rank order, the pick on page 1  (3.0 s)
+PASS  B7. axe (WCAG 2.0/2.1/2.2 A and AA rules), light theme: Trade-offs table, Trade-offs chart and Options tab have no serious or critical violation  (10.7 s)
+PASS  B8. Removable filter chips: each filter shows a chip with its own remove button; removing it by keyboard keeps focus in the chip row  (1.2 s)
+PASS  B9. A weight preset moves the pick without a re-run (§17 target ≤ 100 ms, measured in the browser)  (0.4 s)
+      pick "#1 Grid · Diesel N+1 · DLC · PV 7.7 MWp …" → "#1 Islanded gas recips · retained-plant …" in 84 ms (click to repaint of the pick line; no re-run); header leader = pick before (yes) and after (yes).
+PASS  B10. No console errors or page errors on the main page  (0.0 s)
+      0 errors (load and run 13.2 s, status "Options updated. Leader unchanged. Last run 13 s on 1 worker").
+PASS  B11. axe, dark theme (prefers-color-scheme: dark): Trade-offs chart, table and Options tab have no serious or critical violation  (24.7 s)
+PASS  B12. Tablet width (1000 px): the closed inputs panel takes no Tab stop; opened, its controls are reachable  (14.7 s)
+PASS  B13. Phone width (375 px): Trade-offs chart and table cause no horizontal page scroll  (13.4 s)
+PASS  B14. Phone width (375 px, touch): the Site tab causes no horizontal page scroll with every section open; a boundary drawn by tapping re-screens the options  (25.9 s)
+      scrollWidth/clientWidth 375/375 px with every section open, plan 325 px wide; 4 taps + Finish → drawn 4-edge boundary of 9.25 ha, options re-screened (run summary: "drawn polygon (4 edges)"); drawing 375/375 px, after 375/375 px.
+PASS  B15. Keyboard on the Site tab: Tab reaches the plan; arrow keys focus blocks with dimensions, tooltip, live text and the matching table row; the table alternative is reachable; a boundary can be drawn with the keyboard alone  (26.3 s)
+      11 Tab presses from the Site tab to the plan (select → input → input → input → input → input → input → input → input → input → svg), focus visible; ArrowRight → "Data hall 1 of 4 (phase 1)" with dimensions 101.6 m × 67.7 m, tooltip and table row match; End → "Heat rejection (ground), array 2 of 2 · 11 × 5 MW modules"; Home back; Escape clears; Tab → "The plan as a table" link → Enter → Tab → table region (14 rows); keyboard drawing: Enter, 12 × Shift+→, Enter, 12 × Shift+↑, Enter, F → 3-edge boundary of 0.72 ha (120 × 120 m triangle), options re-screened.
+PASS  B16. GeoJSON import on the Site tab: each feature gets a "use as" choice (guessed from its name), and applying sets the boundary, a soft flood exclusion, the POC and a receptor, then re-screens the options  (31.4 s)
+      uses guessed boundary, excl:flood, poc, receptor; "Applied 4 of 4 features from site-import-3198.geojson."; re-screened: Boundary: imported polygon (4 edges); gross 19.13 ha, buildable envelope 17.42 ha, net developable 14.80 ha af…; receptor row "Dwelling45.7 dB(A)57.5 dB(A)✗ above (flagged)".
+PASS  B17. axe, light theme: Site tab (plan, layers, legend, editor with every section open, site-fit panel incl. unplaced tray, small multiples, table) and drawing mode have no serious or critical violation  (32.8 s)
+      Site tab, leader (light): 35 rules passed, violations {}, needs review color-contrast ×782
+      Site tab, an option that does not fit (light): 35 rules passed, violations {}, needs review color-contrast ×795
+      Site tab, drawing (light): 35 rules passed, violations {}, needs review color-contrast ×796
+      Site tab (light): 774 "needs review" text nodes checked from computed styles, lowest 4.86:1 (.rp-ev-progress.rp-ev:nth-child(1) > .rp-t, rgb(98, 103, 111), 12px), 0 below the minimum; 8 icon-only glyphs (decorative, beside text)
+PASS  B18. axe, dark theme: the same Site tab states have no serious or critical violation  (32.0 s)
+      Site tab, leader (dark): 35 rules passed, violations {}, needs review color-contrast ×782
+      Site tab, an option that does not fit (dark): 35 rules passed, violations {}, needs review color-contrast ×795
+      Site tab, drawing (dark): 35 rules passed, violations {}, needs review color-contrast ×796
+      Site tab (dark): 774 "needs review" text nodes checked from computed styles, lowest 5:1 (.rp-ev-start.rp-ev:nth-child(189) > .rp-src, rgb(154, 152, 144), 12px), 0 below the minimum; 8 icon-only glyphs (decorative, beside text)
+18/18 browser checks passed.
+Keyboard: chart in 2 Tab + Enter via the skip link (results: 1 Tab + Enter); Tab only from the top: 213 presses (179 in the inputs panel).
+```
+
+During development: 9i first failed (it counted the leader's thumbnail blocks with the main plan's; the test now counts the main plan only); an earlier 6c failure came from the longer stage list (fixed as described above). The Site tab checks B14, B15, B17 and B18 passed on their first run. B16 (GeoJSON import) first failed because the test deleted its temporary file before Chromium read it (Chromium reads a chosen file only when the page asks for its text; the page then showed "Could not read the file"); the test now deletes it afterwards. Writing B16 also found a UI defect: the Boundary section of the editor collapsed as soon as a drawn, typed or imported boundary was applied (its `open` attribute followed "site is still the area rectangle"); it is now set once when the editor opens. After looking at screenshots the tooltip was moved beside the block (under the plan when it is narrower than 480 px), the phone thumbnails were set to two columns and heat rejection was made neutral. The full suites above ran after all of these changes.

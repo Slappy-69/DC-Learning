@@ -31,7 +31,7 @@ Branches are stacked: merging the newest one into `main` brings in everything be
 
 ## Next, in the brief's build order (§20)
 
-1. **Site (stage 2):** boundary draw/import, setbacks, exclusions, height limit, building massing, plant blocks and auto-layout, site-fit status, area budget, 2D plan, small multiples. In progress. Checkpoint 2026-10-16 evening: S1 geometry, S2 site model with T2/T4 fixtures, S3 blocks and S4 auto-layout done (`npm test` 27/27); S5 site-fit integration partly done; S6 views (2D plan, site input UI, small multiples) not started. Builder's own progress notes: `app/SITE-PROGRESS.md`. Stopped twice by the plan's usage limit and resumed.
+1. **Site (stage 2):** built (S1–S6 complete 2026-10-16: geometry kernel, site model with T2/T4 fixtures, blocks, auto-layout with relaxation levels, site-fit outputs, Site tab with 2D plan, boundary drawing and GeoJSON/KML import, small multiples). `npm test` 31/31, `npm run test:browser` 18/18 at checkpoint. Verification (Haiku ×3 + Opus) in progress. Builder notes: `app/SITE-PROGRESS.md` and `app/BUILD-NOTES.md` "Slice: Site (§10)".
 2. **Rest of the trade-off views (stage 3):** parallel coordinates with brushing, choice-impact chart, option card, compare view, phasing timeline, schematic, key quantities.
 3. **Verification tier (stage 4):** representative-day screening, background 8760-hour verification of the top 10, dispatch visualisations.
 4. **Uncertainty and sensitivity (stage 5):** ranges, Monte Carlo, rank stability, robust pick, tornado, breakevens, scenarios.

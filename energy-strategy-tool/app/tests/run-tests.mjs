@@ -56,7 +56,7 @@ import { dispatchAll } from '../src/engine/dispatch.js';
 import { createProgressTracker } from '../src/engine/runlog.js';
 import { Worker } from 'node:worker_threads';
 import { readFileSync, existsSync } from 'node:fs';
-import { geometryTests, siteModelTests, blockTests, layoutTests } from './site-tests.mjs';
+import { geometryTests, siteModelTests, blockTests, layoutTests, siteFitTests } from './site-tests.mjs';
 
 const START = '2027-01';
 const results = [];
@@ -803,6 +803,19 @@ async function getViewBundle() {
       }
       export function renderView(run, view) {
         return renderToStaticMarkup(React.createElement(ParetoView, { run, view, setView: () => {}, start: '2027-01' }));
+      }
+      import SiteView from ${src('src/components/SiteView.jsx')};
+      import RunSummary from ${src('src/components/RunSummary.jsx')};
+      import OptionDetail from ${src('src/components/OptionDetail.jsx')};
+      export { blockRows } from ${src('src/components/site/BlocksTable.jsx')};
+      export function renderSite(run, inputs, optionId = null) {
+        return renderToStaticMarkup(React.createElement(SiteView, { run, inputs, update: () => {}, optionId, setOptionId: () => {}, computing: false }));
+      }
+      export function renderSummary(run) {
+        return renderToStaticMarkup(React.createElement(RunSummary, { run, open: true, onToggle: () => {}, onInclude: () => {}, onSamplingOff: () => {} }));
+      }
+      export function renderOptionDetail(o) {
+        return renderToStaticMarkup(React.createElement(OptionDetail, { o, start: '2027-01', onClose: () => {} }));
       }`);
     const out = join(dir, 'bundle.mjs');
     await esbuild.build({ entryPoints: [entry], bundle: true, format: 'esm', platform: 'node', outfile: out, jsx: 'automatic', loader: { '.js': 'jsx' }, logLevel: 'silent', nodePaths: [join(root, 'node_modules')], define: { 'process.env.NODE_ENV': '"production"' } });
@@ -966,8 +979,17 @@ await test('8f. Every registered view setting and run setting is the value the c
   await withRecord(reg, 'view.pareto.yAxis', 'deliverability', () => assert.equal(HOOKS.paretoView(runT1, null).axes.y, 'deliverability'));
   await withRecord(reg, 'view.pareto.xAxis', 'nonsense', () => assert.throws(() => defaultParetoAxes({}), /xAxis/));
   out.push('axes follow-scoring (record "ttp" → x = time-to-power)');
-  // (h) Coverage: every registered view setting has a check above.
-  const probed = ['view.pareto.canvasAbove', 'view.pareto.display', 'view.pareto.ttpClasses', 'view.pareto.xAxis', 'view.pareto.yAxis', 'view.table.pageSize'];
+  // (h) view.site.smallMultiples: number of small-multiple plans on the Site tab (top options by rank).
+  const multIds = (h) => [...h.matchAll(/<button[^>]*class="multiple"[^>]*data-id="([^"]+)"/g)].map((m) => m[1]);
+  const top = runT1.options.slice().sort((a, b) => a.rank - b.rank);
+  const s0 = multIds(B.renderSite(runT1, runT1.inputs));
+  assert.equal(s0.length, breg['view.site.smallMultiples'].value, 'small multiples differ from view.site.smallMultiples');
+  assert.deepEqual(s0, top.slice(0, s0.length).map((o) => o.id), 'small multiples are not the top options in rank order');
+  await withRecord(breg, 'view.site.smallMultiples', 3, () => assert.equal(multIds(B.renderSite(runT1, runT1.inputs)).length, 3));
+  await withRecord(breg, 'view.site.smallMultiples', 0, () => assert.equal(multIds(B.renderSite(runT1, runT1.inputs)).length, 0));
+  out.push(`site smallMultiples ${breg['view.site.smallMultiples'].value} (top options in rank order; record 3 → 3, 0 → none)`);
+  // (i) Coverage: every registered view setting has a check above.
+  const probed = ['view.pareto.canvasAbove', 'view.pareto.display', 'view.pareto.ttpClasses', 'view.pareto.xAxis', 'view.pareto.yAxis', 'view.site.smallMultiples', 'view.table.pageSize'];
   assert.deepEqual(Object.keys(reg).filter((k) => k.startsWith('view.')).sort(), probed, 'a registered view setting has no usage check in test 8f');
   assert.deepEqual(Object.keys(breg).filter((k) => k.startsWith('view.')).sort(), probed);
   return out.join('; ') + '.';
@@ -1070,6 +1092,10 @@ await test('8h. Every active view filter is a removable chip, and the header fil
     { ...DEFAULT_VIEW, dominated: 'only', hideDominated: true },
     { ...DEFAULT_VIEW, archetypesOnly: true, search: 'PPA' },
     { ...DEFAULT_VIEW, resilience: ['Meets with flags'], flagIds: ['grid-binding'], hideFlagIds: ['permit-ied'], capexCeiling: 2e8, dominated: 'non', archetypesOnly: true, search: 'Grid' },
+    { ...DEFAULT_VIEW, siteFit: ['Fits'] },
+    { ...DEFAULT_VIEW, siteFit: ['Fits', 'Fits with flags'], landTakeCeilingHa: 9 },
+    { ...DEFAULT_VIEW, landTakeCeilingHa: 5.5, flagIds: ['site-does-not-fit'] },
+    { ...DEFAULT_VIEW, siteFit: ['Does not fit'], resilience: ['Meets'], hideFlagIds: ['site-relaxed'], landTakeCeilingHa: 12 },
   ];
   let chipsChecked = 0;
   for (const v of views) {
@@ -1085,10 +1111,14 @@ await test('8h. Every active view filter is a removable chip, and the header fil
     assert.equal(applyView(runT1.options, { ...w, hideDominated: false }).list.length, runT1.options.length, 'removing every chip did not restore every option');
   }
   assert.ok(activeFilterChips({ ...DEFAULT_VIEW, capexCeiling: 100e6 })[0].label.includes('€100 m'));
+  assert.deepEqual(activeFilterChips({ ...DEFAULT_VIEW, siteFit: ['Fits', 'Does not fit'], landTakeCeilingHa: 7.25 }).map((c) => c.label), ['Site fit: Fits', 'Site fit: Does not fit', 'Land take ≤ 7.25 ha']);
+  assert.equal(activeFilterCount({ ...DEFAULT_VIEW, siteFit: ['Fits', 'Does not fit'], landTakeCeilingHa: 7.25 }), 2, 'site-fit statuses count as one filter kind');
   const B = await getViewBundle();
   const html = B.renderView(runT1, { ...defaultView(), resilience: ['Meets'], hideFlagIds: ['grid-binding', 'permit-ied'], capexCeiling: 100e6 });
   assert.equal((html.match(/aria-label="Remove filter: /g) || []).length, 4, 'one remove button per chip on the Trade-offs tab');
-  return `${views.length} view states, ${chipsChecked} chips each removed alone (only that filter goes); filter count = applyView chips in every state; removing every chip restores all ${runT1.options.length} options; Trade-offs renders one remove button per chip.`;
+  const html2 = B.renderView(runT1, { ...defaultView(), siteFit: ['Fits', 'Fits with flags'], landTakeCeilingHa: 9 });
+  assert.equal((html2.match(/aria-label="Remove filter: (Site fit|Land take)/g) || []).length, 3, 'site-fit and land-take chips on the Trade-offs tab');
+  return `${views.length} view states (incl. site fit and land-take ceiling), ${chipsChecked} chips each removed alone (only that filter goes); filter count = applyView chips in every state; removing every chip restores all ${runT1.options.length} options; Trade-offs renders one remove button per chip (site-fit and land-take chips included).`;
 });
 
 // ---------------------------------------------------------------------------
@@ -1096,9 +1126,10 @@ await test('8h. Every active view filter is a removable chip, and the header fil
 // ---------------------------------------------------------------------------
 await geometryTests(test);
 await siteModelTests(test);
-const siteRuns = { runT1, runT3, START };
+const siteRuns = { runT1, runT3, START, getViewBundle };
 await blockTests(test, siteRuns);
 await layoutTests(test, siteRuns);
+await siteFitTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);
