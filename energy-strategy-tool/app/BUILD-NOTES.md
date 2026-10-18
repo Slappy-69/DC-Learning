@@ -1126,7 +1126,7 @@ The other line reported the same 413 options, the same 270 later full loads and 
 | Leader | O1YAUJ8J unchanged ("Grid · Diesel N+1 · DLC · PV 7.7 MWp · PPA hybrid 100 %"), 85.9642 → 92.7124; LCOE 133.50 → 153.77 €/MWh | **changed**: O1Q4ILX5 ("Islanded rented temporary generation · Gas CHP-trigen · retained-plant backup · Air · PV 5.3 MWp · BESS 2 h · PPA hybrid 100 %", now rank 2) → O826DRQ (same but "PPA hybrid 50 %", no BESS; was rank 2), 70.8916 → 97.1139; the top 10 sit within 0.0005 points of each other |
 | Top 10 | 6 of 10 kept. Before: O1YAUJ8J, O1BM95B8, O1GBHO2A, OSCP27D, O14EVMZU, OMTCPB2, O1VA67D3, OV4UD3O, ORCKDL0, O1QWIDO. After: O1YAUJ8J, O1BM95B8, OSCP27D, O1GBHO2A, O14EVMZU, OMTCPB2, O6FDBB2, O1OSKM4K, OUTRYDE, O12DDOCS | 9 of 10 kept. Before: O1Q4ILX5, O826DRQ, O1FU8UKR, OMDIQOD, O1EQ82QV, ONV51PO, ON9TFWU, OH6NSUZ, ORMUQVQ, OAS6AIL. After: O826DRQ, O1Q4ILX5, O1EQ82QV, OMDIQOD, ON9TFWU, ORMUQVQ, O1FU8UKR, OH6NSUZ, OQKRTJ7, OAS6AIL |
 | Ranks moved | 1,990 of 2,000 (largest 865) | 1,242 (largest 378) |
-| LCOE changed | all 1,113 PPA options (largest +42.3 %) | 1,099 of 1,113 PPA options |
+| LCOE changed | all 1,113 PPA options (largest change +42.3 % on the change relative to the new LCOE, (new − old) / new; +73.2 % on the change relative to the old LCOE, (new − old) / old; same option, OZ57BJM, 93.62 → 162.16 €/MWh) | 1,099 of 1,113 PPA options |
 | Negative / non-finite LCOE | 0 / 0 → 0 / 0 | **80 / 26 → 0 / 26** (the 26 deliver no energy at all) |
 | Cost axis (LCOE range) | 93.6–286.0 → 151.8–286.0 €/MWh; the 2,000 options spread over the whole 0–100 | −13.8 M to 4.61 M €/MWh → 157.3 to 4.61 M €/MWh |
 | Cost-axis spread of the options with LCOE 0–1,000 €/MWh | 2,000 options over 0–100 points, before and after; P10/P50/P90 of the cost scores 34.4/54.9/71.9 → 30.6/70.4/88.5 | 1,844 options within 0.004 points (25.075–25.079) → 1,866 within 0.013 points (99.987–100.000); P10/P50/P90 of all cost scores 25.077/25.078/25.078 → 99.993/99.999/100.000 |
@@ -1190,6 +1190,34 @@ B22 Dispatch tab at 375 px (no page overflow with the tables open, keyboard read
 - Exports: `SOURCE_OF_TECH` (blocks.js), `Pattern` (site/SitePlan.jsx), `siteFor` (SiteView.jsx).
 - Existing tests' printed values that moved because of item 2 (and, for 5d, item 4's four records; assertions unchanged): 3 (best "Does not meet" rank 5 → 3; T1 dominated 1,947 → 1,950), 4 (visible counts), 5d (492 → 496 records), 8a (T1 frontier 11 → 8), 8b (3 distinct picks, was 4: Lowest cost OZ57BJM → OVOJ8EB, Lowest risk OCRJR70 → O1YAUJ8J), 8c and 8d (dominated counts; T3 1,895 → 1,881), 8g (10 separate highest-score marks, was 7), 9g (rank counts). Test 6d's slice count is timing.
 
+### Verification findings on the port (H1, H2, H3; 2026-10-18)
+
+Reports: `verification/port/H1-claims.md`, `H2-brief.md`, `H3-browser.md`. The decisions below answer them; where a point is deferred, the reason is given.
+
+**Changes now recorded (H2 section 3, "not recorded" or "partly recorded").**
+- *Gas driver scales the commodity price only* (T-3). The tornado's "Gas commodity price" driver (`sensitivity.gasPriceFactor`) multiplies the commodity price; the gas transport adder stays fixed, because the label names the commodity. The other line scaled the built price including the adder. Kept, as a deliberate change. Against the other line, the low value is 0.3 × adder higher and the high value 0.3 × adder lower, because the adder no longer moves with the factor.
+- *Tornado option list: every option, not the top 50* (T-9). The option selector lists every option, leader by default; there is no cap. Kept.
+- *In-cell swing bars dropped* (T-10). The tornado chart replaces the table's bar cells; the table keeps the low, high and swing values. Kept.
+- *Inspector's bridging battery read from sizing* (B-4). `inspect.js` reads the bridging battery from `sz.bridgeBess`, the same value the run uses, instead of deriving it as max(0, supply − grid − firm). The derivation gave the same series whenever the battery is the only bridging source; the sizing read cannot drift from the run. Kept. Check: the inspector equals the run for 10 options (H1 check 6, 0 MWh difference).
+- *Carbon driver label* (T-4). Renamed "Carbon price (Scope 1)" because the driver moves only Scope 1 emissions through the carbon price, not the market-based Scope 2 figure. Kept.
+- *Loading and hosted-page wording* (L-3, D-19). The `<noscript>` browser list order and the unmet-load warning symbol ("! Unmet load") changed for wording and visibility only. Kept.
+- *`__HOSTED__` guard* (L-10). The `typeof __HOSTED__` guard was removed; `build.mjs` defines `__HOSTED__` in every bundle, so the shipped builds are safe. The test bundle (`tests/view-bundle.mjs`) does not include `RunProgress.jsx`. Kept.
+- *Chart role* (D-6). Recorded in judgement 10.
+- *Tornado precision and rounding* (R24). Tornado scores show 4 significant figures in the detail table (the brief asks 2 in summaries, 3 in detail). Not changed; a rounding item for the stage-7 polish, see open point 9.
+- *Tornado swing for LCOE* (R19). The engine computes `lcoeSwing` for every driver; the table shows LCOE at low and high only. Not shown as a swing; open point 9.
+- *Tornado top-driver count* (R20). `sensitivity.topDrivers` (12) has no UI control. The note "editable 1–30" in the record refers to the code clamp (1–30), not to a control. Open point 9.
+- *View selections without a §18 record* (R41). Option selectors open on the leader, and the Dispatch default year (most unmet) and week (most unmet week), are view state with no record. Open point 9; the owner decides whether they need records.
+
+**Brief requirements left open, now recorded (H2 section 2).**
+- *§12.6 bridging-period shading* (R14) and *§12.6 grid-date uncertainty band* (R15): MISSING. Deferred, not built in this slice: the grid-date band needs the grid-date range, which is deferred with the Monte Carlo and uncertainty stage (stage 5; BUILD-NOTES 190), and the shading needs the bridging months drawn on the phasing chart, which needs the representative-period layout of stage 3. Both are visible gaps for the owner; they are not hidden.
+- *§17 initial load and bundle size* (R35): measured in the verification run below (initial load and gzipped size of `dist/energy-tool-single-file.html`).
+- *§12.6 phasing timeline layout* (R13 "Gantt"): the monthly stacked chart is the implemented form; the brief's Gantt layout is open. Judgement, owner to confirm.
+
+**H1 claim results.**
+- *Claim 2c* (+42.3 % denominator): corrected in item 2 above; both denominators are stated.
+- *Claim 5c* (battery first discharge, month 27, against time-to-power month 21): the verifier's check (`check5c`) found that the one option where the first discharge is later (O1I6WHKZ, no main battery, C3 backup) charges from month 21 and discharges only against a shortfall after firm plant and import. No shortfall occurred in months 21 to 26, so the battery was available and not needed. The time-to-power count is the availability month, which is correct. Not a timing defect. The owner may still want the time-to-power count to follow the first discharge; that is a definition choice, open point 10.
+- *S2* (item-1 scores 98.9963 and 73.1602): these are the item-1-only state, before the PPA decision. The intermediate engine is not in the repository, so these scores are **not verified** in this slice. The final scores quoted in this section (T1 leader OOB3CL1 98.9977; T3 leader O114KGKR 99.2194, with BESS + solar) are the ones the tests reproduce.
+
 ### Judgement calls
 
 1. Bridging-battery capex and fixed O&M follow its supply month, like every other plant (item 1; quantified above).
@@ -1220,6 +1248,9 @@ B22 Dispatch tab at 375 px (no page overflow with the tables open, keyboard read
 6. **§17 main-thread long tasks**: the on-demand re-runs run on the main thread; the Dispatch tab's first re-run is one task of a few hundred milliseconds, and the tornado's longest slice was 179 ms on the phone run (the target is none above 50 ms). A worker for these re-runs is the remedy.
 7. Tornado drivers not yet built (§13.3): PUE parameters, capex by technology, solar yield, PPA price, BESS cost, lead times; and breakevens, Monte Carlo, scenarios.
 8. Screen-reader walk-through of the two new tabs not done (axe, keyboard and live-region text in headless Chromium only). The hosted page was checked in a host-like document in headless Chromium, not on the real host.
+9. **Tornado and view-setting details not yet built** (H2 section 2, R13–R24, R41): LCOE swing per driver shown in the table (computed, not shown); tornado scores at 4 significant figures (brief: 3 in detail views); `sensitivity.topDrivers` has no control; the option selector, Dispatch default year and week carry no §18 record. The owner decides whether view defaults need records (AC15).
+10. **Battery time-to-power definition** (H1 claim 5c): time-to-power counts the bridging battery from its availability month (21 here), while the first discharge can come later when there is no shortfall to cover. The verifier found no timing defect. Owner to confirm the availability month is the intended measure, or to count from the first discharge.
+11. **Brief §12.6 gaps** (H2 R14, R15): bridging-period shading and the grid-date band are not built; see "Verification findings" above for the reason and the stage they belong to.
 
 ### Test run (port slice, final)
 
