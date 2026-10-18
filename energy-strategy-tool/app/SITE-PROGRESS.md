@@ -11,6 +11,14 @@ Rule: update this file at the end of every stage (the build has been stopped by 
 - AC7 on T2: all 11 archetypes "Does not fit" with named shortfalls; C17/C18 at defaults with "2,000 options do not fit" notes; including GIS + double-deck gives 2 options that fit with flags.
 - BUILD-NOTES.md "Slice: Site (§10)" written: what was built, algorithm, all 112 new records, changes to scoring.js/sizing.js/evaluate.js with reasons, test changes, T1/T3 comparison with 60fe41a, palette validation, judgement calls, deferred items, open points, test output.
 
+## Review (2026-10-17): complete
+
+Opus review of H1 (claims), H2 (brief) and H3 (browser) plus orchestrator findings O1–O5. Record: `/home/claude/build/verification/site/OPUS-review.md`; BUILD-NOTES "Review: Site slice"; progress log `REVIEW-PROGRESS.md`. 75 findings: 40 accepted, 12 rejected, 23 deferred.
+- Engine: compliant-first ranks "Does not fit" after fitting options (D9); POC cable route and gas-main pipe costs from the site model (I07b, I08b; `tech.substation.cableKm` removed, `tech.gasConnection.pipePerKm` new); records for the MV power factor, SMR clearance and L:W; the double-deck record wired; roof plant = max(fraction, footprint) in sizing too; BESS relaxed-separation text states the test-data condition.
+- UI: phone "Run details" fold (results first), Site selector width (no overflow at 1400/1000/375), "Skip to site plan", site-fit wording, leader re-sized message, route lengths in the plan table and run summary.
+- Tests: `npm test` 32/32 (9g extended, 9c extended, 8g extended, new 9j, constrained fixture fixed); `npm run test:browser` 21/21 (B9 asserts a bound; new B19–B21).
+- T1 leader unchanged (85.9634 → 85.9642, 141 ranks move ≤ 2); T3 unchanged.
+
 ## Stages
 
 | Stage | State | Files |
@@ -34,8 +42,8 @@ Rule: update this file at the end of every stage (the build has been stopped by 
 7. Exclusion type defaults: only flood zones soft.
 8. T4 fixture: grid 8 MW now and at full connection (date = start), one 5 MW phase at month 12.
 9. Building: one block per phase, halls above 25,000 m²; building clearance 6 m (fire access, judgement); anchor: first hall farthest from the POC, further halls next to placed halls.
-10. Unit arrays: ≤ 12 units, 2 rows, ≤ 4,000 m² per array (engines/turbines get fewer units per array); double-deck = two units per position; in-building gensets add their area to the halls.
-11. Height limit is soft in placement (prefer compliant cells; else place and flag): an over-height block makes "Fits with flags", never "Does not fit".
+10. Unit arrays: ≤ 12 units, 2 rows, ≤ 4,000 m² per array (engines/turbines get fewer units per array); double-deck = ceil(units × doubleDeckFootprintFactor) positions (two units per position at 0.5; record wired in the review); in-building gensets add their area to the halls.
+11. Height limit is soft in placement (prefer compliant cells; else place and flag): an over-height block makes "Fits with flags", never "Does not fit". Kept in the review; reasoning in BUILD-NOTES Brief issue 18.
 12. Relaxation levels L0–L4 with minimum values per rule (judgement); hydrogen 25 m never relaxed; wind topple/noise buffers flag-only.
 13. Noise proxy: Lp = Lw − 20 log10 r − 8 (hemispherical, geometric spreading only); normal operation vs standby gensets reported separately; flag only at receptors; the noise flag is category Permitting (§15) but not counted in deliverability (site-derived; §5.7/§11 keep site fit out of the score by default).
 14. SMR off site by default (1 ha per 100 MWe); off-site land shortfall and SMR are flagged ("Fits with flags").

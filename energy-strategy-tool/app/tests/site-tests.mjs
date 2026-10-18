@@ -241,8 +241,15 @@ export async function siteModelTests(test) {
 // ---------------------------------------------------------------------------
 // S3 blocks and S4 layout
 // ---------------------------------------------------------------------------
-import { runModel, buildBlocks, blockSetKey, runLayout, layoutMany, separation, lightContext, layoutForOption, layoutFacts, siteFitOf, HOOKS, validateRunLog, STAGES, stripTimestamps } from '../src/engine/index.js';
+import { runModel, buildBlocks, blockSetKey, runLayout, layoutMany, separation, lightContext, layoutForOption, layoutFacts, siteFitOf, HOOKS, validateRunLog, STAGES, stripTimestamps, buildContext, sizeOption } from '../src/engine/index.js';
 import { TECH, SPATIAL } from '../src/engine/defaults.js';
+
+// Temporarily set a library value (SPATIAL or TECH record value as the code reads it), run fn, restore.
+function withLib(lib, id, key, value, fn) {
+  const old = lib[id].p[key];
+  lib[id].p[key] = value;
+  try { return fn(); } finally { lib[id].p[key] = old; }
+}
 
 // Every distinct layout of a run, recomputed from the options' sizing with the run's own inputs (the same
 // path the UI uses), as one batch.
@@ -384,8 +391,43 @@ export async function blockTests(test, { runT1 }) {
     assert.ok(!b10.ground.some((b) => b.type === 'smr'));
     const smr = b10.offsite.find((x) => x.type === 'smr');
     near(smr.landHa, A10a.sizing.prime.mw / 100, 1e-9, 'SMR off-site land'); assert.equal(smr.distanceKm, inputs.site.offsiteDistanceKm);
-    // T4 (8 MW, 11–33 kV): 500 m² per 20 MVA → 500 × 8 / 0.9 / 20 = 222.2 m².
     out.push(`double-deck ${dgs.length} arrays at 12 m; in-building adds ${A1.sizing.backup.units * 100} m² to the halls; GIS 4,000 m²; A3 BESS ${bess.length} arrays (${Math.ceil(A3.sizing.storage.mwh / 4)} containers); A10a SMR off-site ${smr.landHa.toFixed(2)} ha`);
+    // Review (H2 D4, D5, D6, D8): each former literal is a §18 record, and changing the record changes the value.
+    // (a) T4 (8 MW, 11–33 kV): 500 m² per 20 MVA at the recorded power factor → 500 × 8 / 0.9 / 20 = 222.2 m²,
+    //     in the substation block and in the sizing area budget.
+    const ctx4 = buildContext(normalizeInputs(referenceT4({ analysisStart: inputs.project.analysisStart })));
+    const mvArea = () => [buildBlocks(ctx4, A1.v, sizeOption(ctx4, A1.v)).ground.find((b) => b.type === 'substation').areaM2, sizeOption(ctx4, A1.v).area.parts.substation];
+    const pf = SPATIAL.substation.p.mvPowerFactor;
+    for (const x of mvArea()) near(x, (500 * 8) / pf / 20, 1e-6, 'MV substation footprint at the recorded power factor');
+    withLib(SPATIAL, 'substation', 'mvPowerFactor', 0.8, () => { for (const x of mvArea()) near(x, (500 * 8) / 0.8 / 20, 1e-6, 'MV substation footprint follows spatial.substation.mvPowerFactor'); });
+    // (b) Double-deck: ceil(units × factor) positions of one unit footprint; the area budget uses the same factor.
+    withLib(SPATIAL, 'genset', 'doubleDeckFootprintFactor', 0.75, () => {
+      const d = buildBlocks(ctx, { ...A1.v, C18: 'double' }, A1.sizing).ground.filter((b) => b.type === 'genset');
+      const pos75 = Math.ceil(A1.sizing.backup.units * 0.75), slots75 = d.reduce((a, b) => a + b.rows * b.cols, 0);
+      assert.equal(d.reduce((a, b) => a + b.units, 0), A1.sizing.backup.units, 'double-deck units (factor 0.75)');
+      assert.ok(slots75 >= pos75 && slots75 <= pos75 + d.length, `double-deck slots ${slots75} for ${pos75} positions (factor 0.75)`);
+      near(sizeOption(runT1.ctx, { ...A1.v, C18: 'double' }).area.parts.backup, A1.sizing.backup.units * TECH.backupDiesel.p.m2PerUnit * 0.75, 1e-6, 'double-deck area budget follows the record');
+    });
+    // (c) SMR placed on site: clearance and L:W from the records, never relaxed.
+    withLib(SPATIAL, 'smr', 'placement', 'onsite', () => {
+      const b = buildBlocks(ctx, A10a.v, A10a.sizing).ground.find((x) => x.type === 'smr');
+      assert.ok(b && b.clearanceM === SPATIAL.smr.p.clearanceM && b.clearanceMinM === b.clearanceM && b.relaxable === false, 'on-site SMR clearance');
+      near(b.w / b.h, SPATIAL.smr.p.lw, 1e-9, 'on-site SMR L:W');
+      withLib(SPATIAL, 'smr', 'clearanceM', 20, () => assert.equal(buildBlocks(ctx, A10a.v, A10a.sizing).ground.find((x) => x.type === 'smr').clearanceM, 20, 'SMR clearance follows the record'));
+    });
+    // (d) Roof plant (§5.3): max(roof-plant fraction of the roof, heat-rejection footprint on the roof), the same in
+    //     sizing (rooftop PV) and in the roof-plant block; exercised with the footprint larger (400 m²/MW).
+    const R = runT1.options.find((o) => o.v.C9 === 'roof' && ['roof', 'roofResidual'].includes(o.v.C10));
+    const roofAgree = () => {
+      const s2 = sizeOption(runT1.ctx, R.v);
+      const rp2 = buildBlocks(ctx, R.v, s2).roof.find((x) => x.type === 'roofPlant');
+      near(s2.solarRoofMWp, (Math.max(0, s2.building.footprintM2 - rp2.areaM2) * TECH.solarRoof.p.usableFraction) / TECH.solarRoof.p.m2PerKWp / 1000, 1e-9, 'rooftop PV = free roof after the roof-plant block');
+      return rp2;
+    };
+    const rpA = roofAgree();
+    assert.ok(rpA.byFraction >= rpA.byFootprint, 'T1 default: the 40 % fraction governs');
+    withLib(TECH, 'heatRejection', 'm2PerMW', 400, () => { const rpB = roofAgree(); assert.ok(rpB.byFootprint > rpB.byFraction, 'footprint case not exercised'); });
+    out.push('records drive the values: MV power factor (T4 substation 222.2 m²; 0.8 → 250 m²), double-deck factor (0.75 → ceil(0.75 × units) positions, area budget × 0.75), on-site SMR clearance and L:W, roof plant = max(fraction, heat-rejection footprint) in sizing and blocks alike');
     // Every block has a footprint, height, clearance ring and type (§10.3); the priority order is non-decreasing.
     for (const o of runT1.options.slice(0, 200)) {
       const s = buildBlocks(ctx, o.v, o.sizing);
@@ -402,7 +444,10 @@ export async function blockTests(test, { runT1 }) {
 export function constrainedT1(start) {
   const inp = referenceT1({ analysisStart: start });
   const at = llAt(inp.project.lat, inp.project.lon);
-  const a = Math.sqrt(150000 * 1.5) / 2, b = 150000 / (2 * a);
+  // Half side lengths of the 15 ha, 1.5 : 1 rectangle: a = 237.17 m (east–west), b = 158.11 m (north–south).
+  // (Review fix: b was 150000 / (2a) = 316.23 m, the full north–south side, which put the flood zone wholly
+  // south of the site and the gas main 158 m north of it.)
+  const a = Math.sqrt(150000 * 1.5) / 2, b = 150000 / (4 * a);
   inp.project.name = 'T1 + site constraints (test)';
   inp.site.exclusions = [
     { type: 'easement', points: [at(-60, -b - 20), at(-45, -b - 20), at(-45, b + 20), at(-60, b + 20)] },
@@ -672,7 +717,7 @@ export async function siteFitTests(test, ctxRuns) {
     return out.join('; ') + '.';
   });
 
-  await test('9g. Site fit never changes a score or rank while the site-fit penalty is off; with the penalty on, deliverability drops by 10/25 points and the axis reads "Deliverability (incl. site fit)"', async () => {
+  await test('9g. Site-fit status alone never changes a score or rank while the site-fit penalty is off; site inputs act on scores only through fill-residual PV sizing (T1 at half the area); with the penalty on, deliverability drops by 10/25 points and the axis reads "Deliverability (incl. site fit)"', async () => {
     const out = [];
     const ctx = runT1.ctx;
     assert.equal(!!ctx.inputs.deliverability.siteFitPenalty, false, 'the site-fit penalty must default to off');
@@ -699,6 +744,47 @@ export async function siteFitTests(test, ctxRuns) {
       for (const o of opts) assert.deepEqual([o.score, o.rank], base.get(o.id), `${mode}: score or rank of ${o.id} changed`);
     }
     out.push('scores and ranks identical with site fit removed, scrambled or all "Does not fit" (dominance may differ: it includes site fit, §7.2 step 6)');
+    // (b2) A real status-only change through the whole pipeline (review O2): T4 with a receptor east of the site and
+    // the night threshold at 45 or 60 dB(A). Only the noise flag and the status may change; no score, rank, raw
+    // metric, sizing or layout does.
+    const rcp = (thr) => { const x = referenceT4({ analysisStart: START }); const at4 = llAt(x.project.lat, x.project.lon); x.site.receptors = [{ name: 'Dwelling (test)', point: at4(120, 0) }]; x.requirements.noiseNightDbA = thr; return runModel(x); };
+    const rA = rcp(45), rB = rcp(60);
+    const byB = new Map(rB.options.map((o) => [o.id, o]));
+    let stChanged = 0;
+    for (const a of rA.options) {
+      const b = byB.get(a.id);
+      assert.ok(b, `${a.id} missing at 60 dB(A)`);
+      if (a.siteFit.status !== b.siteFit.status) stChanged++;
+      assert.deepEqual([a.score, a.rank], [b.score, b.rank], `${a.id}: a status-only change moved the score or rank`);
+      assert.deepEqual([a.eco.lcoe, a.eco.capex, a.carbon.locationG, a.ttp.metric, a.deliv.score, a.sizing.solarMWp, a.layoutKey], [b.eco.lcoe, b.eco.capex, b.carbon.locationG, b.ttp.metric, b.deliv.score, b.sizing.solarMWp, b.layoutKey], `${a.id}: a status-only change moved a raw metric, the sizing or the layout`);
+    }
+    assert.ok(stChanged > 0, 'the threshold change did not change any status');
+    out.push(`status-only change on T4 (receptor; noise threshold 45 → 60 dB(A)): ${stChanged} statuses change, 0 scores, 0 ranks, 0 raw metrics, sizes or layouts`);
+    // (b3) Site inputs are not statuses (review O2, H1 6b): halving the T1 site area (POC at its default, on the
+    // boundary, so its cable route stays 10 m) changes the statuses and the fill-residual ground PV (§10.4: sized after
+    // the other blocks are placed). Nothing else in any option's sizing changes; every option whose ground PV is
+    // unchanged keeps identical raw metrics; all scores move through the relative scale (§11).
+    const half = referenceT1({ analysisStart: START });
+    half.site.areaHa = half.site.areaHa / 2;
+    const runH = runModel(half);
+    const byH = new Map(runH.options.map((o) => [o.id, o]));
+    const rest = (sz) => { const { sentences, area, solarGroundMWp, solarMWp, ...r } = sz; return JSON.stringify(r); };
+    let pvChanged = 0, metricChanged = 0, statusChanged = 0, scoreMoved = 0, rankMoved = 0;
+    for (const a of runT1.options) {
+      const b = byH.get(a.id);
+      assert.ok(b, `${a.id} missing at half the area`);
+      assert.equal(rest(b.sizing), rest(a.sizing), `${a.id}: halving the site area changed sizing other than the fill-residual ground PV`);
+      const pv = a.sizing.solarGroundMWp !== b.sizing.solarGroundMWp;
+      if (pv) { pvChanged++; assert.equal(a.v.C10, 'roofResidual', `${a.id}: ground PV changed on an option that does not fill the residual area`); }
+      const raw = (o) => [o.eco.lcoe, o.eco.capex, o.eco.npvCost, o.carbon.locationG, o.ttp.metric, o.deliv.score];
+      const same = JSON.stringify(raw(a)) === JSON.stringify(raw(b));
+      if (!same) { metricChanged++; assert.ok(pv, `${a.id}: raw metrics changed although its ground PV did not`); }
+      if (a.siteFit.status !== b.siteFit.status) statusChanged++;
+      if (a.score !== b.score) scoreMoved++;
+      if (a.rank !== b.rank) rankMoved++;
+    }
+    assert.ok(statusChanged > 0 && pvChanged > 0, 'halving the area changed no status or no fill-residual PV');
+    out.push(`T1 at half the area (7.5 ha): ${statusChanged} statuses change; ${pvChanged} fill-residual options change ground PV and ${metricChanged} options change raw metrics (all of them fill-residual); every other sizing value identical on all ${runT1.options.length} options; ${scoreMoved} scores and ${rankMoved} ranks move through the relative scale (§11)`);
     // (c) View filters by site fit and land take never change a score or rank.
     const v = applyView(runT1.options, { ...DEFAULT_VIEW, siteFit: ['Fits'], landTakeCeilingHa: 8 });
     assert.ok(v.list.length < runT1.options.length && v.list.every((o) => o.siteFit.status === 'Fits' && o.siteFit.landTakeHa <= 8));
@@ -761,6 +847,45 @@ export async function siteFitTests(test, ctxRuns) {
       assert.equal((html.match(/class="multiple"/g) || []).length, Math.min(6, run.options.length));
       out.push(`${label}: leader ${re.siteFit.status}, ${drawn} blocks drawn = placed, ${trs} table rows (placed ${re.layout.placed.length}, unplaced ${re.layout.unplaced.length}, fill ${re.layout.fill ? 1 : 0}, roof ${re.bs.roof.length}, off-site ${re.bs.offsite.length})`);
     }
+    return out.join('; ') + '.';
+  });
+
+  await test('9j. Route lengths for cost (§5.2, §5.4): the POC sets the grid cable route and the gas main the connection pipe of gas-burning options; layout-independent, the same for every option', () => {
+    const out = [];
+    const sp = TECH.substation.p, gp = TECH.gasConnection.p;
+    // (a) Site model. T1: the default POC is the mid-point of the south edge, 10 m (the setback) from the envelope;
+    // no gas main. A POC 1,200 m south of the boundary is 1,210 m away; a gas main inside the envelope is 0 m away.
+    const m1 = buildSiteModel(runT1.inputs);
+    near(m1.routes.pocM, 10, 1e-6, 'default POC to the envelope = the 10 m setback');
+    assert.equal(m1.routes.gasMainM, null, 'no gas main by default');
+    const inp = normalizeInputs(referenceT1({ analysisStart: START }));
+    const at = llAt(inp.project.lat, inp.project.lon);
+    const hb = 150000 / Math.sqrt(150000 * 1.5) / 2;
+    const m2 = buildSiteModel({ ...inp, site: { ...inp.site, poc: at(0, -hb - 1200), gasMain: at(0, 0) } });
+    near(m2.routes.pocM, 1210, 0.5, 'POC 1,200 m south of the boundary'); assert.equal(m2.routes.gasMainM, 0, 'gas main inside the envelope');
+    out.push(`site model: default POC ${m1.routes.pocM} m (the setback), POC 1,200 m out → ${m2.routes.pocM.toFixed(1)} m, gas main inside → 0 m, none → not costed`);
+    // (b) T1 economics: every option's grid connection line = offered MW × €/MW (110–150 kV) + €/km × 0.010 km; no gas pipe.
+    const burnsGas = (o) => [o.sizing.prime, o.sizing.bridge].some((p) => p && TECH[p.tech].fuel === 'gas') || !!(o.sizing.backup.tech && TECH[o.sizing.backup.tech].fuel === 'gas');
+    const gridLine = (o) => o.eco.capexLines.filter((l) => l.item === 'Grid connection and reinforcement').reduce((a, l) => a + l.amount, 0);
+    const gasLine = (o) => o.eco.capexLines.filter((l) => l.item === 'Gas connection pipe').reduce((a, l) => a + l.amount, 0);
+    const expGrid = runT1.inputs.grid.fullMW * sp.connCapexPerMW_hv + sp.cablePerKm * 0.010;
+    for (const o of runT1.options) {
+      near(gridLine(o), expGrid, 1e-3, `${o.id}: grid connection capex`);
+      near(o.sizing.grid.cableKm, 0.010, 1e-12, `${o.id}: cable route`);
+      assert.equal(gasLine(o), 0, `${o.id}: gas pipe without a gas main`);
+      if (burnsGas(o)) assert.ok(o.sizing.sentences.some((t) => t.startsWith('Gas connection: no gas main location given')), `${o.id}: no "not costed" sentence`);
+    }
+    out.push(`T1: grid connection €${Math.round(expGrid).toLocaleString('en-GB')} on all ${runT1.options.length} options (cable €${Math.round(sp.cablePerKm * 0.01).toLocaleString('en-GB')} for 10 m), no gas pipe (no gas main), gas-burning options say so`);
+    // (c) T1 + constraints: the gas main on the north edge is 10 m from the envelope; each gas-burning option pays
+    // 0.010 km × €/km, and no other option pays anything.
+    const mc = buildSiteModel(runTC.inputs);
+    near(mc.routes.gasMainM, 10, 1e-6, 'gas main on the boundary = the setback');
+    let gasOpts = 0;
+    for (const o of runTC.options) {
+      if (burnsGas(o)) { gasOpts++; near(gasLine(o), 0.010 * gp.pipePerKm, 1e-6, `${o.id}: gas pipe`); } else assert.equal(gasLine(o), 0, `${o.id}: gas pipe on an option that burns no gas`);
+    }
+    assert.ok(gasOpts > 0 && gasOpts < runTC.options.length, `${gasOpts} gas-burning options of ${runTC.options.length}`);
+    out.push(`T1 + constraints: ${gasOpts} of ${runTC.options.length} options burn gas and pay €${Math.round(0.01 * gp.pipePerKm).toLocaleString('en-GB')} (10 m × €${(gp.pipePerKm / 1e6).toFixed(2)} m/km), the others nothing`);
     return out.join('; ') + '.';
   });
 }

@@ -122,7 +122,7 @@ function SmallMultiples({ run, site, items, selectedId, onSelect }) {
   );
 }
 
-export default function SiteView({ run, inputs, update, optionId, setOptionId, computing }) {
+export default function SiteView({ run, inputs, update, optionId, setOptionId, computing, focusPlan = false, onPlanFocused = null }) {
   const nRun = useMemo(() => normalizeInputs(run.inputs), [run.inputs]);
   const runSite = useMemo(() => siteFor(nRun), [nRun]);
   const nCur = useMemo(() => normalizeInputs(inputs), [inputs]);
@@ -145,6 +145,13 @@ export default function SiteView({ run, inputs, update, optionId, setOptionId, c
   const planRef = useRef(null);
 
   const site = editSite; // the plan always shows the current site inputs; blocks only when the run matches them
+  // "Skip to site plan" (review O4): focus the plan once the Site tab has rendered it.
+  useEffect(() => {
+    if (!focusPlan) return;
+    const el = typeof document !== 'undefined' ? document.getElementById('site-plan') : null;
+    if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'start' }); }
+    if (onPlanFocused) onPlanFocused();
+  }, [focusPlan]); // eslint-disable-line react-hooks/exhaustive-deps
   const startEdit = (e) => {
     setEdit(e); setDraft([]); setDrawError(''); setNotice('');
     setTimeout(() => { const el = document.getElementById('site-plan'); if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }); } }, 0);
@@ -191,8 +198,10 @@ export default function SiteView({ run, inputs, update, optionId, setOptionId, c
     <section className="site" aria-labelledby="site-h">
       <div className="site-head">
         <h2 id="site-h">Site layout</h2>
-        <label className="small">Option shown{' '}
-          <select value={option.id} onChange={(e) => setOptionId(e.target.value)}>
+        <label className="small site-pick">Option shown{' '}
+          {/* Every screened option, in rank order (none hidden). Names run to 180 characters, so the closed control
+              is width-bound with an ellipsis (review O3); the open list and the title show the full name. */}
+          <select value={option.id} onChange={(e) => setOptionId(e.target.value)} title={`#${option.rank} ${option.name} · ${f ? f.status : ''}`}>
             {optionList}
           </select>
         </label>

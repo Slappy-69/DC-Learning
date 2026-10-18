@@ -15,7 +15,7 @@
 // View settings (default axes, time-to-power classes, Canvas threshold, first display) are read
 // from the §18 registry at the point of use (view.js / registryValue), never from a local copy.
 
-import { applyView } from './scoring.js';
+import { applyView, isRequirementCompliant } from './scoring.js';
 import { defaultView, viewSetting } from './view.js';
 
 // Axis metrics (§11: cost, carbon, time-to-power, deliverability; §9.5, §9.6 metric variants).
@@ -93,7 +93,8 @@ export function paretoFrontier(points) {
 // match[es] the weighted leader"). The header "Leader", the live "New leader" announcement and the
 // plain-English summary (when built) use this same function, so they always name the same option.
 // With "Rank requirement-compliant options first" off (default), rank 1 is the highest weighted score,
-// ties to the lower id. With it on, rank 1 is the best-scoring option that is not "Does not meet".
+// ties to the lower id. With it on, rank 1 is the best-scoring requirement-compliant option: resilience not
+// "Does not meet" and site fit not "Does not fit" (scoring.js isRequirementCompliant).
 export function weightedPick(options) {
   let best = null;
   for (const o of options) if (Number.isFinite(o.rank) && (!best || o.rank < best.rank)) best = o;
@@ -101,8 +102,9 @@ export function weightedPick(options) {
 }
 
 // Highest weighted score, ties broken by id (the order rankOptions() uses within a group). Differs
-// from weightedPick() only when "Rank requirement-compliant options first" is on and the top scorer
-// does not meet the resilience requirement; the view then marks it separately and says why.
+// from weightedPick() only when "Rank requirement-compliant options first" is on and the top scorer is not
+// requirement-compliant (resilience "Does not meet" or site fit "Does not fit"); the view then marks it
+// separately and says why.
 export function highestWeightedScore(options) {
   let best = null;
   for (const o of options) {
@@ -236,7 +238,13 @@ export function paretoView(run, axes, view = defaultView()) {
     topScore: topDiffers ? top.score : null,
     topScoreRank: topDiffers ? top.rank : null,
     topScoreStatus: topDiffers ? top.resilience.status : null,
-    topScoreReason: topDiffers ? (compliantFirst && top.resilience.status === 'Does not meet' ? 'compliant-first' : 'ranking') : null,
+    topScoreSiteFit: topDiffers && top.siteFit ? top.siteFit.status : null,
+    topScoreReason: topDiffers ? (compliantFirst && !isRequirementCompliant(top) ? 'compliant-first' : 'ranking') : null,
+    // The requirement checks it fails, in words (for the pick line), when the reason is compliant-first.
+    topScoreFailing: topDiffers ? [
+      ...(top.resilience && top.resilience.status === 'Does not meet' ? ['its resilience status is "Does not meet"'] : []),
+      ...(top.siteFit && top.siteFit.status === 'Does not fit' ? ['its site-fit status is "Does not fit"'] : []),
+    ] : null,
     topScoreVisible: topDiffers && shownIds.has(top.id) && finiteXY(top),
     scoringSetSize: opts.length,
     dominatedCount: opts.filter((o) => o.dominatedBy).length,

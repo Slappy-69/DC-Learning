@@ -35,6 +35,21 @@ function computeKeyOf(inputs) {
   return JSON.stringify({ ...rest, settings: s });
 }
 
+// Media query state (phone layout, §16 "Phone (360–767 px)"). Re-renders when the viewport crosses the query.
+function useMediaQuery(q) {
+  const get = () => (typeof window !== 'undefined' && window.matchMedia ? window.matchMedia(q).matches : false);
+  const [m, setM] = useState(get);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mq = window.matchMedia(q);
+    const on = () => setM(mq.matches);
+    on();
+    if (mq.addEventListener) mq.addEventListener('change', on); else mq.addListener(on);
+    return () => { if (mq.removeEventListener) mq.removeEventListener('change', on); else mq.removeListener(on); };
+  }, [q]);
+  return m;
+}
+
 export default function App() {
   const [inputs, setInputs] = useState(() => referenceT1());
   const [view, setView] = useState(() => defaultView()); // registry defaults: no filter, hide dominated off
@@ -45,6 +60,12 @@ export default function App() {
   const [tab, setTab] = useState('options'); // results view tabs (§16): Options, Trade-offs, Site
   const [siteOptionId, setSiteOptionId] = useState(null); // option shown on the Site tab (null = the leader)
   const [focusChart, setFocusChart] = useState(false); // "Skip to trade-offs chart" request
+  const [focusPlan, setFocusPlan] = useState(false); // "Skip to site plan" request
+  // Phone width (review O1): once a run has finished, the run progress panel, its event log and the run summary
+  // fold into one "Run details" disclosure (closed by default, one tap away) so the results come first; while a
+  // run is in progress the progress panel stays visible.
+  const narrow = useMediaQuery('(max-width: 767px)');
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const computeKey = useMemo(() => computeKeyOf(inputs), [inputs]);
   const compute = useCompute(inputs, computeKey);
   const prevLeader = useRef(null);
@@ -68,8 +89,13 @@ export default function App() {
 
   useEffect(() => {
     if (!leader) return;
-    const msg = prevLeader.current && prevLeader.current !== leader.id ? `Options updated. New leader: ${leader.name}.` : 'Options updated. Leader unchanged.';
-    prevLeader.current = leader.id;
+    // The option id is the hash of its choices; its name carries sizes (e.g. fill-residual PV MWp), which a site
+    // edit can change while the choices, and so the leader, stay the same (review, H3 F3).
+    const prev = prevLeader.current;
+    const msg = prev && prev.id !== leader.id ? `Options updated. New leader: ${leader.name}.`
+      : prev && prev.name !== leader.name ? `Options updated. Leader unchanged (same choices, re-sized): ${leader.name}.`
+        : 'Options updated. Leader unchanged.';
+    prevLeader.current = { id: leader.id, name: leader.name };
     setAnnounce(msg);
   }, [leader]);
 
@@ -77,7 +103,7 @@ export default function App() {
   useEffect(() => {
     if (!compute.run) return;
     const sig2 = JSON.stringify([compute.run.rules.map((r) => r.removed), compute.run.generation.valuesNotGenerated.map((v) => v.id + v.omitted.length), compute.run.generation.sampled]);
-    if (prevRunRules.current !== null && prevRunRules.current !== sig2) setSummaryOpen(true);
+    if (prevRunRules.current !== null && prevRunRules.current !== sig2) { setSummaryOpen(true); setDetailsOpen(true); }
     prevRunRules.current = sig2;
   }, [compute.run]);
 
@@ -100,6 +126,7 @@ export default function App() {
   const dominated = run ? run.options.filter((o) => o.dominatedBy).length : 0;
   const shown = useMemo(() => (run ? applyView(run.options, view).list.length : 0), [run, view]);
   const skipToChart = (e) => { e.preventDefault(); setTab('tradeoffs'); setFocusChart(true); };
+  const skipToPlan = (e) => { e.preventDefault(); setTab('site'); setFocusPlan(true); };
   const showSite = (id) => { setSiteOptionId(id); setTab('site'); setTimeout(() => document.getElementById('tab-site')?.focus(), 0); };
   const fitCounts = useMemo(() => {
     const c = { Fits: 0, 'Fits with flags': 0, 'Does not fit': 0 };
@@ -109,10 +136,29 @@ export default function App() {
   const penaltyOn = !!inputs.deliverability.siteFitPenalty;
   const TABS = [['options', 'Options'], ['tradeoffs', 'Trade-offs'], ['site', 'Site']];
 
+  // Run progress, run summary and run-level flags; on a phone they fold into "Run details" (review O1).
+  const progressEl = <RunProgress compute={compute} open={progressOpen} onToggle={setProgressOpen} />;
+  const summaryEl = run ? (
+    <>
+      <RunSummary run={run} open={summaryOpen} onToggle={setSummaryOpen} onInclude={onInclude} onSamplingOff={() => update('settings.sampleAboveCap', false)} />
+      {run.runFlags.length ? (
+        <ul className="run-flags">{run.runFlags.map((f) => <li key={f.id} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
+      ) : null}
+    </>
+  ) : null;
+  const foldProgress = narrow && compute.status === 'done';
+  const foldSummary = narrow && !!run;
+  const prog = compute.progress;
+  const detailsLine = [
+    foldProgress && prog ? `${prog.stages.filter((x) => x.status === 'done').length}/${prog.stages.length} stages, ${prog.warnings} warning${prog.warnings === 1 ? '' : 's'}` : 'summary of the last run',
+    run ? `${run.generation.screened.toLocaleString('en-GB')} of ${run.generation.totalCombinations.toLocaleString('en-GB')} screened` : '',
+  ].filter(Boolean).join(' · ');
+
   return (
     <div className="app">
       <a className="skip" href="#results">Skip to results</a>
       {run ? <a className="skip" href={`#tradeoffs-chart`} onClick={skipToChart}>Skip to trade-offs chart</a> : null}
+      {run ? <a className="skip" href="#site-plan" onClick={skipToPlan}>Skip to site plan</a> : null}
       <header className="topbar">
         <div className="brand">
           <h1>Concept energy optioneering</h1>
@@ -134,7 +180,7 @@ export default function App() {
           <div className="header-strip" role="region" aria-label="Results header">
             <div className="hs-item"><span className="hs-k">Options</span><span className="hs-v">{run ? `${shown.toLocaleString('en-GB')} shown / ${run.options.length.toLocaleString('en-GB')} screened / ${run.generation.totalCombinations.toLocaleString('en-GB')} combinations · ${dominated.toLocaleString('en-GB')} dominated` : '—'}</span></div>
             <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">Rank probability not available in this slice (no Monte Carlo)</span></div>
-            <div className="hs-item"><span className="hs-k">Site fit</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit' : 'A status, not a weight: no effect on any score or rank'}</span></div>
+            <div className="hs-item"><span className="hs-k">Site fit</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit.' : `Status only: it changes no score${inputs.settings.rankCompliantFirst ? ' (compliant-first ranking is on)' : ' or rank'}.`} Site inputs still size fill-residual solar and set the POC and gas-main route costs.</span></div>
             <div className="hs-item"><span className="hs-k">Model</span><span className="hs-v">Full-year hourly (8760 h)</span><span className="hs-sub">Synthetic profiles · {run ? COUNTRIES[run.country].name : ''}</span></div>
             <div className="hs-item"><span className="hs-k">Settings</span><span className="hs-v">
               Sample above cap: {inputs.settings.sampleAboveCap ? 'On' : 'Off'} · Hide dominated: {view.hideDominated ? 'On' : 'Off'} · View filters: {viewFilterCount}
@@ -158,14 +204,19 @@ export default function App() {
             ) : null}
           </div>
 
-          <RunProgress compute={compute} open={progressOpen} onToggle={setProgressOpen} />
+          {foldProgress ? null : progressEl}
+          {foldSummary ? (
+            <details className="run-details" open={detailsOpen} onToggle={(e) => setDetailsOpen(e.currentTarget.open)}>
+              <summary><span className="section-title">Run details</span>{' '}<span className="rd-line">{detailsLine}</span></summary>
+              <div className="rd-body">
+                {foldProgress ? progressEl : null}
+                {summaryEl}
+              </div>
+            </details>
+          ) : summaryEl}
 
           {run ? (
             <>
-              <RunSummary run={run} open={summaryOpen} onToggle={setSummaryOpen} onInclude={onInclude} onSamplingOff={() => update('settings.sampleAboveCap', false)} />
-              {run.runFlags.length ? (
-                <ul className="run-flags">{run.runFlags.map((f) => <li key={f.id} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
-              ) : null}
               <div className="tabs" role="tablist" aria-label="Results views">
                 {TABS.map(([id, label]) => (
                   <button key={id} type="button" role="tab" id={`tab-${id}`} aria-selected={tab === id} aria-controls={`panel-${id}`} tabIndex={tab === id ? 0 : -1}
@@ -181,7 +232,7 @@ export default function App() {
               <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
                 {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} />
                   : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} onShowSite={showSite} />
-                    : <SiteView run={run} inputs={inputs} update={update} optionId={siteOptionId} setOptionId={setSiteOptionId} computing={compute.status === 'running'} />}
+                    : <SiteView run={run} inputs={inputs} update={update} optionId={siteOptionId} setOptionId={setSiteOptionId} computing={compute.status === 'running'} focusPlan={focusPlan} onPlanFocused={() => setFocusPlan(false)} />}
               </div>
             </>
           ) : compute.status !== 'error' ? (

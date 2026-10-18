@@ -280,9 +280,14 @@ tech('substation', { name: 'Grid connection and on-site substation', role: 'grid
   connCapexPerMW_ehv: [120000, '€/MW offered (220–400 kV)', 70000, 200000],
   subCapexPerMW_mv: [60000, '€/MW (11–33 kV)', 40000, 90000], subCapexPerMW_hv: [80000, '€/MW (110–150 kV)', 50000, 120000],
   subCapexPerMW_ehv: [70000, '€/MW (220–400 kV)', 45000, 110000], gisMultiplier: [1.4, '× AIS cost', 1.2, 1.7],
-  cablePerKm: [1.5e6, '€/km', 0.8e6, 3e6], cableKm: [1.0, 'km POC to site', 0.2, 5],
+  cablePerKm: [1.5e6, '€/km of cable route from the POC (route length from the site model, §5.2)', 0.8e6, 3e6],
   m2Per20MVA_mv: [500, 'm² per 20 MVA', 300, 800], haAIS_hv: [1.2, 'ha', 0.8, 2.0], haGIS_hv: [0.4, 'ha', 0.25, 0.6], haAIS_ehv: [4.0, 'ha', 2.5, 6.0], haGIS_ehv: [1.2, 'ha', 0.8, 2.0],
   bandMvMaxMW: [20, 'MW (MV/HV band edge)', 20, 20], bandHvMaxMW: [150, 'MW (HV/EHV band edge)', 150, 150] });
+// Gas connection (§5.2: the gas main location "drives gas-plant placement and connection cost"). Applied only to
+// options that burn gas on site, and only when a gas main location is given; the route length comes from the
+// site model (straight line from the gas main to the buildable envelope).
+tech('gasConnection', { name: 'Gas connection pipe', role: 'utility', maturity: 'Commercial', verify: 'Gas network connection charging statements; pipeline cost benchmarks' }, {
+  pipePerKm: [800000, '€/km of connection pipe from the gas main', 400000, 2000000] });
 tech('heatRejection', { name: 'Heat rejection (dry / adiabatic coolers, chillers)', role: 'cooling plant', maturity: 'Commercial', verify: 'Vendor data' }, {
   m2PerMW: [60, 'm² per MW rejected', 40, 100], roofPlantFraction: [0.4, 'fraction of roof if heat rejection on roof', 0.3, 0.6] });
 
@@ -314,6 +319,7 @@ spatial('building', { name: 'Data hall building', verify: 'Project benchmarks; i
 });
 spatial('substation', { name: 'Substation', verify: 'Utility / DNO standards, TSO/DSO design standards, vendor data' }, {
   lw: [1.5, 'length : width', 1, 3, 'judgement', 'Plan proportion. No source.'],
+  mvPowerFactor: [0.9, 'power factor (MVA = MW ÷ power factor), 11–33 kV footprint', 0.85, 0.95, 'judgement', '§6.3 gives the 11–33 kV footprint per 20 MVA; the offered MW is converted to MVA at this power factor. No source.'],
   mvHeightM: [6, 'm (11–33 kV)', 5, 8],
   mvClearanceM: [5, 'm to other blocks (11–33 kV)', 3, 8],
   mvClearanceMinM: [3, 'm (minimum when relaxed)', 2, 5, 'judgement'],
@@ -331,7 +337,7 @@ spatial('genset', { name: 'Standby gensets (containerised)', verify: 'Manufactur
   unitLw: [2.5, 'length : width of one unit cell', 2, 3.5, 'judgement', 'Unit cell = m² per unit (incl. maintenance access) at this proportion.'],
   heightM: [7, 'm incl. flue stub', 6, 8],
   doubleDeckHeightM: [12, 'm (double-deck)', 10, 14, 'source', 'Source to verify against: manufacturer / project precedent.'],
-  doubleDeckFootprintFactor: [0.5, '× footprint per unit (double-deck)', 0.5, 0.6, 'source', '"Halves footprint per unit" (§6.3).'],
+  doubleDeckFootprintFactor: [0.5, '× footprint per unit (double-deck)', 0.5, 0.6, 'source', '"Halves footprint per unit" (§6.3). Read by sizing (area budget) and by the blocks: ceil(units × factor) stacked positions of one unit footprint each (0.5 = two units per position).'],
   clearanceM: [3, 'm between units / arrays', 2, 5],
   clearanceMinM: [1.5, 'm (minimum when relaxed)', 1, 3, 'judgement'],
   maxDistBuildingM: [30, 'm maximum distance to the building', 15, 50, 'source', '"Adjacent to building (≤ 30 m)" (§6.3).'],
@@ -414,6 +420,8 @@ spatial('wind', { name: 'Wind onshore', verify: 'National planning guidance' }, 
 spatial('smr', { name: 'Small modular reactor', verify: 'Vendor and regulator publications' }, {
   haPer100MW: [1, 'ha per 100 MWe (3 ha per ~300 MWe unit)', 0.7, 2],
   heightM: [40, 'm', 30, 60],
+  lw: [1.5, 'length : width (on-site SMR block)', 1, 3, 'judgement', 'Plan proportion of an on-site SMR block. No source.'],
+  clearanceM: [10, 'm to other blocks (on-site SMR, never relaxed)', 5, 50, 'judgement', '§6.3 gives no SMR clearance ("emergency planning zone not modelled; flag always"). Used only when spatial.smr.placement is "onsite"; not relaxed by the layout.'],
   placement: ['offsite', '"offsite" | "onsite"', null, null, 'judgement', 'Not placed within a typical campus boundary by default (§6.2).'],
 });
 spatial('unitArrays', { name: 'Unit-based arrays (gensets, BESS, engines, heat rejection)', verify: '' }, {
@@ -539,7 +547,7 @@ export function buildDefaultInputs(opts = {}) {
       heightLimitM: rec('site.heightLimitM', 25, 'm', { low: 15, high: 40, basis: 'judgement', ref: '§5.2' }),
       heightZones: rec('site.heightZones', [], 'list of { name, limitM, points }', { basis: 'judgement', ref: '§5.2', note: 'Per-zone override of the height limit; none by default.' }),
       exclusions: rec('site.exclusions', [], 'list of { name, type, hard, points }', { basis: 'judgement', ref: '§5.2', note: 'None by default.' }),
-      softUsableBySolar: rec('site.softUsableBySolar', true, 'toggle', { basis: 'judgement', ref: '§5.2', note: 'Soft exclusions can be used by ground solar only (configurable). Off: soft exclusions are treated like hard ones for placement.' }),
+      softUsableBySolar: rec('site.softUsableBySolar', true, 'toggle', { basis: 'judgement', ref: '§5.2', note: 'Soft exclusions can be used by ground solar (configurable). Off: ground solar does not use them either. Other blocks never use a soft exclusion by default; only at the last relaxation level (L4), flagged "Block in soft exclusion" and "Fits with flags" (§10.4 step 5, §15).' }),
       poc: rec('site.poc', null, '[lat, lon] or null', { basis: 'judgement', ref: '§5.2', note: 'The brief default is the boundary point nearest the map\'s nearest road. This offline tool has no road data, so the default POC is the default access point (mid-point of the longest edge), standing in for the road side. Replace with the real POC.' }),
       gasMain: rec('site.gasMain', null, '[lat, lon] or null', { basis: 'judgement', ref: '§5.2', note: 'None: gas off-site, location unknown.' }),
       access: rec('site.access', null, 'list of [lat, lon] or null', { basis: 'judgement', ref: '§5.2', note: 'null = one access point at the mid-point of the longest edge.' }),
@@ -635,7 +643,7 @@ export function buildDefaultInputs(opts = {}) {
       hydrogenPenalty: rec('deliverability.hydrogenPenalty', 10, 'points', { basis: 'judgement', ref: '§9.9' }),
       leadTimePenalty: rec('deliverability.leadTimePenalty', 5, 'points per technology', { basis: 'judgement', ref: '§9.9' }),
       leadTimeThresholdM: rec('deliverability.leadTimeThresholdM', 24, 'months procurement', { basis: 'judgement', ref: '§9.9' }),
-      siteFitPenalty: rec('deliverability.siteFitPenalty', false, 'toggle', { basis: 'judgement', ref: '§9.9', note: 'Off by default: site fit has no effect on the deliverability or weighted score. On: the axis is labelled "Deliverability (incl. site fit)".' }),
+      siteFitPenalty: rec('deliverability.siteFitPenalty', false, 'toggle', { basis: 'judgement', ref: '§9.9', note: 'Off by default: the site-fit status has no effect on the deliverability or weighted score. On: the axis is labelled "Deliverability (incl. site fit)".' }),
       siteFitFlagsPenalty: rec('deliverability.siteFitFlagsPenalty', 10, 'points for "Fits with flags"', { basis: 'judgement', ref: '§9.9', note: 'Applies only when the site-fit penalty is on.' }),
       siteFitNoFitPenalty: rec('deliverability.siteFitNoFitPenalty', 25, 'points for "Does not fit"', { basis: 'judgement', ref: '§9.9', note: 'Applies only when the site-fit penalty is on.' }),
     },
@@ -647,7 +655,7 @@ export function buildDefaultInputs(opts = {}) {
       costMetric: rec('settings.costMetric', 'lcoe', '"lcoe" | "npv"', { basis: 'judgement', ref: '§11' }),
       carbonMetric: rec('settings.carbonMetric', 'location', '"location" | "market" | "cfe"', { basis: 'judgement', ref: '§9.6' }),
       absoluteScaling: rec('settings.absoluteScaling', false, 'toggle', { basis: 'judgement', ref: '§11', note: 'Hook only in this slice.' }),
-      rankCompliantFirst: rec('settings.rankCompliantFirst', false, 'toggle', { basis: 'judgement', ref: '§11' }),
+      rankCompliantFirst: rec('settings.rankCompliantFirst', false, 'toggle', { basis: 'judgement', ref: '§11', note: 'On: options whose resilience status is "Does not meet" or whose site-fit status is "Does not fit" rank after the others (the two requirement checks, §5.7); scores do not change.' }),
       hideDominated: rec('settings.hideDominated', false, 'toggle', { basis: 'judgement', ref: '§7.2 step 6' }),
       windSiteThresholdHa: rec('settings.windSiteThresholdHa', 20, 'ha', { basis: 'judgement', ref: '§8 C11' }),
       fixedSolarMWp: rec('settings.fixedSolarMWp', 5, 'MWp', { basis: 'judgement', ref: '§8 C10', note: 'User value for "Fixed MWp".' }),

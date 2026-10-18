@@ -452,14 +452,19 @@ await check('B8. Removable filter chips: each filter shows a chip with its own r
   return `chips "${chips.map((c) => c.replace('×', '').trim()).join('", "')}"; header counted 2 filters and the shown count; Enter on "Remove filter" removed only that chip and focus stayed on the next chip's remove button; last chip removed → no chip row, count 0.`;
 });
 
-await check('B9. A weight preset moves the pick without a re-run (§17 target ≤ 100 ms, measured in the browser)', async () => {
+// §17: "Weight or scenario change → ranking, Pareto pick and plain-English summary updated ≤ 100 ms" on the 4-core
+// reference machine. This shared 2-core sandbox is not that machine, so the check asserts a regression bound (median
+// of three preset changes) and reports the measured value against the 100 ms target (review O5: a check that cannot
+// fail is not a check).
+const B9_BOUND_MS = 300;
+await check(`B9. A weight preset moves the pick without a re-run; repaint asserted ≤ ${B9_BOUND_MS} ms (median of 3, regression bound on this sandbox) and reported against the §17 target of 100 ms on the reference machine`, async () => {
   const { page } = main;
   await tradeoffsTab(page).click();
   await page.waitForSelector('.pick-line');
   const before = await page.locator('.pick-line strong').first().innerText();
   const leaderBefore = await page.locator('.header-strip .hs-item').nth(1).innerText();
-  const ms = await page.evaluate(async () => {
-    const btn = [...document.querySelectorAll('.preset-row button')].find((b) => b.textContent.trim() === 'Lowest cost');
+  const timeClick = (label) => page.evaluate(async (lbl) => {
+    const btn = [...document.querySelectorAll('.preset-row button')].find((b) => b.textContent.trim() === lbl);
     const pl = document.querySelector('.pick-line strong');
     const was = pl.textContent;
     const t0 = performance.now();
@@ -469,16 +474,23 @@ await check('B9. A weight preset moves the pick without a re-run (§17 target �
       tick();
       setTimeout(() => resolve(-1), 5000);
     });
-  });
+  }, label);
+  const samples = [await timeClick('Lowest cost')];
   const after = await page.locator('.pick-line strong').first().innerText();
   const leaderAfter = await page.locator('.header-strip .hs-item').nth(1).innerText();
   const status = await page.locator('.status').innerText();
-  ok(ms >= 0 && after !== before, 'the pick did not change with the "Lowest cost" preset');
+  ok(samples[0] >= 0 && after !== before, 'the pick did not change with the "Lowest cost" preset');
   ok(leaderAfter.includes(after.replace(/^#\d+ /, '')), `header leader "${leaderAfter}" is not the pick "${after}"`);
   ok(!/Screening options/.test(status), 'a weight change started a re-run');
-  report.weightMs = ms;
+  samples.push(await timeClick('Balanced'));
+  samples.push(await timeClick('Lowest cost'));
+  ok(samples.every((x) => x >= 0), `a preset change did not move the pick within 5 s (${samples.join(', ')})`);
+  ok(!/Screening options/.test(await page.locator('.status').innerText()), 'a weight change started a re-run');
+  const med = samples.slice().sort((a, b) => a - b)[1];
+  report.weightMs = med;
   await page.locator('.preset-row button', { hasText: 'Balanced' }).click();
-  return `pick "${before.slice(0, 40)}…" → "${after.slice(0, 40)}…" in ${ms.toFixed(0)} ms (click to repaint of the pick line; no re-run); header leader = pick before (${leaderBefore.includes(before.replace(/^#\d+ /, '')) ? 'yes' : 'no'}) and after (yes).`;
+  ok(med <= B9_BOUND_MS, `median repaint ${med.toFixed(0)} ms is above the ${B9_BOUND_MS} ms regression bound (samples ${samples.map((x) => x.toFixed(0)).join(', ')} ms)`);
+  return `pick "${before.slice(0, 40)}…" → "${after.slice(0, 40)}…"; click to repaint of the pick line ${samples.map((x) => x.toFixed(0)).join(', ')} ms, median ${med.toFixed(0)} ms ≤ ${B9_BOUND_MS} ms (asserted); §17 target ≤ 100 ms on the 4-core reference machine: ${med <= 100 ? 'also met on this sandbox' : `not met on this 2-core sandbox (median ${(med - 100).toFixed(0)} ms over; open performance item)`}; no re-run; header leader = pick before (${leaderBefore.includes(before.replace(/^#\d+ /, '')) ? 'yes' : 'no'}) and after (yes).`;
 });
 await main.ctx.close();
 await check('B10. No console errors or page errors on the main page', async () => {
@@ -737,9 +749,106 @@ await check('B18. axe, dark theme: the same Site tab states have no serious or c
   return [...out.map(axeLine), reviewLine('Site tab (dark)', review)].join('\n      ');
 });
 
+// ---------------------------------------------------------------------------
+// Review of the site slice: phone layout (O1), Site tab width with the 2,000-option selector (O3), keyboard
+// path to the plan (O4).
+// ---------------------------------------------------------------------------
+await check('B19. Phone width (375 px, touch): after the run, the tab bar and the start of the active tab are within the first 1,000 px; the run progress, event log and run summary sit in a closed "Run details" disclosure under a one-line status; during a run the progress panel is shown, not folded', async () => {
+  const { ctx, page, errors } = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true });
+  const m = await page.evaluate(() => {
+    const box = (el) => { const r = el.getBoundingClientRect(); return { top: Math.round(r.top + scrollY), bottom: Math.round(r.bottom + scrollY) }; };
+    const panel = document.querySelector('[role=tabpanel]');
+    const first = panel && [...panel.querySelectorAll('h2, h3, p, table, button, select, input')].find((x) => x.getBoundingClientRect().height > 0);
+    const det = document.querySelector('details.run-details');
+    const inside = (s) => { const el = document.querySelector(s); return !!el && !!det && det.contains(el); };
+    const st = document.querySelector('.status');
+    return {
+      tabs: box(document.querySelector('.tabs')), panel: box(panel), first: first ? { ...box(first), tag: first.tagName.toLowerCase(), text: first.textContent.replace(/\s+/g, ' ').trim().slice(0, 40) } : null,
+      det: det ? { open: det.open, summary: det.querySelector('summary').textContent.replace(/\s+/g, ' ').trim(), top: box(det).top, sumH: Math.round(det.querySelector('summary').getBoundingClientRect().height) } : null,
+      folded: { progress: inside('.run-progress'), log: inside('.rp-log'), summary: inside('.run-summary') },
+      status: st.textContent.replace(/\s+/g, ' ').trim(), statusH: Math.round(st.getBoundingClientRect().height), header: box(document.querySelector('.header-strip')),
+    };
+  });
+  ok(m.tabs.bottom <= 1000, `the tab bar ends at ${m.tabs.bottom} px`);
+  ok(m.first && m.first.top < 1000, `the active tab's first content starts at ${m.first && m.first.top} px`);
+  ok(m.det && !m.det.open, '"Run details" is missing or open after the run');
+  ok(m.folded.progress && m.folded.log && m.folded.summary, `not folded into "Run details": ${JSON.stringify(m.folded)}`);
+  ok(/stages/.test(m.det.summary) && /screened/.test(m.det.summary), `"Run details" summary: "${m.det.summary}"`);
+  ok(/Last run/.test(m.status) && m.statusH <= 60, `status line "${m.status}" (${m.statusH} px)`);
+  const axeClosed = await runAxe(page, 'Phone, "Run details" closed');
+  // Trackability one tap away: opening "Run details" shows the progress panel with every stage done.
+  await page.locator('details.run-details > summary').tap();
+  await page.waitForTimeout(250);
+  const opened = await page.evaluate(() => { const rp = document.querySelector('.run-progress'); return { open: document.querySelector('details.run-details').open, done: document.querySelectorAll('.rp-stage.rp-done').length, stages: document.querySelectorAll('.rp-stage').length, h: Math.round(rp.getBoundingClientRect().height) }; });
+  ok(opened.open && opened.h > 100 && opened.done === opened.stages && opened.stages > 0, `after one tap: ${JSON.stringify(opened)}`);
+  const axeOpen = await runAxe(page, 'Phone, "Run details" open');
+  const badAxe = [axeClosed, axeOpen].filter((r) => !r.skipped).flatMap((r) => serious(r).map((v) => `${r.label}: ${v.impact} ${v.id} ×${v.nodes} (${v.target})`));
+  ok(badAxe.length === 0, badAxe.join(' | '));
+  await page.locator('details.run-details > summary').tap();
+  // A new run ("Reset to defaults"): the progress panel is shown outside "Run details" while it runs, then folds again.
+  await page.getByRole('button', { name: 'Reset to defaults' }).tap();
+  await page.waitForFunction(() => /Screening options/.test(document.querySelector('.status').textContent), null, { timeout: 30000, polling: 50 });
+  const during = await page.evaluate(() => { const rp = document.querySelector('.run-progress'); const det = document.querySelector('details.run-details'); return { inDetails: !!(det && rp && det.contains(rp)), h: rp ? Math.round(rp.getBoundingClientRect().height) : 0 }; });
+  ok(!during.inDetails && during.h > 30, `progress panel during the run: ${JSON.stringify(during)}`);
+  await page.waitForFunction(() => { const t = document.querySelector('.status').textContent; return /Last run/.test(t) && !/Screening options/.test(t); }, null, { timeout: 180000, polling: 250 });
+  const after = await page.evaluate(() => { const rp = document.querySelector('.run-progress'); const det = document.querySelector('details.run-details'); return { inDetails: !!(det && det.contains(rp)), open: det ? det.open : null, tabsBottom: Math.round(document.querySelector('.tabs').getBoundingClientRect().bottom + scrollY) }; });
+  ok(after.inDetails && after.tabsBottom <= 1000, `after the second run: ${JSON.stringify(after)}`);
+  await ctx.close();
+  ok(errors.length === 0, errors.join(' | '));
+  report.phone = { tabsBottom: m.tabs.bottom, firstTop: m.first.top };
+  return `header strip ${m.header.top}–${m.header.bottom} px, status line ${m.statusH} px ("${m.status.slice(0, 60)}…"), "Run details" (closed) at ${m.det.top} px: "${m.det.summary}"; tab bar ${m.tabs.top}–${m.tabs.bottom} px, first content of the active tab (${m.first.tag} "${m.first.text}") at ${m.first.top} px (was about 5,400 px); one tap opens the progress panel (${opened.done}/${opened.stages} stages done); during a new run the panel is shown outside "Run details" (${during.h} px), and folds again when it finishes (tab bar at ${after.tabsBottom} px)${axeClosed.skipped ? '' : `\n      ${axeLine(axeClosed)}\n      ${axeLine(axeOpen)}`}.`;
+});
+
+await check('B20. Site tab at 1400, 1000 and 375 px: no horizontal page scroll with the option selector listing every screened option; the closed selector shows its full name as the title', async () => {
+  const { ctx, page, errors } = await openPage({ width: 1400, height: 900 });
+  await openSite(page);
+  const screened = Number(((await page.locator('.header-strip').innerText()).match(/([\d,]+) screened/) || [])[1].replace(/,/g, ''));
+  const out = [];
+  let first = null;
+  for (const w of [1400, 1000, 375]) {
+    await page.setViewportSize({ width: w, height: w < 768 ? 812 : 900 });
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(() => {
+      const s = document.querySelector('.site-head select'); const b = s.getBoundingClientRect();
+      return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, left: Math.round(b.left), right: Math.round(b.right), n: s.options.length, title: s.title, text: s.options[s.selectedIndex].textContent.replace(/\s+/g, ' ').trim(), longest: Math.max(...[...s.options].map((o) => o.textContent.length)) };
+    });
+    ok(r.sw <= r.cw, `${w} px: scrollWidth ${r.sw} > clientWidth ${r.cw}`);
+    ok(r.right <= r.cw, `${w} px: the selector ends at ${r.right} px`);
+    ok(r.n === screened, `${w} px: the selector lists ${r.n} options, ${screened} screened`);
+    ok(r.title.replace(/\s+/g, ' ').trim() === r.text, `${w} px: title "${r.title}" ≠ selected "${r.text}"`);
+    if (!first) first = r;
+    out.push(`${w} px: ${r.sw}/${r.cw}, selector ${r.left}–${r.right} px`);
+  }
+  await ctx.close();
+  ok(errors.length === 0, errors.join(' | '));
+  return `scrollWidth/clientWidth ${out.join('; ')}; ${first.n} options listed (= screened), longest label ${first.longest} characters; the title holds the full selected name.`;
+});
+
+await check('B21. "Skip to site plan" is the third Tab stop: Enter selects the Site tab and focuses the plan', async () => {
+  const { ctx, page, errors } = await openPage();
+  const stops = [];
+  for (let i = 0; i < 3; i++) { await page.keyboard.press('Tab'); stops.push(await active(page)); }
+  ok(/Skip to results/.test(stops[0].text) && /Skip to trade-offs chart/.test(stops[1].text) && /Skip to site plan/.test(stops[2].text) && stops[2].visible, `first three Tab stops: ${stops.map((a) => a.text).join(' | ')}`);
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'site-plan', null, { timeout: 15000 });
+  const a = await active(page);
+  ok(a.focusVisible, 'plan focused without a visible focus indicator');
+  ok((await siteTab(page).getAttribute('aria-selected')) === 'true', 'Site tab not selected');
+  await page.waitForFunction(() => !!document.querySelector('#site-plan g[data-block]'), null, { timeout: 30000 });
+  await page.keyboard.press('ArrowRight'); await page.waitForTimeout(150);
+  const live = await page.evaluate(() => (document.querySelector('.site-plan > [aria-live]') || {}).textContent || '');
+  ok(/m²/.test(live), `ArrowRight on the plan after the skip link: "${live}"`);
+  await ctx.close();
+  ok(errors.length === 0, errors.join(' | '));
+  report.skipPlan = '3 Tab + Enter';
+  return `Tab stops 1–3: "${stops.map((x) => x.text).join('", "')}"; Enter → Site tab selected, focus on the plan (:focus-visible); ArrowRight → "${live.split('. ')[0]}". Plan: 3 Tab + Enter (before: 36 Tab presses after "Skip to results", 218 with Tab only).`;
+});
+
 await browser.close();
 const passed = results.filter((r) => r.status === 'PASS').length;
 const skipped = results.filter((r) => r.status === 'SKIP').length;
 console.log(`\n${passed}/${results.length} browser checks passed${skipped ? `, ${skipped} skipped` : ''}.`);
-if (report.tabOnly) console.log(`Keyboard: chart in 2 Tab + Enter via the skip link (results: 1 Tab + Enter); Tab only from the top: ${report.tabOnly.toChart} presses (${report.tabOnly.panelStops} in the inputs panel).`);
+if (report.tabOnly) console.log(`Keyboard: chart in 2 Tab + Enter via the skip link (results: 1 Tab + Enter${report.skipPlan ? `; site plan: ${report.skipPlan}` : ''}); Tab only from the top: ${report.tabOnly.toChart} presses (${report.tabOnly.panelStops} in the inputs panel).`);
+if (report.weightMs != null) console.log(`Weight-change repaint: median ${report.weightMs.toFixed(0)} ms (asserted ≤ ${B9_BOUND_MS} ms here; §17 target ≤ 100 ms on the 4-core reference machine).`);
+if (report.phone) console.log(`Phone (375 px): tab bar ends at ${report.phone.tabsBottom} px; active tab content starts at ${report.phone.firstTop} px (bound 1,000 px).`);
 process.exit(failures ? 1 : 0);

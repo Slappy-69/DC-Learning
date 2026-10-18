@@ -2,7 +2,7 @@
 // and plain sizing sentences. Every option is sized by the same rules before any check.
 // The grid connection is the offered capacity per period and is never resized.
 
-import { TECH, COOLING, choiceLabel } from './defaults.js';
+import { TECH, COOLING, SPATIAL, choiceLabel } from './defaults.js';
 import { designDemandByMonth, demandYear } from './context.js';
 import { NA } from './generator.js';
 
@@ -232,10 +232,10 @@ export function sizeOption(ctx, v) {
   const sp = TECH.substation.p;
   let subM2;
   if (fullMW <= 0) subM2 = 0;
-  else if (band === 'mv') subM2 = sp.m2Per20MVA_mv * (fullMW / 0.9 / 20);
+  else if (band === 'mv') subM2 = sp.m2Per20MVA_mv * (fullMW / SPATIAL.substation.p.mvPowerFactor / 20);
   else if (band === 'hv') subM2 = (v.C17 === 'GIS' ? sp.haGIS_hv : sp.haAIS_hv) * 10000;
   else subM2 = (v.C17 === 'GIS' ? sp.haGIS_ehv : sp.haAIS_ehv) * 10000;
-  const gensetFactor = v.C18 === 'double' ? 0.5 : v.C18 === 'inBuilding' ? 0 : 1;
+  const gensetFactor = v.C18 === 'double' ? SPATIAL.genset.p.doubleDeckFootprintFactor : v.C18 === 'inBuilding' ? 0 : 1;
   const backupM2 = backup.tech ? backup.units * TECH[backup.tech].p.m2PerUnit * gensetFactor : 0;
   const fuelM2 = backup.fuelM3 * TECH.fuelStorage.p.m2PerM3;
   const bessM2 = (storage.mwh + backup.bessMWh) * TECH.bess.p.m2PerMWh;
@@ -264,8 +264,14 @@ export function sizeOption(ctx, v) {
   const othersM2 = footprint + subM2 + backupM2 + fuelM2 + bessM2 + primeM2 + bridgeM2 + hrM2 + windM2 + hydrogenM2;
   const residualM2 = netM2 - othersM2;
 
-  // Solar (C10)
-  const roofFree = footprint * (1 - (v.C9 === 'roof' ? TECH.heatRejection.p.roofPlantFraction : v.C9 === 'split' ? TECH.heatRejection.p.roofPlantFraction / 2 : 0));
+  // Solar (C10). Roof plant (§5.3): the roof-plant fraction of the roof, or the heat-rejection footprint on the
+  // roof (§6.3, 60 m² per MW rejected) where that is larger; the roof share is 1 (C9 roof) or 0.5 (split). The
+  // same rule sizes the roof-plant block (blocks.js), so the sizing and the plan agree.
+  const roofShare = v.C9 === 'roof' ? 1 : v.C9 === 'split' ? 0.5 : 0;
+  const roofPlantByFraction = TECH.heatRejection.p.roofPlantFraction * roofShare * footprint;
+  const roofPlantByFootprint = rejectedMW * roofShare * TECH.heatRejection.p.m2PerMW;
+  const roofPlantM2 = roofShare > 0 ? Math.max(roofPlantByFraction, roofPlantByFootprint) : 0;
+  const roofFree = roofPlantByFootprint > roofPlantByFraction ? Math.max(0, footprint - roofPlantByFootprint) : footprint * (1 - TECH.heatRejection.p.roofPlantFraction * roofShare);
   const sr = TECH.solarRoof.p;
   const roofMWp = (roofFree * sr.usableFraction) / sr.m2PerKWp / 1000;
   let solarRoofMWp = 0;
@@ -273,7 +279,8 @@ export function sizeOption(ctx, v) {
   let solarGroundMWp = 0;
   if (['roof', 'roofCarport', 'roofResidual'].includes(v.C10)) {
     solarRoofMWp = roofMWp;
-    sentences.push(`Rooftop PV: roof ${Math.round(footprint).toLocaleString('en-GB')} m²${v.C9 !== 'ground' ? ` less roof plant (${v.C9})` : ''} = ${Math.round(roofFree).toLocaleString('en-GB')} m² free × ${sr.usableFraction * 100} % usable ÷ ${sr.m2PerKWp} m²/kWp = ${roofMWp.toFixed(2)} MWp.`);
+    const plantText = roofShare > 0 ? ` less roof plant (${v.C9}: ${roofPlantByFootprint > roofPlantByFraction ? `heat-rejection footprint ${Math.round(roofPlantByFootprint).toLocaleString('en-GB')} m², larger than ${(TECH.heatRejection.p.roofPlantFraction * roofShare * 100).toFixed(0)} % of the roof` : `${(TECH.heatRejection.p.roofPlantFraction * roofShare * 100).toFixed(0)} % of the roof, ${Math.round(roofPlantM2).toLocaleString('en-GB')} m²`})` : '';
+    sentences.push(`Rooftop PV: roof ${Math.round(footprint).toLocaleString('en-GB')} m²${plantText} = ${Math.round(roofFree).toLocaleString('en-GB')} m² free × ${sr.usableFraction * 100} % usable ÷ ${sr.m2PerKWp} m²/kWp = ${roofMWp.toFixed(2)} MWp.`);
   }
   if (v.C10 === 'roofCarport') {
     const cp2 = TECH.solarCarport.p;
@@ -323,6 +330,29 @@ export function sizeOption(ctx, v) {
   for (const p of shortfalls) {
     sentences.push(`Grid shortfall at design load, months ${p.from}–${p.to}: design load ${r1(p.maxDemand)} MW less ${r1(p.firm)} MW firm on site less ${r1(v.C1 === 'islanded' ? 0 : p.gridMW)} MW grid leaves up to ${r1(p.maxShort)} MW; dispatched as unmet load under "${inputs.settings.gridHandling === 'unmet' ? 'Show unmet load' : 'Show exceedance'}".`);
   }
+  // Grid cable route (§5.2 the POC "drives … cable-route length for cost"; §5.4 "plus cable route cost per km from
+  // the POC"): straight line from the POC to the buildable envelope (site model), the same for every option.
+  const routes = ctx.site && ctx.site.routes ? ctx.site.routes : null;
+  const poc = ctx.site ? ctx.site.points.poc : null;
+  const cableKm = fullMW > 0 && routes && routes.pocM != null ? routes.pocM / 1000 : 0;
+  if (fullMW > 0) {
+    sentences.push(routes && routes.pocM != null
+      ? `Grid cable route: ${Math.round(routes.pocM).toLocaleString('en-GB')} m from the POC${poc && poc.isDefault ? ' (default: the access point, standing in for the road side; replace with the real POC)' : ''} to the buildable envelope, straight line, × €${(TECH.substation.p.cablePerKm / 1e6).toFixed(2)} m/km = €${Math.round(cableKm * TECH.substation.p.cablePerKm).toLocaleString('en-GB')} (in the grid connection capex).`
+      : 'Grid cable route: no buildable area to reach, so no cable route is costed.');
+  }
+  // Gas connection (§5.2 the gas main "drives … connection cost"): options that burn gas on site pay a connection
+  // pipe from the gas main to the buildable envelope (straight line). With no gas main location (the default:
+  // "gas off-site, location unknown") no pipe is costed, and the sentence says so.
+  const burnsGas = [prime, bridge].some((p) => p && TECH[p.tech].fuel === 'gas') || !!(backup.tech && TECH[backup.tech].fuel === 'gas');
+  let gasConnection = null;
+  if (burnsGas) {
+    const gm = routes ? routes.gasMainM : null;
+    if (gm == null) sentences.push('Gas connection: no gas main location given (default: gas off-site, location unknown), so no connection pipe is costed.');
+    else {
+      gasConnection = { km: gm / 1000, perKm: TECH.gasConnection.p.pipePerKm };
+      sentences.push(`Gas connection: ${Math.round(gm).toLocaleString('en-GB')} m from the gas main to the buildable envelope, straight line, × €${(gasConnection.perKm / 1e6).toFixed(2)} m/km = €${Math.round(gasConnection.km * gasConnection.perKm).toLocaleString('en-GB')}.`);
+    }
+  }
 
   // Plants for dispatch
   const plants = [];
@@ -334,7 +364,8 @@ export function sizeOption(ctx, v) {
     building: { whitespaceM2: whitespace, gfaM2: gfa, footprintM2: footprint, heightM },
     backup, prime, bridge, bridgeBess, bess, storage,
     solarMWp, solarRoofMWp, solarCarportMWp, solarGroundMWp, windMW, windTurbines, ppa,
-    grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })) },
+    grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })), cableKm },
+    gasConnection,
     area: { grossM2, netM2, landTakeM2, residualM2: netM2 - landTakeM2, parts: { building: footprint, substation: subM2, backup: backupM2, fuel: fuelM2, bess: bessM2, prime: primeM2, bridge: bridgeM2, heatRejection: hrM2, wind: windM2, groundSolar: groundSolarM2 } },
     firmByMonth, designByMonth,
     plants,

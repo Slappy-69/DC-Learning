@@ -404,7 +404,7 @@ export function toTransferable(run) {
     const { supplyByMonth, ...ttp } = o.ttp;
     return {
       ...o,
-      sizing: { ...sz, grid: { band: grid.band, fullMW: grid.fullMW, shortfalls: grid.shortfalls } },
+      sizing: { ...sz, grid: { band: grid.band, fullMW: grid.fullMW, shortfalls: grid.shortfalls, cableKm: grid.cableKm } },
       ttp,
       dispatch: { nExplicit: o.dispatch.nExplicit, years: o.dispatch.years.map(({ hourly, ...y }) => y) },
       eco: { ...o.eco, ledger: o.eco.ledger },

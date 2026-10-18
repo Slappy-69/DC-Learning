@@ -211,7 +211,9 @@ export function siteFitOf(ctx, site, bs, L, facts, v, sz) {
   for (const p of L.placed) {
     for (const br of p.broken) {
       const B = blocks[p.index];
-      if (br.rule === 'separation') relaxed.push({ rule: 'separation', text: `${B.name} to ${nameOf(br.with)}: separation ${r1(br.defaultM)} m reduced to ${r1(br.actualM)} m (minimum ${r1(br.minM)} m)` });
+      // §6.3 BESS: "10 m to occupied buildings, 3 m between units unless test data supports less". The layout may
+      // go down to the recorded minimum only as a named relaxation; the text states the condition.
+      if (br.rule === 'separation') relaxed.push({ rule: 'separation', text: `${B.name} to ${nameOf(br.with)}: separation ${r1(br.defaultM)} m reduced to ${r1(br.actualM)} m (minimum ${r1(br.minM)} m)${B.type === 'bess' || (blocks[br.with] && blocks[br.with].type === 'bess') ? '; a BESS separation below the §6.3 default needs UL 9540A test data or a fire-rated barrier' : ''}` });
       else if (br.rule === 'boundary') relaxed.push({ rule: 'boundary', text: `${B.name} to the boundary: ${r1(br.defaultM)} m reduced to ${r1(br.actualM)} m (minimum ${r1(br.minM)} m)` });
       else if (br.rule === 'height') { heightExceeded = true; relaxed.push({ rule: 'height', text: `${B.name}: ${br.element === 'stack' ? 'stack' : 'height'} ${r1(br.heightM)} m above the ${r1(br.limitM)} m height limit` }); }
       else if (br.rule === 'soft') relaxed.push({ rule: 'soft', text: `${B.name} placed in a soft exclusion (${Math.round(br.areaM2).toLocaleString('en-GB')} m²)` });
@@ -229,7 +231,7 @@ export function siteFitOf(ctx, site, bs, L, facts, v, sz) {
   // Height check rows that exceed (tallest element per zone), which also covers stacks and wind tips.
   for (const row of facts.heights) if (row.status === 'exceeded' && !hRel.length) { heightExceeded = true; f('site-height', 'minor', `Height limit exceeded: ${row.element} ${r1(row.tallestM)} m > ${row.limitM} m (${row.name})`); break; }
   // Ground solar in soft exclusions is allowed (configurable) and reported as information.
-  if (L.fill && L.fill.softM2 > 0) f('site-soft-solar', 'info', `Ground PV uses ${Math.round(L.fill.softM2).toLocaleString('en-GB')} m² of soft exclusion (allowed for solar only)`);
+  if (L.fill && L.fill.softM2 > 0) f('site-soft-solar', 'info', `Ground PV uses ${Math.round(L.fill.softM2).toLocaleString('en-GB')} m² of soft exclusion (allowed for ground solar; other blocks only as a flagged relaxation)`);
 
   // Wind buffers (flag only), hydrogen and SMR (always flagged), off-site land
   const windFail = facts.separations.filter((x) => (x.key === 'topple' || x.key === 'windNoise') && x.status === 'fail');

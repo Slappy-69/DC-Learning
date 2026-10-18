@@ -96,11 +96,19 @@ export function markDominance(options) {
   }
 }
 
+// "Rank requirement-compliant options first" (§11, off by default): resilience and site fit are the two
+// requirement checks (§5.7), so an option is compliant unless its resilience status is "Does not meet" or its
+// site-fit status is "Does not fit" (the two statuses §11 names). Options without a site-fit result
+// (synthetic test options) count as compliant on site fit. Scores never change; only the order does.
+export function isRequirementCompliant(o) {
+  return !(o.resilience && o.resilience.status === 'Does not meet') && !(o.siteFit && o.siteFit.status === 'Does not fit');
+}
+
 export function rankOptions(options, compliantFirst) {
   const sorted = options.slice().sort((a, b) => {
     if (compliantFirst) {
-      const ca = a.resilience.status === 'Does not meet' ? 1 : 0;
-      const cb = b.resilience.status === 'Does not meet' ? 1 : 0;
+      const ca = isRequirementCompliant(a) ? 0 : 1;
+      const cb = isRequirementCompliant(b) ? 0 : 1;
       if (ca !== cb) return ca - cb;
     }
     return b.score - a.score || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);

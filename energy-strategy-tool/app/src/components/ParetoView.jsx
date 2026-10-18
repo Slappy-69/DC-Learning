@@ -73,7 +73,7 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
     ? ` Not on the chart: "Hide dominated options" hides it${model.pickDominatedBy ? ` (dominated by #${model.pickDominatedBy.rank} ${model.pickDominatedBy.name}, which ties or nearly ties on weighted score)` : ''}; use "show" to see it.`
     : ' Not on the chart: hidden by the current view filters; remove them to see it.';
   const topReason = model.topScoreReason === 'compliant-first'
-    ? `ranked #${model.topScoreRank}, below the pick, because "Rank requirement-compliant options first" is on and its resilience status is "${model.topScoreStatus}".`
+    ? `ranked #${model.topScoreRank}, below the pick, because "Rank requirement-compliant options first" is on and ${(model.topScoreFailing && model.topScoreFailing.length ? model.topScoreFailing : [`its resilience status is "${model.topScoreStatus}"`]).join(' and ')}.`
     : `ranked #${model.topScoreRank} under the current ranking settings.`;
 
   return (
@@ -158,7 +158,7 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
               {model.topScoreId ? <span><span className="lg-ring lg-ring-top" aria-hidden="true" /> Highest weighted score</span> : null}
             </div>
           </div>
-          <p className="note">Shape shows site-fit status (§12.2); resilience status is in the tooltip and the table. Site fit is a status, not a weight: it does not change any score or rank, and options that do not fit stay in the chart. Points are P50 values from the full-year hourly model; P10–P90 error crosses arrive with the uncertainty slice.</p>
+          <p className="note">Shape shows site-fit status (§12.2); resilience status is in the tooltip and the table. Site fit is a status, not a weight: the status changes no score, and no rank unless "Rank requirement-compliant options first" is on; options that do not fit stay in the chart. Points are P50 values from the full-year hourly model; P10–P90 error crosses arrive with the uncertainty slice.</p>
         </>
       ) : (
         <>

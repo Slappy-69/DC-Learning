@@ -49,7 +49,7 @@ import {
   logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY,
   HOOKS, paretoFrontier, weightedPick, paretoTableRows, PRESETS,
   highestWeightedScore, defaultView, activeFilterChips, activeFilterCount, paretoTtpClasses, defaultParetoAxes,
-  tablePageSize, buildDefaultInputs,
+  tablePageSize, buildDefaultInputs, isRequirementCompliant,
 } from '../src/engine/index.js';
 import { scoreOptions } from '../src/engine/scoring.js';
 import { dispatchAll } from '../src/engine/dispatch.js';
@@ -631,7 +631,13 @@ await test('7. Single-file build: worker inlined as a Blob-URL source string, no
     w.postMessage({ id: 1, inputs: t1Inputs, sliceIndex: 0, sliceCount: SLICES, t0Abs: performance.timeOrigin + performance.now() });
   });
   assert.ok(part.options.length > 0, 'inlined worker returned no options');
-  return `single file ${(html.length / 1024).toFixed(1)} KB, 1 inline script, 0 "worker.js" mentions, 0 <script src>, 0 <link href>, 0 relative src/href; inlined worker source ${src.length.toLocaleString('en-GB')} chars, identical to dist/worker.js, parses; run in a worker_thread on slice 1/${SLICES} of T1: ${part.options.length} options, ${part.log.length} log events.`;
+  // Is the build newer than the source it should contain (review, H1)? Reported, not asserted: file times are not a
+  // reliable signal across checkouts and copies; run `npm run build` before `npm test`.
+  const { statSync, readdirSync } = await import('node:fs');
+  const newest = (dir) => readdirSync(dir, { withFileTypes: true }).reduce((m, d) => Math.max(m, d.isDirectory() ? newest(new URL(`${d.name}/`, dir)) : statSync(new URL(d.name, dir)).mtimeMs), 0);
+  const srcMs = newest(new URL('../src/', import.meta.url));
+  const distMs = statSync(htmlPath).mtimeMs;
+  return `single file ${(html.length / 1024).toFixed(1)} KB, 1 inline script, 0 "worker.js" mentions, 0 <script src>, 0 <link href>, 0 relative src/href; inlined worker source ${src.length.toLocaleString('en-GB')} chars, identical to dist/worker.js, parses; run in a worker_thread on slice 1/${SLICES} of T1: ${part.options.length} options, ${part.log.length} log events; build ${distMs >= srcMs ? 'newer than' : 'OLDER than'} the newest source file (${new Date(distMs).toISOString()} vs ${new Date(srcMs).toISOString()}).`;
 });
 
 // ---------------------------------------------------------------------------
@@ -1025,6 +1031,27 @@ await test('8g. AC5: the highlighted pick is the weighted leader (rank 1, the he
       assert.match(html, /is on and its resilience status is/, 'pick line does not say why the highest score is not the pick');
     }
   }
+  // Site fit is the other requirement check (§5.7, §11): with the toggle on, an option that does not fit ranks
+  // after the options that fit, even when it meets the resilience requirement (review D9).
+  const mkSite = (cf) => {
+    const opts = [synth('x', 50, 50, 12, 90, 'Meets'), synth('y', 60, 60, 18, 80, 'Meets'), synth('z', 70, 55, 20, 70, 'Meets with flags')];
+    opts[0].siteFit = { status: 'Does not fit' }; opts[1].siteFit = { status: 'Fits' }; opts[2].siteFit = { status: 'Fits with flags' };
+    const run = { options: opts, inputs: { weights: W, settings: { costMetric: 'lcoe', carbonMetric: 'location', rankCompliantFirst: cf } } };
+    scoreOptions(run.options, run.inputs);
+    return run;
+  };
+  for (const cf of [false, true]) {
+    const run = mkSite(cf);
+    const m = HOOKS.paretoView(run, { x: 'lcoe', y: 'location' });
+    const scores = Object.fromEntries(run.options.map((o) => [o.id, o.score]));
+    assert.deepEqual(scores, Object.fromEntries(mk(cf).options.map((o) => [o.id, o.score])), 'site fit changed a score');
+    if (!cf) { assert.equal(m.pickId, 'x'); assert.equal(m.topScoreId, null); } else {
+      assert.equal(m.pickId, 'y', 'with compliant-first on, an option that does not fit must rank after those that fit');
+      assert.equal(run.options.find((o) => o.id === 'x').rank, 3);
+      assert.equal(m.topScoreId, 'x'); assert.equal(m.topScoreReason, 'compliant-first'); assert.equal(m.topScoreSiteFit, 'Does not fit');
+      assert.match(B.renderView(run, defaultView()), /is on and its site-fit status is (&quot;|")Does not fit/, 'pick line does not name the site-fit status');
+    }
+  }
   // Real data: the test-3 sample (36 options) and a smaller C5 = None sample (other open choices locked to their
   // first value), every weight preset, toggle off and on.
   const small = (() => {
@@ -1051,8 +1078,9 @@ await test('8g. AC5: the highlighted pick is the weighted leader (rank 1, the he
         const top = highestWeightedScore(options);
         if (top.id !== rank1.id) {
           divergent++;
-          divergentCases.push(`${sampleLabel}, ${presetName}: top scorer rank ${top.rank} (${top.resilience.status})`);
-          assert.ok(cf && top.resilience.status === 'Does not meet', 'top scorer differs from rank 1 without the compliant-first toggle');
+          divergentCases.push(`${sampleLabel}, ${presetName}: top scorer rank ${top.rank} (${top.resilience.status}${top.siteFit ? `, ${top.siteFit.status}` : ''})`);
+          // Review D9: compliant means resilience not "Does not meet" and site fit not "Does not fit".
+          assert.ok(cf && !isRequirementCompliant(top), 'top scorer differs from rank 1 without the compliant-first toggle');
           assert.equal(m.topScoreId, top.id); assert.equal(m.topScoreReason, 'compliant-first');
           assert.deepEqual(m.points.filter((q) => q.isTopScore).map((q) => q.id), [top.id]);
         } else assert.equal(m.topScoreId, null);
@@ -1078,7 +1106,7 @@ await test('8g. AC5: the highlighted pick is the weighted leader (rank 1, the he
   assert.equal(mn.pickId, 'a'); assert.equal(mn.pickShown, true); assert.equal(mn.pickPlotted, false); assert.equal(mn.pickVisible, false);
   assert.equal(/Weighted pick #/.test(B.renderChart(mn, 900)), false);
   assert.match(B.renderView(np, defaultView()), /Not drawn: it has no finite value on an axis/);
-  return `synthetic: toggle off → pick = rank 1 = top scorer, no second mark; toggle on → pick = rank 1 (Meets), top scorer (Does not meet, rank ${mk(true).options.find((o) => o.id === 'x').rank}) marked separately with the reason in the pick line; real samples: ${combos} sample × preset × toggle combinations, pick = rank 1 in all, ${divergent} with a separate highest-score mark (${divergentCases.join('; ')}; toggle on in each); App.jsx leader = weightedPick(); undrawn pick explained (hide-dominated tie, filters, not plottable).`;
+  return `synthetic: toggle off → pick = rank 1 = top scorer, no second mark; toggle on → pick = rank 1 (Meets), top scorer (Does not meet, rank ${mk(true).options.find((o) => o.id === 'x').rank}) marked separately with the reason in the pick line; site fit: toggle on → a "Does not fit" top scorer that meets resilience ranks after the fitting options (rank 3), scores unchanged, reason names the site-fit status; real samples: ${combos} sample × preset × toggle combinations, pick = rank 1 in all, ${divergent} with a separate highest-score mark (${divergentCases.join('; ')}; toggle on in each); App.jsx leader = weightedPick(); undrawn pick explained (hide-dominated tie, filters, not plottable).`;
 });
 
 await test('8h. Every active view filter is a removable chip, and the header filter count matches applyView()', async () => {

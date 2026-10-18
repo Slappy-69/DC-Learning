@@ -93,7 +93,8 @@ export function economics(ctx, v, sz, disp, ttp) {
   while (firstGridM < ctx.gridCap.length && ctx.gridCap[firstGridM] <= 0) firstGridM++;
   const gridYear = fullMW > 0 ? yearOfMonth(Math.min(firstGridM, ctx.fullGridM)) : 0;
   if (fullMW > 0) {
-    addCapex('Grid connection and reinforcement', gridYear, fullMW * sp[`connCapexPerMW_${band}`] + sp.cablePerKm * sp.cableKm, 40);
+    // Cable route from the POC (§5.4): route length from the site model (sizing.js, sz.grid.cableKm).
+    addCapex('Grid connection and reinforcement', gridYear, fullMW * sp[`connCapexPerMW_${band}`] + sp.cablePerKm * (sz.grid.cableKm || 0), 40);
     addCapex(`Substation (${band.toUpperCase()}, ${v.C17})`, gridYear, fullMW * sp[`subCapexPerMW_${band}`] * (v.C17 === 'GIS' ? sp.gisMultiplier : 1), 40);
   }
   // Renewables
@@ -119,6 +120,13 @@ export function economics(ctx, v, sz, disp, ttp) {
     const t = TECH[sz.bridge.tech];
     addCapex(`${t.name} (bridging)`, yearOfMonth(sz.bridge.availMonth), sz.bridge.mw * 1000 * t.p.capexPerKW, t.p.life, { removeYear: bridgeRemoveYear });
     if (t.p.stackLife && bridgeRemoveYear === null) assets.push({ item: `${t.name} stack replacement`, year: yearOfMonth(sz.bridge.availMonth), amount: sz.bridge.mw * 1000 * t.p.capexPerKW * t.p.stackFraction, life: t.p.stackLife, stackOnly: true });
+  }
+  // Gas connection pipe from the gas main (§5.2), for options that burn gas on site and only when a gas main
+  // location is given (sizing.js): booked when the first gas plant is available (gas gensets only: phase 1).
+  if (sz.gasConnection && sz.gasConnection.km > 0) {
+    const gasMonths = [sz.prime, sz.bridge].filter((p) => p && TECH[p.tech].fuel === 'gas').map((p) => p.availMonth);
+    const gasYear = gasMonths.length ? yearOfMonth(Math.min(...gasMonths)) : (phaseShares.length ? phaseShares[0].year : 0);
+    addCapex('Gas connection pipe', gasYear, sz.gasConnection.km * sz.gasConnection.perKm, 40);
   }
   // Backup gensets, BESS-augmented UPS BESS, fuel storage (per phase)
   if (sz.backup.tech) {

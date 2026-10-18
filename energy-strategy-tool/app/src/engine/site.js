@@ -18,7 +18,7 @@
 import {
   makeProjection, meanLatLon, validateRing, orientRing, edgeIndexAfterOrient, ringArea, rotateRing, rotatePoint,
   bbox, minAreaRect, offsetRingInward, regionDifference, regionArea, pointInRing, distPointSegment, distSegmentBox,
-  distBoxRing, nearestPointOnRing,
+  distBoxRing, nearestPointOnRing, pointInRegion, distPointRing, distPointBox,
 } from './geometry.js';
 import { EXCLUSION_TYPES } from './defaults.js';
 
@@ -241,6 +241,32 @@ export function buildSiteModel(inputs) {
   const netM2 = envelopeM2 - allowanceM2;
   if (envCells === 0) warn('envelope-empty', 'No buildable cell: the setbacks and hard exclusions leave no buildable area');
 
+  // ---- 8. Route lengths for cost (§5.2: the POC "drives … cable-route length for cost", the gas main
+  // "drives … connection cost"; §5.4 "cable route cost per km from the POC"). Straight-line distance from the
+  // point to the nearest point of the buildable envelope, where the auto-layout anchors the substation and the
+  // plant (0 when the point lies inside it). It depends on the site only, not on the layout, so it is the same
+  // for every option on the site. null = no buildable area (or no gas main).
+  const distToEnvelope = (xy) => {
+    if (envelope) {
+      if (pointInRegion(xy, envelope.region)) return 0;
+      let d = Infinity;
+      for (const piece of envelope.region) for (const r of [piece.outer, ...piece.holes]) d = Math.min(d, distPointRing(xy, r));
+      return Number.isFinite(d) ? d : null;
+    }
+    if (!envCells) return null;
+    const p = toUV(xy);
+    let d = Infinity;
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      if (!env[i + j * nx]) continue;
+      const e = distPointBox(p, { x0: u0 + i * cell, y0: v0 + j * cell, x1: u0 + (i + 1) * cell, y1: v0 + (j + 1) * cell });
+      if (e < d) d = e;
+    }
+    return d;
+  };
+  // Rounded to 0.1 m: a concept-stage route length, and the same number whatever floating-point path produced it.
+  const r01 = (x) => (x == null ? null : Math.round(x * 10) / 10);
+  const routes = { pocM: r01(distToEnvelope(poc.xy)), gasMainM: gasMain ? r01(distToEnvelope(gasMain.xy)) : null, method: 'straight line to the nearest buildable point' };
+
   return {
     key: siteKey(inputs),
     origin, projection: { lat0: P.lat0, lon0: P.lon0, kx: P.kx, ky: P.ky },
@@ -250,6 +276,7 @@ export function buildSiteModel(inputs) {
     envelope,
     exclusions, heightZones, heightLimitM, softUsableBySolar: softUsable,
     points: { poc, gasMain, access, receptors },
+    routes,
     areas: {
       grossM2, offsetM2, setbackM2: offsetM2 != null ? grossM2 - offsetM2 : null,
       hardExclusionM2: offsetM2 != null && envelope ? offsetM2 - envelopeM2 : null,
@@ -271,6 +298,8 @@ export function siteSummary(m) {
     allowanceM2: round1(m.areas.allowanceM2), netM2: round1(m.areas.netM2),
     exclusions: m.exclusions.length, hardExclusions: m.exclusions.filter((e) => e.hard).length, heightZones: m.heightZones.length,
     receptors: m.points.receptors.length, cellM: m.grid.cell, nx: m.grid.nx, ny: m.grid.ny, envCells: m.grid.envCells,
+    pocDefault: !!m.points.poc.isDefault, gasMain: !!m.points.gasMain,
+    routes: { pocM: round1(m.routes.pocM), gasMainM: round1(m.routes.gasMainM) },
     warnings: m.warnings.map((w) => w.code),
   };
 }

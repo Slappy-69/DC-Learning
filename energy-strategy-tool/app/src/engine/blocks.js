@@ -133,7 +133,7 @@ export function buildBlocks(ctx, v, sz) {
     const band = sz.grid.band;
     const gis = v.C17 === 'GIS';
     let area, height, clr, clrMin, label;
-    if (band === 'mv') { area = sub.m2Per20MVA_mv * (fullMW / 0.9 / 20); height = P.mvHeightM; clr = P.mvClearanceM; clrMin = P.mvClearanceMinM; label = '11–33 kV'; }
+    if (band === 'mv') { area = sub.m2Per20MVA_mv * (fullMW / P.mvPowerFactor / 20); height = P.mvHeightM; clr = P.mvClearanceM; clrMin = P.mvClearanceMinM; label = '11–33 kV'; }
     else if (band === 'hv') { area = (gis ? sub.haGIS_hv : sub.haAIS_hv) * 10000; height = gis ? P.hvGisHeightM : P.hvAisHeightM; clr = P.hvClearanceM; clrMin = P.hvClearanceMinM; label = `110–150 kV ${v.C17}`; }
     else { area = (gis ? sub.haGIS_ehv : sub.haAIS_ehv) * 10000; height = gis ? P.ehvGisHeightM : P.ehvAisHeightM; clr = P.hvClearanceM; clrMin = P.hvClearanceMinM; label = `220–400 kV ${v.C17}`; }
     const [w, h] = lw(area, P.lw);
@@ -151,12 +151,15 @@ export function buildBlocks(ctx, v, sz) {
     const t = TECH[sz.backup.tech], P = S('genset');
     const units = v.C5 === 'bessUps' ? sz.backup.nUnits : sz.backup.units;
     const dbl = v.C18 === 'double';
-    const positions = dbl ? Math.ceil(units / 2) : units; // double-deck: two units stacked per position
+    // Double-deck (§6.3 "halves footprint per unit"): ceil(units × factor) stacked positions of one unit
+    // footprint each, so 1 ÷ factor units per position (factor 0.5: two units stacked per position).
+    const ddf = Math.min(1, Math.max(0.05, Number(P.doubleDeckFootprintFactor) || 0.5));
+    const positions = dbl ? Math.ceil(units * ddf - 1e-9) : units;
     const unitArea = t.p.m2PerUnit;
     const arrs = arrays(positions, sp.maxUnits, sp.rows, unitArea, sp.maxArrayM2);
     let left = units;
     arrs.forEach((arr, k) => {
-      const nUnits = dbl ? Math.min(left, arr.units * 2) : arr.units;
+      const nUnits = dbl ? (k === arrs.length - 1 ? left : Math.min(left, Math.round(arr.units / ddf))) : arr.units;
       left -= nUnits;
       push(arrayBlock({
         group: 'genset', type: 'genset', source: SOURCE_OF_TECH[t.id] || 'diesel', priority: PRIORITY.genset,
@@ -188,9 +191,10 @@ export function buildBlocks(ctx, v, sz) {
     if (sz.prime.tech === 'smr' && S('smr').placement !== 'onsite') {
       offsite.push({ type: 'smr', source: 'nuclear', name: `${TECH.smr.name} · ${Math.round(sz.prime.mw)} MW`, landHa: (sz.prime.mw / 100) * S('smr').haPer100MW, distanceKm: ctx.site ? ctx.site.offsite.distanceKm : inputs.site.offsiteDistanceKm, heightM: S('smr').heightM, note: 'Off-site or adjacent site (§6.2); emergency planning zone not modelled.' });
     } else if (sz.prime.tech === 'smr') {
-      const area = (sz.prime.mw / 100) * S('smr').haPer100MW * 10000;
-      const [w, h] = lw(area, 1.5);
-      push({ group: 'firm', type: 'smr', source: 'nuclear', priority: PRIORITY.firm, name: `${TECH.smr.name} · ${Math.round(sz.prime.mw)} MW`, w, h, areaM2: area, heightM: S('smr').heightM, stackM: null, clearanceM: 10, clearanceMinM: 10, relaxable: false, boundaryM: 0, boundaryMinM: 0, anchor: 'firm', noise: null });
+      const SM = S('smr');
+      const area = (sz.prime.mw / 100) * SM.haPer100MW * 10000;
+      const [w, h] = lw(area, SM.lw);
+      push({ group: 'firm', type: 'smr', source: 'nuclear', priority: PRIORITY.firm, name: `${TECH.smr.name} · ${Math.round(sz.prime.mw)} MW`, w, h, areaM2: area, heightM: SM.heightM, stackM: null, clearanceM: SM.clearanceM, clearanceMinM: SM.clearanceM, relaxable: false, boundaryM: 0, boundaryMinM: 0, anchor: 'firm', noise: null });
     } else plantBlocks(sz.prime, 'prime', sp, push);
   }
   if (sz.bridge && sz.bridge.units > 0) plantBlocks(sz.bridge, 'bridging', sp, push);
@@ -237,6 +241,9 @@ export function buildBlocks(ctx, v, sz) {
   if (sz.solarRoofMWp > 0) {
     roof.push({ type: 'solarRoof', source: 'solar', name: `Rooftop PV · ${sz.solarRoofMWp.toFixed(2)} MWp`, areaM2: sz.solarRoofMWp * 1000 * TECH.solarRoof.p.m2PerKWp, mwp: sz.solarRoofMWp, heightAboveRoofM: S('solarRoof').heightAboveRoofM });
   }
+  // Carport PV (C10 "Roof + carport", §6.2 "over parking allowance"): the allowance is a land budget, not a
+  // located area (site.js), so the carport has no position to draw; it is sized and costed, and said here.
+  if (sz.solarCarportMWp > 0) notes.push(`Carport PV ${sz.solarCarportMWp.toFixed(2)} MWp sits over the roads and parking allowance. The allowance is held back as a land budget, not a located area, so the carport is not drawn and takes no buildable area; it is sized and costed with the option.`);
 
   // ---- 7. Wind turbines (C11): on site as pads with buffers (flag only); off-site land to the tray ----
   if (sz.windTurbines > 0 && v.C11 === 'fit') {

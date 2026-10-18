@@ -227,6 +227,20 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
   .spinner { animation: none; border-top-color: var(--line); }
 }
 
+/* Phone: "Run details" holds the run progress panel, its event log and the run summary once a run has finished
+   (review O1), so the results tabs come first. */
+.run-details { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 10px; }
+.run-details > summary { padding: 10px 12px; cursor: pointer; display: flex; gap: 4px 10px; flex-wrap: wrap; align-items: baseline; font-weight: 600; min-height: 36px; }
+.rd-line { font-weight: 400; color: var(--ink-2); font-size: 13px; overflow-wrap: anywhere; }
+/* A visible open/closed marker on the run disclosures (as on the input sections), so "Run details" reads as
+   something to open. */
+.run-details > summary, .run-progress > summary, .run-summary > summary { list-style: none; }
+.run-details > summary::-webkit-details-marker, .run-progress > summary::-webkit-details-marker, .run-summary > summary::-webkit-details-marker { display: none; }
+.run-details > summary::before, .run-progress > summary::before, .run-summary > summary::before { content: "▸"; color: var(--ink-3); margin-right: -4px; }
+.run-details[open] > summary::before, .run-progress[open] > summary::before, .run-summary[open] > summary::before { content: "▾"; }
+.rd-body { padding: 0 8px 8px; }
+.rd-body > .run-progress, .rd-body > .run-summary { margin-bottom: 8px; }
+
 /* Run progress panel (live stage progress, last 200 events, log download) */
 .run-progress { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 10px; }
 .run-progress > summary { padding: 10px 12px; cursor: pointer; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; font-weight: 600; min-height: 36px; }
@@ -368,6 +382,11 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .site h3 { font-size: 14px; margin: 14px 0 6px; }
 .site-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
 .site-head select { min-height: 32px; max-width: 100%; border: 1px solid var(--control-border); border-radius: var(--radius); background: var(--surface); padding: 2px 6px; }
+/* Option selector (review O3): a select is as wide as its longest option (names up to ~180 characters), which
+   pushed the page 114 px wider than the window at 1400 px. The label takes the free width of the row and the
+   select shrinks inside it (min-width: 0), cutting the closed text with an ellipsis; the open list is not limited. */
+.site-head > .site-pick { display: flex; align-items: center; gap: 6px; flex: 1 1 16rem; min-width: 0; max-width: 100%; }
+.site-head > .site-pick select { flex: 1 1 auto; width: 100%; min-width: 0; text-overflow: ellipsis; }
 .site-columns { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 10px; }
 @media (min-width: 1100px) { .site-columns { grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); } }
 .site-plan-wrap { min-width: 0; }
@@ -456,5 +475,6 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 @media (max-width: 767px) {
   .site { padding: 10px 8px; }
   .site-head { flex-direction: column; align-items: stretch; }
+  .site-head > .site-pick { flex: 0 0 auto; }
   .site-head select { width: 100%; }
 }
