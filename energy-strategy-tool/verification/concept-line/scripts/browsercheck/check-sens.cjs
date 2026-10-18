@@ -1,0 +1,27 @@
+const { chromium } = require('playwright');
+(async () => {
+  const file = 'file:///tmp/claude-0/-home-claude/3ded6fb1-dffa-5614-ab8f-4144dc966e9a/scratchpad/dc-learning/energy-strategy-tool/app/dist/energy-tool-single-file.html';
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push('PAGEERROR ' + e.message));
+  await page.goto(file);
+  await page.waitForFunction(() => document.querySelector('#tab-options') && !document.body.innerText.includes('Running'), { timeout: 120000 }).catch(() => {});
+  await page.waitForSelector('#tab-sensitivity', { timeout: 120000 });
+  await page.click('#tab-sensitivity');
+  await page.click('button:has-text("Run sensitivity")', { timeout: 120000 });
+  await page.waitForSelector('.sens-table', { timeout: 180000 });
+  const rows = await page.$$eval('.sens-table tbody tr', (trs) => trs.map((t) => t.innerText.replace(/\s+/g, ' ').trim()));
+  const base = await page.$eval('.sens-base', (e) => e.innerText);
+  console.log('BASE:', base);
+  console.log('ROWS:', rows.length); rows.forEach((r) => console.log(' -', r));
+  await page.screenshot({ path: __dirname + '/sens-desktop.png', fullPage: false });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(300);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  console.log('MOBILE horizontal overflow px:', overflow);
+  await page.screenshot({ path: __dirname + '/sens-mobile.png', fullPage: false });
+  console.log('CONSOLE ERRORS:', errors.length ? errors.slice(0, 5).join(' | ') : 'none');
+  await browser.close();
+})().catch((e) => { console.error('FAILED', e.message); process.exit(1); });

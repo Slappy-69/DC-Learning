@@ -1,0 +1,51 @@
+# Verification record: concept line
+
+This is the evidence for the work on `concept-sensitivity-tab` and `concept-site-layout` (2026-10-15 to 2026-10-16), built in a separate chat from the `feature/*` line.
+
+The other line has ported all of its functional changes to `feature/port-concept-line` (checked file by file against cbc785f on 2026-10-18). That port has its own battery-timing tests in `tests/port-tests.mjs`. **Before deleting these branches, copy this folder into the port's verification record.**
+
+## Summary
+
+| Check | By | Result | Evidence |
+|---|---|---|---|
+| Node test suite | Builder (Opus 5.5) | 23/23 at e1161ce | `npm test` in `app/` |
+| Dispatch slice, independent check | Haiku 5.5 verifier, 2026-10-16 | 22/22 at f236acc. Independent rebuild of the T1 leader's year-3 balance matched exactly. 1 medium finding (it predated the slice), 5 low | `dispatch-haiku-check.md`, `scripts/verify/` |
+| Review of the Haiku findings | Opus 5.5 | Medium finding confirmed against BRIEF §9.8 and fixed. 4 low findings fixed, 1 left as recorded | `dispatch-haiku-check.md` § Disposition |
+| Inspector exactness | Builder | On the T1 leader, the T3 leader and a T1 option with battery, PPA and firm plant, the re-run equals the ranking run (difference 0). Hourly sums match the engine's annual totals within 1.5e-10 MWh. Hourly residual ≤ 2.8e-14 MWh. Timeline gap = time-to-power gap | test 12, `scripts/check-inspect.mjs` |
+| Load and hosting | Builder, headless Chromium | See table below | `scripts/loadcheck/scenarios.cjs` |
+| Browser: Dispatch, Sensitivity, Site tabs | Builder, headless Chromium | No console errors. 0 px horizontal scroll at 390 px. Keyboard and pointer readouts work | `scripts/browsercheck/`, `images/` |
+| Chart colours | Builder, dataviz `validate_palette.js` | See below | `scripts/palette-search.sh` |
+| Battery-timing fix, before and after | Builder | Default T1 and T3 unchanged. With BESS + solar included: 270 of 413 options change | `data/rank-before.json`, `data/rank-after.json`, `scripts/rank-snapshot.mjs` |
+
+The scripts ran in that chat's workspace, and their paths point there. To re-run one, replace the path prefix ending in `scratchpad/dc-learning` with your clone's root. The verifier's jsdom harness also needs `npm install` in `scripts/verify/` (see its `package.json`).
+
+## Load and hosting (headless Chromium)
+
+Time to the first page and to results on the T1 example. "Before" is the build sent on 2026-10-16 that a viewer reported as not loading. "After" adds the loading message and startup-error display (e9ed8f6, c3f81f5).
+
+| Case | Before | After |
+|---|---|---|
+| Normal browser over HTTP | page 0.24 s, results 10.3 s | page 0.23–0.26 s, results 9.2–10.7 s |
+| Sandboxed frame, scripts allowed | 0.71 s / 9.4 s | 0.74 s / 8.8 s |
+| Security policy blocks background workers (main-thread fallback) | 0.24 s / 9.6 s | same code path |
+| Phone CPU ×4, workers | 0.63 s / 12.1 s | same code path |
+| Phone CPU ×4, workers blocked | 0.67 s / 56.4 s | same code path |
+| Inline scripts blocked (some file previews) | blank page, no message | loading message stays and says to open the file in a browser |
+| Scripts disabled | "This tool needs JavaScript." | loading message and the same note |
+| Hosted page in a host-like sandboxed frame and policy | — | 0.75 s / 9.7–10.1 s, no console errors. Copy-log fallback shows the 1.37 MB log selected |
+| Hosted page at phone width | — | 0.74 s / 9.3 s, 0 px horizontal scroll |
+
+## Chart colours (Dispatch tab)
+
+- No five-colour subset of the reference palette passes the all-pairs checks in both themes. Two four-colour sets do. The hourly chart therefore shows four sources, with PPA inside grid import; the readout, week table and balance split PPA out.
+- Renewables `#008300`. Battery `#2a78d6` light and `#3987e5` dark. Firm plant `#eda100` light and `#c98500` dark. Grid `#e87ba4` light and `#d55181` dark.
+- Light on `#ffffff`: all checks pass. Contrast warnings for firm (2.17:1) and grid (2.69:1) are relieved by the legend, readout and tables.
+- Dark on `#1e2125`: all checks pass. A colour-blind warning for firm against renewables (ΔE 6.9) is covered by secondary encoding (band gaps, legend, readout, tables).
+- The critical red `#d03b3b` fails beside the source colours (colour-blind ΔE 5.9 against renewables; normal-vision ΔE 9.0 against dark grid). It is used only in the separate strip for unmet load and power gap.
+
+## Battery timing fix (e1161ce)
+
+- **Defect:** a bridging battery (C2 = BESS + solar) counted as time-to-power supply from month 0. Dispatch made it available from month 0 without a main battery and from month 21 with one. BRIEF §9.8: supply available date = project start + planning + procurement + construction.
+- **Fix:** one availability month for all battery capacity, used by sizing, time-to-power and dispatch.
+- **Default T1 and T3 runs:** top 10 and scores identical before and after. No BESS + solar options are generated by default.
+- **T1 with BESS + solar bridging included:** 413 such options (135 without a main battery); 270 get a later time-to-power. The leader is unchanged (Grid + BESS + solar only bridge → retain for grid services, retained-plant backup). Its full load moves from month 0 to month 21 and its score from 99.705 to 98.996. The top-10 order is unchanged.

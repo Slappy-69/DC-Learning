@@ -1,0 +1,11 @@
+import { JSDOM } from 'jsdom';
+import { createRequire } from 'node:module';
+const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { pretendToBeVisual: true, url: 'http://localhost/' });
+const { window } = dom;
+globalThis.window = window;
+globalThis.document = window.document;
+for (const k of ['Node', 'HTMLElement', 'Element', 'Event', 'KeyboardEvent', 'MouseEvent', 'HTMLInputElement', 'HTMLSelectElement', 'SVGElement']) globalThis[k] = window[k];
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+const mod = await import('./ui-bundle.mjs');
+await mod.main(window);
+process.exit(0);

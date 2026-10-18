@@ -1,0 +1,22 @@
+const { chromium } = require('playwright');
+(async () => {
+  const file = 'file:///tmp/claude-0/-home-claude/3ded6fb1-dffa-5614-ab8f-4144dc966e9a/scratchpad/dc-learning/energy-strategy-tool/app/dist/energy-tool-single-file.html';
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push('PAGEERROR ' + e.message));
+  await page.goto(file);
+  await page.waitForSelector('#tab-site', { timeout: 120000 });
+  await page.click('#tab-site');
+  await page.waitForSelector('.site-svg', { timeout: 60000 });
+  console.log('STATUS:', await page.$eval('.sens-status', (e) => e.innerText));
+  const svg = await page.$('.site-svg');
+  await svg.scrollIntoViewIfNeeded();
+  await svg.screenshot({ path: __dirname + '/site-plan-desktop.png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(300);
+  console.log('MOBILE overflow px:', await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth));
+  console.log('CONSOLE ERRORS:', errors.length ? errors.slice(0, 5).join(' | ') : 'none');
+  await browser.close();
+})().catch((e) => { console.error('FAILED', e.message); process.exit(1); });
