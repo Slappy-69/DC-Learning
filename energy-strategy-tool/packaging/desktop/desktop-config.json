@@ -1,0 +1,8 @@
+{
+  "electronVersion": "44.9.0",
+  "packageName": "concept-energy-optioneering",
+  "linuxExecutableName": "concept-energy-optioneering",
+  "author": "DC-Learning",
+  "description": "Concept-stage data centre energy optioneering: inputs, hourly dispatch, option generation and scoring, trade-offs, site layout, dispatch and sensitivity. Runs offline on this computer.",
+  "macCategory": "public.app-category.productivity"
+}

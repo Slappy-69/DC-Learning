@@ -1,0 +1,19 @@
+/* "Update ready" notice (inlined into index.html by build-pwa.mjs). Uses the app's colour tokens, so it follows the
+   light and dark themes; the fallbacks are the light-theme values. The app's global :focus-visible ring applies. */
+.pwa-update {
+  position: fixed; right: 16px; bottom: 16px; z-index: 1000;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px;
+  max-width: min(440px, calc(100vw - 32px)); padding: 10px 12px;
+  background: var(--surface, #fff); color: var(--ink, #1d1f22);
+  border: 1px solid var(--line, #d8d5cc); border-left: 4px solid var(--accent, #1f5f8b); border-radius: var(--radius, 6px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .2); font: 14px/1.4 var(--font, system-ui, sans-serif);
+}
+.pwa-update[hidden] { display: none; }
+.pwa-update-msg { margin: 0; flex: 1 1 200px; }
+.pwa-update button {
+  min-height: 32px; padding: 4px 12px; border-radius: var(--radius, 6px); font: inherit; cursor: pointer;
+}
+.pwa-update-reload { background: var(--accent, #1f5f8b); color: var(--accent-ink, #fff); border: 1px solid var(--accent, #1f5f8b); font-weight: 600; }
+.pwa-update-later { background: transparent; color: var(--ink, #1d1f22); border: 1px solid var(--control-border, #888681); }
+@media (max-width: 480px) { .pwa-update-msg { flex-basis: 100%; } }
+@media print { .pwa-update { display: none; } }

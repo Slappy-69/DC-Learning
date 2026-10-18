@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-18T20:37:14.301Z",
+  "chromium": "141.0.7390.37",
+  "v1": "9ff41bf56969e63f",
+  "v2": "f0a6f670876508f8",
+  "results": [
+    {
+      "name": "P1. App loads from the Pages-like server and a model run completes (online, first visit)",
+      "status": "PASS",
+      "info": "Options updated. Leader unchanged. Last run 17 s on 1 worker."
+    },
+    {
+      "name": "P2. Manifest: fetched from the link, required fields present, every icon served at its declared size",
+      "status": "PASS",
+      "info": "short_name \"Optioneering\", id \"concept-energy-optioneering\", 4 icons OK; theme-color (prefers-color-scheme: light)=#ffffff, (prefers-color-scheme: dark)=#1e2125"
+    },
+    {
+      "name": "P3. Maskable icon keeps the mark inside the 40 % safe zone (pixel scan) and fills the canvas",
+      "status": "PASS",
+      "info": "mark within 31.1 % of the width from the centre; background rgb(31,95,139), no transparency"
+    },
+    {
+      "name": "P4. Service worker registers, and controls the page after one reload (response from the worker)",
+      "status": "PASS",
+      "info": "controller http://localhost:33615/DC-Learning/sw.js; cache ceo-shell:/DC-Learning/:9ff41bf56969e63f holds 8 files"
+    },
+    {
+      "name": "P5. Other pages on the same site are not taken over (online: the server answers, not the app)",
+      "status": "PASS",
+      "info": "GET /DC-Learning/some-other-page.html -> 404 from the server"
+    },
+    {
+      "name": "P6. Offline: a reload still loads the app from the cache and a full model run completes (in workers)",
+      "status": "PASS",
+      "info": "Options updated. Leader unchanged. Last run 18 s on 1 worker. Network attempts while offline: GET /DC-Learning/sw.js (refused: server down), GET /DC-Learning/sw.js (refused: server down), GET /DC-Learning/sw.js (refused: server down)"
+    },
+    {
+      "name": "P7. Installability: Page.getInstallabilityErrors returns none; Page.getAppManifest reports no errors",
+      "status": "PASS",
+      "info": "no installability errors; manifest http://localhost:33615/DC-Learning/manifest.webmanifest; app id http://localhost:33615/concept-energy-optioneering (recommended id \"/DC-Learning/\")"
+    },
+    {
+      "name": "P8. Update: when sw.js changes, an accessible \"Update ready — reload\" notice appears; no reload is forced",
+      "status": "PASS",
+      "info": "notice shown with role=status, aria-live=polite; old version 9ff41bf56969e63f still in control; new version waiting"
+    },
+    {
+      "name": "P9. Update notice passes axe (WCAG 2.2 AA) in light and dark, and works at phone width",
+      "status": "PASS",
+      "info": "light: 0 violations, 12 rules passed; dark: 0 violations, 12 rules passed; fits at 375 px"
+    },
+    {
+      "name": "P10. \"Later\" hides the notice; it comes back on the next load while the update waits",
+      "status": "PASS",
+      "info": "hidden after Later; shown again after a reload (old version still in control)"
+    },
+    {
+      "name": "P11. \"Reload\" activates the new version: page reloads under the new worker; old cache removed",
+      "status": "PASS",
+      "info": "now version f0a6f670876508f8; caches ceo-shell:/DC-Learning/:f0a6f670876508f8"
+    },
+    {
+      "name": "P12. Without service workers the page still works: file:// copy, and a browser that blocks workers",
+      "status": "PASS",
+      "info": "file: run OK, registrations n/a; blocked: run OK, registrations 0"
+    }
+  ]
+}
