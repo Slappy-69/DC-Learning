@@ -7,7 +7,9 @@
 // pointer hit-testing, keyboard navigation on the chart, table paging, skip links and tab order,
 // removable filter chips, the off-canvas inputs panel at tablet width, phone overflow, an axe audit
 // (WCAG 2.0/2.1/2.2 A and AA rules) in light and dark themes, and the Site tab (phone width with touch
-// drawing, keyboard reach of the plan and its table, keyboard drawing, axe light and dark).
+// drawing, keyboard reach of the plan and its table, keyboard drawing, axe light and dark). Port slice (B22–B29):
+// Dispatch and Sensitivity tabs (phone width, keyboard readouts, axe light and dark), the five-tab bar, skip links,
+// the hosted page in a host-like document, the loading message without scripts and the startup-error display.
 //
 // Exit code 1 if any check fails.
 
@@ -842,6 +844,266 @@ await check('B21. "Skip to site plan" is the third Tab stop: Enter selects the S
   ok(errors.length === 0, errors.join(' | '));
   report.skipPlan = '3 Tab + Enter';
   return `Tab stops 1–3: "${stops.map((x) => x.text).join('", "')}"; Enter → Site tab selected, focus on the plan (:focus-visible); ArrowRight → "${live.split('. ')[0]}". Plan: 3 Tab + Enter (before: 36 Tab presses after "Skip to results", 218 with Tab only).`;
+});
+
+// ---------------------------------------------------------------------------
+// Port slice (2026-10-18): Dispatch and Sensitivity tabs (phone width, keyboard readouts, axe light and dark), the
+// five-tab bar (sideways scroll, ARIA keyboard pattern, skip links), the hosted page in a host-like document, the
+// loading message without scripts and the startup-error display.
+// ---------------------------------------------------------------------------
+const dispatchTab = (page) => page.getByRole('tab', { name: 'Dispatch', exact: true });
+const sensitivityTab = (page) => page.getByRole('tab', { name: 'Sensitivity', exact: true });
+async function openDispatch(page) {
+  await dispatchTab(page).click();
+  await page.waitForSelector('#dispatch-chart', { timeout: 60000 });
+}
+async function runTornado(page) {
+  await sensitivityTab(page).click();
+  await page.getByRole('button', { name: /Run sensitivity|Run again/ }).click();
+  await page.waitForSelector('#tornado-chart', { timeout: 120000 });
+}
+const openAllDetails = (page, sel) => page.evaluate((q) => document.querySelectorAll(`${q} details`).forEach((d) => { d.open = true; }), sel);
+// Keyboard readout of a chart: focus it, press keys, return the live-region text and the visible readout text.
+async function chartReadout(page, sel, keys) {
+  await page.focus(sel);
+  for (const k of keys) await page.keyboard.press(k);
+  await page.waitForTimeout(150);
+  return page.evaluate((q) => {
+    const el = document.querySelector(q);
+    const live = el.querySelector('[aria-live]');
+    const tip = el.querySelector('.sc-tip, .tor-tip');
+    let fv = false; try { fv = el.matches(':focus-visible'); } catch { fv = false; }
+    return { live: live ? live.textContent.replace(/\s+/g, ' ').trim() : '', tip: tip ? tip.textContent.replace(/\s+/g, ' ').trim() : '', focused: document.activeElement === el, focusVisible: fv };
+  }, sel);
+}
+
+const phonePort = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true });
+await check('B22. Phone width (375 px, touch): the Dispatch tab causes no horizontal page scroll with its tables open; the timeline and hourly charts give a keyboard readout on screen and in a live region; year, week box (8-day week 52) and presets work; the check against the ranking says it matches', async () => {
+  const { page, errors } = phonePort;
+  const t0 = Date.now();
+  await openDispatch(page);
+  const ms = Date.now() - t0;
+  await openAllDetails(page, '.dv');
+  await page.waitForTimeout(300);
+  const w1 = await pageWidths(page);
+  ok(w1[0] <= w1[1], `Dispatch tab scrollWidth ${w1[0]} > clientWidth ${w1[1]}`);
+  const r1 = await chartReadout(page, '#dispatch-timeline', ['ArrowRight', 'ArrowRight']);
+  ok(r1.focused && r1.focusVisible, 'timeline chart not focused with a visible indicator');
+  ok(/month 1/.test(r1.live) && /Design load/.test(r1.live) && r1.tip.includes('Design load'), `timeline readout: "${r1.live.slice(0, 120)}"`);
+  const r2 = await chartReadout(page, '#dispatch-chart', ['ArrowRight', 'End']);
+  ok(/Year \d+ · day \d+/.test(r2.live) && /Facility demand \(net\)/.test(r2.live), `hourly readout: "${r2.live.slice(0, 120)}"`);
+  ok(r2.tip.includes('Facility demand (net)'), 'hourly readout not shown on screen');
+  const check = await page.locator('.dv-notes [data-check]').getAttribute('data-check');
+  ok(check === 'match', `check against the ranking: ${check}`);
+  // The last model year (the steady state; year 1 has no load before the first phase), then week 52 typed: the week
+  // table has 192 hourly rows (8 days).
+  const years = page.locator('.dv-controls [role=group][aria-label="Model year"] button');
+  const nYears = await years.count();
+  await years.nth(nYears - 1).click();
+  await page.locator('#dv-week').fill('52');
+  await page.locator('#dv-week').press('Enter');
+  await openAllDetails(page, '.dv');
+  await page.waitForTimeout(200);
+  const rows52 = await page.evaluate(() => { const t = [...document.querySelectorAll('.dv details')].find((d) => /Week 52 as a table/.test(d.textContent)); return t ? t.querySelectorAll('tbody tr').length : 0; });
+  ok(rows52 === 192, `week 52 table rows ${rows52} (expected 192)`);
+  const presets = await page.locator('.dv-controls button[aria-pressed]').count();
+  const w2 = await pageWidths(page);
+  ok(w2[0] <= w2[1], `after the week change scrollWidth ${w2[0]} > clientWidth ${w2[1]}`);
+  ok(errors.length === 0, errors.join(' | '));
+  return `Dispatch tab ready ${ms} ms after the click (option re-run on this device); ${w1[0]}/${w1[1]} px with every table open; timeline readout "${r1.live.slice(0, 70)}…"; hourly readout "${r2.live.slice(0, 70)}…"; check "match"; year ${nYears} week 52 = ${rows52} rows; ${presets} year/preset buttons; ${w2[0]}/${w2[1]} px after.`;
+});
+
+await check('B23. Phone width (375 px, touch): the Sensitivity tab runs the tornado for the leader without horizontal page scroll; arrow keys on the tornado give a readout (the live region repeats the on-screen readout); one table row per driver; the base re-run matches the ranking', async () => {
+  const { page, errors } = phonePort;
+  const t0 = Date.now();
+  await runTornado(page);
+  const ms = Date.now() - t0;
+  const w = await pageWidths(page);
+  ok(w[0] <= w[1], `Sensitivity tab scrollWidth ${w[0]} > clientWidth ${w[1]}`);
+  const r = await chartReadout(page, '#tornado-chart', ['ArrowDown']);
+  ok(r.focused && r.focusVisible, 'tornado not focused with a visible indicator');
+  ok(/^1 of \d+: /.test(r.live) && /Swing [\d.]+ points/.test(r.live) && r.tip === r.live, `tornado readout: live "${r.live.slice(0, 80)}" tip "${r.tip.slice(0, 80)}"`);
+  const r2 = await chartReadout(page, '#tornado-chart', ['End']);
+  ok(/^(\d+) of \1: /.test(r2.live), `End: "${r2.live.slice(0, 60)}"`);
+  const rows = await page.locator('.sens-table tbody tr').count();
+  const bars = await page.locator('#tornado-chart g[data-driver]').count();
+  ok(rows === bars && rows >= 7, `rows ${rows}, bars ${bars}`);
+  ok((await page.locator('.sens-base [data-check]').getAttribute('data-check')) === 'match', 'base re-run differs from the ranking');
+  ok(errors.length === 0, errors.join(' | '));
+  return `tornado (15 re-runs) in ${(ms / 1000).toFixed(1)} s; ${w[0]}/${w[1]} px; readout "${r.live.slice(0, 80)}…"; End → "${r2.live.slice(0, 30)}…"; ${rows} drivers; base re-run matches the ranking.`;
+});
+
+await check('B24. Tab bar with five tabs at 375 px: the tab list scrolls sideways, the page does not; arrow keys wrap through all five tabs (ARIA tabs pattern), Home/End go to the first and last, and the selected tab is scrolled into view inside the list', async () => {
+  const { page, errors } = phonePort;
+  await optionsTab(page).click();
+  const m = await page.evaluate(() => { const t = document.querySelector('.tabs'); return { sw: t.scrollWidth, cw: t.clientWidth, n: t.querySelectorAll('[role=tab]').length, labels: [...t.querySelectorAll('[role=tab]')].map((x) => x.textContent) }; });
+  ok(m.n === 5 && m.sw > m.cw, `tab list ${m.n} tabs, scrollWidth ${m.sw} vs clientWidth ${m.cw}`);
+  const w = await pageWidths(page);
+  ok(w[0] <= w[1], `page scrollWidth ${w[0]} > ${w[1]}`);
+  await page.focus('#tab-options');
+  const seq = [];
+  const inView = () => page.evaluate(() => { const a = document.activeElement; const t = document.querySelector('.tabs'); const ra = a.getBoundingClientRect(), rt = t.getBoundingClientRect(); return { id: a.id, sel: a.getAttribute('aria-selected'), tabindex: a.getAttribute('tabindex'), inside: ra.left >= rt.left - 1 && ra.right <= rt.right + 1 }; });
+  for (let i = 0; i < 5; i++) {
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(200);
+    const a = await inView();
+    seq.push(a.id.replace('tab-', ''));
+    ok(a.sel === 'true' && a.tabindex === '0' && a.inside, `after ${i + 1} ArrowRight: ${JSON.stringify(a)}`);
+  }
+  ok(seq.join(',') === 'tradeoffs,site,dispatch,sensitivity,options', `ArrowRight order: ${seq.join(',')}`);
+  await page.keyboard.press('End'); await page.waitForTimeout(200);
+  const e = await inView();
+  await page.keyboard.press('Home'); await page.waitForTimeout(200);
+  const h = await inView();
+  ok(e.id === 'tab-sensitivity' && e.inside && h.id === 'tab-options' && h.inside, `End → ${e.id} (${e.inside}), Home → ${h.id} (${h.inside})`);
+  await page.keyboard.press('ArrowLeft'); await page.waitForTimeout(200);
+  const l = await inView();
+  ok(l.id === 'tab-sensitivity', `ArrowLeft from the first tab → ${l.id}`);
+  ok(errors.length === 0, errors.join(' | '));
+  return `tab list ${m.sw}/${m.cw} px (scrolls), page ${w[0]}/${w[1]} px; ArrowRight: ${seq.join(' → ')}; End → Sensitivity, Home → Options, ArrowLeft from Options → Sensitivity; the selected tab is inside the visible part of the list every time.`;
+});
+await phonePort.ctx.close();
+
+await check('B25. Skip links with five tabs at 375 px: "Skip to results", "Skip to trade-offs chart" and "Skip to site plan" are still the first three Tab stops, and "Skip to site plan" selects the Site tab (scrolled into view in the tab list) and focuses the plan', async () => {
+  const { ctx, page, errors } = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true });
+  const stops = [];
+  for (let i = 0; i < 3; i++) { await page.keyboard.press('Tab'); stops.push(await active(page)); }
+  ok(/Skip to results/.test(stops[0].text) && /Skip to trade-offs chart/.test(stops[1].text) && /Skip to site plan/.test(stops[2].text), `first three Tab stops: ${stops.map((a) => a.text).join(' | ')}`);
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'site-plan', null, { timeout: 30000 });
+  const sel = await page.evaluate(() => { const a = document.getElementById('tab-site'); const t = document.querySelector('.tabs'); const ra = a.getBoundingClientRect(), rt = t.getBoundingClientRect(); return { sel: a.getAttribute('aria-selected'), inside: ra.left >= rt.left - 1 && ra.right <= rt.right + 1 }; });
+  ok(sel.sel === 'true' && sel.inside, `Site tab ${JSON.stringify(sel)}`);
+  await ctx.close();
+  ok(errors.length === 0, errors.join(' | '));
+  return `Tab stops 1–3: "${stops.map((x) => x.text).join('", "')}"; Enter on "Skip to site plan" → Site tab selected and inside the visible tab list, plan focused.`;
+});
+
+async function portAxe(colorScheme) {
+  const { ctx, page, errors } = await openPage({ colorScheme });
+  const out = [];
+  await openDispatch(page);
+  await openAllDetails(page, '.dv');
+  await chartReadout(page, '#dispatch-chart', ['ArrowRight']);
+  out.push(await runAxe(page, `Dispatch tab, tables open, readout shown (${colorScheme})`));
+  const reviewD = await verifyNeedsReviewContrast(page);
+  // An option with firm on-site plant and a battery (hatched firm bands, battery charge level chart).
+  const pick = await page.evaluate(() => { const o = [...document.querySelectorAll('#dv-option option')].find((x) => /fuel cells|gas recips|CHP/i.test(x.textContent) && /BESS/.test(x.textContent)); return o ? o.value : null; });
+  if (pick) {
+    await page.locator('#dv-option').selectOption(pick);
+    await page.waitForFunction(() => !document.querySelector('.dv-wait') && document.querySelector('#dispatch-chart'), null, { timeout: 60000 });
+    await openAllDetails(page, '.dv');
+    out.push(await runAxe(page, `Dispatch tab, an option with firm plant and a battery (${colorScheme})`));
+  }
+  await runTornado(page);
+  await chartReadout(page, '#tornado-chart', ['ArrowDown']);
+  out.push(await runAxe(page, `Sensitivity tab with the tornado and readout (${colorScheme})`));
+  const reviewS = await verifyNeedsReviewContrast(page);
+  const body = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  await ctx.close();
+  return { out, errors, body, reviewD, reviewS, pick };
+}
+for (const scheme of ['light', 'dark']) {
+  await check(`B${scheme === 'light' ? 26 : 27}. axe, ${scheme} theme: Dispatch tab (charts, legend, readout, every table open; the leader and an option with firm plant and a battery) and Sensitivity tab (tornado, readout, table) have no serious or critical violation`, async () => {
+    if (!AXE) return { skip: 'axe-core is not installed.' };
+    const { out, errors, body, reviewD, reviewS, pick } = await portAxe(scheme);
+    if (scheme === 'dark') ok(/30, 33, 37|21, 23, 26/.test(body), `dark theme not applied (body ${body})`);
+    const bad = out.flatMap((r) => serious(r).map((v) => `${r.label}: ${v.impact} ${v.id} ×${v.nodes} (${v.target}) ${v.msg}`));
+    ok(bad.length === 0, bad.join(' | '));
+    for (const [lbl, rv] of [['Dispatch', reviewD], ['Sensitivity', reviewS]]) ok(!rv || rv.below.length === 0, `${lbl}: needs-review text below the contrast minimum: ${rv ? rv.below.slice(0, 5).join(' | ') : ''}`);
+    ok(errors.length === 0, errors.join(' | '));
+    ok(pick, 'no option with firm plant and a battery in the selector');
+    return [...out.map(axeLine), reviewLine(`Dispatch tab (${scheme})`, reviewD), reviewLine(`Sensitivity tab (${scheme})`, reviewS)].join('\n      ');
+  });
+}
+
+const HOSTED_FILE = join(ROOT, 'dist', 'energy-tool-hosted.html');
+await check('B28. Hosted page (dist/energy-tool-hosted.html) inside a host-like document: no document wrapper of its own, loads, runs and shows results with no console errors; the run log is copied (or shown selected for copying), never downloaded', async () => {
+  const { readFileSync } = await import('node:fs');
+  ok(existsSync(HOSTED_FILE), 'dist/energy-tool-hosted.html missing: run npm run build');
+  const content = readFileSync(HOSTED_FILE, 'utf8');
+  ok(!/<!doctype|<html[\s>]|<head[\s>]|<body[\s>]/i.test(content.replace(/<script>[\s\S]*?<\/script>/g, '')), 'hosted page carries document tags');
+  // The host adds the document: a doctype, head with charset and viewport, and a body holding the page content.
+  const hostFile = join(tmpdir(), `host-${process.pid}.html`);
+  writeFileSync(hostFile, `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>${content}</body></html>`);
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1 });
+  try { await ctx.grantPermissions(['clipboard-read', 'clipboard-write']); } catch { /* not grantable here: the fallback path is checked instead */ }
+  const page = await ctx.newPage();
+  const errors = [];
+  const downloads = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(`console: ${m.text()}`); });
+  page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+  page.on('download', (d) => downloads.push(d.suggestedFilename()));
+  const requests = [];
+  page.on('request', (r) => requests.push(r.url()));
+  try {
+    await page.goto(pathToFileURL(hostFile).href, { waitUntil: 'load' });
+    await page.waitForFunction(() => { const st = document.querySelector('.status'); const t = st ? st.textContent : ''; return /Run failed/.test(t) || (/Last run/.test(t) && !/Screening options/.test(t)); }, null, { timeout: 180000, polling: 250 });
+    const status = (await page.locator('.status').innerText()).replace(/\s+/g, ' ').trim();
+    ok(!/Run failed/.test(status), `run failed: ${status}`);
+    ok(await page.locator('[role=tab]').count() === 5, 'results tabs missing');
+    await page.evaluate(() => { const d = document.querySelector('details.run-progress'); if (d) d.open = true; });
+    const label = await page.locator('.rp-dl-label').innerText();
+    ok(/Copy run log/.test(label) && !/Download/.test(label), `run-log label "${label}"`);
+    await page.locator('.rp-log-head').getByRole('button', { name: 'JSON' }).click();
+    await page.waitForFunction(() => !!document.querySelector('.rp-copied') || !!document.querySelector('#rp-copy-text'), null, { timeout: 10000 });
+    const res = await page.evaluate(async () => {
+      const copied = document.querySelector('.rp-copied');
+      const ta = document.querySelector('#rp-copy-text');
+      let clip = null; try { clip = await navigator.clipboard.readText(); } catch { clip = null; }
+      return { copied: copied ? copied.textContent : null, fallback: ta ? { len: ta.value.length, selected: document.activeElement === ta && ta.selectionEnd - ta.selectionStart === ta.value.length, head: ta.value.slice(0, 40) } : null, clipHead: clip ? clip.slice(0, 40) : null };
+    });
+    ok(res.copied ? /Copied JSON/.test(res.copied) : (res.fallback && res.fallback.selected && /"schema"|dc-energy-run-log/.test(res.fallback.head)), `copy result ${JSON.stringify(res)}`);
+    await page.waitForTimeout(500);
+    ok(downloads.length === 0, `a download started: ${downloads.join(', ')}`);
+    const outside = requests.filter((u) => !/^(file:|blob:|data:)/.test(u));
+    ok(outside.length === 0, `requests outside the page: ${outside.slice(0, 3).join(', ')}`);
+    ok(errors.length === 0, errors.join(' | '));
+    return `host-like document: ran (${status.slice(0, 60)}…); label "${label.trim()}"; JSON ${res.copied ? `copied to the clipboard (${res.clipHead ? `clipboard starts "${res.clipHead.slice(0, 24)}…"` : 'clipboard not readable here'})` : `not allowed, shown selected (${res.fallback.len.toLocaleString('en-GB')} characters)`}; 0 downloads; ${requests.length} requests, all file:/blob:/data:.`;
+  } finally {
+    await ctx.close();
+    try { unlinkSync(hostFile); } catch { /* ignore */ }
+  }
+});
+
+await check('B29. Loading message and startup errors: with scripts off the single file shows the loading message and the "needs JavaScript" note (never a blank page); a startup error is shown on the page (role=alert); once the app runs, a later error leaves the page alone', async () => {
+  const { readFileSync } = await import('node:fs');
+  const out = [];
+  // (a) Scripts off.
+  const c1 = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1000, height: 700 } });
+  const p1 = await c1.newPage();
+  await p1.goto(pathToFileURL(FILE).href, { waitUntil: 'load' });
+  const t1 = (await p1.locator('body').innerText()).replace(/\s+/g, ' ');
+  ok(/Loading the energy optioneering tool/.test(t1) && /open the file in a web browser/.test(t1) && /needs JavaScript/.test(t1), `scripts off: "${t1.slice(0, 160)}"`);
+  await c1.close();
+  out.push('scripts off: loading message with the "open in a web browser" instruction and the noscript note');
+  // (b) A copy of the single file whose app script throws at startup.
+  const html = readFileSync(FILE, 'utf8');
+  const scripts = [...html.matchAll(/<script>[\s\S]*?<\/script>/g)];
+  const appTag = scripts.reduce((a, b) => (b[0].length > a[0].length ? b : a));
+  const broken = html.slice(0, appTag.index) + '<script>throw new Error("startup test error")</script>' + html.slice(appTag.index + appTag[0].length);
+  const bFile = join(tmpdir(), `broken-${process.pid}.html`);
+  writeFileSync(bFile, broken);
+  const c2 = await browser.newContext({ viewport: { width: 1000, height: 700 } });
+  const p2 = await c2.newPage();
+  try {
+    await p2.goto(pathToFileURL(bFile).href, { waitUntil: 'load' });
+    await p2.waitForSelector('#boot-error', { timeout: 10000 });
+    const e2 = await p2.evaluate(() => { const b = document.getElementById('boot-error'); return { role: b.getAttribute('role'), text: b.textContent }; });
+    ok(e2.role === 'alert' && /startup test error/.test(e2.text) && /Reload the page/.test(e2.text), `startup error box ${JSON.stringify(e2)}`);
+    out.push(`startup error shown: "${e2.text.slice(0, 70)}…" (role=alert)`);
+  } finally {
+    await c2.close();
+    try { unlinkSync(bFile); } catch { /* ignore */ }
+  }
+  // (c) The running app: a later error does not add the startup box (the app's own handling applies).
+  const { ctx, page } = await openPage();
+  await page.evaluate(() => { window.dispatchEvent(new ErrorEvent('error', { message: 'late test error' })); });
+  await page.waitForTimeout(200);
+  const late = await page.evaluate(() => ({ box: !!document.getElementById('boot-error'), boot: !!document.querySelector('#root .boot'), tabs: document.querySelectorAll('[role=tab]').length }));
+  ok(!late.box && !late.boot && late.tabs === 5, `after the app runs: ${JSON.stringify(late)}`);
+  await ctx.close();
+  out.push('running app: a later error event leaves the page as it is (no startup box, loading message gone)');
+  return out.join('; ') + '.';
 });
 
 await browser.close();

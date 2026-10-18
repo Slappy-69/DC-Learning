@@ -14,7 +14,9 @@ export const PATTERNS = {
 };
 const SHORT = { building: 'Hall', substation: 'Sub', genset: 'Gen', fuel: 'Fuel', bess: 'BESS', gasEngine: 'Eng', turbine: 'GT', fuelCell: 'FC', hydrogen: 'H₂', heatRejection: 'HR', wind: 'WT', smr: 'SMR' };
 
-function Pattern({ id, kind }) {
+// Hatch pattern of an energy source (PATTERNS); also used by the dispatch charts (StackChart.jsx) for wind, which
+// shares the grid hue, so the plan and the charts carry the same hatch.
+export function Pattern({ id, kind }) {
   const s = 7;
   let body = null;
   if (kind === 'h') body = <line className="sp-pat-line" x1="0" y1={s / 2} x2={s} y2={s / 2} />;

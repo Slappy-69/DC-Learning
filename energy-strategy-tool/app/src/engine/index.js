@@ -6,7 +6,7 @@ export { runModel, runModelSteps, startPooledRun, rescore, mergeRuns, toTransfer
 export * from './runlog.js';
 export { getProfiles, PROFILE_LABEL, nearestCountry, H } from './profiles.js';
 export { buildContext, demandYear, gridCapByMonth } from './context.js';
-export { sizeOption } from './sizing.js';
+export { sizeOption, techAvailMonth, bridgeActive } from './sizing.js';
 export { dispatchConfig, dispatchYear, dispatchAll, MERIT_ORDER } from './dispatch.js';
 export { addMonths, monthsBetween } from './dates.js';
 export { paretoView, paretoFrontier, weightedPick, highestWeightedScore, paretoTableRows, dominatedLabel, defaultParetoAxes, paretoCanvasAbove, paretoDefaultDisplay, paretoTtpClasses, PARETO_AXES, PARETO_AXIS_LIST, PARETO_AXIS_GROUPS, TTP_RAMP_STEPS } from './pareto.js';
@@ -17,3 +17,8 @@ export { runLayout, layoutMany, separation, LAYOUT_LEVELS } from './layout.js';
 export { layoutFacts, siteFitOf, SITE_FIT_STATUSES, NOISE_LABEL, siteFitIcon } from './sitefit.js';
 export { layoutForOption, lightContext } from './siteapi.js';
 export * as geometry from './geometry.js';
+export { evaluateOption } from './option.js';
+export { inspectOption, compareWithRun, balanceFromHourly, weekRange, weekPresets, plantSource, HOURS_PER_WEEK, WEEKS_PER_YEAR } from './inspect.js';
+export { allOptionFlags, unmetSummary } from './evaluate.js';
+export { SOURCE_OF_TECH } from './blocks.js';
+export { tornado, tornadoSteps, TORNADO_DRIVERS, tornadoTopN, scoreAgainstRun } from './sensitivity.js';

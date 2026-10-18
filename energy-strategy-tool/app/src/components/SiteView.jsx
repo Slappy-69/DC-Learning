@@ -13,7 +13,8 @@ import { normalizeInputs, buildSiteModel, siteKey, layoutForOption, viewSetting,
 
 // Site models by site key (building one rasterises the site, so it is cached; small LRU).
 const siteCache = new Map();
-function siteFor(nInputs) {
+// Also used by the Dispatch and Sensitivity tabs, which re-run one option on the run's site model.
+export function siteFor(nInputs) {
   const key = siteKey(nInputs);
   let m = siteCache.get(key);
   if (!m) {

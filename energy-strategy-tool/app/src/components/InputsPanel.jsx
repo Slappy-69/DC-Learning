@@ -8,6 +8,7 @@ export default function InputsPanel({ inputs, update, setWeights }) {
   const set = (path) => (val) => update(path, val);
   const norm = useMemo(() => normalizeInputs(inputs), [inputs]);
   const countryAuto = nearestCountry(inputs.project.lat, inputs.project.lon);
+  const countryNow = inputs.project.country && COUNTRIES[inputs.project.country] ? inputs.project.country : countryAuto;
   const countryOptions = [['', `From location (${COUNTRIES[countryAuto].name})`], ...Object.entries(COUNTRIES).map(([k, c]) => [k, c.name])];
   const { w, equal } = effectiveWeights(inputs.weights);
 
@@ -87,6 +88,8 @@ export default function InputsPanel({ inputs, update, setWeights }) {
         <SelectField label="Gas available" value={inputs.utilities.gasAvailable} onCommit={set('utilities.gasAvailable')} path="utilities.gasAvailable" inputs={inputs}
           options={[['Unknown', 'Unknown'], ['Yes', 'Yes'], ['No', 'No']]} />
         <NumberField label="Gas available from" unit="months after start" value={inputs.utilities.gasDateMonths} onCommit={set('utilities.gasDateMonths')} path="utilities.gasDateMonths" inputs={inputs} min={0} />
+        <NumberField label="Gas commodity price" unit="€/MWh_th" value={typeof inputs.utilities.gasPrice === 'number' ? inputs.utilities.gasPrice : null} onCommit={set('utilities.gasPrice')} path="utilities.gasPrice" inputs={inputs} nullable min={0}
+          placeholder={`${COUNTRIES[countryNow].gas} (country default)`} hint={`Empty = the ${COUNTRIES[countryNow].name} default, ${COUNTRIES[countryNow].gas} €/MWh_th; the gas transport adder is added either way.`} />
         <SelectField label="Hydrogen availability" value={inputs.utilities.hydrogenAvailable} onCommit={set('utilities.hydrogenAvailable')} path="utilities.hydrogenAvailable" inputs={inputs}
           options={[['No', 'No'], ['Yes', 'Yes']]} />
         <SelectField label="District heating offtake nearby" value={inputs.utilities.districtHeating} onCommit={(v) => { update('utilities.districtHeating', v); update('choices.C15', null); }} path="utilities.districtHeating" inputs={inputs}
@@ -156,6 +159,8 @@ export default function InputsPanel({ inputs, update, setWeights }) {
           <NumberField label="Evaluation period" unit="yr" value={inputs.economics.periodYears} onCommit={(v) => update('economics.periodYears', Math.round(v))} path="economics.periodYears" inputs={inputs} min={5} max={40} step={1} />
         </div>
         <NumberField label="Contingency" unit="%" scale={100} value={inputs.economics.contingency} onCommit={set('economics.contingency')} path="economics.contingency" inputs={inputs} min={0} max={1} />
+        <NumberField label="Carbon price (Scope 1)" unit="€/tCO₂e" value={typeof inputs.economics.carbonPrice === 'number' ? inputs.economics.carbonPrice : null} onCommit={set('economics.carbonPrice')} path="economics.carbonPrice" inputs={inputs} nullable min={0}
+          placeholder={`${COUNTRIES[countryNow].carbonPrice} (country default)`} hint={`Empty = the ${COUNTRIES[countryNow].name} EU/UK ETS default, ${COUNTRIES[countryNow].carbonPrice} €/tCO₂e; it escalates at the carbon escalation rate. Applied to Scope 1 combustion.`} />
       </Section>
     </div>
   );

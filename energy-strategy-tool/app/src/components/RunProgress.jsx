@@ -7,7 +7,16 @@ import { describeEvent, logToCSV, logToJSON, logFileName, validateRunLog, STAGE_
 
 const pctText = (p) => `${Math.round(p * 100)} %`;
 
+/* global __HOSTED__ */
+// Hosted page (build.mjs dist/energy-tool-hosted.html, port of the other line's e9ed8f6 + c3f81f5): a host's frame
+// ignores downloads that the page starts itself, so the run log is copied to the clipboard instead, with a
+// select-the-text fallback if the browser refuses. build.mjs defines __HOSTED__ in every bundle (true only in the
+// hosted page; like __INLINE_WORKER_SRC__ in useCompute.js). It is written out at each use, not held in a constant,
+// because esbuild folds the defined literal at each site but does not inline a module constant in this bundle: the
+// hosted bundle then keeps no download code and the other bundles no copy code (test 14 checks both).
+
 function download(name, text, type) {
+  if (__HOSTED__) return; // never runs in the hosted page; the build drops the rest of this function there
   const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -25,6 +34,8 @@ export default function RunProgress({ compute, open, onToggle }) {
   const [follow, setFollow] = useState(true);
   const [stageAnnounce, setStageAnnounce] = useState('');
   const lastAnnounced = useRef('');
+  const [copied, setCopied] = useState(null); // hosted page: { fmt, ok, text }
+  const copyRef = useRef(null);
   const running = compute.status === 'running';
   const current = p && p.current;
 
@@ -57,17 +68,35 @@ export default function RunProgress({ compute, open, onToggle }) {
     const meta = compute.runMeta || {};
     const now = new Date();
     const name = logFileName(meta.inputHash || 'unhashed', now, fmt, partial);
+    let text;
     if (fmt === 'json') {
       const v = validateRunLog(events);
-      download(name, logToJSON({
+      text = logToJSON({
         inputHash: meta.inputHash, engineVersion: ENGINE_VERSION, mode: compute.mode || meta.mode, runStartedAt: meta.startedAt,
         exportedAt: now.toISOString(), status: partial ? `partial (${compute.status})` : 'complete',
         t_ms_basis: 'milliseconds since run start (runStartedAt)', validation: { ok: v.ok, problems: v.problems, stagesComplete: v.stagesComplete },
-      }, events), 'application/json');
+      }, events);
     } else {
-      download(name, logToCSV(events), 'text/csv');
+      text = logToCSV(events);
+    }
+    if (!__HOSTED__) {
+      download(name, text, fmt === 'json' ? 'application/json' : 'text/csv');
+      return;
+    }
+    // Hosted page: copy, inside the click handler as the clipboard requires; if refused, show the text selected.
+    const fail = () => setCopied({ fmt, ok: false, text });
+    try {
+      const pr = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : null;
+      if (!pr) fail();
+      else pr.then(() => setCopied({ fmt, ok: true, text: null }), fail);
+    } catch (e) {
+      fail();
     }
   };
+
+  useEffect(() => {
+    if (copied && !copied.ok && copyRef.current) { copyRef.current.focus(); copyRef.current.select(); }
+  }, [copied]);
 
   const total = p ? p.eventCount : 0;
   const recent = p ? p.recent : [];
@@ -103,11 +132,19 @@ export default function RunProgress({ compute, open, onToggle }) {
         <div className="rp-log-head">
           <h3 id="rp-log-title">Event log <span className="sub">(last {recent.length} of {total.toLocaleString('en-GB')})</span></h3>
           <div className="btn-row">
-            <span className="rp-dl-label">Download run log{finalLog ? '' : ' (partial)'}:</span>
+            <span className="rp-dl-label">{__HOSTED__ ? 'Copy run log' : 'Download run log'}{finalLog ? '' : ' (partial)'}:</span>
             <button type="button" className="chip-btn" onClick={() => exportLog('json')} disabled={!p || !total}>JSON</button>
             <button type="button" className="chip-btn" onClick={() => exportLog('csv')} disabled={!p || !total}>CSV</button>
+            {__HOSTED__ && copied && copied.ok ? <span className="rp-copied" role="status">Copied {copied.fmt.toUpperCase()} to the clipboard</span> : null}
           </div>
         </div>
+        {__HOSTED__ && copied && !copied.ok ? (
+          <div className="rp-copy-fallback">
+            <label htmlFor="rp-copy-text">This browser did not allow copying. The {copied.fmt.toUpperCase()} log is selected below: copy it with the browser's Copy command.</label>
+            <textarea id="rp-copy-text" ref={copyRef} readOnly rows={6} value={copied.text} />
+            <button type="button" className="link-btn" onClick={() => setCopied(null)}>Close</button>
+          </div>
+        ) : null}
         <div className="rp-log" ref={logRef} onScroll={onScroll} role="log" aria-live="off" aria-labelledby="rp-log-title" tabIndex={0}>
           {recent.map((e) => (
             <div key={`${e.detail.source}|${e.seq}`} className={`rp-ev rp-ev-${e.event}`}>

@@ -9,7 +9,7 @@ import { normalizeInputs } from './defaults.js';
 import { generateOptions, optionName, RULES, RULE_D } from './generator.js';
 import { sizeOption, applySolarFill } from './sizing.js';
 import { dispatchConfig, dispatchKey, dispatchAll, MERIT_ORDER } from './dispatch.js';
-import { timeToPower, economics, carbon, resilience, optionFlags, deliverability, flag } from './evaluate.js';
+import { timeToPower, economics, carbon, resilience, allOptionFlags, unmetSummary, deliverability, flag } from './evaluate.js';
 import { scoreOptions } from './scoring.js';
 import { hashString } from './prng.js';
 import { PROFILE_LABEL } from './profiles.js';
@@ -233,11 +233,9 @@ export function* runModelSteps(rawInputs, opts = {}) {
   // ---- 11. Flags ----
   let withMajor = 0;
   yield* pass(STAGE.flags, (r) => {
-    r.flags = optionFlags(ctx, r.g.v, r.sz, r.disp, r.ttp, r.eco, r.carb, r.res);
-    // Site-fit flags (§15 "Site fit"); none carries permitting: true, so they never enter deliverability.
-    r.flags.push(...r.siteFit.flags);
-    // Data flag on every option (all defaults are C-tagged in this slice)
-    r.flags.push(flag('data-unverified', 'info', 'Data', 'Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles'));
+    // §15 flags, the site-fit flags (none carries permitting: true, so they never enter deliverability) and the data
+    // flag on every option (all defaults are C-tagged), assembled by the function option.js also uses.
+    r.flags = allOptionFlags(ctx, r.g.v, r.sz, r.disp, r.ttp, r.eco, r.carb, r.res, r.siteFit);
     if (r.flags.some((f) => f.severity === 'major')) withMajor++;
   }, () => ({ optionsWithMajorFlags: withMajor }));
 
@@ -246,12 +244,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
   yield* pass(STAGE.deliverability, (r) => {
     const { g, sz, disp, ttp, eco, carb, res, flags } = r;
     const deliv = deliverability(ctx, g.v, sz, disp, flags, r.siteFit);
-    const unmet = {
-      mwh: disp.years.reduce((a, y) => a + y.unmetMWh, 0),
-      hours: disp.years.reduce((a, y) => a + y.unmetHours, 0),
-      peakMW: disp.years.reduce((a, y) => Math.max(a, y.unmetPeakMW), 0),
-      byYear: disp.years.map((y) => y.unmetMWh),
-    };
+    const unmet = unmetSummary(disp);
     options.push({
       id: r.id, key: g.key, v: g.v, archetype: g.archetype, archetypeName: g.archetypeName, custom: false, pinned: false,
       name: optionName(g.v, sz), sizing: sz, dispatchKey: r.cfgKey, dispatch: disp, ttp, eco, carbon: carb, resilience: res, flags, deliv, unmet,

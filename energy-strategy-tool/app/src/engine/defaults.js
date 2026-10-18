@@ -519,6 +519,14 @@ viewRec('view.pareto.display', 'chart', '"chart" | "table"', 'judgement', 'Chart
 viewRec('view.site.smallMultiples', 6, 'plans', 'run setting', 'Number of top-ranked options drawn as small-multiple plans on the Site tab, all at the same scale (§10.7 "thumbnails of pinned or top options"; pinning is not in this slice). 0 hides them.', '§10.7');
 viewRec('view.table.pageSize', 50, 'rows per page', 'run setting', 'Rows per page in the ranked table and the trade-off table; every page is reachable with the pager.');
 
+// Tornado sensitivity (§13.3, port slice): driver ranges that have no input record of their own (the gas and carbon
+// prices are "by country" and the IT load is a required input), and the number of drivers shown. The other drivers
+// read their input's record (grid.dateUncertainty, grid.priceMultiplier, grid.carbonMultiplier, economics.wacc).
+rec('sensitivity.gasPriceFactor', 1, '× current gas commodity price (country default or entered value)', { low: 0.7, high: 1.3, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range: low and high gas commodity price as factors on the current value. No source.' });
+rec('sensitivity.carbonPriceFactor', 1, '× current carbon price (country default or entered value)', { low: 0.5, high: 1.5, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range: low and high EU/UK ETS carbon price as factors on the current value. No source.' });
+rec('sensitivity.itLoadFactor', 1, '× IT load of every phase', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range: low and high IT load as factors on the entered phases. No source.' });
+rec('sensitivity.topDrivers', 12, 'drivers shown', { basis: 'run setting', ref: '§13.3', dist: 'fixed', note: 'Largest-swing drivers shown in the tornado (§13.3 "top 12 drivers", editable 1–30). This slice has 7 drivers.' });
+
 // Required inputs: no default in the brief. The app pre-fills the T1 reference example
 // so it can run on load; these are marked "example value — replace" in the UI, not defaults.
 export const REQUIRED_EXAMPLE = {
@@ -783,6 +791,7 @@ export function isAtDefault(inputs, path) {
     return JSON.stringify({ state: cur.state, values: cur.values }) === JSON.stringify({ state: d.state, values: d.values });
   }
   if (cur == null && r.derived) return true;
-  if (r.derived && typeof r.value === 'string' && r.value.startsWith('by ')) return true;
+  // "by country" defaults: at default while no value is entered (a number entered replaces it, e.g. utilities.gasPrice).
+  if (r.derived && typeof r.value === 'string' && r.value.startsWith('by ')) return cur == null || cur === r.value;
   return JSON.stringify(cur) === JSON.stringify(r.value);
 }

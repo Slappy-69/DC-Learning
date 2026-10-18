@@ -79,7 +79,9 @@ function itShape(inputs, seed) {
   return a;
 }
 
-export function buildContext(inputs) {
+// opts.site: a site model already built for these inputs (the Dispatch and Sensitivity tabs pass the run's, so one
+// option can be re-run without rasterising the site again); the caller checks its key (site.js siteKey).
+export function buildContext(inputs, opts = {}) {
   const country = resolveCountry(inputs);
   const cdata = COUNTRIES[country];
   const seed = inputs.project.seed;
@@ -96,11 +98,15 @@ export function buildContext(inputs) {
   const cooling = {};
   for (const id of Object.keys(COOLING)) cooling[id] = coolingProfile(COOLING[id], prof);
 
-  const gasPrice = cdata.gas + FUEL.gasTransportAdder;
+  // Gas commodity price and carbon price (§5.4, §5.6): a number entered for utilities.gasPrice or economics.carbonPrice
+  // replaces the country default (the records' value is "by country"); the gas transport adder applies either way.
+  // Before the port slice the engine read only the country values (the inputs were ignored).
+  const gasCommodity = Number.isFinite(inputs.utilities.gasPrice) ? inputs.utilities.gasPrice : cdata.gas;
+  const gasPrice = gasCommodity + FUEL.gasTransportAdder;
   const priceMult = inputs.grid.priceMultiplier;
   const priceAdder = cdata.adder;
   const carbonMult = inputs.grid.carbonMultiplier;
-  const carbonPrice = cdata.carbonPrice;
+  const carbonPrice = Number.isFinite(inputs.economics.carbonPrice) ? inputs.economics.carbonPrice : cdata.carbonPrice;
 
   // Phase months
   const phases = inputs.load.phases.map((p) => ({ m: monthOf(inputs, p.date), it: Number(p.itMW) })).sort((a, b) => a.m - b.m);
@@ -111,10 +117,10 @@ export function buildContext(inputs) {
 
   const ctx = {
     inputs, country, cdata, prof, seed, nMonths, nMonthsTimeline, gridCap, itInst, shape, baseYear, startMonth,
-    cooling, gasPrice, priceMult, priceAdder, carbonMult, carbonPrice, phases, firstPhaseM, lastPhaseM, fullGridM, gasM,
+    cooling, gasCommodity, gasPrice, priceMult, priceAdder, carbonMult, carbonPrice, phases, firstPhaseM, lastPhaseM, fullGridM, gasM,
     demandCache: new Map(),
     demandStats: { hits: 0, misses: 0 }, // run-log counters for the hourly demand cache
-    site: buildSiteModel(inputs), // site model and buildable-envelope raster (§10.1), shared by every option
+    site: opts.site || buildSiteModel(inputs), // site model and buildable-envelope raster (§10.1), shared by every option
   };
   return ctx;
 }

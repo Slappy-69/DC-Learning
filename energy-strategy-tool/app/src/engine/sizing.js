@@ -12,7 +12,11 @@ export function programmeMonths(t) {
   return (t.p.planM || 0) + (t.p.procM || 0) + (t.p.buildM || 0);
 }
 
-function techAvailMonth(ctx, t) {
+// Month a technology can first supply (BRIEF §9.8 "supply available date per source"): its planning,
+// procurement and construction months, or its earliest-availability date if later. One rule for every
+// source, batteries included: the bridging battery's availMonth below, time-to-power (evaluate.js), dispatch
+// (dispatch.js bessAvailM) and the BESS capex year (evaluate.js) all read this month (port of e1161ce).
+export function techAvailMonth(ctx, t) {
   let m = programmeMonths(t);
   if (t.p.earliestYear) {
     const em = (t.p.earliestYear - ctx.baseYear) * 12 - (ctx.startMonth - 1);
@@ -141,7 +145,9 @@ export function sizeOption(ctx, v) {
 
   // --- Bridging (C1/C2) ---
   let bridge = null;
-  let bridgeBess = { mw: 0, mwh: 0 };
+  // Bridging battery (C2 = BESS + solar): supplies from the BESS programme month, like every other source (§9.8).
+  const bessAvailMonth = techAvailMonth(ctx, TECH.bess);
+  let bridgeBess = { mw: 0, mwh: 0, availMonth: bessAvailMonth };
   const T = ctx.fullGridM; // grid full-connection month
   if (v.C1 === 'bridge' || v.C1 === 'islanded') {
     let S = 0;
@@ -154,8 +160,8 @@ export function sizeOption(ctx, v) {
     }
     if (v.C1 === 'islanded') S = Math.max(S, designMW);
     if (v.C2 === 'bessSolar') {
-      bridgeBess = { mw: S, mwh: S * inputs.settings.bridgeBessHours };
-      sentences.push(`Bridging BESS + solar: largest shortfall ${r1(S)} MW → BESS ${r1(S)} MW / ${r1(bridgeBess.mwh)} MWh (${inputs.settings.bridgeBessHours} h), PV per C10.`);
+      bridgeBess = { mw: S, mwh: S * inputs.settings.bridgeBessHours, availMonth: bessAvailMonth };
+      sentences.push(`Bridging BESS + solar: largest shortfall ${r1(S)} MW → BESS ${r1(S)} MW / ${r1(bridgeBess.mwh)} MWh (${inputs.settings.bridgeBessHours} h), PV per C10; supplies from month ${bessAvailMonth} (BESS planning, procurement and construction, §9.8), the month time-to-power and dispatch use.`);
     } else if (S > 0) {
       const t = TECH[BRIDGE_TECH[v.C2]];
       const n = Math.ceil(S / t.p.unitMW - 1e-9);
@@ -180,7 +186,7 @@ export function sizeOption(ctx, v) {
         if (needMW > bridgeBess.mw + 1e-9 || needMWh > bridgeBess.mwh + 1e-9) {
           sentences.push(`Retained BESS as backup: sized to the resilience requirement, ${r1(needMW)} MW (critical load) / ${r1(needMWh)} MWh (${req.autonomyH} h autonomy).`);
         }
-        bridgeBess = { mw: needMW, mwh: needMWh };
+        bridgeBess = { mw: needMW, mwh: needMWh, availMonth: bessAvailMonth };
       } else {
         const t = TECH[BRIDGE_TECH[v.C2]];
         const nCrit = Math.ceil(criticalMW / t.p.unitMW - 1e-9);

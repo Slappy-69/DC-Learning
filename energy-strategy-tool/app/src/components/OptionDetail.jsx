@@ -34,7 +34,23 @@ function SiteFitSummary({ o, onShowSite }) {
   );
 }
 
-export default function OptionDetail({ o, start, onClose, dominator = null, onShowSite = null }) {
+// PPA hedge (owner decision 2026-10-18): settlement on contracted PPA volume that is not delivered physically,
+// reported next to the economics but never in the ledger, LCOE, NPV or score (evaluate.js economics).
+export function PpaHedgeRow({ h }) {
+  const und = h.undeliveredMWh;
+  return (
+    <tr className="hedge-row">
+      <th scope="row">PPA hedge (not counted)</th>
+      <td className="num">
+        {und > 1e-6
+          ? <>net {h.total >= 0 ? 'income' : 'cost'} {money(Math.abs(h.total))} (present value {money(Math.abs(h.pv))}) on {sig(und / 1e6, 3)} TWh not delivered of {sig(h.contractMWh / 1e6, 3)} TWh contracted</>
+          : <>none: all {sig(h.contractMWh / 1e6, 3)} TWh contracted is delivered</>}
+      </td>
+    </tr>
+  );
+}
+
+export default function OptionDetail({ o, start, onClose, dominator = null, onShowSite = null, onShowDispatch = null }) {
   const sz = o.sizing;
   const ss = o.dispatch.years[o.dispatch.years.length - 1];
   return (
@@ -70,9 +86,10 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
               <tr><th scope="row">Capex (incl. contingency)</th><td className="num">{money(o.eco.capex)} <span className="range">({money(o.eco.capexLow, 2)}–{money(o.eco.capexHigh, 2)})</span></td></tr>
               <tr><th scope="row">Opex year 1 / steady state</th><td className="num">{money(o.eco.opexYear1)} / {money(o.eco.opexSteady)}</td></tr>
               <tr><th scope="row">Capex share of PV cost</th><td className="num">{pct(o.eco.capexShare)}</td></tr>
+              {o.eco.ppaHedge ? <PpaHedgeRow h={o.eco.ppaHedge} /> : null}
             </tbody>
           </table>
-          <p className="note">Capex scope: energy, backup, grid connection, substation and cooling delta only. Data hall shell and IT fit-out excluded.</p>
+          <p className="note">Capex scope: energy, backup, grid connection, substation and cooling delta only. Data hall shell and IT fit-out excluded.{o.eco.ppaHedge ? ' PPA settlement counts only on PPA energy delivered over the grid connection; the PPA hedge is reported outside the ledger, LCOE, NPV and score.' : ''}</p>
         </div>
         <div>
           <h4>Carbon and energy</h4>
@@ -109,6 +126,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
               <tr><th scope="row">Axis metric</th><td className="num">{sig(o.ttp.metric)} months</td></tr>
             </tbody>
           </table>
+          {onShowDispatch ? <button type="button" className="link-btn" onClick={() => onShowDispatch(o.id)}>Show this option's phasing and hourly dispatch on the Dispatch tab</button> : null}
           <h4>Resilience: {o.resilience.status}</h4>
           <ul className="plain small">{o.resilience.items.map((i) => <li key={i.item}>{i.ok ? '✓' : '✗'} <strong>{i.item}:</strong> {i.text}</li>)}</ul>
           <h4>{o.deliv.includesSiteFit ? 'Deliverability (incl. site fit)' : 'Deliverability'} {sig(o.deliv.score, 2)}</h4>

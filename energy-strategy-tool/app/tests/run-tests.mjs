@@ -39,6 +39,10 @@
 //         leader, with "Rank requirement-compliant options first" on or off; the highest weighted
 //         score is marked separately when it differs; a pick that is not drawn says why.
 //     8h. Every active view filter is a removable chip; the header filter count matches applyView().
+//  9. Site slice (tests/site-tests.mjs): geometry kernel, site model, blocks, auto-layout, site fit, Site tab.
+// 10–14. Port slice (tests/port-tests.mjs): bridging-battery timing (10), PPA settlement only on physical delivery
+//     and the ledger reconciliation (11), Dispatch tab inspector (12), tornado sensitivity (13), loading message,
+//     startup errors and the hosted page (14).
 // Browser checks (Canvas drawing, keyboard, table paging, skip links, axe) are in tests/browser-tests.mjs.
 
 import assert from 'node:assert/strict';
@@ -57,6 +61,8 @@ import { createProgressTracker } from '../src/engine/runlog.js';
 import { Worker } from 'node:worker_threads';
 import { readFileSync, existsSync } from 'node:fs';
 import { geometryTests, siteModelTests, blockTests, layoutTests, siteFitTests } from './site-tests.mjs';
+import { batteryTimingTests, ppaTests, inspectorTests, sensitivityTests, hostedPageTests } from './port-tests.mjs';
+import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
 const results = [];
@@ -608,8 +614,9 @@ await test('7. Single-file build: worker inlined as a Blob-URL source string, no
   assert.ok(importRefs.every((r) => !/["']\.{0,2}\/?[\w-]+\.(?:js|mjs|css|json)["']/.test(r)), `file loads: ${importRefs.join(' | ')}`);
   // Extract the inlined worker source from new Blob([<literal>], ...).
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
-  assert.equal(scripts.length, 1, `expected one inline script, found ${scripts.length}`);
-  const app = scripts[0];
+  // Two inline scripts since the port slice: the startup-error handler from index.html and the app bundle (the larger).
+  assert.equal(scripts.length, 2, `expected two inline scripts (startup handler + app), found ${scripts.length}`);
+  const app = scripts.reduce((a, b) => (b.length > a.length ? b : a));
   // The worker Blob is the one built from a string literal and passed straight to URL.createObjectURL.
   const blobMatches = [...app.matchAll(/URL\.createObjectURL\(new Blob\(\[(?=["'`])/g)];
   assert.equal(blobMatches.length, 1, `expected one URL.createObjectURL(new Blob([<string literal>]) in the app, found ${blobMatches.length}`);
@@ -637,7 +644,7 @@ await test('7. Single-file build: worker inlined as a Blob-URL source string, no
   const newest = (dir) => readdirSync(dir, { withFileTypes: true }).reduce((m, d) => Math.max(m, d.isDirectory() ? newest(new URL(`${d.name}/`, dir)) : statSync(new URL(d.name, dir)).mtimeMs), 0);
   const srcMs = newest(new URL('../src/', import.meta.url));
   const distMs = statSync(htmlPath).mtimeMs;
-  return `single file ${(html.length / 1024).toFixed(1)} KB, 1 inline script, 0 "worker.js" mentions, 0 <script src>, 0 <link href>, 0 relative src/href; inlined worker source ${src.length.toLocaleString('en-GB')} chars, identical to dist/worker.js, parses; run in a worker_thread on slice 1/${SLICES} of T1: ${part.options.length} options, ${part.log.length} log events; build ${distMs >= srcMs ? 'newer than' : 'OLDER than'} the newest source file (${new Date(distMs).toISOString()} vs ${new Date(srcMs).toISOString()}).`;
+  return `single file ${(html.length / 1024).toFixed(1)} KB, 2 inline scripts (startup handler + app), 0 "worker.js" mentions, 0 <script src>, 0 <link href>, 0 relative src/href; inlined worker source ${src.length.toLocaleString('en-GB')} chars, identical to dist/worker.js, parses; run in a worker_thread on slice 1/${SLICES} of T1: ${part.options.length} options, ${part.log.length} log events; build ${distMs >= srcMs ? 'newer than' : 'OLDER than'} the newest source file (${new Date(distMs).toISOString()} vs ${new Date(srcMs).toISOString()}).`;
 });
 
 // ---------------------------------------------------------------------------
@@ -780,57 +787,7 @@ await test('8c. Dominance marking does not remove any option from the Pareto vie
   return out.join('; ') + '.';
 });
 
-// Bundle the real view components once with esbuild and render them to static markup with
-// react-dom/server. The bundle has its own module instances, so it also exports its own registry:
-// tests that change a view record to check the behaviour follows (8f) change the bundle's copy.
-let viewBundle = null;
-async function getViewBundle() {
-  if (viewBundle) return viewBundle;
-  const esbuild = await import('esbuild');
-  const { mkdtempSync, writeFileSync: wf, rmSync } = await import('node:fs');
-  const { tmpdir } = await import('node:os');
-  const { join } = await import('node:path');
-  const { pathToFileURL, fileURLToPath } = await import('node:url');
-  const root = fileURLToPath(new URL('..', import.meta.url));
-  const dir = mkdtempSync(join(tmpdir(), 'pareto-test-'));
-  try {
-    const entry = join(dir, 'entry.jsx');
-    const src = (f) => JSON.stringify(join(root, f));
-    wf(entry, `import React from 'react'; import { renderToStaticMarkup } from 'react-dom/server.browser';
-      import ParetoChart from ${src('src/components/ParetoChart.jsx')};
-      import ParetoTable from ${src('src/components/ParetoTable.jsx')};
-      import ParetoView from ${src('src/components/ParetoView.jsx')};
-      export { getRegistry } from ${src('src/engine/defaults.js')};
-      export function renderChart(model, width, forceSvg = true) {
-        return renderToStaticMarkup(React.createElement(ParetoChart, { model, onSelect: () => {}, forceSvg, initialWidth: width }));
-      }
-      export function renderTable(model, pageSize = Infinity) {
-        return renderToStaticMarkup(React.createElement(ParetoTable, { model, pageSize }));
-      }
-      export function renderView(run, view) {
-        return renderToStaticMarkup(React.createElement(ParetoView, { run, view, setView: () => {}, start: '2027-01' }));
-      }
-      import SiteView from ${src('src/components/SiteView.jsx')};
-      import RunSummary from ${src('src/components/RunSummary.jsx')};
-      import OptionDetail from ${src('src/components/OptionDetail.jsx')};
-      export { blockRows } from ${src('src/components/site/BlocksTable.jsx')};
-      export function renderSite(run, inputs, optionId = null) {
-        return renderToStaticMarkup(React.createElement(SiteView, { run, inputs, update: () => {}, optionId, setOptionId: () => {}, computing: false }));
-      }
-      export function renderSummary(run) {
-        return renderToStaticMarkup(React.createElement(RunSummary, { run, open: true, onToggle: () => {}, onInclude: () => {}, onSamplingOff: () => {} }));
-      }
-      export function renderOptionDetail(o) {
-        return renderToStaticMarkup(React.createElement(OptionDetail, { o, start: '2027-01', onClose: () => {} }));
-      }`);
-    const out = join(dir, 'bundle.mjs');
-    await esbuild.build({ entryPoints: [entry], bundle: true, format: 'esm', platform: 'node', outfile: out, jsx: 'automatic', loader: { '.js': 'jsx' }, logLevel: 'silent', nodePaths: [join(root, 'node_modules')], define: { 'process.env.NODE_ENV': '"production"' } });
-    viewBundle = await import(pathToFileURL(out).href);
-    return viewBundle;
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-}
+// getViewBundle (the real view components bundled once with esbuild for static rendering): tests/view-bundle.mjs.
 // Set a registry record for the duration of fn, then restore it.
 async function withRecord(registry, path, value, fn) {
   const r = registry[path];
@@ -1158,6 +1115,17 @@ const siteRuns = { runT1, runT3, START, getViewBundle };
 await blockTests(test, siteRuns);
 await layoutTests(test, siteRuns);
 await siteFitTests(test, siteRuns);
+
+// ---------------------------------------------------------------------------
+// 10–14. Port slice (2026-10-18): bridging-battery timing, PPA physical delivery, Dispatch tab inspector,
+// tornado sensitivity, loading message and hosted page (tests/port-tests.mjs)
+// ---------------------------------------------------------------------------
+const portRuns = { runT1, runT3, START, getViewBundle };
+await batteryTimingTests(test, portRuns);
+await ppaTests(test, portRuns);
+await inspectorTests(test, portRuns);
+await sensitivityTests(test, portRuns);
+await hostedPageTests(test);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

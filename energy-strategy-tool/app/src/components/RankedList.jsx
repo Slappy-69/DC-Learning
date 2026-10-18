@@ -71,7 +71,7 @@ function ResBadge({ s }) {
   return <span className={`badge badge-${cls}`}><span aria-hidden="true">{icon}</span> {s}</span>;
 }
 
-export default function RankedList({ run, view, setView, start, onShowSite }) {
+export default function RankedList({ run, view, setView, start, onShowSite, onShowDispatch = null }) {
   const [page, setPage] = useState(0);
   const [openId, setOpenId] = useState(null);
   const { list, hiddenDominated } = useMemo(() => applyView(run.options, view), [run, view]);
@@ -200,7 +200,7 @@ export default function RankedList({ run, view, setView, start, onShowSite }) {
                     <td className="num"><span className="flag-counts" title={`${c.major} major, ${c.minor} minor, ${c.info} info`}>{c.major ? <span className="fc fc-major">{c.major}</span> : null}{c.minor ? <span className="fc fc-minor">{c.minor}</span> : null}<span className="fc fc-info">{c.info}</span></span></td>
                   </tr>
                   {open ? (
-                    <tr className="detail-row"><td colSpan={15}><OptionDetail o={o} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={onShowSite} /></td></tr>
+                    <tr className="detail-row"><td colSpan={15}><OptionDetail o={o} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={onShowSite} onShowDispatch={onShowDispatch} /></td></tr>
                   ) : null}
                 </React.Fragment>
               );

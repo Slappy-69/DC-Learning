@@ -4,7 +4,7 @@
 import { TECH, FUEL, PPA, COOLING, COUNTRIES, choiceLabel } from './defaults.js';
 import { decarbFactor } from './context.js';
 import { fuelPrice, fuelEF } from './dispatch.js';
-import { bridgeActive, programmeMonths } from './sizing.js';
+import { bridgeActive, programmeMonths, techAvailMonth } from './sizing.js';
 import { NA } from './generator.js';
 
 const PERMIT_NOTE = 'Screening flag, not a permitting determination.';
@@ -23,7 +23,9 @@ export function timeToPower(ctx, v, sz) {
   for (let m = 0; m < n; m++) {
     let s = v.C1 === 'islanded' ? 0 : ctx.gridCap[m];
     s += sz.firmByMonth[m];
-    if (v.C2 === 'bessSolar' && bridgeActive(v, m, sz.T)) s += sz.bridgeBess.mw;
+    // Bridging battery counts from its supply-available month (BRIEF §9.8), like every other source; the same
+    // month sizing records (sz.bridgeBess.availMonth) and dispatch uses (port of e1161ce).
+    if (v.C2 === 'bessSolar' && bridgeActive(v, m, sz.T) && m >= sz.bridgeBess.availMonth) s += sz.bridgeBess.mw;
     supply[m] = s;
   }
   const ph1 = ctx.phases[0];
@@ -103,10 +105,14 @@ export function economics(ctx, v, sz, disp, ttp) {
   addCapex('Solar PV carport', avail('solarCarport'), sz.solarCarportMWp * 1000 * TECH.solarCarport.p.capexPerKW, TECH.solarCarport.p.life);
   addCapex('Solar PV ground-mount', avail('solarGround'), sz.solarGroundMWp * 1000 * TECH.solarGround.p.capexPerKW, TECH.solarGround.p.life);
   addCapex('Wind onshore', avail('wind'), sz.windMW * 1000 * TECH.wind.p.capexPerKW, TECH.wind.p.life);
-  // BESS (C12 + bridging BESS + BESS-augmented UPS)
+  // BESS (C12 + bridging BESS): booked in the year the battery can first supply, the month time-to-power and
+  // dispatch use (sizing.js techAvailMonth, §9.8), as every other plant is booked at its availability. Before the
+  // port a bridging battery was booked in year 0 because it was counted from month 0. (The BESS-augmented UPS
+  // battery is backup plant, booked per phase below.)
   const bp = TECH.bess.p;
   const bessCapex = (mw, mwh) => mwh * 1000 * bp.capexPerKWh + mw * 1000 * bp.capexPerKW;
-  addCapex('BESS', v.C2 === 'bessSolar' ? 0 : avail('bess'), bessCapex(sz.storage.mw, sz.storage.mwh), bp.life);
+  const bessYear = yearOfMonth(techAvailMonth(ctx, TECH.bess));
+  addCapex('BESS', bessYear, bessCapex(sz.storage.mw, sz.storage.mwh), bp.life);
   // Firm prime
   if (sz.prime) {
     const t = TECH[sz.prime.tech];
@@ -180,7 +186,7 @@ export function economics(ctx, v, sz, disp, ttp) {
     if (y >= avail('solarCarport')) L.fom += sz.solarCarportMWp * 1000 * TECH.solarCarport.p.fomPerKW;
     if (y >= avail('solarGround')) L.fom += sz.solarGroundMWp * 1000 * TECH.solarGround.p.fomPerKW;
     if (y >= avail('wind')) L.fom += sz.windMW * 1000 * TECH.wind.p.fomPerKW;
-    if (y >= (v.C2 === 'bessSolar' ? 0 : avail('bess'))) L.fom += bessCapex(sz.storage.mw, sz.storage.mwh) * bp.fomPct;
+    if (y >= bessYear) L.fom += bessCapex(sz.storage.mw, sz.storage.mwh) * bp.fomPct;
     if (sz.prime && y >= yearOfMonth(sz.prime.availMonth)) L.fom += sz.prime.mw * 1000 * TECH[sz.prime.tech].p.fomPerKW;
     if (sz.bridge && sz.bridge.tech !== 'rented' && y >= yearOfMonth(sz.bridge.availMonth) && (bridgeRemoveYear === null || y < bridgeRemoveYear)) L.fom += sz.bridge.mw * 1000 * TECH[sz.bridge.tech].p.fomPerKW;
     if (sz.backup.tech) {
@@ -203,6 +209,13 @@ export function economics(ctx, v, sz, disp, ttp) {
   const nExp = disp.years.length;
   const country = ctx.country;
   const ppaPrice = sz.ppa ? PPA.strike[sz.ppa.type] + PPA.shapingAdder : 0;
+  // PPA settlement (owner decision 2026-10-18: no PPA income without physical delivery). The ledger books the PPA
+  // price (strike + shaping) only on PPA energy physically delivered over the grid connection to the load. The
+  // settlement on contracted volume that is not delivered (its wholesale value less the PPA price, + = net income)
+  // is the "PPA hedge (not counted)": reported here, never added to the ledger, so it is outside LCOE, NPV, the
+  // capex/opex split and the score. Before the decision the ledger booked the PPA price on the whole contract and
+  // netted the undelivered volume at the hourly grid price (incl. the non-commodity adder) as income.
+  const hedge = sz.ppa ? { byYear: [], total: 0, pv: 0, contractMWh: 0, deliveredMWh: 0, undeliveredMWh: 0, limitedMWh: 0, price: ppaPrice } : null;
   const testRun = sz.backup.tech ? (() => {
     const t = TECH[sz.backup.tech];
     const units = v.C5 === 'bessUps' ? sz.backup.nUnits : sz.backup.units;
@@ -232,7 +245,17 @@ export function economics(ctx, v, sz, disp, ttp) {
       scope1 += sh * testRun.fuelMWhTh * fuelEF(testRun.fuel);
     }
     L.grid += d.gridCost * elecEsc + d.ppaNetworkCost; // network/non-commodity adder also applies to PPA energy over the grid
-    if (sz.ppa) L.ppa += d.ppaContractMWh * ppaPrice - d.ppaResaleValue * elecEsc;
+    if (sz.ppa) {
+      L.ppa += d.ppaDeliveredMWh * ppaPrice;
+      const hv = d.ppaUndeliveredSpotValue * elecEsc - d.ppaUndeliveredMWh * ppaPrice;
+      hedge.byYear.push(hv);
+      hedge.total += hv;
+      hedge.pv += hv * Math.pow(1 + r, -(y + 1)); // discounted as opex (end of year)
+      hedge.contractMWh += d.ppaContractMWh;
+      hedge.deliveredMWh += d.ppaDeliveredMWh;
+      hedge.undeliveredMWh += d.ppaUndeliveredMWh;
+      hedge.limitedMWh += d.ppaLimitedMWh;
+    }
     L.carbon += scope1 * cPrice;
     L.revenue += d.exportRevenue * elecEsc;
     L.deliveredMWh += d.grossDemandMWh - d.unmetMWh;
@@ -276,7 +299,8 @@ export function economics(ctx, v, sz, disp, ttp) {
     capexPerMWIT: capexInitial / Math.max(1e-9, sz.itMW),
     opexYear1: year1.opex, opexSteady: ss.opex,
     capexShare: pvCost !== 0 ? pvCapex / pvCost : 0,
-    reconciliation: { lcoeTimesEnergy: lcoe * pvEnergy, npv: pvCost },
+    reconciliation: { lcoeTimesEnergy: lcoe * pvEnergy, npv: pvCost, pvEnergy },
+    ppaHedge: hedge, // outside the ledger (see above); null without a PPA
   };
 }
 
@@ -427,8 +451,20 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
     const exPk = disp.years.reduce((s, y) => Math.max(s, y.exceedPeakMW), 0);
     flags.push(flag('grid-exceed', 'major', 'Grid', `Import exceeds grid capacity: peak ${exPk.toFixed(1)} MW, ${exH.toLocaleString('en-GB')} h, ${Math.round(exMWh).toLocaleString('en-GB')} MWh`, { value: exMWh }));
   }
-  const ppaLim = disp.years.reduce((s, y) => s + y.ppaLimitedMWh, 0);
-  if (ppaLim > 1e-6) flags.push(flag('grid-ppa', 'minor', 'Grid', `PPA limited by import capacity: ${Math.round(ppaLim).toLocaleString('en-GB')} MWh not delivered physically (settled financially)`));
+  // PPA volume not delivered physically (owner decision 2026-10-18): the flag explains the "PPA hedge (not counted)".
+  // Minor when part of it is limited by import capacity (§15 "PPA limited by import capacity"), info when it is only
+  // contracted volume above the residual load in the hour.
+  const hd = eco.ppaHedge;
+  if (hd && hd.undeliveredMWh > 1e-6) {
+    const lim = hd.limitedMWh;
+    const above = Math.max(0, hd.undeliveredMWh - lim);
+    const mwh = (x) => `${Math.round(x).toLocaleString('en-GB')} MWh`;
+    const eur = (x) => `€${Number((Math.abs(x) / 1e6).toPrecision(3)).toLocaleString('en-GB')} m`;
+    const parts = [lim > 1e-6 ? `${mwh(lim)} limited by import capacity` : null, above > 1e-6 ? `${mwh(above)} above the load in the hour` : null].filter(Boolean).join(', ');
+    flags.push(flag('grid-ppa', lim > 1e-6 ? 'minor' : 'info', 'Grid',
+      `${lim > 1e-6 ? 'PPA limited by import capacity' : 'PPA volume not delivered'}: ${mwh(hd.undeliveredMWh)} of contracted PPA volume over the ${inputs.economics.periodYears}-year evaluation period is not delivered physically (${parts}). Its settlement, a net ${hd.total >= 0 ? 'income' : 'cost'} of ${eur(hd.total)} (present value ${eur(hd.pv)}), is reported as "PPA hedge (not counted)": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection.`,
+      { value: hd.undeliveredMWh, hedge: hd.total }));
+  }
   if (sz.storage.role === 'peakShave' && sz.storage.mw > 0 && disp.years.some((y) => y.designDayShortfall)) {
     flags.push(flag('grid-bess-peakshave', 'minor', 'Grid', 'BESS peak-shave cannot hold import within grid capacity on the design day'));
   }
@@ -493,6 +529,26 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
 
   // Site fit flags come from the layout (sitefit.js) and are added in the flags stage of the run.
   return flags;
+}
+
+// Every flag of an option as the run assembles it (run.js flags stage): the §15 flags above, the site-fit flags
+// (sitefit.js; none carries permitting: true, so they never enter deliverability) and the data flag on every option
+// (all defaults are C-tagged). Shared by the run and by evaluateOption (option.js), so both give the same list.
+export function allOptionFlags(ctx, v, sz, disp, ttp, eco, carb, res, siteFit) {
+  const flags = optionFlags(ctx, v, sz, disp, ttp, eco, carb, res);
+  if (siteFit) flags.push(...siteFit.flags);
+  flags.push(flag('data-unverified', 'info', 'Data', 'Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles'));
+  return flags;
+}
+
+// Unmet load over the dispatched years (option summary and ranking-table column), shared by the run and option.js.
+export function unmetSummary(disp) {
+  return {
+    mwh: disp.years.reduce((a, y) => a + y.unmetMWh, 0),
+    hours: disp.years.reduce((a, y) => a + y.unmetHours, 0),
+    peakMW: disp.years.reduce((a, y) => Math.max(a, y.unmetPeakMW), 0),
+    byYear: disp.years.map((y) => y.unmetMWh),
+  };
 }
 
 const MATURITY = (id) => (TECH[id] ? TECH[id].maturity : 'Commercial');

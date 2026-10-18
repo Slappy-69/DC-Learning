@@ -2,7 +2,10 @@
 //
 // Merit order (same six steps as the delivered v1 tool):
 //   1. On-site renewables (solar, wind) serve load first.
-//   2. PPA energy, delivered over the grid connection (uses import capacity).
+//   2. PPA energy, delivered over the grid connection (uses import capacity). Contracted volume that is not
+//      delivered (above the residual load in the hour, or above the import capacity) is recorded with its
+//      wholesale value; under the owner decision of 2026-10-18 its settlement is the "PPA hedge (not counted)"
+//      in evaluate.js, outside the cost ledger.
 //   3. BESS discharges per role (shortfall cover and/or expensive hours); charges from
 //      surplus on-site generation or cheap grid within the import cap.
 //   4. Firm on-site generation against the hourly marginal cost of grid import, respecting
@@ -21,6 +24,7 @@
 import { H } from './profiles.js';
 import { demandYear } from './context.js';
 import { TECH, FUEL, PPA } from './defaults.js';
+import { techAvailMonth } from './sizing.js';
 
 export const MERIT_ORDER = [
   'On-site renewables (solar, wind)',
@@ -86,15 +90,17 @@ export function dispatchConfig(ctx, v, sz) {
     maxRunHours: inputs.requirements.maxRunHours,
     solarMWp: sz.solarMWp, solarAvailM: Math.min(sz.solarGroundMWp > 0 ? avail('solarGround') : Infinity, sz.solarRoofMWp > 0 ? avail('solarRoof') : Infinity),
     windMW: sz.windMW, windAvailM: sz.windMW > 0 ? avail('wind') : Infinity,
-    bessMW: sz.storage.mw, bessMWh: sz.storage.mwh, bessAvailM: sz.storage.mw > 0 ? (v.C2 === 'bessSolar' && v.C12 === 'none' ? 0 : avail('bess')) : Infinity,
+    // All battery capacity (main C12 battery and bridging battery) supplies from the BESS supply-available month
+    // (BRIEF §9.8: project start + planning + procurement + construction), the month time-to-power and the
+    // bridging battery's sizing use (sizing.js techAvailMonth). Before the port a bridging battery without a main
+    // battery dispatched from month 0 and one with a main battery from the programme month.
+    bessMW: sz.storage.mw, bessMWh: sz.storage.mwh, bessAvailM: sz.storage.mw > 0 ? techAvailMonth(ctx, TECH.bess) : Infinity,
     bessRole: sz.storage.role, bessDurN: durationH >= 8 ? 12 : durationH >= 3 ? 4 : durationH >= 1.5 ? 2 : 1,
     rte: TECH.bess.p.rte,
     ppaType: sz.ppa ? sz.ppa.type : null, ppaCoverage: sz.ppa ? sz.ppa.coverage : 0,
     flex: v.C16 === 'on',
     plants,
   };
-  // Bridging BESS + solar: the bridging BESS must be available from the start of bridging.
-  if (v.C2 === 'bessSolar') cfg.bessAvailM = Math.min(cfg.bessAvailM, avail('bess'));
   return cfg;
 }
 
@@ -123,7 +129,7 @@ function emptyYear() {
     exceedMWh: 0, exceedHours: 0, exceedPeakMW: 0,
     gridMWh: 0, gridChargeMWh: 0, gridCost: 0, gridCarbonT: 0, ppaCarbonT: 0, gridCarbonWeighted: 0,
     reGenMWh: 0, solarMWh: 0, windMWh: 0, reUsedMWh: 0, curtailMWh: 0, exportMWh: 0, exportRevenue: 0,
-    ppaContractMWh: 0, ppaDeliveredMWh: 0, ppaResaleValue: 0, ppaLimitedMWh: 0, ppaLimitedHours: 0,
+    ppaContractMWh: 0, ppaDeliveredMWh: 0, ppaUndeliveredMWh: 0, ppaUndeliveredSpotValue: 0, ppaLimitedMWh: 0, ppaLimitedHours: 0,
     bessChargeMWh: 0, bessDischargeMWh: 0, bessLossMWh: 0, socStart: 0, socEnd: 0,
     firmMWh: 0, chpCreditMWh: 0, flexMWh: 0, cfeMWh: 0, itMWh: 0,
     plants: [], designDayShortfall: false, maxBalanceError: 0,
@@ -177,7 +183,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
   const roleArb = role === 'peakShave' || role === 'shifting' || role === 'gridServices';
   const reserveE = role === 'peakShave' ? 0.5 * E : 0;
   const y12 = y * 12;
-  let ppaNetworkCost = 0, ppaLimitedMWh = 0, ppaLimitedHours = 0, ppaDeliveredMWh = 0, ppaResaleValue = 0, exportRevenue = 0;
+  let ppaNetworkCost = 0, ppaLimitedMWh = 0, ppaLimitedHours = 0, ppaDeliveredMWh = 0, ppaUndeliveredMWh = 0, ppaUndeliveredSpotValue = 0, exportRevenue = 0;
   let exceedMWh = 0, exceedHours = 0, exceedPeakMW = 0, grossDemandMWh = 0, netDemandMWh = 0, servedMWh = 0;
   let unmetMWh = 0, unmetHours = 0, unmetPeakMW = 0, designDayShortfall = false, gridMWh = 0, gridChargeMWh = 0;
   let gridCost = 0, gridCarbonT = 0, ppaCarbonT = 0, reGenMWh = 0, solarMWh = 0, windMWh = 0, reUsedMWh = 0;
@@ -187,7 +193,8 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
   let rec = null;
   if (record) {
     rec = {};
-    for (const k of ['demand', 'net', 're', 'ppa', 'dis', 'ch', 'firm', 'grid', 'gridCharge', 'unmet', 'curt', 'exp', 'soc', 'cap', 'chpCredit', 'flex']) rec[k] = new Float64Array(H);
+    for (const k of ['demand', 'net', 're', 'solar', 'wind', 'ppa', 'ppaContract', 'dis', 'ch', 'firm', 'grid', 'gridCharge', 'unmet', 'curt', 'exp', 'soc', 'cap', 'chpCredit', 'flex']) rec[k] = new Float64Array(H);
+    rec.plant = cfg.plants.map(() => new Float64Array(H)); // firm output per plant (prime, bridging), sums to rec.firm
   }
 
   for (let h = 0; h < H; h++) {
@@ -221,7 +228,10 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
       if (capRem !== Infinity) capRem -= ppaUse;
       ppaDeliveredMWh += ppaUse;
       ppaNetworkCost += ppaUse * adder;
-      ppaResaleValue += (ppaV - ppaUse) * gp; // unconsumed contract volume settled at spot (financial only)
+      // Contracted volume not delivered physically, at the wholesale price (no non-commodity adder: a financial
+      // settlement is not energy taken from the grid). Not in the cost ledger: "PPA hedge (not counted)".
+      ppaUndeliveredMWh += ppaV - ppaUse;
+      ppaUndeliveredSpotValue += (ppaV - ppaUse) * pPrice[h] * priceMult;
     }
 
     // Firm capacity available this hour (for the BESS shortfall rule)
@@ -284,6 +294,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
       sur += excess; // output above need at min stable load is curtailed (or charges the BESS)
       plantMslCurtail[i] += excess;
       plantMWh[i] += P;
+      if (rec) rec.plant[i][h] = P;
       plantHours[i] += 1;
       if (!pIsSmr[i]) plantFuel[i] += P / pEff[i];
     }
@@ -362,7 +373,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     cfeMWh += clean < netDemand ? clean : netDemand;
 
     if (rec) {
-      rec.demand[h] = D0; rec.net[h] = netDemand; rec.re[h] = re; rec.ppa[h] = ppaUse; rec.dis[h] = dis; rec.ch[h] = ch + gridCh;
+      rec.demand[h] = D0; rec.net[h] = netDemand; rec.re[h] = re; rec.solar[h] = sol; rec.wind[h] = win; rec.ppa[h] = ppaUse; rec.ppaContract[h] = ppaV; rec.dis[h] = dis; rec.ch[h] = ch + gridCh;
       rec.firm[h] = firm; rec.grid[h] = g; rec.gridCharge[h] = gridCh; rec.unmet[h] = unmet; rec.curt[h] = curt; rec.exp[h] = exp; rec.soc[h] = soc;
       rec.cap[h] = capPhys; rec.chpCredit[h] = chpCredit; rec.flex[h] = flexed;
     }
@@ -373,7 +384,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
   }
 
   Object.assign(out, {
-    ppaNetworkCost, ppaLimitedMWh, ppaLimitedHours, ppaDeliveredMWh, ppaResaleValue, exportRevenue, exceedMWh, exceedHours, exceedPeakMW,
+    ppaNetworkCost, ppaLimitedMWh, ppaLimitedHours, ppaDeliveredMWh, ppaUndeliveredMWh, ppaUndeliveredSpotValue, exportRevenue, exceedMWh, exceedHours, exceedPeakMW,
     grossDemandMWh, netDemandMWh, servedMWh, unmetMWh, unmetHours, unmetPeakMW, designDayShortfall, gridMWh, gridChargeMWh,
     gridCost, gridCarbonT, ppaCarbonT, reGenMWh, solarMWh, windMWh, reUsedMWh, curtailMWh, exportMWh, bessChargeMWh,
     bessDischargeMWh, firmMWh, chpCreditMWh, flexMWh, itMWh, cfeMWh, maxBalanceError,

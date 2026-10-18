@@ -5,6 +5,8 @@ import RunSummary from './components/RunSummary.jsx';
 import RunProgress from './components/RunProgress.jsx';
 import ParetoView from './components/ParetoView.jsx';
 import SiteView from './components/SiteView.jsx';
+import DispatchView from './components/DispatchView.jsx';
+import SensitivityView from './components/SensitivityView.jsx';
 import { useCompute } from './useCompute.js';
 import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount } from './engine/index.js';
 import { scoreOptions, effectiveWeights, applyView } from './engine/scoring.js';
@@ -59,6 +61,8 @@ export default function App() {
   const [announce, setAnnounce] = useState('');
   const [tab, setTab] = useState('options'); // results view tabs (§16): Options, Trade-offs, Site
   const [siteOptionId, setSiteOptionId] = useState(null); // option shown on the Site tab (null = the leader)
+  const [dispatchOptionId, setDispatchOptionId] = useState(null); // option shown on the Dispatch tab (null = the leader)
+  const [sensOptionId, setSensOptionId] = useState(null); // option tested on the Sensitivity tab (null = the leader)
   const [focusChart, setFocusChart] = useState(false); // "Skip to trade-offs chart" request
   const [focusPlan, setFocusPlan] = useState(false); // "Skip to site plan" request
   // Phone width (review O1): once a run has finished, the run progress panel, its event log and the run summary
@@ -99,6 +103,16 @@ export default function App() {
     setAnnounce(msg);
   }, [leader]);
 
+  // The selected tab is scrolled into view inside the tab list (it scrolls sideways on phones), without moving the page.
+  useEffect(() => {
+    const el = typeof document !== 'undefined' ? document.getElementById(`tab-${tab}`) : null;
+    const bar = el && el.parentElement;
+    if (!el || !bar || bar.scrollWidth <= bar.clientWidth) return;
+    const br = bar.getBoundingClientRect(), er = el.getBoundingClientRect();
+    if (er.left < br.left) bar.scrollLeft -= br.left - er.left + 8;
+    else if (er.right > br.right) bar.scrollLeft += er.right - br.right + 8;
+  }, [tab, run ? 1 : 0]);
+
   // Expand the run summary when any entry is new since the last run (§12).
   useEffect(() => {
     if (!compute.run) return;
@@ -128,13 +142,14 @@ export default function App() {
   const skipToChart = (e) => { e.preventDefault(); setTab('tradeoffs'); setFocusChart(true); };
   const skipToPlan = (e) => { e.preventDefault(); setTab('site'); setFocusPlan(true); };
   const showSite = (id) => { setSiteOptionId(id); setTab('site'); setTimeout(() => document.getElementById('tab-site')?.focus(), 0); };
+  const showDispatch = (id) => { setDispatchOptionId(id); setTab('dispatch'); setTimeout(() => document.getElementById('tab-dispatch')?.focus(), 0); };
   const fitCounts = useMemo(() => {
     const c = { Fits: 0, 'Fits with flags': 0, 'Does not fit': 0 };
     if (run) for (const o of run.options) if (o.siteFit) c[o.siteFit.status]++;
     return c;
   }, [run]);
   const penaltyOn = !!inputs.deliverability.siteFitPenalty;
-  const TABS = [['options', 'Options'], ['tradeoffs', 'Trade-offs'], ['site', 'Site']];
+  const TABS = [['options', 'Options'], ['tradeoffs', 'Trade-offs'], ['site', 'Site'], ['dispatch', 'Dispatch'], ['sensitivity', 'Sensitivity']];
 
   // Run progress, run summary and run-level flags; on a phone they fold into "Run details" (review O1).
   const progressEl = <RunProgress compute={compute} open={progressOpen} onToggle={setProgressOpen} />;
@@ -162,7 +177,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <h1>Concept energy optioneering</h1>
-          <span className="sub">Data centre campus · core slice, trade-off view and site layout</span>
+          <span className="sub">Data centre campus · core slice, trade-off view, site layout, dispatch and sensitivity</span>
         </div>
         <div className="topbar-actions">
           <button type="button" className="chip-btn panel-toggle" aria-expanded={panelOpen} aria-controls="inputs-panel" onClick={() => setPanelOpen(!panelOpen)}>{panelOpen ? 'Close inputs' : 'Inputs'}</button>
@@ -222,17 +237,26 @@ export default function App() {
                   <button key={id} type="button" role="tab" id={`tab-${id}`} aria-selected={tab === id} aria-controls={`panel-${id}`} tabIndex={tab === id ? 0 : -1}
                     className={`tab ${tab === id ? 'on' : ''}`} onClick={() => setTab(id)}
                     onKeyDown={(e) => {
-                      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+                      // ARIA tabs pattern (automatic activation): arrows wrap, Home and End go to the first and last tab.
                       const i = TABS.findIndex((t) => t[0] === tab);
-                      const n = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length][0];
+                      let k = null;
+                      if (e.key === 'ArrowRight') k = (i + 1) % TABS.length;
+                      else if (e.key === 'ArrowLeft') k = (i + TABS.length - 1) % TABS.length;
+                      else if (e.key === 'Home') k = 0;
+                      else if (e.key === 'End') k = TABS.length - 1;
+                      if (k == null) return;
+                      e.preventDefault();
+                      const n = TABS[k][0];
                       setTab(n); setTimeout(() => document.getElementById(`tab-${n}`)?.focus(), 0);
                     }}>{label}</button>
                 ))}
               </div>
               <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} />
-                  : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} onShowSite={showSite} />
-                    : <SiteView run={run} inputs={inputs} update={update} optionId={siteOptionId} setOptionId={setSiteOptionId} computing={compute.status === 'running'} focusPlan={focusPlan} onPlanFocused={() => setFocusPlan(false)} />}
+                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} onShowDispatch={showDispatch} />
+                  : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} onShowSite={showSite} onShowDispatch={showDispatch} />
+                    : tab === 'site' ? <SiteView run={run} inputs={inputs} update={update} optionId={siteOptionId} setOptionId={setSiteOptionId} computing={compute.status === 'running'} focusPlan={focusPlan} onPlanFocused={() => setFocusPlan(false)} />
+                      : tab === 'dispatch' ? <DispatchView run={run} optionId={dispatchOptionId} setOptionId={setDispatchOptionId} />
+                        : <SensitivityView run={run} optionId={sensOptionId} setOptionId={setSensOptionId} />}
               </div>
             </>
           ) : compute.status !== 'error' ? (
@@ -243,7 +267,7 @@ export default function App() {
 
       <footer className="footer">
         <p>{GUARDRAIL}</p>
-        <p className="sub">Not built yet: parallel coordinates, choice-impact and radar charts, sensitivity, scenarios, manual layout editing, 2.5D massing, map tiles and underlays, exports, Monte Carlo ranges, representative-day screening tier. Site layouts and noise figures are concept-stage proxies. Profiles are synthetic and seeded; every default is indicative — unverified.</p>
+        <p className="sub">Not built yet: parallel coordinates, choice-impact and radar charts, breakevens and the rest of the tornado drivers, scenarios, manual layout editing, 2.5D massing, map tiles and underlays, exports, Monte Carlo ranges, representative-day screening tier. Site layouts and noise figures are concept-stage proxies. PPA settlement counts only on PPA energy delivered over the grid connection. Profiles are synthetic and seeded; every default is indicative — unverified.</p>
       </footer>
     </div>
   );

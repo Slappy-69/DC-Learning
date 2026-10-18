@@ -28,6 +28,8 @@ npm run test:browser # node tests/browser-tests.mjs: Playwright + Chromium + axe
 
 Open `dist/index.html` through any static server (for example `npx serve dist`). The compute pool uses Web Workers loaded from `worker.js`. If workers cannot be used, the app falls back to the main thread and says so in the status line. This covers a synchronous failure (the `Worker` constructor throws, as some browsers do on `file://`) and an asynchronous one (`worker.js` fails to load or throws, or a message cannot be read: `worker.onerror` / `worker.onmessageerror`). In the asynchronous case every worker is terminated first and the status line reads "Worker failed: workers terminated, running on the main thread instead." Two more paths fall back the same way: a `postMessage` to a worker that throws ("Worker could not be started") and a worker that goes silent with no error event, for example killed by the browser ("Worker stopped responding"). A watchdog catches the silent case: no message from a worker that has not yet returned its result for 30 s. While working, a worker sends events at least every 0.55 s on T1. An engine error reported by a worker ends the run with the error shown; it is not retried on the main thread, which would fail the same way.
 
+`dist/energy-tool-hosted.html` (port slice) is the single file as page content for a host that adds the document: only `<title>`, `<style>` and the body content, with the run log copied to the clipboard instead of downloaded (see "Slice: Port from the concept line").
+
 `dist/energy-tool-single-file.html` is the same app with `app.css`, `app.js` and the worker inlined, built by `npm run build`. The worker source (`dist/worker.js`) is embedded as a string and the workers are created from a Blob URL (`URL.createObjectURL(new Blob([src], { type: 'text/javascript' }))`), so the file loads no other file and can be opened from a download, including on a phone. The page contains no `<script src>`, no `<link href>` and no relative file reference (checked by test 7). If the browser refuses Blob workers, the same fallback applies. The fallback runs in 30 ms time slices, so the page and the progress panel stay live. Checked in headless Chromium 2026-10-15: the single file from `file://` runs on a Blob worker and requests only itself and the `blob:` URL; the normal build with `worker.js` missing falls back on `file://` (constructor throws) and over HTTP (404, asynchronous `onerror`), and both runs complete.
 
 ## Architecture
@@ -60,6 +62,9 @@ src/
     layout.js        (site slice) auto-layout (§10.4), batch with prefix sharing, solar fill
     sitefit.js       (site slice) §10.6 outputs and site-fit flags
     siteapi.js       (site slice) layoutForOption = HOOKS.layout (plan and detail on demand)
+    option.js        (port slice) evaluateOption: one option through the run's own per-option chain
+    inspect.js       (port slice) Dispatch tab inspector: hourly re-run, phasing timeline, balances, weeks
+    sensitivity.js   (port slice) tornado: low/high driver re-runs scored on the base run's ranges
     run.js           pipeline as stage passes (runModelSteps generator; runModel drains it), dispatch
                      cache, worker slicing/merge, re-score, hooks for later slices
     runlog.js        run event log: stage list, logger, merge, validation, JSON/CSV export,
@@ -72,17 +77,20 @@ src/
                      Choices panel with projected count), RunProgress (live stages, last 200 events,
                      log download), RunSummary, RankedList, OptionDetail, ParetoView/ParetoChart/
                      ParetoTable (Trade-offs tab), FilterChips (removable filter chips, both tabs),
-                     SiteView + site/SitePlan, SiteFitPanel, SiteEditor, BlocksTable (Site tab)
+                     SiteView + site/SitePlan, SiteFitPanel, SiteEditor, BlocksTable (Site tab),
+                     DispatchView + StackChart (Dispatch tab), SensitivityView (Sensitivity tab)
   styles.css         tokens, dark mode, visible focus, reduced motion, phone/tablet/desktop layouts
 tests/run-tests.mjs  Node test script (node:assert only)
-tests/site-tests.mjs site slice tests 9a–9i, called from run-tests.mjs
+tests/site-tests.mjs site slice tests 9a–9j, called from run-tests.mjs
+tests/port-tests.mjs port slice tests 10–14, called from run-tests.mjs
+tests/view-bundle.mjs the view components bundled once for static rendering (shared by the Node tests)
 tests/worker-shim.mjs runs src/worker.js in a Node worker_thread (test 6c)
 tests/browser-tests.mjs Playwright checks on the built single file (Canvas path, keyboard, paging, skip
                      links, chips, tablet panel, phone overflow, axe in light and dark; Site tab: phone
                      tap drawing, keyboard plan/table/drawing, GeoJSON import, axe in light and dark)
-build.mjs            esbuild: dist/app.js, dist/worker.js, dist/app.css, dist/index.html, and
+build.mjs            esbuild: dist/app.js, dist/worker.js, dist/app.css, dist/index.html,
                      dist/energy-tool-single-file.html (CSS, JS and worker inlined; worker
-                     from a Blob URL)
+                     from a Blob URL) and dist/energy-tool-hosted.html (page content only)
 ```
 
 Data flow: inputs (UI keeps `null` for "at default" on derived defaults) → `normalizeInputs` → `buildContext` (with the site model) → `generateOptions` → per option `sizeOption` → `buildBlocks` → layout (batched, cached by block-set key; "fill residual" solar sized from it) → site fit → `dispatchConfig` → `dispatchAll` (cached by configuration key, so options that differ only in non-dispatch choices share one dispatch) → `timeToPower`, `economics`, `carbon`, `resilience`, `optionFlags`, `deliverability` → `scoreOptions` over the whole screened set → `applyView` for display only.
@@ -97,7 +105,7 @@ Incremental recompute: a change to weights, cost/carbon axis metric or "rank com
 
 **Dispatch (real, 8760 h).** `dispatch.js` runs the six-step merit order from §9.4 hour by hour over full 8760-hour model years, carrying BESS state of charge from year to year:
 1. On-site solar and wind serve load first.
-2. PPA energy is shaped hourly (solar, wind, hybrid, baseload or demand-shaped 24/7), delivered over the grid connection, and uses import capacity. PPA volume that cannot be delivered is settled at spot and flagged.
+2. PPA energy is shaped hourly (solar, wind, hybrid, baseload or demand-shaped 24/7), delivered over the grid connection, and uses import capacity. PPA volume that is not delivered (above the residual load in the hour, or above the import capacity) is recorded with its wholesale value; since the owner decision of 2026-10-18 its settlement is the "PPA hedge (not counted)", outside the ledger (port slice), and the `grid-ppa` flag explains it.
 3. BESS discharge depends on its role. Peak-shave covers the shortfall above grid plus firm capacity, then expensive hours with a 50 % reserve. Shifting and grid services discharge in the n dearest hours of each day. Bridging support covers shortfalls only. BESS charges from on-site surplus first, then from the grid in the n cheapest hours of each day, within the import cap.
 4. Firm plant runs when its marginal cost (fuel ÷ efficiency + VOM + carbon) is below the hourly grid price, or to cover the gap above grid capacity. Min stable load is respected per unit, and output forced above need by min stable load is curtailed. Plant is must-run when islanded. The trigeneration absorption-chiller credit is limited to the mechanical cooling load in that hour. Run-hour handling follows the setting ("Flag only" or "Respect limit").
 5. Grid import is capped at the offered capacity for that month ("Show unmet load"), or uncapped with the excess recorded and flagged ("Show exceedance").
@@ -123,7 +131,7 @@ With brief defaults on T1, the open choices give 57,024 valid combinations (57,0
 
 **Economics.** One real-terms cash-flow ledger per option, the source for LCOE, NPV of net cost, capex and opex.
 - Capex is timed by phase (C19), with contingency, replacements, and residual value at the end of the period or salvage on removal. The cooling capex delta is relative to the air baseline.
-- Opex covers fixed O&M, VOM, fuel, grid energy plus the non-commodity adder (also charged on PPA energy carried over the grid), PPA strike plus shaping, Scope 1 carbon cost, genset test runs, rental for rented bridging plant, and export revenue.
+- Opex covers fixed O&M, VOM, fuel, grid energy plus the non-commodity adder (also charged on PPA energy carried over the grid), PPA strike plus shaping on PPA energy delivered over the grid connection (owner decision 2026-10-18, port slice), Scope 1 carbon cost, genset test runs, rental for rented bridging plant, and export revenue.
 - Capex scope excludes the data hall shell and IT fit-out, stated in the UI.
 
 **Carbon and water.** Location-based and market-based annual average gCO₂e/kWh with the decarbonisation trajectory, hourly CFE %, the Scope 1/2 split, a trajectory per year, and WUE.
@@ -179,7 +187,7 @@ Builder-chosen values not given by the brief, all recorded as judgement or run s
 ## What is not in this slice
 
 - **Parallel coordinates, choice-impact chart, compare view, radar** (§12.2, §12.7). The Pareto scatter is now built (see "Slice: Pareto trade-off view" below); `HOOKS.paretoView` is implemented.
-- **Sensitivity, tornado, breakevens, Monte Carlo, rank stability, robust pick, P10–P90 ranges** (§13). Hooks: `HOOKS.sensitivity` and `HOOKS.monteCarlo`. Every default record already carries low and high values and a distribution. Capex shows only the AACE band.
+- **Breakevens, Monte Carlo, rank stability, robust pick, P10–P90 ranges** (§13), and the tornado drivers beyond the seven of the port slice. Hooks: `HOOKS.sensitivity` and `HOOKS.monteCarlo`. Every default record already carries low and high values and a distribution. Capex shows only the AACE band. (The port slice added the tornado for one option and the Dispatch tab with the phasing timeline and hourly dispatch.)
 - **Scenarios** (§13.3). Hook: `HOOKS.scenario`. The escalation inputs exist.
 - **Site layout, plan, massing, site-fit status, unplaced tray, noise proxy, height check per block** (§10). Hook: `HOOKS.layout`. Only an area budget is computed (residual ground PV, plus an info flag when land take exceeds net area). C17/C18 notes state that fit counts are unavailable.
 - **Exports** (PDF, Excel, JSON, GeoJSON, PNG, presentation mode), project save/load, undo/redo, snapshots, decision log, plain-English summary (§12.10, §14, §16, §19). Hook: `HOOKS.export`.
@@ -215,7 +223,7 @@ See the bottom of this file ("Test run") for the real numbers from `node tests/r
 18. **Height limit in placement** (site slice, kept in the review; H2 D1). §10.4 step 3 says each placement "tests … height zones", and step 4 says a block that cannot be placed makes the option "Does not fit". Read as a hard test, no 16 m data hall could be placed under T2's 15 m limit, and no option on T2 could "fit or fit with flags" as AC7 requires, whatever C17 and C18 are. §15 lists "height limit exceeded" as a site-fit flag, which can only arise if over-height blocks are placed, and §2 principle 5 lists height among the constraints that are flagged, never enforced. **Choice made:** height is soft in placement (judgement call 11): a compliant cell is preferred; otherwise the block is placed and flagged, and the option is "Fits with flags", never "Does not fit" for height alone. The brief should say in §10.4 step 3 that the height test is a preference with a flag.
 19. **Access points and the roads allowance** (H2 I09b). §5.2 says the access points drive the roads allowance, but defines the allowance as 15 % of the net developable area with no term for access. **Choice made:** not built (no rule to implement); the allowance is the fraction alone, and the access point drives fuel-delivery placement only.
 20. **Gas connection cost** (H2 I08b). §5.2 says the gas main location drives the connection cost; §9.5's capex scope does not list a gas connection and no cost basis is given. **Choice made (review):** options that burn gas on site pay a connection pipe from the gas main to the buildable envelope at `tech.gasConnection.pipePerKm` (€0.8 m/km, indicative — unverified); with no gas main location (the §5.2 default, "gas off-site unknown") nothing is costed and the sizing sentence says so.
-21. **LCOE when an option delivers almost nothing** (review of the site slice, H1; pre-existing). §9.5 defines LCOE per MWh delivered and §11 normalises each axis linearly between the best and worst option. On T3 (no grid) grid-dependent options deliver almost no energy, and a financially settled PPA gives them a net revenue, so 80 options have a negative LCOE down to −13.8 M€/MWh and 26 a non-finite one; the cost axis then cannot separate the other 1,844 options (all within 0.004 points). **Not changed** (outside the site slice; owner decision): see open point 10 of the site slice for the options.
+21. **LCOE when an option delivers almost nothing** (review of the site slice, H1; pre-existing). §9.5 defines LCOE per MWh delivered and §11 normalises each axis linearly between the best and worst option. On T3 (no grid) grid-dependent options deliver almost no energy, and a financially settled PPA gives them a net revenue, so 80 options have a negative LCOE down to −13.8 M€/MWh and 26 a non-finite one; the cost axis then cannot separate the other 1,844 options (all within 0.004 points). **Not changed** (outside the site slice; owner decision): see open point 10 of the site slice for the options. **Owner decision 2026-10-18, applied in the port slice:** no PPA income without physical delivery. T3 now has 0 negative LCOEs (26 non-finite remain), but the cost axis still does not separate the ordinary options (1,866 within 0.013 points), now because near-zero-delivery options reach 4.6 M€/MWh at the top of the axis; see "Slice: Port from the concept line", open point 2.
 
 ## Run event log (trackability)
 
@@ -881,7 +889,7 @@ Re-filed in the review (H2 D16–D19): the slice had listed every item under sta
 7. **Spatial library values in the UI.** The 87 spatial records are labelled in the registry and covered by test 5d, and the Site tab says every spatial default is indicative — unverified, but there is no per-value library page yet.
 8. **Screen-reader walk-through** of the Site tab with NVDA + Firefox and VoiceOver + Safari (§17) not done; checked with axe, keyboard and the live-region text in headless Chromium.
 9. **Large sites.** The 5 m raster above 50 ha (T5) is in place but T5 itself is not a fixture in this slice.
-10. **T3 cost axis (review, H1 other finding 3; pre-existing core economics, not changed).** On T3, 80 options have a negative LCOE (down to −13.8 M€/MWh) and 26 a non-finite one, so the min–max cost axis (§11) puts the 1,844 options with an LCOE between 0 and 1,000 €/MWh within 0.004 points of each other (25.075–25.079): the cost axis does not separate them, and the T3 ranking comes from carbon, time-to-power and deliverability. Cause: grid-dependent options on a site with no grid deliver almost nothing (e.g. 0.1 TWh of 13.9 TWh demand), a 100 % PPA there is settled financially (`grid-ppa` flag) and its settlement is a net revenue (PPA line −€947 m over the period on OAG1IBQ), and LCOE divides net cost by delivered energy (§9.5 "€/MWh delivered"). The same on both engines (60fe41a and this slice). Owner decision; options: LCOE over demanded energy (with unmet load priced), the NPV cost metric for such sites, no financial PPA settlement without physical delivery, or a robust axis scale (which §11's linear min–max does not allow). See Brief issue 21.
+10. **T3 cost axis (review, H1 other finding 3; pre-existing core economics, not changed).** On T3, 80 options have a negative LCOE (down to −13.8 M€/MWh) and 26 a non-finite one, so the min–max cost axis (§11) puts the 1,844 options with an LCOE between 0 and 1,000 €/MWh within 0.004 points of each other (25.075–25.079): the cost axis does not separate them, and the T3 ranking comes from carbon, time-to-power and deliverability. Cause: grid-dependent options on a site with no grid deliver almost nothing (e.g. 0.1 TWh of 13.9 TWh demand), a 100 % PPA there is settled financially (`grid-ppa` flag) and its settlement is a net revenue (PPA line −€947 m over the period on OAG1IBQ), and LCOE divides net cost by delivered energy (§9.5 "€/MWh delivered"). The same on both engines (60fe41a and this slice). Owner decision; options: LCOE over demanded energy (with unmet load priced), the NPV cost metric for such sites, no financial PPA settlement without physical delivery, or a robust axis scale (which §11's linear min–max does not allow). See Brief issue 21. **Port slice (owner decision 2026-10-18):** the PPA option is applied; negative LCOEs are gone, the axis compression is not (open point 2 of the port slice).
 11. **§17 weight-change repaint (review O5).** B9 now asserts a regression bound (median of 3 ≤ 300 ms on this shared 2-core sandbox) and reports the value against the §17 target of 100 ms on the 4-core reference machine; measured medians 70–166 ms here depending on load. The 100 ms target is not demonstrated on the reference machine.
 12. **Route lengths for cost (review I07b, I08b).** Straight line from the POC (or the gas main) to the nearest buildable point, the same for every option; no route factor. At the default POC (a stand-in for "nearest boundary point to the map's nearest road") the cable is 10 m, so the grid connection line is almost all the per-MW charge; replace the POC with the real one. The gas pipe rate (€0.8 m/km) is new and unverified, and it applies only when a gas main location is entered.
 
@@ -1073,3 +1081,238 @@ Keyboard: chart in 2 Tab + Enter via the skip link (results: 1 Tab + Enter; site
 Weight-change repaint: median 70 ms (asserted ≤ 300 ms here; §17 target ≤ 100 ms on the 4-core reference machine).
 Phone (375 px): tab bar ends at 813 px; active tab content starts at 832 px (bound 1,000 px).
 ```
+
+## Slice: Port from the concept line (2026-10-18)
+
+The owner kept this line (verified Pareto view and site engine) and asked for the other line's useful work to be ported onto it, plus one decision on PPA economics. Source: the other line's app (read-only copy in the scratchpad, `other-line/energy-strategy-tool/app/`) and its commits, read with `git show`: f1fd5c5 (tornado), e9ed8f6 + c3f81f5 (loading message, startup errors, hosted page; their `site.js` / PV-fill parts skipped), f236acc (Dispatch tab), e1161ce (bridging-battery timing fix and Dispatch fixes). The other line's site layout (231e7fc, a5be4d1) was not ported: this line's verified site engine supersedes it. Nothing was pasted unchanged: the two code bases diverged (this line has the layout stage, "fill residual" solar from the layout, site fit, route costs and a registry-driven view layer). No git command was run. The state before the slice (32/32 Node, 21/21 browser) was copied to the scratchpad (`port/baseline/app/`) and every before/after number below compares against it (`port/snap.mjs`, `port/cmp.mjs`, snapshots in `port/snaps/`). Progress log: `PORT-PROGRESS.md`.
+
+### Item 1. Bridging battery supplies from its programme month (e1161ce)
+
+**Problem (the other line's independent check, confirmed here).** A bridging battery (C2 = BESS + solar) was counted in time-to-power from month 0, while dispatch made it available from month 0 without a main battery and from the BESS programme month (21) with one. §9.8 sets every source's supply-available date from its planning, procurement and construction.
+
+**Change (same rule as the other line).** `techAvailMonth(ctx, TECH.bess)` (sizing.js, now exported) is the one month: sizing records it (`sz.bridgeBess.availMonth`, and the sizing sentence says so), time-to-power counts the bridging battery only from it (evaluate.js), and dispatch uses it for all battery capacity (dispatch.js `bessAvailM`; the special case for C2 = BESS + solar is gone).
+
+**Adapted beyond the other line (judgement call 1).** The BESS capex line and its fixed O&M were booked in year 0 for bridging-battery options (because the battery was counted from month 0) and in the availability year for every other option. They now follow the same month for every option, as every other plant is booked at its availability. The other line left them in year 0.
+
+**Effect.** Default T1 and T3: bit-identical (C2's default subset has no BESS + solar). With BESS + solar added to C2:
+
+| | T1 + BESS + solar | T3 + BESS + solar |
+|---|---|---|
+| Bridging-battery options | 413 (278 with a main battery, 135 without); month 21 | 413 |
+| Leader | OOB3CL1 unchanged, 99.7048 → 98.9963 ("Grid + bess + solar only bridge → retain for grid services · retained-plant backup · Immersion · PV 3.3 MWp · BESS 4 h · PPA hybrid 100 %") | O114KGKR unchanged, 73.7173 → 73.1602 |
+| Top 10 | same set, same order | same set; ranks 5 and 6 swap |
+| Time-to-power | 270 options later full load (by up to 21 months), 168 later first power | 413 later (first power 413, full load 252) |
+| Ranks moved | 1,745 (largest 1,262: O10WQVLG, no main battery, full load month 0 → 21) | 1,827 (largest 673) |
+| Capex-timing part alone (judgement call 1) | LCOE of all 413 changes (largest −12.8 %, islanded battery-only options); leader LCOE 445.1 → 416.4 €/MWh; leader score identical with or without this part | LCOE of all 413 changes (largest −13.8 %) |
+
+The other line reported the same 413 options, the same 270 later full loads and the same leader 99.7 → 99.0, which this line reproduces.
+
+**Test 10** (port of the other line's test 13): on T1 + BESS + solar, every bridging-battery option has sizing month = dispatch month = the time-to-power month (supply rebuilt month by month), BESS capex in that year; for one option with and one without a main battery, no charge or discharge in any hour before the month, the battery is used after it, and the re-dispatch equals the run's annual figures. Test 12d repeats the check through the Dispatch tab inspector.
+
+### Item 2. Owner decision 2026-10-18: no PPA income without physical delivery
+
+**Rule.** PPA settlement counts only on PPA energy physically delivered over the grid connection to the load. The ledger's PPA line is now `delivered MWh × (strike + shaping adder)` (evaluate.js). The settlement on contracted volume that is not delivered — its wholesale value less the PPA price on it, positive = net income — is `eco.ppaHedge` ("PPA hedge (not counted)": by year, total over the evaluation period and present value at the WACC, discounted like opex). It is never written to a ledger row, so it is outside the cost ledger, LCOE, NPV, the capex/opex split and the score. Before, the ledger booked the PPA price on the whole contract and netted the undelivered volume back at the hourly grid price as income.
+
+**What "not delivered" is.** Contracted hourly volume above the residual load in the hour, and volume above the import capacity (dispatch.js now records `ppaUndeliveredMWh` and `ppaUndeliveredSpotValue`; the hourly arrays keep the contracted volume `ppaContract`). The engine delivers PPA energy to the load only (merit order step 2, §9.4); it never routes PPA energy into a battery, so the "(or battery)" part of the decision has nothing to count in this engine (open point 4).
+
+**Flag.** `grid-ppa` now appears wherever there is undelivered volume and explains the hedge: "PPA limited by import capacity: X MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (Y MWh limited by import capacity, Z MWh above the load in the hour). Its settlement, a net income of €A m (present value €B m), is reported as "PPA hedge (not counted)": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection." Minor when part is import-limited (§15 "PPA limited by import capacity"), info when it is only above-load volume. On T1 and T3 all 1,113 PPA options have import-limited volume, so the flag set is the same as before (all minor); only the text changed. The option detail shows a "PPA hedge (not counted)" row and a note; the Dispatch tab balance shows contracted against delivered volume.
+
+**Ledger reconciliation (AC3).** Test 11b checks every T1 and T3 option (4,000): NPV = Σ discounted ledger capex + opex, LCOE × discounted delivered energy = NPV, capex share = PV capex ÷ NPV, capex lines = ledger capex, every row's totals = its lines; largest relative difference 6.4e-16 (limit 1e-3); no ledger row carries the hedge.
+
+**Effect** (against the baseline copy; item 1 changes nothing on default T1/T3, so these are the slice's total effect on them):
+
+| | T1 | T3 |
+|---|---|---|
+| Leader | O1YAUJ8J unchanged ("Grid · Diesel N+1 · DLC · PV 7.7 MWp · PPA hybrid 100 %"), 85.9642 → 92.7124; LCOE 133.50 → 153.77 €/MWh | **changed**: O1Q4ILX5 ("Islanded rented temporary generation · Gas CHP-trigen · retained-plant backup · Air · PV 5.3 MWp · BESS 2 h · PPA hybrid 100 %", now rank 2) → O826DRQ (same but "PPA hybrid 50 %", no BESS; was rank 2), 70.8916 → 97.1139; the top 10 sit within 0.0005 points of each other |
+| Top 10 | 6 of 10 kept. Before: O1YAUJ8J, O1BM95B8, O1GBHO2A, OSCP27D, O14EVMZU, OMTCPB2, O1VA67D3, OV4UD3O, ORCKDL0, O1QWIDO. After: O1YAUJ8J, O1BM95B8, OSCP27D, O1GBHO2A, O14EVMZU, OMTCPB2, O6FDBB2, O1OSKM4K, OUTRYDE, O12DDOCS | 9 of 10 kept. Before: O1Q4ILX5, O826DRQ, O1FU8UKR, OMDIQOD, O1EQ82QV, ONV51PO, ON9TFWU, OH6NSUZ, ORMUQVQ, OAS6AIL. After: O826DRQ, O1Q4ILX5, O1EQ82QV, OMDIQOD, ON9TFWU, ORMUQVQ, O1FU8UKR, OH6NSUZ, OQKRTJ7, OAS6AIL |
+| Ranks moved | 1,990 of 2,000 (largest 865) | 1,242 (largest 378) |
+| LCOE changed | all 1,113 PPA options (largest +42.3 %) | 1,099 of 1,113 PPA options |
+| Negative / non-finite LCOE | 0 / 0 → 0 / 0 | **80 / 26 → 0 / 26** (the 26 deliver no energy at all) |
+| Cost axis (LCOE range) | 93.6–286.0 → 151.8–286.0 €/MWh; the 2,000 options spread over the whole 0–100 | −13.8 M to 4.61 M €/MWh → 157.3 to 4.61 M €/MWh |
+| Cost-axis spread of the options with LCOE 0–1,000 €/MWh | 2,000 options over 0–100 points, before and after; P10/P50/P90 of the cost scores 34.4/54.9/71.9 → 30.6/70.4/88.5 | 1,844 options within 0.004 points (25.075–25.079) → 1,866 within 0.013 points (99.987–100.000); P10/P50/P90 of all cost scores 25.077/25.078/25.078 → 99.993/99.999/100.000 |
+
+Why the T1 leader's LCOE rose by 15 %: its PPA line over 20 years went from €311.9 m to €574.2 m. Of the €262.3 m difference, €246.1 m is the non-commodity adder (55 €/MWh, GB) that the old rule credited as income on 4.48 TWh of PPA volume that never crossed the connection, and €16.2 m (present value €7.8 m) is the wholesale settlement now reported as the hedge. On T1, 877 PPA options have a hedge income and 236 a hedge cost. With BESS + solar included, T3's negative LCOEs go 77 → 0 (25 non-finite remain) and T1's leader is unchanged (snapshots `i2-*-bess.json`).
+
+**What the decision did not fix on T3.** The negative LCOEs (one end of the axis) are gone, but the linear min–max cost axis (§11) is still compressed, now from the other end: grid-only options on a site with no grid deliver almost nothing (O13FMGZ0 "Grid · HVO N+1 · Immersion · BESS 2 h": 26 MWh over 20 years, from the battery's initial charge) and reach 4.6 M€/MWh. So on T3 the cost axis still separates nothing and the ranking comes from carbon, time-to-power and deliverability; the T3 leader's tornado shows every swing at 0.00 points for the same reason. See open point 2.
+
+**Test 11a**: on T1 and T3, for every option and evaluation year, the ledger PPA line = delivered × (strike + shaping), the hedge = undelivered wholesale value × electricity escalation − undelivered × price, contract = delivered + undelivered; options without a PPA have no hedge, no PPA cost and no `grid-ppa` flag; every option with undelivered volume has the flag with the hedge explanation (severity by import limitation); no negative LCOE on T1 or T3. It also rebuilds the old rule from the same dispatch (PPA price on the whole contract, undelivered volume back at the hourly grid price including the adder): 80 negative LCOEs on T3, matching the baseline run exactly.
+
+### Item 3. Dispatch tab (f236acc + e1161ce)
+
+**Engine.** `option.js evaluateOption(ctx, v, { recordYears })` runs one option through the run's own per-option chain: sizing → blocks → layout (`runLayout`, one block set; test 9d shows it equals the run's batch) → "fill residual" solar from the layout → site fit → dispatch (with hourly records) → time-to-power → economics → carbon → resilience → flags → deliverability. To keep the run and this function identical, the run's flags assembly and unmet summary moved into `allOptionFlags` and `unmetSummary` (evaluate.js), which run.js now calls (outputs byte-identical). `buildContext(inputs, { site })` accepts the run's site model so a re-run does not rasterise the site again. `inspect.js inspectOption` (adapted from the other line) re-runs the option with every model year recorded and returns the monthly phasing series (grid offered, firm plant per plant and source, battery bridging, supply, design load, gap), per-year balances from the hourly arrays (now also solar, wind, contracted PPA and per-plant output), the engine's annual figures, week helpers (`weekRange`, `weekPresets`; week 52 is 8 days, from e1161ce) and `compareWithRun`, the check against the ranking's figures.
+
+**UI.** `DispatchView.jsx` + `StackChart.jsx`: option selector (every option in rank order, as on the Site tab; the leader unless another is chosen, also from "Show this option's phasing and hourly dispatch" in the option detail; the choice survives tab switches); time-to-power facts; the monthly phasing chart (§12.6) with the power-gap strip and markers (full grid connection, first power, full load, battery available); year buttons, a week box that keeps typed text, previous/next and presets (peak demand, most unmet, most curtailment, least renewables); the hourly chart with the demand line and unmet strip; the battery charge level; the annual energy balance with the engine's hourly error; the check against the ranking ("match" or the differing figures); tables for the timeline and the week. Charts are keyboard applications (arrows, Shift for faster, Home, End, Escape) with an on-screen readout and a polite live region, as the Pareto chart and the site plan. The re-run happens after the tab paints, takes 0.5–0.7 s in headless Chromium here, and is cached per run and option.
+
+**One energy-source colour system.** The chart bands use the site plan's tokens (`--src-*`), not the other line's four new tokens: solar yellow, wind the grid blue with the plan's wind hatch, battery aqua (discharge above the axis, charging below), firm plant per source as on the plan (gas red, fuel cells green, HVO-diesel orange, hydrogen violet, nuclear magenta; plants of one source share a band) with the plan's hatch, grid import blue (PPA arrives over the connection, so it sits in the grid band; readout, table and balance split it), export blue below the axis, curtailment a neutral (`--src-curtail`, not an energy source), unmet load and power gap in the app's flag colour (`--bad`) in a strip above the plot, never beside a band. The legend and readout swatches are the plan's swatches.
+
+**Palette validation** (`scratchpad/port/palette.mjs`, dataviz validator, surfaces `--surface` #ffffff light / #1e2125 dark; every set of sources that shares a chart on T1 and T3, in stacking order, adjacent pairs and all pairs; full output `scratchpad/port/palette.txt`):
+- Light: every set passes the hard gates except hydrogen + grid (2 options; blue–violet, normal-vision ΔE 10.5). Many sets sit in the 6–8 colour-blind warning band: gas–battery (red–aqua, ΔE 6.9) and gas–fuel cells (7.2).
+- Dark: the normal-vision floor (15) fails for fuel cells vs battery (ΔE 11.9; e.g. 308 options with solar, battery, fuel cells and grid), gas vs solar (13.0) and hydrogen vs grid (9.8). These are non-adjacent slots of the reference palette, which by its own documentation passes all pairs only for its first three slots; with colour following the entity, any subset can share a chart.
+- Decision: solar, battery and grid (present in most charts) stay plain and pass all pairs in both themes (light CVD 9.1, normal 22.9, contrast below 3:1 for yellow 2.17 and aqua 2.82, relieved by the readout and tables; dark CVD 8.4, normal 19.8, contrast ≥ 3:1). Every other source band carries its plan hatch, so the failing pairs always differ in texture; bands are separated by a 1.5 px surface gap, stack in a fixed (merit) order, and the legend, readout and tables name every source. Re-stepping the shared hexes would have changed the verified site plan and was not done (open point 5).
+- Curtailment neutral: first #898781 in both themes (the other line's), which sat at ΔE 14.5 (light) / 12.6 (dark) from the battery colour it touches below the axis; changed to #6f6d68 light / #b9b7b0 dark: ≥ 15 from battery, grid and solar (light 19.3 / 17.5 / 27.6, dark 20.1 / 23.2 / 17.2) and 5.17:1 / 8.05:1 on the surface. Flag strip `--bad` 8.15:1 / 8.03:1.
+
+**Tests 12a–12e** (port of the other line's test 12): 24 inspections (T1: leader, rank 2, every archetype, a battery option, prime + bridging plant, an option that does not fit; T3: six; T1 + BESS + solar: bridging battery with and without a main battery), half of them rebuilding the site model, equal the run in every dispatched year (every annual field and the per-plant figures), time-to-power, LCOE, NPV, PPA hedge, solar size, deliverability, site fit and flags (12a); 146 inspected years: 17 hourly sums equal the annual totals, plant hours sum to the firm output, solar + wind = renewables, the balance closes in every hour (12b); the timeline sources add up to the time-to-power supply every month and Σ gap = the time-to-power gap (12c); 52 weeks cover 8,760 hours with an 8-day week 52, presets valid, "most unmet" is the maximum, and the bridging battery is idle before its month (12d); the rendered tab: keyboard applications, plan colour tokens only, firm plant and wind with their hatch, tables, balance, check "match" (12e).
+
+### Item 4. Tornado sensitivity tab (f1fd5c5)
+
+**Engine.** `sensitivity.js` re-runs one option (default the leader) at the low and high value of each driver through `evaluateOption` (so the layout and "fill residual" solar follow, e.g., the IT load), and scores it against the base run's axis ranges and effective weights with this line's arithmetic (`axisScore` and `SCORE_KEYS`, now exported from scoring.js and used by `scoreOptions` itself), clipping each axis score to 0–100. The base re-run reproduces the run's score exactly (difference 0 on the T1 and T3 leaders); the run, the other options and their ranks are untouched. `tornadoSteps` yields after each re-run so the tab runs it in time slices; `tornado` drains it.
+
+**Drivers and their §18 records** (each "indicative — unverified"): grid full-connection date −6/+24 months (the input `grid.dateUncertainty`; intermediate grid steps move with it), grid import price ×0.7/×1.5 and grid carbon ×0.8/×1.2 (the low/high of the input records `grid.priceMultiplier` and `grid.carbonMultiplier`, applied to the current value), WACC 4 %/12 % (`economics.wacc` low/high), and three new records for drivers whose input has no range: `sensitivity.gasPriceFactor` 0.7/1.3, `sensitivity.carbonPriceFactor` 0.5/1.5, `sensitivity.itLoadFactor` 0.8/1.2 (judgement). `sensitivity.topDrivers` = 12 (run setting, §13.3) limits the rows shown. Test 5d now counts 496 records.
+
+**Carbon and gas price inputs (the other line's gap, fixed).** The engine read only the country values; `economics.carbonPrice` and `utilities.gasPrice` ("by country") were ignored, which is why the other line scaled them on the built context. context.js now uses an entered number (the gas transport adder still applies) and the country value otherwise; the Inputs panel has the two fields (empty = the country default, shown as the placeholder), and `isAtDefault` treats a "by country" record as at default only while no number is entered. The tornado drives both prices through these inputs.
+
+**UI.** `SensitivityView.jsx`: option selector (every option, the leader by default), "Run sensitivity" (15 re-runs, 0.7–1.4 s in headless Chromium, one per tick with a progress line), the base score with the check against the ranking, a tornado chart (score at the low value L and high value H around the dashed base line; two lightness steps of one neutral, 3.24:1 and 10.25:1 light, 4.14:1 and 10.90:1 dark, with L/H text) that is a keyboard application (up/down, Home, End; readout under the chart and in a live region), and a table with every driver's record, "unverified" tag, low and high values, scores, LCOE and swing. Results are cached per run, option and weighting.
+
+**Results.** T1 leader: IT load 21.65 points (LCOE 154.9/153.0 €/MWh), grid date 8.33, grid price 5.53, WACC, grid carbon, carbon price 0.015 (Scope 1 from genset test runs only), gas price. T3 leader: every swing 0.00 points although the LCOE moves (gas price 166–222 €/MWh): the compressed T3 cost axis (item 2).
+
+**Tests 13a–13c** (port of the other line's test 9): base re-run = run score on the T1 and T3 leaders, rows sorted by swing, every driver once, later grid date never better time-to-power, carbon price moves LCOE only with Scope 1 emissions, IT load moves LCOE, scores in 0–100, the run unchanged, clipping on a synthetic case (13a); every driver's record exists with the label, changing `sensitivity.itLoadFactor`, `economics.wacc` or `sensitivity.topDrivers` changes the rows, and entered carbon and gas prices reach the context and a gas option's LCOE (13b); the rendered tab (13c).
+
+### Item 5. Loading message, startup errors and hosted page (e9ed8f6 + c3f81f5, non-site parts)
+
+- `index.html`: a loading message inside `#root` (React replaces it on mount; if scripts never run it stays and says to open the file in a web browser), an expanded `<noscript>`, and an inline startup-error handler (error and unhandledrejection) that shows the error on the page (role=alert) while the app has not started or after it stopped, and stays quiet once the app runs.
+- `build.mjs`: `__HOSTED__` (false in the normal and single-file builds) and a third output, `dist/energy-tool-hosted.html`: the single file with `__HOSTED__` true, keeping only `<title>`, `<style>` and the body content (the build fails if document tags remain). The single-file build is unchanged otherwise (worker inlined, no outside reference).
+- `RunProgress.jsx`: in the hosted page the run-log buttons copy JSON or CSV to the clipboard, with a select-the-text fallback if the browser refuses; the download code is dropped at build time. Adapted: the flag is written out at each use, not held in a module constant as in the other line, because esbuild did not inline the constant in this bundle (the first hosted build still carried both labels and the download code); test 14 now checks the hosted page has no download code and the single file no copy label.
+- Loading text says 10 to 20 seconds (this line's run takes about 13 s in headless Chromium).
+- **Test 7 changed** (it asserted one inline script): the single file now has two, the startup handler and the app; the app is the larger one. **Test 14** (port of the other line's test 11): index.html structure; single file and hosted page both have two inline scripts that parse, the worker inlined and equal to `dist/worker.js`, no `<script src>`, `<link href>`, relative or outside reference or stylesheet import; the hosted page starts with `<title>` then `<style>` and has no doctype, `<html>`, `<head>`, `<body>` or `<meta>`; copy label and fallback in the hosted page, download code only in the single file.
+
+### Item 6. Tab bar with five tabs
+
+Options, Trade-offs, Site, Dispatch, Sensitivity. The tab list scrolls sideways inside itself on narrow screens (no page overflow); its baseline is an inset shadow so the selected tab still covers it while the list clips its overflow; the focus ring is drawn inside the tab so the clipping cannot hide it. Keyboard: the ARIA tabs pattern with automatic activation, arrows wrapping, and Home/End (new); the selected tab is scrolled into view inside the list (without moving the page) on every change, including from a skip link or "Show this option's …". The three skip links are unchanged and still the first three Tab stops.
+
+### Browser checks added (`tests/browser-tests.mjs`, B22–B29)
+
+B22 Dispatch tab at 375 px (no page overflow with the tables open, keyboard readouts on both charts, check "match", year and 8-day week 52); B23 Sensitivity tab at 375 px (tornado, keyboard readout, rows, base check); B24 the five-tab bar at 375 px (list scrolls, page does not; arrows wrap, Home/End; selected tab in view); B25 skip links with five tabs at 375 px; B26/B27 axe light and dark on the Dispatch tab (leader and an option with firm plant and a battery, tables open, readout shown) and the Sensitivity tab, with the "needs review" contrast check; B28 the hosted page inside a host-like document (runs, no console errors, "Copy run log" copies or falls back, no download, only file:/blob:/data: requests); B29 loading message with scripts off, a startup error shown, quiet once running. B1–B21 are unchanged.
+
+### Other changes to existing code and tests
+
+- `getViewBundle` moved from run-tests.mjs to `tests/view-bundle.mjs` (shared with port-tests.mjs; renders `DispatchPanel` and `SensitivityResult` too). No assertion changed.
+- `Field.jsx`: `NumberField` takes a placeholder; `UnverifiedTag` fills the registry on first use (a component rendered before `buildDefaultInputs` showed no tag).
+- Exports: `SOURCE_OF_TECH` (blocks.js), `Pattern` (site/SitePlan.jsx), `siteFor` (SiteView.jsx).
+- Existing tests' printed values that moved because of item 2 (and, for 5d, item 4's four records; assertions unchanged): 3 (best "Does not meet" rank 5 → 3; T1 dominated 1,947 → 1,950), 4 (visible counts), 5d (492 → 496 records), 8a (T1 frontier 11 → 8), 8b (3 distinct picks, was 4: Lowest cost OZ57BJM → OVOJ8EB, Lowest risk OCRJR70 → O1YAUJ8J), 8c and 8d (dominated counts; T3 1,895 → 1,881), 8g (10 separate highest-score marks, was 7), 9g (rank counts). Test 6d's slice count is timing.
+
+### Judgement calls
+
+1. Bridging-battery capex and fixed O&M follow its supply month, like every other plant (item 1; quantified above).
+2. The PPA decision is applied symmetrically: the whole settlement on undelivered volume (strike payment and spot value) leaves the ledger, so a hedge loss is not counted either (236 T1 options have one).
+3. The hedge is valued at the wholesale price without the non-commodity adder, which applies to energy taken from the grid, not to a financial settlement. The old rule's credit of the adder on undelivered volume (€246 m on the T1 leader) disappears with it.
+4. The hedge is reported as a total over the evaluation period and its present value at the WACC (discounted like opex), with the undelivered volume split into import-limited and above-load parts.
+5. `grid-ppa` is raised wherever there is undelivered volume (minor if import-limited, info otherwise) and carries the hedge explanation; on T1/T3 this changes the text only.
+6. Market-based carbon and hourly CFE are unchanged by the decision (open point 4).
+7. Dispatch tab: every option in the selector (no top-50 limit), the choice kept in App across tabs (the other line reset it); year and week reset when the tab remounts.
+8. Firm plant of one source shares a band; PPA stays in the grid band (as the other line), split in the readout, table and balance.
+9. Firm plant and wind carry their plan hatch in the charts (palette validation); solar, battery and grid stay plain. Curtailment neutral re-stepped per theme.
+10. Charts are `role="application"` with a live region, as this line's Pareto chart and site plan (the other line used `role="group"`); readouts move under the chart below 480 px (StackChart) and always sit under the tornado.
+11. The inspector and the tornado run on the main thread on request (the inspector after the tab paints, the tornado one re-run per tick), with small caches; not in a worker (open point 6).
+12. Tornado ranges: the input's own record where it has a range, applied to the current value for multipliers and as absolute values for WACC; new `sensitivity.*` records otherwise; the grid date driver moves intermediate steps too; ties in swing are ordered by driver id.
+13. Gas and carbon price fields added to the Inputs panel with the engine fix (empty = country default).
+14. Tornado colours: two steps of one neutral (an ordinal low/high pair, not energy sources), with L/H text.
+15. `__HOSTED__` written at each use (see item 5).
+16. Tab list: inset baseline, inset focus ring, Home/End.
+17. New tests numbered 10–14 after this line's 9a–9j; browser checks B22–B29.
+
+### Open points
+
+1. **Time-to-power counts battery power without regard to its energy** (the other line's open point, unchanged; §9.2, §9.8): a bridging battery sized to the shortfall with 24 h of energy counts like firm capacity for first power and full load, whatever its state of charge. Relatedly (pre-existing, not changed): with C3 = Remove, time-to-power stops counting the bridging battery at the full grid connection while dispatch keeps using it and the ledger keeps its capex without a removal.
+2. **T3 cost axis still compressed** after the PPA decision (item 2): 1,866 ordinary options within 0.013 points because near-zero-delivery options reach 4.6 M€/MWh; the same on T1 with BESS + solar included, before and after the slice (51 islanded "BESS + solar only" options deliver 1,250–144,794 MWh in 20 years at 0.019–0.94 M€/MWh and compress the other 1,949 options into 0.046 → 0.040 points). The remaining owner options from Brief issue 21: LCOE over demanded energy with unmet load priced, the NPV cost metric for such sites, or a robust axis scale (which §11's linear min–max does not allow).
+3. Grid-ppa flag membership: on T1/T3 every PPA option is import-limited, so the info-severity branch (above-load volume only) is exercised only by the unit logic, not by the reference runs.
+4. **PPA beyond the ledger**: the engine never routes contracted PPA energy into a battery ("or battery" has nothing to count); market-based Scope 2 still applies certificates for the whole contract and hourly CFE still counts contracted volume up to the residual load even when it is not delivered. Both are carbon accounting, outside the decision as stated; owner decision.
+5. **Palette**: in dark mode three source pairs that can share a dispatch chart fail the normal-vision floor (fuel cells–battery 11.9, gas–solar 13.0, hydrogen–grid 9.8; hydrogen–grid 10.5 in light too); identity relies on the plan hatch, gaps, position, legend, readout and tables. Re-stepping the shared palette would change the site plan.
+6. **§17 main-thread long tasks**: the on-demand re-runs run on the main thread; the Dispatch tab's first re-run is one task of a few hundred milliseconds, and the tornado's longest slice was 179 ms on the phone run (the target is none above 50 ms). A worker for these re-runs is the remedy.
+7. Tornado drivers not yet built (§13.3): PUE parameters, capex by technology, solar yield, PPA price, BESS cost, lead times; and breakevens, Monte Carlo, scenarios.
+8. Screen-reader walk-through of the two new tabs not done (axe, keyboard and live-region text in headless Chromium only). The hosted page was checked in a host-like document in headless Chromium, not on the real host.
+
+### Test run (port slice, final)
+
+`npm run build` (exit 0; energy-tool-single-file.html 791.0 KB, energy-tool-hosted.html 790.9 KB), then `npm test` (exit 0) and `npm run test:browser` (exit 0, on the single file), 2026-10-18, Node v22.22.0, 2-core sandbox. Every test with its real result (detail lines omitted). Run times are within run-to-run variation of the baseline copy (T1 10.32 s, T3 10.46 s there), with the same 1,769 distinct dispatch runs on T1.
+
+```
+Running core-slice tests…
+T1 run: 2000 options screened of 57028 combinations in 10.93 s (single thread, 1769 distinct dispatch runs, 10616 8760-h years)
+T3 run: 2000 options in 9.22 s
+PASS  1. Per-hour energy balance (supply = demand + losses + curtailment + unmet), T1 and T3, full 8760-h years  (3233 ms)
+PASS  2. Grid connection equals the offered capacity on every option, never resized; import never exceeds it in "Show unmet load"  (1327 ms)
+PASS  3. No option is hidden by default  (15 ms)
+PASS  4. Score and rank do not change when a view filter changes  (80 ms)
+PASS  5a. Determinism: same inputs + seed give identical outputs  (10103 ms)
+PASS  5b. Weight change re-ranks without re-dispatch; effective weights sum to 1  (0 ms)
+PASS  5c. "Show exceedance" removes unmet load on T3 and raises "Import exceeds grid capacity"  (1277 ms)
+PASS  5d. Every default record carries the "indicative — unverified" label and a basis  (0 ms)
+PASS  6a. Event log completeness: every stage has a start and an end, sequence numbers contiguous, stage order as specified (T1, T3 and the test-3 sample)  (22 ms)
+PASS  6b. Log content (timestamps excluded) is identical across two runs with the same inputs  (7 ms)
+PASS  6c. Worker pool: each worker returns its own events; merged log complete, ordered and deterministic; results equal the single-thread run  (23173 ms)
+PASS  6d. Main-thread fallback: time-sliced runModelSteps gives the same log content and results, and the progress tracker reaches 100 % on every stage  (10534 ms)
+PASS  6e. Log export: JSON round-trips, CSV has one row per event, file names carry the input hash and a timestamp  (32 ms)
+PASS  7. Single-file build: worker inlined as a Blob-URL source string, no relative "worker.js" or other file reference, inlined source parses and runs  (1691 ms)
+PASS  8a. Pareto set (non-dominated on the two plotted axes) is correct on a hand-checked example  (41 ms)
+PASS  8b. Weighted pick is the highest weighted score and moves with the weights, with no dispatch re-run  (76 ms)
+PASS  8c. Dominance marking does not remove any option from the Pareto view, the list or the ranking  (21 ms)
+PASS  8d. Every point in the Pareto chart has a matching row in the table alternative (rendered)  (761 ms)
+PASS  8e. Dominance is marked when the dominated option has an infinite cost (LCOE with no delivered energy)  (5 ms)
+PASS  8f. Every registered view setting and run setting is the value the code uses  (335 ms)
+PASS  8g. AC5: the highlighted pick is the weighted leader (rank 1, the header leader) with "Rank requirement-compliant options first" on or off  (237 ms)
+PASS  8h. Every active view filter is a removable chip, and the header filter count matches applyView()  (49 ms)
+PASS  9a. Geometry kernel: projection, areas, validity, point-in-polygon, offsets, differences, raster, import round-trips (hand-checked values)  (11 ms)
+PASS  9b. Site model: area + aspect rectangle, polygon boundary, per-edge setbacks, exclusions, height zones, points, raster, fixtures and records  (175 ms)
+PASS  9c. Blocks (§10.3): building massing from the §5.3 density rules, unit arrays, substation, fuel, rooftop blocks, off-site tray  (42 ms)
+PASS  9d. Layout invariants on T1, T2, T4 and T1 with constraints: no overlaps, inside the envelope and outside hard exclusions, separations met or named, unplaced → "Does not fit" with a shortfall, deterministic  (19094 ms)
+PASS  9h. Run log: the "layout" stage has start, progress and end with counts and cache hits/misses; sequence numbers contiguous; content deterministic  (2779 ms)
+PASS  9e. Site-fit outputs (§10.6): area budget, land take, residual, height per zone, separation checklist, noise proxy (hand-checked), roof use, expansion headroom, land-take ceiling flag  (1641 ms)
+PASS  9f. AC7 on T2: an archetype shows "Does not fit" with a named shortfall; C17/C18 stay at defaults with "N options do not fit" notes; including C17 GIS and C18 double-deck yields options that fit or fit with flags; no option hidden  (9276 ms)
+PASS  9g. Site-fit status alone never changes a score or rank while the site-fit penalty is off; site inputs act on scores only through fill-residual PV sizing (T1 at half the area); with the penalty on, deliverability drops by 10/25 points and the axis reads "Deliverability (incl. site fit)"  (17536 ms)
+PASS  9i. Site tab (server render): plan with layers, scale bar and north arrow, one drawn block per placed block, site-fit panel, unplaced tray, plan as a table with every block, small multiples, editor  (448 ms)
+PASS  9j. Route lengths for cost (§5.2, §5.4): the POC sets the grid cable route and the gas main the connection pipe of gas-burning options; layout-independent, the same for every option  (138 ms)
+PASS  10. Bridging battery supplies from its programme month in sizing, time-to-power, dispatch and the BESS capex year (BRIEF §9.8), with and without a main battery  (37 ms)
+PASS  11a. PPA settlement counts only on PPA energy physically delivered; the settlement on undelivered contracted volume is the "PPA hedge (not counted)", outside the ledger, LCOE, NPV and score (owner decision 2026-10-18)  (107 ms)
+PASS  11b. AC3: LCOE, NPV and the capex/opex split derive from the one cash-flow ledger for every option, T1 and T3 (difference < 0.1 %)  (27 ms)
+PASS  12a. Dispatch tab inspector (src/engine/inspect.js): re-running one option through the full pipeline (sizing, layout, fill-residual solar, dispatch with hourly records, time-to-power, economics, flags) gives exactly the figures of the run  (3581 ms)
+PASS  12b. Hourly records sum to the engine's annual totals, and the energy balance closes in every hour of every inspected year  (478 ms)
+PASS  12c. Phasing timeline: grid + firm plant by source + battery bridging = the supply time-to-power counts in every month, and the timeline gap equals the time-to-power power gap  (2 ms)
+PASS  12d. Weeks: 52 contiguous weeks cover all 8,760 hours (week 52 is 8 days, 192 h); presets name valid weeks and "most unmet" holds the most unmet load; the bridging battery is idle before its month in the inspector too  (30 ms)
+PASS  12e. Dispatch tab (server render): timeline and hourly charts are keyboard-operable applications with a description, the legend uses the site plan's energy-source colours (wind with its hatch), table views, energy balance and the check against the ranking  (810 ms)
+PASS  13a. Tornado (src/engine/sensitivity.js, §13.3): the base re-run reproduces the run score (T1 and T3 leaders), rows are sorted by swing with every driver once, directions hold, and the run is not changed  (925 ms)
+PASS  13b. Every tornado driver range is a §18 record with the "indicative — unverified" label and drives the tornado (range record and sensitivity.topDrivers changed → rows follow); the gas and carbon price inputs are read by the engine  (312 ms)
+PASS  13c. Sensitivity tab (server render): the tornado is a keyboard-operable application with a description, one bar per driver, and the table lists every driver with its range record and "unverified" label and the base check  (3 ms)
+PASS  14. Loading message and startup-error handler (index.html, single file) and the hosted page (dist/energy-tool-hosted.html): page content only (no <html>/<head>/<body>, no doctype), no outside reference, worker inlined, run log copied with a select-the-text fallback and the download code dropped  (89 ms)
+
+44/44 tests passed.
+Timing (single thread, Node v22.22.0): T1 full run 10.93 s for 2000 options; T3 9.22 s.
+```
+
+```
+Chromium 141.0.7390.37, Playwright 1.56.0, axe-core 4.10.2
+PASS  B1. Tab order from the top of the page (no skip link): stops before the results and the chart, none hidden  (15.0 s)
+PASS  B2. Skip links: "Skip to results" and "Skip to trade-offs chart" are the first two Tab stops and reach their targets  (0.4 s)
+PASS  B3. Keyboard on the chart: arrows move along the axes, Home/End, P returns to the pick, Enter opens its detail, Escape clears  (3.0 s)
+PASS  B4. Canvas path (more than the registered threshold): points drawn on Canvas, no SVG markers, pixels at the pick, pointer hit-test opens the nearest option  (0.4 s)
+PASS  B5. SVG path (at or below the threshold): with "Hide dominated options" on, markers are SVG paths, one per plotted point, no Canvas  (0.8 s)
+PASS  B6. Table paging: every option reachable, page size as registered, rank order, the pick on page 1  (3.2 s)
+PASS  B7. axe (WCAG 2.0/2.1/2.2 A and AA rules), light theme: Trade-offs table, Trade-offs chart and Options tab have no serious or critical violation  (11.3 s)
+PASS  B8. Removable filter chips: each filter shows a chip with its own remove button; removing it by keyboard keeps focus in the chip row  (1.2 s)
+PASS  B9. A weight preset moves the pick without a re-run; repaint asserted ≤ 300 ms (median of 3, regression bound on this sandbox) and reported against the §17 target of 100 ms on the reference machine  (0.6 s)
+PASS  B10. No console errors or page errors on the main page  (0.0 s)
+PASS  B11. axe, dark theme (prefers-color-scheme: dark): Trade-offs chart, table and Options tab have no serious or critical violation  (22.2 s)
+PASS  B12. Tablet width (1000 px): the closed inputs panel takes no Tab stop; opened, its controls are reachable  (13.3 s)
+PASS  B13. Phone width (375 px): Trade-offs chart and table cause no horizontal page scroll  (12.5 s)
+PASS  B14. Phone width (375 px, touch): the Site tab causes no horizontal page scroll with every section open; a boundary drawn by tapping re-screens the options  (25.2 s)
+PASS  B15. Keyboard on the Site tab: Tab reaches the plan; arrow keys focus blocks with dimensions, tooltip, live text and the matching table row; the table alternative is reachable; a boundary can be drawn with the keyboard alone  (24.5 s)
+PASS  B16. GeoJSON import on the Site tab: each feature gets a "use as" choice (guessed from its name), and applying sets the boundary, a soft flood exclusion, the POC and a receptor, then re-screens the options  (28.0 s)
+PASS  B17. axe, light theme: Site tab (plan, layers, legend, editor with every section open, site-fit panel incl. unplaced tray, small multiples, table) and drawing mode have no serious or critical violation  (32.1 s)
+PASS  B18. axe, dark theme: the same Site tab states have no serious or critical violation  (33.6 s)
+PASS  B19. Phone width (375 px, touch): after the run, the tab bar and the start of the active tab are within the first 1,000 px; the run progress, event log and run summary sit in a closed "Run details" disclosure under a one-line status; during a run the progress panel is shown, not folded  (27.3 s)
+PASS  B20. Site tab at 1400, 1000 and 375 px: no horizontal page scroll with the option selector listing every screened option; the closed selector shows its full name as the title  (14.6 s)
+PASS  B21. "Skip to site plan" is the third Tab stop: Enter selects the Site tab and focuses the plan  (13.5 s)
+PASS  B22. Phone width (375 px, touch): the Dispatch tab causes no horizontal page scroll with its tables open; the timeline and hourly charts give a keyboard readout on screen and in a live region; year, week box (8-day week 52) and presets work; the check against the ranking says it matches  (1.7 s)
+PASS  B23. Phone width (375 px, touch): the Sensitivity tab runs the tornado for the leader without horizontal page scroll; arrow keys on the tornado give a readout (the live region repeats the on-screen readout); one table row per driver; the base re-run matches the ranking  (1.5 s)
+PASS  B24. Tab bar with five tabs at 375 px: the tab list scrolls sideways, the page does not; arrow keys wrap through all five tabs (ARIA tabs pattern), Home/End go to the first and last, and the selected tab is scrolled into view inside the list  (2.9 s)
+PASS  B25. Skip links with five tabs at 375 px: "Skip to results", "Skip to trade-offs chart" and "Skip to site plan" are still the first three Tab stops, and "Skip to site plan" selects the Site tab (scrolled into view in the tab list) and focuses the plan  (12.9 s)
+PASS  B26. axe, light theme: Dispatch tab (charts, legend, readout, every table open; the leader and an option with firm plant and a battery) and Sensitivity tab (tornado, readout, table) have no serious or critical violation  (47.9 s)
+PASS  B27. axe, dark theme: Dispatch tab (charts, legend, readout, every table open; the leader and an option with firm plant and a battery) and Sensitivity tab (tornado, readout, table) have no serious or critical violation  (45.5 s)
+PASS  B28. Hosted page (dist/energy-tool-hosted.html) inside a host-like document: no document wrapper of its own, loads, runs and shows results with no console errors; the run log is copied (or shown selected for copying), never downloaded  (12.8 s)
+PASS  B29. Loading message and startup errors: with scripts off the single file shows the loading message and the "needs JavaScript" note (never a blank page); a startup error is shown on the page (role=alert); once the app runs, a later error leaves the page alone  (13.1 s)
+29/29 browser checks passed.
+Keyboard: chart in 2 Tab + Enter via the skip link (results: 1 Tab + Enter; site plan: 3 Tab + Enter); Tab only from the top: 215 presses (180 in the inputs panel).
+Weight-change repaint: median 68 ms (asserted ≤ 300 ms here; §17 target ≤ 100 ms on the 4-core reference machine).
+Phone (375 px): tab bar ends at 812 px; active tab content starts at 831 px (bound 1,000 px).
+```
+
+Selected details from the new checks: B22 Dispatch tab ready 505 ms after the click (the option re-run), 375/375 px with every table open, check "match", year 6 week 52 = 192 rows; B23 tornado (15 re-runs) in 1.1 s; B24 tab list 410/343 px (scrolls), page 375/375 px; B26/B27 32 axe rules passed with no violation on each Dispatch and Sensitivity state in both themes (2,773 and 773 "needs review" contrast nodes checked from computed styles, lowest 4.86:1 light and 5:1 dark); B28 2 requests, all file:/blob:/data:, 0 downloads, JSON copied to the clipboard.

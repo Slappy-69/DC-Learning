@@ -21,10 +21,20 @@ export function axisMetrics(o, settings) {
 }
 
 const LOWER_BETTER = { cost: true, carbon: true, ttp: true, deliverability: false };
+export const SCORE_KEYS = Object.keys(LOWER_BETTER); // axis order of the weighted sum
+
+// Axis score 0–100 of one metric against an axis range (best = 100, worst = 0, linear; §11). Non-finite metric → 0;
+// a range of zero width → 100. Used by scoreOptions and by the tornado (sensitivity.js), which scores one re-run
+// option against the base run's ranges with the same arithmetic.
+export function axisScore(key, x, lo, hi) {
+  if (!Number.isFinite(x)) return 0;
+  if (hi - lo < 1e-12) return 100;
+  return LOWER_BETTER[key] ? (100 * (hi - x)) / (hi - lo) : (100 * (x - lo)) / (hi - lo);
+}
 
 export function scoreOptions(options, inputs) {
   const { w, equal } = effectiveWeights(inputs.weights);
-  const keys = Object.keys(LOWER_BETTER);
+  const keys = SCORE_KEYS;
   for (const o of options) o.metrics = axisMetrics(o, inputs.settings);
   const range = {};
   for (const k of keys) {
@@ -42,11 +52,7 @@ export function scoreOptions(options, inputs) {
     let ws = 0;
     for (const k of keys) {
       const { lo, hi } = range[k];
-      const x = o.metrics[k];
-      let s;
-      if (!Number.isFinite(x)) s = 0;
-      else if (hi - lo < 1e-12) s = 100;
-      else s = LOWER_BETTER[k] ? (100 * (hi - x)) / (hi - lo) : (100 * (x - lo)) / (hi - lo);
+      const s = axisScore(k, o.metrics[k], lo, hi);
       o.axisScores[k] = s;
       ws += w[k] * s;
     }

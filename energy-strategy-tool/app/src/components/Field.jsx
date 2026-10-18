@@ -1,9 +1,17 @@
 import React, { useEffect, useId, useState } from 'react';
-import { getRegistry, isAtDefault, LABEL } from '../engine/defaults.js';
+import { getRegistry, registryValue, isAtDefault, LABEL } from '../engine/defaults.js';
+
+// The §18 record of a path; input records are created by buildDefaultInputs, so fill the registry on first use.
+function recordOf(path) {
+  const r = getRegistry()[path];
+  if (r) return r;
+  try { registryValue(path); } catch { return null; }
+  return getRegistry()[path] || null;
+}
 
 // Full label text for a §18 record: label, basis, source to verify against, note.
 export function unverifiedTip(path) {
-  const r = getRegistry()[path];
+  const r = recordOf(path);
   if (!r) return null;
   return `${LABEL} (${r.basis})${r.sourceToVerify ? ` — source to verify against: ${r.sourceToVerify}` : ' — no source'}${r.note ? ` — ${r.note}` : ''}`;
 }
@@ -14,7 +22,7 @@ export function unverifiedTip(path) {
 // it labels can point at it with aria-describedby (heard with the control, not as part of its name);
 // without `descId`, the text is read inline as visually hidden text.
 export function UnverifiedTag({ path, compact, descId, text }) {
-  const r = getRegistry()[path];
+  const r = recordOf(path);
   if (!r) return null;
   const tip = unverifiedTip(path);
   return (
@@ -47,7 +55,7 @@ function Label({ id, label, unit, path, atDefault, required, hint }) {
 }
 
 // Numeric input with commit on blur or Enter (BRIEF §4 input commit model).
-export function NumberField({ label, unit, value, onCommit, path, inputs, required, min, max, step = 'any', scale = 1, hint, nullable }) {
+export function NumberField({ label, unit, value, onCommit, path, inputs, required, min, max, step = 'any', scale = 1, hint, nullable, placeholder }) {
   const id = useId();
   const atDefault = path && inputs ? isAtDefault(inputs, path) : false;
   const shown = value == null ? '' : String(+(value * scale).toPrecision(10));
@@ -67,7 +75,7 @@ export function NumberField({ label, unit, value, onCommit, path, inputs, requir
     <div className="field">
       <Label id={id} label={label} unit={unit} path={path} atDefault={atDefault} required={required} hint={hint} />
       <input id={id} type="number" inputMode="decimal" step={step} value={draft} aria-describedby={atDefault ? basisId(id) : undefined}
-        placeholder={nullable ? 'none' : undefined}
+        placeholder={placeholder ?? (nullable ? 'none' : undefined)}
         onChange={(e) => setDraft(e.target.value)} onBlur={commit}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); } }} />
     </div>

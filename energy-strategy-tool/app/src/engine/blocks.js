@@ -56,7 +56,8 @@ function arrayBlock(base, unitArea, unitLw, arr) {
 }
 
 const BRIDGE_TYPE = { gasRecip: 'gasEngine', chp: 'gasEngine', rented: 'gasEngine', dieselPrime: 'gasEngine', gasTurbine: 'turbine', fuelCell: 'fuelCell', hydrogen: 'hydrogen' };
-const SOURCE_OF_TECH = { gasRecip: 'gas', chp: 'gas', rented: 'gas', gasTurbine: 'gas', dieselPrime: 'diesel', fuelCell: 'fuelCell', hydrogen: 'hydrogen', smr: 'nuclear', backupDiesel: 'diesel', backupHvo: 'diesel', backupGas: 'gas' };
+// Technology → energy-source key; also used by the Dispatch tab so firm plant draws in the same colour as on the plan.
+export const SOURCE_OF_TECH = { gasRecip: 'gas', chp: 'gas', rented: 'gas', gasTurbine: 'gas', dieselPrime: 'diesel', fuelCell: 'fuelCell', hydrogen: 'hydrogen', smr: 'nuclear', backupDiesel: 'diesel', backupHvo: 'diesel', backupGas: 'gas' };
 
 // Firm plant (prime or bridging) as unit arrays.
 function plantBlocks(plant, roleLabel, sp, push) {
