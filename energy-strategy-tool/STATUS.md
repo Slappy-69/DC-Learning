@@ -32,9 +32,15 @@ Branches are stacked: merging the newest one into `main` brings in everything be
 | Pareto trade-off view | Haiku ×3 + Opus, 2026-10-16 | `npm test` 22/22; `npm run test:browser` 13/13; axe 0 serious/critical (light and dark) |
 | Site (stage 2): geometry kernel, site model with T2/T4, blocks, auto-layout, site-fit outputs, Site tab with plan, boundary drawing, GeoJSON/KML import, small multiples | Haiku ×3 + Opus, 2026-10-17 (0 invariant violations in 8,000 independently checked layouts) | `npm test` 32/32; `npm run test:browser` 21/21; axe 0 serious/critical; phone shows results first |
 
+## Launchable app (owner request 2026-10-18; owner chose "Both")
+
+- **Installable web app (PWA):** manifest, service worker (offline), icons; to be hosted on GitHub Pages at https://slappy-69.github.io/DC-Learning/ (the owner agreed to Pages being switched on when choosing this option). Install from the browser on Android, iPhone, Windows or Mac.
+- **Desktop program (Electron):** Windows, Linux and macOS builds with secure defaults, offered as a GitHub pre-release. Not code-signed, so Windows SmartScreen and macOS Gatekeeper warn on first launch.
+- Packaging scripts live in `packaging/` once verified; nothing is published until the port slice is verified.
+
 ## Next
 
-1. **Port from the other line:** Dispatch tab (phasing timeline, hourly dispatch, annual balance), tornado sensitivity tab, bridging-battery timing fix, hosted-page build and loading message. Then update the published artifact "Concept Energy Optioneering" in place so it opens on a phone.
+1. **Port from the other line:** built 2026-10-18 (checkpoint 298d51b; builder-reported `npm test` 44/44, `npm run test:browser` 29/29); verification (Haiku ×3 + Opus) in progress. Dispatch tab (phasing timeline, hourly dispatch, annual balance), tornado sensitivity tab, bridging-battery timing fix, hosted-page build and loading message. Then update the published artifact "Concept Energy Optioneering" in place so it opens on a phone.
 2. **Rest of the trade-off views (stage 3):** parallel coordinates with brushing, choice-impact chart, option card, compare view, phasing timeline, schematic, key quantities.
 3. **Verification tier (stage 4):** representative-day screening, background 8760-hour verification of the top 10, dispatch visualisations.
 4. **Uncertainty and sensitivity (stage 5):** ranges, Monte Carlo, rank stability, robust pick, tornado, breakevens, scenarios.
