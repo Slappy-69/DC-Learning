@@ -56,7 +56,23 @@ jobs:
       - name: Browser tests (layout, accessibility, Dispatch, Sensitivity, Site)
         env:
           NODE_PATH: ${{ github.workspace }}/energy-strategy-tool/packaging/node_modules
-        run: npm run test:browser
+        run: |
+          set -o pipefail
+          npm run test:browser 2>&1 | tee browser-tests.log
+      - name: Report browser test failures as annotations
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os, re, sys
+          if not os.path.exists('browser-tests.log'): sys.exit(0)
+          log = open('browser-tests.log', encoding='utf-8', errors='replace').read().split('\n')
+          esc = lambda t: t.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          for i, line in enumerate(log):
+              if line.startswith('FAIL'):
+                  title = re.sub(r'[:,]', ' ', line[6:80])
+                  print(f"::error title={title}::{esc(chr(10).join(log[i:i + 8])[:1800])}")
+          print('::notice title=Browser test summary::' + esc(' '.join(l for l in log if 'checks passed' in l or l.startswith('SKIP'))))
+          PY
       - name: Upload the single-file app
         if: always()
         uses: actions/upload-artifact@v4
@@ -76,5 +92,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: energy-strategy-tool/packaging/test-results/
+          path: |
+            energy-strategy-tool/packaging/test-results/
+            energy-strategy-tool/app/browser-tests.log
           if-no-files-found: ignore
