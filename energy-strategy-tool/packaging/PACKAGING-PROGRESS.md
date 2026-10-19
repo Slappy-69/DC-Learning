@@ -1,12 +1,12 @@
 # Packaging slice progress (PWA + Electron desktop, 2026-10-18)
 
-Read this first if resumed. Task: package the built web app (read-only input
-`/home/claude/build/app/dist/energy-tool-single-file.html`) as (A) an installable PWA for GitHub Pages under
+Read this first if resumed. Task: package the built web app (input `../app/dist/energy-tool-single-file.html`,
+built with `npm run build` in `app/`) as (A) an installable PWA for GitHub Pages under
 `https://slappy-69.github.io/DC-Learning/` (all paths relative) and (B) an Electron desktop program for Windows, macOS
-(x64, arm64) and Linux. Never modify `/home/claude/build/app` or run its build; no git; no publishing.
+(x64, arm64) and Linux. Nothing is published from here.
 Keep this folder under about 1.2 GB; build one desktop platform at a time and clear Electron caches.
 
-## Status: in progress
+## Status: done (2026-10-18), pending the packaging Haiku check and Opus review
 
 | Part | State | Files | Tests |
 |---|---|---|---|
@@ -14,11 +14,11 @@ Keep this folder under about 1.2 GB; build one desktop platform at a time and cl
 | A1 Icons (SVG mark, PNG/ICO/ICNS) | done | icons/icon-art.mjs (parametric SVG), icons/build-icons.mjs, icons/generated/* (preview.png = contact sheet) | visual check of preview.png |
 | A2 build-pwa.mjs, manifest, sw.js | done | pwa/build-pwa.mjs, pwa/sw.template.js, pwa/register-sw.js, pwa/update-notice.css, lib/common.mjs; output out/pwa/ | — |
 | A3 test-pwa.mjs | done | pwa/test-pwa.mjs; test-results/pwa.json + pwa-update-notice-*.png | 12/12 pass (P1–P12) |
-| B1 Electron app source (main.js etc.) | pending | | |
-| B2 build-desktop.mjs (packager, fuses, archives) | pending | | |
-| B3 test-desktop.mjs (Linux build under xvfb) | pending | | |
-| B4 github/desktop.yml (electron-builder) | pending | | |
-| C README.md, final sizes | pending | | |
+| B1 Electron app source (main.js etc.) | done | desktop/app/main.js, desktop/app/lib/{guards,menu,window-state}.js | through B3 |
+| B2 build-desktop.mjs (packager, fuses, archives) | done | desktop/build-desktop.mjs, desktop/stage.mjs, desktop/fuses.mjs, desktop/desktop-config.json | Linux, Windows and both macOS targets built locally |
+| B3 test-desktop.mjs (Linux build under xvfb) | done | desktop/test-desktop.mjs; test-results/desktop.json | 11/11 pass (D1–D11), two runs |
+| B4 GitHub workflows | done | ../../.github/workflows/desktop.yml (all four targets, Linux tested), ../../.github/workflows/ci.yml (tests, builds, PWA) | run on GitHub after the merge |
+| C README.md, final sizes | done | README.md | — |
 
 ## Environment facts (checked 2026-10-18)
 
@@ -49,6 +49,34 @@ Keep this folder under about 1.2 GB; build one desktop platform at a time and cl
 9. Registration is skipped unless the page is http(s) in a secure context with serviceWorker support; failures are swallowed so
    the app's own start-up error box never shows for them.
 
+10. **CI builds with the tested script, not electron-builder.** The plan named electron-builder for the GitHub workflow.
+    The workflow runs `desktop/build-desktop.mjs` instead, the script built and tested here, so what GitHub produces is
+    what was tested. Trade-off: no installers (NSIS, DMG, AppImage), only archives to unzip and run. electron-builder
+    can be added later if installers are wanted.
+11. **Electron download in a child process with 3 attempts.** Through this sandbox's HTTPS proxy, undici (inside
+    @electron/get) twice threw an uncaught assertion when the connection dropped mid-download, which killed the build.
+    The download now runs first in a child process, retried up to 3 times; @electron/packager then reads the cached zip.
+12. **Desktop test attaches over Chromium's remote-debugging port**, because Playwright's Electron launcher needs Node's
+    `--inspect`, which the EnableNodeCliInspectArguments fuse disables on purpose. The test waits for the window's page
+    target before attaching (attaching earlier leaves Playwright without the window) and starts the program in its own
+    process group so every helper process is stopped at the end.
+13. **Tests run as root pass `--no-sandbox`** (Chromium refuses to start as root otherwise). The window still has
+    `sandbox: true` and context isolation, and D8 confirms the page has no Node.js; only the OS-level sandbox is off in
+    the test, not in normal use.
+
+14. **macOS signature check by page hashes** (`desktop/macho-verify.mjs`), because `rcodesign verify` 0.29 rejects every
+    ad hoc signature ("CMS error: missing further values"). Tested: 14 of 14 binaries pass in each macOS build; 6 of 6
+    copies with one byte flipped fail (one page each).
+
+## Local build sizes (2026-10-18, Electron 44.9.0, engine 0.2.0-site)
+
+| Target | Archive | Unpacked | Signing |
+|---|---|---|---|
+| linux-x64 | 117.9 MB .tar.gz | 285 MB | none (not needed) |
+| win32-x64 | 151.6 MB .zip | 370 MB | none; exe has no certificate table |
+| darwin-x64 | 130.2 MB .zip | 314 MB | ad hoc, 14 Mach-O files checked |
+| darwin-arm64 | 124.8 MB .zip | 311 MB | ad hoc, 14 Mach-O files checked |
+
 ## Next step
 
-B1 Electron app source.
+Haiku check and Opus review of the packaging, then merge to `main` (owner approved 2026-10-18).

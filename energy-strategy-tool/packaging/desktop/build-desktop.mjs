@@ -15,6 +15,7 @@ import { join, resolve } from 'node:path';
 import { packager } from '@electron/packager';
 import { flipFuses } from '@electron/fuses';
 import { FUSES, readFuses } from './fuses.mjs';
+import { verifyAdhocMachO } from './macho-verify.mjs';
 import { APP_ID, APP_NAME, DEFAULT_SINGLE_FILE, PACKAGING_ROOT, args, sha256 } from '../lib/common.mjs';
 import { CONFIG, stage } from './stage.mjs';
 
@@ -29,6 +30,25 @@ const CACHE = join(PACKAGING_ROOT, 'out', '.electron-cache');
 const TOOLS = join(PACKAGING_ROOT, 'out', '.tools');
 const RCODESIGN_VERSION = '0.29.0';
 const RCODESIGN_SHA256 = 'dbe85cedd8ee4217b64e9a0e4c2aef92ab8bcaaa41f20bde99781ff02e600002';
+
+/**
+ * Downloads the Electron zip for one platform into the packager's cache, in a child process, up to 3 attempts.
+ * undici (inside @electron/get) can throw an uncaught assertion from a socket event when a connection drops mid-download
+ * (seen through an HTTPS proxy), which kills the whole process; a child process contains it, so a retry is possible.
+ */
+function ensureElectronZip(platform, arch) {
+  const script = `import('@electron/get').then(({ downloadArtifact }) => downloadArtifact({ version: ${JSON.stringify(ELECTRON)}, platform: ${JSON.stringify(platform)}, arch: ${JSON.stringify(arch)}, artifactName: 'electron', cacheRoot: ${JSON.stringify(CACHE)} })).then((p) => console.log(p)).catch((e) => { console.error(e && e.message || e); process.exit(1); });`;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      execFileSync(process.execPath, ['--input-type=module', '-e', script], { cwd: PACKAGING_ROOT, stdio: ['ignore', 'pipe', 'pipe'], timeout: 15 * 60 * 1000 });
+      return;
+    } catch (e) {
+      const why = String(e.stderr || e.message).split('\n').find((l) => l.trim()) || 'unknown error';
+      console.warn(`Electron ${ELECTRON} ${platform}-${arch} download attempt ${attempt} of 3 failed: ${why}`);
+      if (attempt === 3) throw new Error(`Electron download failed 3 times for ${platform}-${arch}`);
+    }
+  }
+}
 
 const run = (cmd, argv, opts = {}) => execFileSync(cmd, argv, { stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64 * 1024 * 1024, ...opts }).toString();
 const mb = (n) => `${(n / 1048576).toFixed(1)} MB`;
@@ -93,6 +113,7 @@ for (const target of PLATFORMS) {
   const t0 = Date.now();
   rmSync(WORK, { recursive: true, force: true });
   mkdirSync(WORK, { recursive: true });
+  ensureElectronZip(platform, arch); // packager then finds the zip in CACHE and does not download
   const [dir] = await packager({
     dir: s.app,
     out: WORK,
@@ -132,9 +153,11 @@ for (const target of PLATFORMS) {
       run(rc, ['sign', binary]);
       const files = machOFiles(binary);
       const bad = [];
-      for (const f of files) { try { run(rc, ['verify', f]); } catch (e) { bad.push(`${f.slice(binary.length)}: ${String(e.stderr || e.message).split('\n')[0]}`); } }
-      if (bad.length) throw new Error(`rcodesign verify failed for ${bad.length} of ${files.length} Mach-O files:\n${bad.join('\n')}`);
-      info.signing = `ad hoc (rcodesign ${RCODESIGN_VERSION}); ${files.length} Mach-O files verified`;
+      // `rcodesign verify` (0.29) rejects every ad hoc signature ("CMS error: missing further values": ad hoc signatures
+      // have no CMS blob), so each file is checked by macho-verify.mjs: ad hoc CodeDirectory, every page hash matches.
+      for (const f of files) { const p = verifyAdhocMachO(f); if (p.length) bad.push(`${f.slice(binary.length)}: ${p.join('; ')}`); }
+      if (bad.length) throw new Error(`ad hoc signature check failed for ${bad.length} of ${files.length} Mach-O files:\n${bad.join('\n')}`);
+      info.signing = `ad hoc (rcodesign ${RCODESIGN_VERSION}); ${files.length} Mach-O files: CodeDirectory ad hoc, every page hash matches the file`;
     }
   }
 

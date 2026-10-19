@@ -1,0 +1,80 @@
+# Tests and builds the concept energy optioneering tool on every push to main and on pull requests.
+# Uploads the single-file app and the installable web app (PWA) as workflow artifacts. Publishes nothing.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLAYWRIGHT_VERSION: 1.56.0
+
+jobs:
+  test-and-build:
+    name: Node tests, build, PWA
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: energy-strategy-tool/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            energy-strategy-tool/app/package-lock.json
+            energy-strategy-tool/packaging/package-lock.json
+      - name: Install app dependencies
+        run: npm ci
+      - name: Build (dist/, single-file and hosted pages)
+        run: npm run build
+      - name: Node test suite
+        run: npm test
+      - name: Install Playwright and Chromium
+        working-directory: energy-strategy-tool/packaging
+        run: |
+          npm ci
+          npm install --no-save playwright@${PLAYWRIGHT_VERSION}
+          npx playwright install --with-deps chromium
+      - name: Build the PWA
+        working-directory: energy-strategy-tool/packaging
+        run: npm run pwa
+      - name: PWA tests
+        working-directory: energy-strategy-tool/packaging
+        run: npm run test:pwa
+      - name: Browser tests (layout, accessibility, Dispatch, Sensitivity, Site)
+        env:
+          NODE_PATH: ${{ github.workspace }}/energy-strategy-tool/packaging/node_modules
+        run: npm run test:browser
+      - name: Upload the single-file app
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: energy-tool-single-file
+          path: energy-strategy-tool/app/dist/energy-tool-single-file.html
+          if-no-files-found: ignore
+      - name: Upload the PWA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pwa
+          path: energy-strategy-tool/packaging/out/pwa/
+          if-no-files-found: ignore
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: energy-strategy-tool/packaging/test-results/
+          if-no-files-found: ignore

@@ -1,0 +1,71 @@
+# Builds the unsigned desktop program for Windows (x64), macOS (Intel and Apple silicon) and Linux (x64), and tests
+# the Linux build under a virtual display. Run by hand (Actions tab -> Desktop builds -> Run workflow) or by pushing a
+# tag v*. Also runs when the packaging or this workflow changes on main. The archives are attached to the workflow run
+# as artifacts; this workflow never creates a release.
+#
+# All four targets are built on Linux with the same script that is tested locally (packaging/desktop/build-desktop.mjs:
+# @electron/packager, Electron fuses, ad hoc macOS signature with rcodesign), so the CI output matches what was tested.
+name: Desktop builds
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+    branches: [main]
+    paths:
+      - 'energy-strategy-tool/packaging/**'
+      - '.github/workflows/desktop.yml'
+
+permissions:
+  contents: read
+
+env:
+  PLAYWRIGHT_VERSION: 1.56.0
+
+jobs:
+  desktop:
+    name: Build ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [linux-x64, win32-x64, darwin-x64, darwin-arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            energy-strategy-tool/app/package-lock.json
+            energy-strategy-tool/packaging/package-lock.json
+      - name: Build the web app
+        working-directory: energy-strategy-tool/app
+        run: |
+          npm ci
+          npm run build
+      - name: Install packaging dependencies
+        working-directory: energy-strategy-tool/packaging
+        run: npm ci
+      - name: Build ${{ matrix.target }}
+        working-directory: energy-strategy-tool/packaging
+        run: node desktop/build-desktop.mjs --platforms ${{ matrix.target }}
+      - name: Test the Linux build (virtual display)
+        if: matrix.target == 'linux-x64'
+        working-directory: energy-strategy-tool/packaging
+        run: |
+          npm install --no-save playwright@${PLAYWRIGHT_VERSION}
+          npx playwright install-deps chromium
+          sudo apt-get install -y xvfb
+          npm run test:desktop
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.target }}
+          path: |
+            energy-strategy-tool/packaging/out/desktop/*.zip
+            energy-strategy-tool/packaging/out/desktop/*.tar.gz
+            energy-strategy-tool/packaging/out/desktop/build-desktop.json
+            energy-strategy-tool/packaging/test-results/desktop.json
+          if-no-files-found: error

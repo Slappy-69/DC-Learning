@@ -1,0 +1,105 @@
+{
+  "date": "2026-10-19T01:55:58.157Z",
+  "archive": "Concept-Energy-Optioneering-0.2.0-site-linux-x64.tar.gz",
+  "version": "0.2.0-site",
+  "sandboxFlag": "--no-sandbox (tests run as root)",
+  "results": [
+    {
+      "name": "D1. Archive: checksum listed in SHA256SUMS.txt, folder holds the executable and resources/app.asar only (no loose app folder)",
+      "status": "PASS",
+      "info": "Concept-Energy-Optioneering-0.2.0-site-linux-x64.tar.gz: 117.9 MB (unpacked 285 MB); folder Concept Energy Optioneering-linux-x64"
+    },
+    {
+      "name": "D2. app.asar holds the unmodified web app (SHA-256 equals the input build) and build-info.json with the CSP",
+      "status": "PASS",
+      "info": "11 files; web app c5226f2e322e; version 0.2.0-site; 2 script hashes"
+    },
+    {
+      "name": "D3. Electron fuses in the binary are as configured (no run-as-Node, no NODE_OPTIONS, no --inspect, app only from asar)",
+      "status": "PASS",
+      "info": "RunAsNode=false, EnableCookieEncryption=false, EnableNodeOptionsEnvironmentVariable=false, EnableNodeCliInspectArguments=false, EnableEmbeddedAsarIntegrityValidation=false, OnlyLoadAppFromAsar=true, LoadBrowserProcessSpecificV8Snapshot=false, GrantFileProtocolExtraPrivileges=false, WasmTrapHandlers=true"
+    },
+    {
+      "name": "D4. The program starts and its window loads the bundled app from app://bundle/index.html",
+      "status": "PASS",
+      "info": "app://bundle/index.html; title \"Concept Energy Optioneering\""
+    },
+    {
+      "name": "D5. A model run completes inside the desktop window, with no page errors",
+      "status": "PASS",
+      "info": "Options updated. Leader unchanged. Last run 16 s on 1 worker."
+    },
+    {
+      "name": "D6. Offline: the app made no network request while loading and running; a request the page tries is cancelled",
+      "status": "PASS",
+      "info": "0 requests during load and run; test fetch refused: TypeError"
+    },
+    {
+      "name": "D7. Content-Security-Policy applies: an injected inline script does not run and a violation is reported",
+      "status": "PASS",
+      "info": "inline script blocked; violated directive script-src-elem"
+    },
+    {
+      "name": "D8. The page has no Node.js access (context isolation, sandbox): require, process and module are absent",
+      "status": "PASS",
+      "info": "{\"require\":\"undefined\",\"process\":\"undefined\",\"module\":\"undefined\",\"Buffer\":\"undefined\",\"isSecure\":true,\"origin\":\"app://bundle\"}"
+    },
+    {
+      "name": "D9. Navigation and new windows outside the app are blocked; the window stays on app://bundle",
+      "status": "PASS",
+      "info": "[nav] blocked new window for https://example.com/; [nav] blocked navigation to https://example.com/"
+    },
+    {
+      "name": "D10. A second copy hands over to the running one and exits",
+      "status": "PASS",
+      "info": "second copy exited with code 0; first copy logged the hand-over"
+    },
+    {
+      "name": "D11. Closing the window quits the program cleanly and saves the window size",
+      "status": "PASS",
+      "info": "exit {\"code\":0,\"sig\":null}; window-state {\"x\":56,\"y\":36,\"width\":1288,\"height\":828,\"maximized\":false}"
+    }
+  ],
+  "processLog": [
+    "seamonkey: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "mozilla: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "epiphany: not found",
+    "/usr/bin/xdg-open: 882: x-www-browser: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "konqueror: not found",
+    "/usr/bin/xdg-open: 882: firefox: not found",
+    "/usr/bin/xdg-open: 882: chromium: not found",
+    "/usr/bin/xdg-open: 882: iceweasel: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "chromium-browser: not found",
+    "/usr/bin/xdg-open: 882: seamonkey: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "google-chrome: not found",
+    "/usr/bin/xdg-open: 882: mozilla: not found",
+    "/usr/bin/xdg-open: 882: www-browser: not found",
+    "/usr/bin/xdg-open: 882: epiphany: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "/usr/bin/xdg-open: 882: konqueror: not found",
+    "links2: not found",
+    "/usr/bin/xdg-open: 882: chromium: not found",
+    "/usr/bin/xdg-open: 882: elinks: not found",
+    "/usr/bin/xdg-open: 882: chromium-browser: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "links: not found",
+    "/usr/bin/xdg-open: 882: google-chrome: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "lynx: not found",
+    "/usr/bin/xdg-open: 882: www-browser: not found",
+    "/usr/bin/xdg-open: 882: w3m: not found",
+    "xdg-open: no method available for opening 'https://example.com/'",
+    "/usr/bin/xdg-open: 882: links2: not found",
+    "/usr/bin/xdg-open: 882: elinks: not found",
+    "/usr/bin/xdg-open: 882: links: not found",
+    "/usr/bin/xdg-open: 882: lynx: not found",
+    "/usr/bin/xdg-open: 882: w3m: not found",
+    "xdg-open: no method available for opening 'https://example.com/'",
+    "[app] a second copy was started: showing this window instead"
+  ]
+}
