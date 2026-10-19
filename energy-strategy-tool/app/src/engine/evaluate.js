@@ -461,8 +461,12 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
     const mwh = (x) => `${Math.round(x).toLocaleString('en-GB')} MWh`;
     const eur = (x) => `€${Number((Math.abs(x) / 1e6).toPrecision(3)).toLocaleString('en-GB')} m`;
     const parts = [lim > 1e-6 ? `${mwh(lim)} limited by import capacity` : null, above > 1e-6 ? `${mwh(above)} above the load in the hour` : null].filter(Boolean).join(', ');
+    // The total and its present value can have opposite signs (early income, later small costs): the present value
+    // then names its own sign (Opus review 2026-10-18; it was printed as an absolute value after the total's word).
+    const word = (x) => (x >= 0 ? 'income' : 'cost');
+    const pvText = word(hd.pv) === word(hd.total) ? `present value ${eur(hd.pv)}` : `present value a net ${word(hd.pv)} of ${eur(hd.pv)}`;
     flags.push(flag('grid-ppa', lim > 1e-6 ? 'minor' : 'info', 'Grid',
-      `${lim > 1e-6 ? 'PPA limited by import capacity' : 'PPA volume not delivered'}: ${mwh(hd.undeliveredMWh)} of contracted PPA volume over the ${inputs.economics.periodYears}-year evaluation period is not delivered physically (${parts}). Its settlement, a net ${hd.total >= 0 ? 'income' : 'cost'} of ${eur(hd.total)} (present value ${eur(hd.pv)}), is reported as "PPA hedge (not counted)": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection.`,
+      `${lim > 1e-6 ? 'PPA limited by import capacity' : 'PPA volume not delivered'}: ${mwh(hd.undeliveredMWh)} of contracted PPA volume over the ${inputs.economics.periodYears}-year evaluation period is not delivered physically (${parts}). Its settlement, a net ${word(hd.total)} of ${eur(hd.total)} (${pvText}), is reported as "PPA hedge (not counted)": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection.`,
       { value: hd.undeliveredMWh, hedge: hd.total }));
   }
   if (sz.storage.role === 'peakShave' && sz.storage.mw > 0 && disp.years.some((y) => y.designDayShortfall)) {

@@ -525,7 +525,7 @@ viewRec('view.table.pageSize', 50, 'rows per page', 'run setting', 'Rows per pag
 rec('sensitivity.gasPriceFactor', 1, '× current gas commodity price (country default or entered value)', { low: 0.7, high: 1.3, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range: low and high gas commodity price as factors on the current value. No source.' });
 rec('sensitivity.carbonPriceFactor', 1, '× current carbon price (country default or entered value)', { low: 0.5, high: 1.5, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range: low and high EU/UK ETS carbon price as factors on the current value. No source.' });
 rec('sensitivity.itLoadFactor', 1, '× IT load of every phase', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range: low and high IT load as factors on the entered phases. No source.' });
-rec('sensitivity.topDrivers', 12, 'drivers shown', { basis: 'run setting', ref: '§13.3', dist: 'fixed', note: 'Largest-swing drivers shown in the tornado (§13.3 "top 12 drivers", editable 1–30). This slice has 7 drivers.' });
+rec('sensitivity.topDrivers', 12, 'drivers shown', { basis: 'run setting', ref: '§13.3', dist: 'fixed', note: 'Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). This slice has 7 drivers and no control for this setting yet; the code clamps it to 1–30.' });
 
 // Required inputs: no default in the brief. The app pre-fills the T1 reference example
 // so it can run on load; these are marked "example value — replace" in the UI, not defaults.

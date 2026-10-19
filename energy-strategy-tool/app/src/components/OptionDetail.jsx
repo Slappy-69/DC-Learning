@@ -38,12 +38,15 @@ function SiteFitSummary({ o, onShowSite }) {
 // reported next to the economics but never in the ledger, LCOE, NPV or score (evaluate.js economics).
 export function PpaHedgeRow({ h }) {
   const und = h.undeliveredMWh;
+  // The present value names its own sign when it differs from the total's (Opus review 2026-10-18).
+  const word = (x) => (x >= 0 ? 'income' : 'cost');
+  const pvWord = word(h.pv) === word(h.total) ? '' : `net ${word(h.pv)} `;
   return (
     <tr className="hedge-row">
       <th scope="row">PPA hedge (not counted)</th>
       <td className="num">
         {und > 1e-6
-          ? <>net {h.total >= 0 ? 'income' : 'cost'} {money(Math.abs(h.total))} (present value {money(Math.abs(h.pv))}) on {sig(und / 1e6, 3)} TWh not delivered of {sig(h.contractMWh / 1e6, 3)} TWh contracted</>
+          ? <>net {word(h.total)} {money(Math.abs(h.total))} (present value {pvWord}{money(Math.abs(h.pv))}) on {sig(und / 1e6, 3)} TWh not delivered of {sig(h.contractMWh / 1e6, 3)} TWh contracted</>
           : <>none: all {sig(h.contractMWh / 1e6, 3)} TWh contracted is delivered</>}
       </td>
     </tr>
