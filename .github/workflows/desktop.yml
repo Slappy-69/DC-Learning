@@ -1,6 +1,6 @@
 # Builds the unsigned desktop program for Windows (x64), macOS (Intel and Apple silicon) and Linux (x64), and tests
 # the Linux build under a virtual display. Run by hand (Actions tab -> Desktop builds -> Run workflow) or by pushing a
-# tag v*. Also runs when the packaging or this workflow changes on main. The archives are attached to the workflow run
+# tag v*. Also runs when the packaging or this workflow changes on main or a feature/ branch. The archives are attached to the workflow run
 # as artifacts; this workflow never creates a release.
 #
 # All four targets are built on Linux with the same script that is tested locally (packaging/desktop/build-desktop.mjs:
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
   push:
     tags: ['v*']
-    branches: [main]
+    branches: [main, 'feature/**']
     paths:
       - 'energy-strategy-tool/packaging/**'
       - '.github/workflows/desktop.yml'
