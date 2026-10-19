@@ -157,7 +157,22 @@ for (const target of PLATFORMS) {
       // have no CMS blob), so each file is checked by macho-verify.mjs: ad hoc CodeDirectory, every page hash matches.
       for (const f of files) { const p = verifyAdhocMachO(f); if (p.length) bad.push(`${f.slice(binary.length)}: ${p.join('; ')}`); }
       if (bad.length) throw new Error(`ad hoc signature check failed for ${bad.length} of ${files.length} Mach-O files:\n${bad.join('\n')}`);
-      info.signing = `ad hoc (rcodesign ${RCODESIGN_VERSION}); ${files.length} Mach-O files: CodeDirectory ad hoc, every page hash matches the file`;
+      // Self-check of the checker on every build: copies of the main executable with one byte flipped (in the Mach-O
+      // header page, and a third of the way in) and with the signature's blob count corrupted must all fail.
+      const mainExe = join(binary, 'Contents', 'MacOS', APP_NAME);
+      const orig = readFileSync(mainExe);
+      const sigOff = (() => { const n = orig.readUInt32LE(16); let p = orig.readUInt32LE(0) === 0xfeedfacf ? 32 : 28; for (let i = 0; i < n; i++) { if (orig.readUInt32LE(p) === 0x1d) return orig.readUInt32LE(p + 8); p += orig.readUInt32LE(p + 4); } return 0; })();
+      const probes = [['header byte', 100], ['code byte', Math.floor(sigOff / 3)], ['signature blob count', sigOff + 8]];
+      for (const [what, at] of probes) {
+        const copy = Buffer.from(orig);
+        if (what === 'signature blob count') copy.writeUInt32BE(0xffff, at); else copy[at] ^= 0xff;
+        const tmp = join(WORK, 'macho-selfcheck.bin');
+        writeFileSync(tmp, copy);
+        const p = verifyAdhocMachO(tmp);
+        rmSync(tmp, { force: true });
+        if (!p.length) throw new Error(`macho-verify self-check: a copy with a changed ${what} (offset ${at}) passed`);
+      }
+      info.signing = `ad hoc (rcodesign ${RCODESIGN_VERSION}); ${files.length} Mach-O files: CodeDirectory ad hoc, every page hash matches the file; checker self-check: 3 of 3 altered copies rejected`;
     }
   }
 

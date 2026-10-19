@@ -1,13 +1,13 @@
 {
-  "date": "2026-10-19T01:48:23.102Z",
+  "date": "2026-10-19T02:45:28.622Z",
   "chromium": "141.0.7390.37",
-  "v1": "73566ca38cf86514",
-  "v2": "d8ebaf3048797181",
+  "v1": "a0c18875782007c6",
+  "v2": "1010d5a1990da69e",
   "results": [
     {
       "name": "P1. App loads from the Pages-like server and a model run completes (online, first visit)",
       "status": "PASS",
-      "info": "Options updated. Leader unchanged. Last run 16 s on 1 worker."
+      "info": "Options updated. Leader unchanged. Last run 17 s on 1 worker."
     },
     {
       "name": "P2. Manifest: fetched from the link, required fields present, every icon served at its declared size",
@@ -22,7 +22,7 @@
     {
       "name": "P4. Service worker registers, and controls the page after one reload (response from the worker)",
       "status": "PASS",
-      "info": "controller http://localhost:41061/DC-Learning/sw.js; cache ceo-shell:/DC-Learning/:73566ca38cf86514 holds 8 files"
+      "info": "controller http://localhost:44789/DC-Learning/sw.js; cache ceo-shell:/DC-Learning/:a0c18875782007c6 holds 8 files"
     },
     {
       "name": "P5. Other pages on the same site are not taken over (online: the server answers, not the app)",
@@ -32,22 +32,22 @@
     {
       "name": "P6. Offline: a reload still loads the app from the cache and a full model run completes (in workers)",
       "status": "PASS",
-      "info": "Options updated. Leader unchanged. Last run 24 s on 1 worker. Network attempts while offline: GET /DC-Learning/sw.js (refused: server down), GET /DC-Learning/sw.js (refused: server down), GET /DC-Learning/sw.js (refused: server down)"
+      "info": "Options updated. Leader unchanged. Last run 15 s on 1 worker. Network attempts while offline: GET /DC-Learning/sw.js (refused: server down), GET /DC-Learning/sw.js (refused: server down), GET /DC-Learning/sw.js (refused: server down)"
     },
     {
       "name": "P7. Installability: Page.getInstallabilityErrors returns none; Page.getAppManifest reports no errors",
       "status": "PASS",
-      "info": "no installability errors; manifest http://localhost:41061/DC-Learning/manifest.webmanifest; app id http://localhost:41061/concept-energy-optioneering (recommended id \"/DC-Learning/\")"
+      "info": "no installability errors; manifest http://localhost:44789/DC-Learning/manifest.webmanifest; app id http://localhost:44789/concept-energy-optioneering (recommended id \"/DC-Learning/\")"
     },
     {
       "name": "P8. Update: when sw.js changes, an accessible \"Update ready — reload\" notice appears; no reload is forced",
       "status": "PASS",
-      "info": "notice shown with role=status, aria-live=polite; old version 73566ca38cf86514 still in control; new version waiting"
+      "info": "notice shown with role=status, aria-live=polite; old version a0c18875782007c6 still in control; new version waiting"
     },
     {
       "name": "P9. Update notice passes axe (WCAG 2.2 AA) in light and dark, and works at phone width",
       "status": "PASS",
-      "info": "axe-core not found: skipped the axe part"
+      "info": "light: 0 violations, 12 rules passed; dark: 0 violations, 12 rules passed; fits at 375 px"
     },
     {
       "name": "P10. \"Later\" hides the notice; it comes back on the next load while the update waits",
@@ -57,7 +57,7 @@
     {
       "name": "P11. \"Reload\" activates the new version: page reloads under the new worker; old cache removed",
       "status": "PASS",
-      "info": "now version d8ebaf3048797181; caches ceo-shell:/DC-Learning/:d8ebaf3048797181"
+      "info": "now version 1010d5a1990da69e; caches ceo-shell:/DC-Learning/:1010d5a1990da69e"
     },
     {
       "name": "P12. Without service workers the page still works: file:// copy, and a browser that blocks workers",

@@ -245,8 +245,10 @@ await check('P8. Update: when sw.js changes, an accessible "Update ready — rel
 });
 
 await check('P9. Update notice passes axe (WCAG 2.2 AA) in light and dark, and works at phone width', async () => {
-  const axePath = ['/home/claude/build/app/node_modules/axe-core/axe.min.js'].find((p) => { try { readFileSync(p); return true; } catch { return false; } });
-  if (!axePath) return 'axe-core not found: skipped the axe part';
+  // axe-core comes from the web app's dev dependencies (../app, after npm ci there). A missing axe is a failure, not a
+  // skip: earlier this path was hard-coded to another machine's folder and the axe part silently never ran.
+  const axePath = [join(PACKAGING_ROOT, '..', 'app', 'node_modules', 'axe-core', 'axe.min.js'), join(PACKAGING_ROOT, 'node_modules', 'axe-core', 'axe.min.js')].find((p) => { try { readFileSync(p); return true; } catch { return false; } });
+  ok(axePath, 'axe-core not found: run npm ci in ../app (its devDependencies include axe-core)');
   await page.addScriptTag({ content: readFileSync(axePath, 'utf8') });
   const out = [];
   for (const scheme of ['light', 'dark']) {

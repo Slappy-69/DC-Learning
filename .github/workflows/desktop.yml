@@ -57,7 +57,7 @@ jobs:
         run: |
           npm install --no-save playwright@${PLAYWRIGHT_VERSION}
           npx playwright install-deps chromium
-          sudo apt-get install -y xvfb
+          sudo apt-get install -y xvfb strace
           # Ubuntu 24.04 blocks unprivileged user namespaces through AppArmor, which Chromium's sandbox needs; allow
           # them on this runner so the program is tested with its sandbox on (not with --no-sandbox).
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
@@ -69,6 +69,13 @@ jobs:
           path: |
             energy-strategy-tool/packaging/out/desktop/*.zip
             energy-strategy-tool/packaging/out/desktop/*.tar.gz
+            energy-strategy-tool/packaging/out/desktop/SHA256SUMS.txt
             energy-strategy-tool/packaging/out/desktop/build-desktop.json
-            energy-strategy-tool/packaging/test-results/desktop.json
           if-no-files-found: error
+      - name: Upload the Linux test results
+        if: matrix.target == 'linux-x64' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-test-results
+          path: energy-strategy-tool/packaging/test-results/desktop.json
+          if-no-files-found: ignore

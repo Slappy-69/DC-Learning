@@ -166,7 +166,7 @@ await check('D5. A model run completes inside the desktop window, with no page e
   return status;
 });
 
-await check('D6. Offline: the app made no network request while loading and running; a request the page tries is cancelled', async () => {
+await check('D6. Offline, page level: the page made no request while loading and running; a request it tries is refused (the whole program is traced in D12)', async () => {
   ok(page, 'no window');
   const before = app.log.filter((l) => /^\[net\] blocked/.test(l));
   ok(!before.length, `the app tried the network: ${before.join(' | ')}`);
@@ -232,6 +232,50 @@ await check('D11. Closing the window quits the program cleanly and saves the win
   const s = JSON.parse(readFileSync(f, 'utf8'));
   ok(s.width > 0 && s.height > 0, `window state ${JSON.stringify(s)}`);
   return `exit ${JSON.stringify(r)}; window-state ${JSON.stringify(s)}`;
+});
+
+await check('D12. No network from the whole program: under strace, start-up and the first model run make no DNS lookup and no connection off this computer, and proxy settings are ignored', async () => {
+  // Separate launch with its own profile (the single-instance lock is per profile), traced by strace for every
+  // process. A DNS lookup shows as a connect() to port 53; anything else off the computer as a connect() to a
+  // non-loopback address. Proxy variables point at a local listener, so a request routed through a proxy is seen too.
+  let strace = null;
+  try { strace = execFileSync('sh', ['-c', 'command -v strace']).toString().trim(); } catch { /* none */ }
+  ok(strace, 'strace is not installed: this check cannot run (install strace; it is not skipped silently)');
+  const proxyHits = [];
+  const proxy = createServer((sock) => { proxyHits.push(Date.now()); sock.destroy(); });
+  await new Promise((r) => proxy.listen(0, '127.0.0.1', r));
+  const proxyUrl = `http://127.0.0.1:${proxy.address().port}`;
+  const home2 = join(TMP, 'home-trace');
+  mkdirSync(home2, { recursive: true });
+  const traceFile = join(TMP, 'strace.txt');
+  const env2 = { ...env, HOME: home2, XDG_CONFIG_HOME: join(home2, '.config'), HTTPS_PROXY: proxyUrl, HTTP_PROXY: proxyUrl, ALL_PROXY: proxyUrl, https_proxy: proxyUrl, http_proxy: proxyUrl, all_proxy: proxyUrl, NO_PROXY: '', no_proxy: '' };
+  // --no-sandbox here only: tracing sandboxed helper processes is not reliable; this check is about the network.
+  const argv = [strace, '-f', '-qq', '--seccomp-bpf', '-e', 'trace=connect', '-o', traceFile, BIN, '--no-sandbox', '--disable-gpu'];
+  const [cmd, cargs] = needsXvfb ? ['xvfb-run', ['-a', '-s', '-screen 0 1400x900x24', ...argv]] : [argv[0], argv.slice(1)];
+  const child = spawn(cmd, cargs, { env: env2, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
+  child.stopAll = () => { try { process.kill(-child.pid, 'SIGKILL'); } catch { /* gone */ } };
+  launched.push(child);
+  const out = [];
+  child.stdout.on('data', (d) => out.push(d.toString()));
+  child.stderr.on('data', (d) => out.push(d.toString()));
+  // Start-up requests (such as Chromium's dictionary download) happen in the first seconds; 40 s also covers most of a run.
+  await new Promise((r) => setTimeout(r, 40000));
+  child.stopAll();
+  await new Promise((r) => proxy.close(r));
+  ok(existsSync(traceFile), `no strace output (${out.join('').slice(-300)})`);
+  const lines = readFileSync(traceFile, 'utf8').split('\n').filter((l) => /connect\(/.test(l) && /AF_INET6?/.test(l));
+  const off = [];
+  for (const l of lines) {
+    const port = Number((/sin6?_port=htons\((\d+)\)/.exec(l) || [])[1]);
+    const addr = (/inet_addr\("([^"]+)"\)/.exec(l) || /inet_pton\(AF_INET6, "([^"]+)"/.exec(l) || [])[1] || '?';
+    const loopback = /^127\./.test(addr) || addr === '::1' || /^::ffff:127\./.test(addr);
+    if (port === 53 || !loopback) off.push(`${addr}:${port}`);
+  }
+  const started = readFileSync(traceFile, 'utf8').length > 0;
+  ok(started, 'the traced program did not start');
+  ok(!off.length, `connections off this computer or DNS lookups: ${[...new Set(off)].join(', ')}`);
+  ok(!proxyHits.length, `${proxyHits.length} connection(s) to the proxy set in the environment`);
+  return `${lines.length} inet connect() calls traced over 40 s, all loopback and none to port 53; 0 connections to the proxy in HTTPS_PROXY/HTTP_PROXY/ALL_PROXY`;
 });
 
 if (browser) await browser.close().catch(() => {});

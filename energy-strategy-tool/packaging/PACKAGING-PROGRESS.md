@@ -6,7 +6,7 @@ built with `npm run build` in `app/`) as (A) an installable PWA for GitHub Pages
 (x64, arm64) and Linux. Nothing is published from here.
 Keep this folder under about 1.2 GB; build one desktop platform at a time and clear Electron caches.
 
-## Status: done (2026-10-18), pending the packaging Haiku check and Opus review
+## Status: done (2026-10-18); Haiku check done and answered; Opus review next
 
 | Part | State | Files | Tests |
 |---|---|---|---|
@@ -16,7 +16,7 @@ Keep this folder under about 1.2 GB; build one desktop platform at a time and cl
 | A3 test-pwa.mjs | done | pwa/test-pwa.mjs; test-results/pwa.json + pwa-update-notice-*.png | 12/12 pass (P1–P12) |
 | B1 Electron app source (main.js etc.) | done | desktop/app/main.js, desktop/app/lib/{guards,menu,window-state}.js | through B3 |
 | B2 build-desktop.mjs (packager, fuses, archives) | done | desktop/build-desktop.mjs, desktop/stage.mjs, desktop/fuses.mjs, desktop/desktop-config.json | Linux, Windows and both macOS targets built locally |
-| B3 test-desktop.mjs (Linux build under xvfb) | done | desktop/test-desktop.mjs; test-results/desktop.json | 11/11 pass (D1–D11), two runs |
+| B3 test-desktop.mjs (Linux build under xvfb) | done | desktop/test-desktop.mjs; test-results/desktop.json | 12/12 pass (D1–D12) |
 | B4 GitHub workflows | done | ../../.github/workflows/desktop.yml (all four targets, Linux tested), ../../.github/workflows/ci.yml (tests, builds, PWA) | run on GitHub after the merge |
 | C README.md, final sizes | done | README.md | — |
 
@@ -68,6 +68,28 @@ Keep this folder under about 1.2 GB; build one desktop platform at a time and cl
     ad hoc signature ("CMS error: missing further values"). Tested: 14 of 14 binaries pass in each macOS build; 6 of 6
     copies with one byte flipped fail (one page each).
 
+## Haiku check H1-packaging: findings and responses (2026-10-18)
+
+Report: `../verification/packaging/H1-packaging.md` (commit f797cca).
+
+| Finding | Response |
+|---|---|
+| P9 passed without running: axe path hard-coded to another machine's folder | **Fixed.** axe is resolved from `../app/node_modules/axe-core` (or packaging's own), and a missing axe now fails P9. P9 now runs: 0 violations light and dark, fits at 375 px. The earlier "12/12" in this file did not include a real P9. |
+| "No network connections" contradicted: DNS and TCP to `redirector.gvt1.com` at start-up | **Fixed.** Traced here too: Electron's spell-check dictionary download, started before the session's spell checker is switched off, and routed through any proxy in the environment. `main.js` now sets `host-resolver-rules=MAP * ~NOTFOUND` and `no-proxy-server`. New test **D12** traces every process with strace for 40 s (start-up and a run): no connect() to port 53 or off loopback, and no connection to a proxy listener set in HTTPS_PROXY/HTTP_PROXY/ALL_PROXY. Negative control: the build before the fix fails D12 (it reached the proxy). strace missing is a failure, not a skip. |
+| D6 cannot see browser-process traffic | Accepted; D6 is renamed "page level" and D12 covers the whole program. |
+| `data:` downloads not bound to the app | **Fixed.** A `data:` download is accepted only when the requesting page is an app page. |
+| Save dialog, window position restore, webRequest layer untested | Accepted as gaps; listed in the README under "Not covered by a test". The webRequest layer is now a second line behind the resolver block. |
+| `--remote-debugging-port` still works | Accepted; the README now says so (anyone who can start programs as you can already do more). |
+| Checker crashes on a malformed signature | **Fixed.** Errors become a FAIL line ("malformed Mach-O or signature"); the CLI continues. |
+| Six-copy tamper claim has no script | **Fixed.** Every macOS build now runs a self-check: copies of the main executable with a changed header byte, a changed code byte and a corrupted blob count must all fail, or the build stops. darwin-arm64: 3 of 3 rejected. |
+| Special slots and identifier not checked | Accepted; stated in the checker header and README decision 14. |
+| `desktop.yml` uploads the Linux `desktop.json` for every target; no `SHA256SUMS.txt` | **Fixed.** Checksums uploaded with each target; the test results uploaded once, from the Linux job, as `desktop-test-results`. |
+| Root README trigger text incomplete | **Fixed.** |
+| Test runs rewrite the committed result files | Kept by design (the files are the record of the last verified run); the README says to commit them with a verified change. |
+| Workflows not run on GitHub | Since run: Desktop builds green (all four targets, Linux test with the sandbox on, non-root runner); CI green on 90e4677 (Node 44/44, PWA, browser 29/29). |
+| npm audit: 1 moderate (app) | esbuild ≤ 0.24.2, GHSA-67mh-4wv8-2f99: affects only esbuild's development server (`serve`), which `build.mjs` never starts. Not exploitable here; the fix is a breaking upgrade to 0.28 that could change the bundle. Left at 0.23.1 and recorded. Packaging: 0 vulnerabilities. |
+| win32-x64, darwin-x64 sizes not verified by the check | Built locally (151.6 MB, 130.2 MB) and on GitHub (artifact sizes 151.4 MB and 129.8 MB, which are the artifact zips). |
+
 ## Local build sizes (2026-10-18, Electron 44.9.0, engine 0.2.0-site)
 
 | Target | Archive | Unpacked | Signing |
@@ -79,4 +101,4 @@ Keep this folder under about 1.2 GB; build one desktop platform at a time and cl
 
 ## Next step
 
-Haiku check and Opus review of the packaging, then merge to `main` (owner approved 2026-10-18).
+Opus review of the packaging, then merge to `main` (owner approved 2026-10-18).

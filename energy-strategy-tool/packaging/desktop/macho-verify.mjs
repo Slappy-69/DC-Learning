@@ -3,6 +3,9 @@
 // the hash stored in the CodeDirectory. Used instead of `rcodesign verify`, which (version 0.29) reports
 // "CMS error: missing further values" for every ad hoc signature, because ad hoc signatures carry no CMS blob.
 //
+// Covers: an ad hoc CodeDirectory exists and every code page's hash matches the file. Does not cover: the special slots
+// (Info.plist, resources, requirements) or CodeDirectory fields outside the page hashes, such as the identifier.
+//
 // Usage: node desktop/macho-verify.mjs <file> [...]   (exit 1 if any file fails)
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -86,8 +89,13 @@ function verifySlice(b, label) {
 /** Problems for one file (all slices); empty array when every slice's signature matches. */
 export function verifyAdhocMachO(file) {
   const buf = readFileSync(file);
-  const parts = slices(buf);
-  return parts.flatMap((s, i) => verifySlice(s, parts.length > 1 ? `slice ${i}` : 'file'));
+  let parts;
+  try { parts = slices(buf); } catch (e) { return [`malformed universal header (${e.message})`]; }
+  return parts.flatMap((s, i) => {
+    const label = parts.length > 1 ? `slice ${i}` : 'file';
+    // A truncated or malformed signature makes the reads above run past the buffer: report it, do not crash.
+    try { return verifySlice(s, label); } catch (e) { return [`${label}: malformed Mach-O or signature (${e.code || e.name}: ${e.message})`]; }
+  });
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -40,10 +40,15 @@ later without changing the app.
 
 - Loads the bundled web app from `app://bundle/` in a sandboxed window: context isolation on, no Node.js in the page,
   a Content-Security-Policy that allows only the app's own inline scripts (by SHA-256 hash).
-- Blocks every http, https, WebSocket and FTP request. Links to websites open in your normal browser.
+- Makes no network connection: no host name resolves inside the program and proxy settings are ignored, and every
+  http, https, WebSocket and FTP request from the page is cancelled as well. Links to websites open in your normal
+  browser. Checked by tracing every process of the program (D12): no DNS lookup and no connection off the computer
+  during start-up and a model run.
 - Asks where to save the run log (JSON or CSV), and accepts downloads only from the app itself.
 - Remembers its window size and position. A second copy hands over to the one already open.
-- Electron fuses: no "run as Node", no `NODE_OPTIONS`, no `--inspect`, app code only from `app.asar`.
+- Electron fuses: no "run as Node", no `NODE_OPTIONS`, no Node.js `--inspect`, app code only from `app.asar`.
+  Chromium's own `--remote-debugging-port` switch still works (the desktop test uses it); like any program, it can be
+  started with debugging by someone who can already run programs as you.
 - Does **not** update itself, send anything, or need an internet connection.
 
 ## Build and test it yourself
@@ -72,9 +77,13 @@ The version in file names (`0.2.0-site`) is the model engine version read from t
 | Suite | Checks |
 |---|---|
 | `test:pwa` (P1–P12) | Loads and runs from a GitHub-Pages-like server; manifest and icons; maskable safe zone; service worker control; other pages on the same site left alone; offline reload and full run; installability; update notice (accessible, never forces a reload); works without service workers |
-| `test:desktop` (D1–D11) | Archive checksum and layout; bundled web app unmodified; fuses; window loads; full model run with no page errors; no network use, and requests refused; CSP blocks injected scripts; no Node.js in the page; navigation and pop-ups blocked; single instance; clean quit and saved window size |
+| `test:desktop` (D1–D12) | Archive checksum and layout; bundled web app unmodified; fuses; window loads; full model run with no page errors; page requests refused; CSP blocks injected scripts; no Node.js in the page; navigation and pop-ups blocked; single instance; clean quit and saved window size; whole-program network trace with strace (no DNS lookup, no connection off the computer, proxy settings ignored) |
 
-Latest results: `test-results/pwa.json`, `test-results/desktop.json`.
+Latest results: `test-results/pwa.json`, `test-results/desktop.json`. Each test run rewrites them, so commit them together
+with a verified change.
+
+Not covered by a test: the run-log save dialog, restoring the window position (only the saved size is checked), and
+the macOS and Windows builds' launch.
 
 ## Decisions
 
@@ -99,8 +108,16 @@ Latest results: `test-results/pwa.json`, `test-results/desktop.json`.
 13. Tests run as root pass `--no-sandbox`; the window's own sandbox and context isolation stay on (checked by D8).
 14. macOS signatures are checked with `desktop/macho-verify.mjs` (ad hoc CodeDirectory present, every code page's
     SHA-256 matches the file), not `rcodesign verify`: version 0.29 of that command rejects every ad hoc signature
-    ("CMS error: missing further values", since ad hoc signatures have no CMS blob). The checker was tested on the 14
-    binaries of each macOS build (all pass) and on six copies with one byte flipped (all fail, one page each).
+    ("CMS error: missing further values", since ad hoc signatures have no CMS blob). Every macOS build also runs a
+    self-check of the checker: copies of the main executable with a changed header byte, a changed code byte and a
+    corrupted signature must all fail, or the build stops. The checker does not cover the special slots (Info.plist,
+    resources, requirements) or CodeDirectory fields outside the page hashes.
+15. **No network at the Chromium level** (`host-resolver-rules=MAP * ~NOTFOUND`, `no-proxy-server`). An independent check
+    traced the program at start-up and found DNS lookups for `redirector.gvt1.com`, where Electron fetches spell-check
+    dictionaries, made before the session's spell checker could be switched off. The page-level blocks could not stop
+    them. With the two switches, nothing resolves and no proxy is used; D12 traces every process to prove it.
+16. Downloads are accepted only from the app's page: a `blob:` URL of the app's origin, or a `data:` URL started by an
+    app page.
 
 ## Not done
 

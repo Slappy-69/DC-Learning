@@ -48,7 +48,7 @@ connection while it runs.
 | `energy-strategy-tool/verification/` | Independent verification reports for each slice (`HISTORY.md` summarises them) |
 | `energy-strategy-tool/packaging/` | PWA and Electron desktop packaging, with their tests |
 | `energy-strategy-tool/energy-tool-single-file.html` | The latest single-file build, committed so it can be downloaded directly |
-| `.github/workflows/` | `ci.yml` (tests and builds on every push to `main`), `desktop.yml` (desktop builds, run by hand or on a `v*` tag) |
+| `.github/workflows/` | `ci.yml`: Node tests, build, PWA tests and browser tests on every push to `main` or a `feature/` branch and on pull requests. `desktop.yml`: the four desktop builds and the Linux desktop test, run by hand, on a `v*` tag, or when `energy-strategy-tool/packaging/` changes on `main` or a `feature/` branch |
 
 ## Develop
 

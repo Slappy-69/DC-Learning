@@ -125,7 +125,9 @@ function handleDownloads(ses, getWindow) {
   let lastDir = null;
   ses.on('will-download', (event, item, wc) => {
     const src = item.getURL();
-    if (!(src.startsWith(`blob:${ORIGIN}/`) || src.startsWith('data:'))) {
+    // Only the app's own page may download: a blob: URL of the app origin, or a data: URL started by an app page.
+    const fromApp = !!wc && isAppUrl(wc.getURL());
+    if (!(src.startsWith(`blob:${ORIGIN}/`) || (src.startsWith('data:') && fromApp))) {
       event.preventDefault();
       console.log(`[download] refused (not from the app): ${src.slice(0, 120)}`);
       return;

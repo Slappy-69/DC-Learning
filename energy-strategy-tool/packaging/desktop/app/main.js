@@ -14,6 +14,12 @@ const INFO = JSON.parse(fs.readFileSync(path.join(__dirname, 'build-info.json'),
 const START_URL = `${ORIGIN}/index.html`;
 const ICON = path.join(__dirname, 'icons', 'icon.png');
 
+// No network at all: no host name resolves and proxy settings are ignored, so nothing can leave this computer, including
+// requests Chromium makes by itself (Electron fetches spell-check dictionaries from redirector.gvt1.com at start-up,
+// before the session's spell checker can be switched off). The webRequest filter and the page's CSP block requests too.
+app.commandLine.appendSwitch('host-resolver-rules', 'MAP * ~NOTFOUND');
+app.commandLine.appendSwitch('no-proxy-server');
+
 registerScheme(protocol);
 // The window sets sandbox: true and Electron sandboxes every other renderer by default. app.enableSandbox() is not
 // used: it stops --no-sandbox reaching child processes, which breaks the app for anyone who must run it as root.
