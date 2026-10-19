@@ -1,7 +1,7 @@
 # Status: concept-design energy strategy tool
 
 Checkpoint updated after every completed step, so any session can resume from here.
-Last updated: 2026-10-17.
+Last updated: 2026-10-18.
 
 ## Where to look
 
@@ -40,7 +40,7 @@ Branches are stacked: merging the newest one into `main` brings in everything be
 
 ## Next
 
-1. **Port from the other line:** built 2026-10-18 (checkpoint 298d51b; builder-reported `npm test` 44/44, `npm run test:browser` 29/29). Haiku checks in (2026-10-18), reports in `verification/port/`: H1 claims (44/44; 13 verified, 2 not verified, 1 failed: 5c month-27 discharge; +42.3 % denominator wording); H2 brief and fidelity (3 missing: bridging shading, grid-date band, unmeasured initial load; 13 partial; 7 unrecorded changes); H3 browser, hosted page, phone (passed: browser 29/29, no overflow, axe 0 serious/critical, hosted page has no external requests). **Next:** fix the H1 and H2 findings, then one Opus review (3:1 rule), then commit the verified port. Then update the published artifact "Concept Energy Optioneering" in place so it opens on a phone.
+1. **Port from the other line:** built 2026-10-18 (checkpoint 298d51b). Haiku checks H1–H3 in `verification/port/`. Findings answered in `app/BUILD-NOTES.md` ("Verification findings on the port" and "Fixes after the H checks"): claim 2c both denominators stated (+42.3 % new-based, +73.2 % old-based); claim 5c explained (no shortfall in months 21–26; open point 10 for the owner); S2 not verified (intermediate engine not in the repo); the 7 unrecorded changes recorded and kept; §12.6 shading and grid-date band deferred with reasons (open point 11); §17 measured (JS 184 KB gzipped, budget met; inputs interactive at 0.3 s, results after the first run at about 16 s on the 2-core sandbox, so the 3 s target is met for the inputs only); the axe needs-review rule on Dispatch and Sensitivity is `color-contrast`, every node checked by B26/B27 (lowest 4.86:1). Committed single file refreshed to the port build. Re-run: `npm test` 44/44, `npm run test:browser` 29/29. **Next:** Opus review (3:1 rule).
    - **Packaging (feature/packaging, 981aa3b):** PWA done and tested (12/12). Electron desktop: app source and build scripts written but unverified; test-desktop.mjs, GitHub workflow and README still to do. Not published.
 2. **Rest of the trade-off views (stage 3):** parallel coordinates with brushing, choice-impact chart, option card, compare view, phasing timeline, schematic, key quantities.
 3. **Verification tier (stage 4):** representative-day screening, background 8760-hour verification of the top 10, dispatch visualisations.

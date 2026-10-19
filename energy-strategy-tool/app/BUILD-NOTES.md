@@ -1210,13 +1210,21 @@ Reports: `verification/port/H1-claims.md`, `H2-brief.md`, `H3-browser.md`. The d
 
 **Brief requirements left open, now recorded (H2 section 2).**
 - *§12.6 bridging-period shading* (R14) and *§12.6 grid-date uncertainty band* (R15): MISSING. Deferred, not built in this slice: the grid-date band needs the grid-date range, which is deferred with the Monte Carlo and uncertainty stage (stage 5; BUILD-NOTES 190), and the shading needs the bridging months drawn on the phasing chart, which needs the representative-period layout of stage 3. Both are visible gaps for the owner; they are not hidden.
-- *§17 initial load and bundle size* (R35): measured in the verification run below (initial load and gzipped size of `dist/energy-tool-single-file.html`).
+- *§17 initial load and bundle size* (R35): measured after the H checks; see "Fixes after the H checks" below.
 - *§12.6 phasing timeline layout* (R13 "Gantt"): the monthly stacked chart is the implemented form; the brief's Gantt layout is open. Judgement, owner to confirm.
 
 **H1 claim results.**
 - *Claim 2c* (+42.3 % denominator): corrected in item 2 above; both denominators are stated.
 - *Claim 5c* (battery first discharge, month 27, against time-to-power month 21): the verifier's check (`check5c`) found that the one option where the first discharge is later (O1I6WHKZ, no main battery, C3 backup) charges from month 21 and discharges only against a shortfall after firm plant and import. No shortfall occurred in months 21 to 26, so the battery was available and not needed. The time-to-power count is the availability month, which is correct. Not a timing defect. The owner may still want the time-to-power count to follow the first discharge; that is a definition choice, open point 10.
 - *S2* (item-1 scores 98.9963 and 73.1602): these are the item-1-only state, before the PPA decision. The intermediate engine is not in the repository, so these scores are **not verified** in this slice. The final scores quoted in this section (T1 leader OOB3CL1 98.9977; T3 leader O114KGKR 99.2194, with BESS + solar) are the ones the tests reproduce.
+
+### Fixes after the H checks (2026-10-18, before the Opus review)
+
+- **§17 bundle size (R35), measured.** `npm run build` on this branch: `dist/app.js` 574,357 bytes, **184,020 bytes gzipped** (gzip -9), against the ≤ 1.5 MB gzipped JS budget: met. `dist/energy-tool-single-file.html` 809,951 bytes, 262,021 bytes gzipped (worker inlined, 190.2 KB). `dist/worker.js` 194,719 bytes.
+- **§17 initial load (R35), measured.** Single file from file:// in Chromium 141 (headless, 1400 × 900, 2-core sandbox), 3 cold loads, median: DOMContentLoaded 175 ms; the app shell (header, inputs panel with 194 controls, run progress) is rendered and operable at about 0.3 s; the result tabs and ranking appear when the first run ends, 15.97 s (15.8–16.2 s; the Node suite's T1 run took 16.1 s on the same machine in the same session, 10.9 s in the builder's run). Against "initial load to interactive ≤ 3 s": **met for the inputs, not for the results**, which wait for the full 8,760-hour screening of 2,000 options; the representative-day tier (stage 4) is the remedy, as already recorded for the run time. Script: a 40-line Playwright probe, not part of the suite.
+- **axe "needs review" items (H3).** The one needs-review rule on the Dispatch and Sensitivity tabs is **`color-contrast`** (axe cannot decide contrast for text over layered or semi-transparent backgrounds). B26/B27 already check every such node from computed styles: Dispatch 2,773 nodes (3,025 for an option with firm plant and a battery), Sensitivity 773 nodes, lowest ratio 4.86:1 (light), 0 below the minimum, light and dark. No other needs-review rule appears on any tab.
+- **Committed single file refreshed.** `energy-strategy-tool/energy-tool-single-file.html` (the download-and-open copy) was still the site-slice build (d3ba899): no Dispatch tab, no tornado, old PPA rule. Replaced with this branch's `dist/energy-tool-single-file.html`.
+- **Re-run before the Opus review:** `npm test` 44/44 (exit 0; T1 16.13 s, T3 14.25 s, machine shared with the build), `npm run test:browser` 29/29 (exit 0; B9 repaint median 112 ms ≤ 300 ms asserted; axe 0 serious/critical, light and dark).
 
 ### Judgement calls
 
