@@ -25,7 +25,7 @@ env:
 jobs:
   desktop:
     name: Build ${{ matrix.target }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest moves to Ubuntu 26 from 2026-10-19
     timeout-minutes: 40
     strategy:
       fail-fast: false
@@ -58,6 +58,9 @@ jobs:
           npm install --no-save playwright@${PLAYWRIGHT_VERSION}
           npx playwright install-deps chromium
           sudo apt-get install -y xvfb
+          # Ubuntu 24.04 blocks unprivileged user namespaces through AppArmor, which Chromium's sandbox needs; allow
+          # them on this runner so the program is tested with its sandbox on (not with --no-sandbox).
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
           npm run test:desktop
       - name: Upload
         uses: actions/upload-artifact@v4

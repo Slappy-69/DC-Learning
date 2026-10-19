@@ -34,10 +34,16 @@ async function check(name, fn) {
   } catch (e) {
     failures++;
     results.push({ name, status: 'FAIL', error: String((e && e.stack) || e) });
+    annotate(name, String((e && e.message) || e));
     console.log(`FAIL  ${name}\n      ${e && e.stack ? e.stack.split('\n').slice(0, 5).join('\n      ') : e}`);
   }
 }
 const ok = (cond, msg) => { if (!cond) throw new Error(msg); };
+// On GitHub Actions, failures also become annotations, which anyone can read on the run page without the full log.
+const esc = (t) => String(t).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+function annotate(title, message) {
+  if (process.env.GITHUB_ACTIONS) console.log(`::error title=${esc(title.slice(0, 80)).replace(/[:,]/g, ' ')}::${esc(message.slice(0, 1500))}`);
+}
 const freePort = () => new Promise((res, rej) => { const s = createServer(); s.once('error', rej); s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => res(port)); }); });
 const until = async (fn, ms, what) => { const t = Date.now() + ms; for (;;) { const v = await fn(); if (v) return v; if (Date.now() > t) throw new Error(`timed out after ${ms / 1000} s: ${what}`); await new Promise((r) => setTimeout(r, 250)); } };
 
@@ -232,6 +238,7 @@ if (browser) await browser.close().catch(() => {});
 stopAll();
 
 const log = app.log.slice(-40);
+if (failures) annotate('Desktop program output (last lines)', app.log.filter((l) => !/dbus|Floss|vaapi/.test(l)).slice(-15).join('\n') || '(no output)');
 if (!a.keep) rmSync(TMP, { recursive: true, force: true });
 mkdirSync(join(PACKAGING_ROOT, 'test-results'), { recursive: true });
 writeFileSync(join(PACKAGING_ROOT, 'test-results', 'desktop.json'), `${JSON.stringify({ date: new Date().toISOString(), archive: ARCHIVE.split('/').pop(), version: info && info.version, sandboxFlag: rootFlags.length ? '--no-sandbox (tests run as root)' : 'none', results, processLog: log }, null, 2)}\n`);
