@@ -40,7 +40,8 @@ Branches are stacked: merging the newest one into `main` brings in everything be
 
 ## Next
 
-1. **Port from the other line:** built 2026-10-18 (checkpoint 298d51b; builder-reported `npm test` 44/44, `npm run test:browser` 29/29); verification (Haiku ×3 + Opus) in progress. Dispatch tab (phasing timeline, hourly dispatch, annual balance), tornado sensitivity tab, bridging-battery timing fix, hosted-page build and loading message. Then update the published artifact "Concept Energy Optioneering" in place so it opens on a phone.
+1. **Port from the other line:** built 2026-10-18 (checkpoint 298d51b; builder-reported `npm test` 44/44, `npm run test:browser` 29/29). Haiku checks in (2026-10-18), reports in `verification/port/`: H1 claims (44/44; 13 verified, 2 not verified, 1 failed: 5c month-27 discharge; +42.3 % denominator wording); H2 brief and fidelity (3 missing: bridging shading, grid-date band, unmeasured initial load; 13 partial; 7 unrecorded changes); H3 browser, hosted page, phone (passed: browser 29/29, no overflow, axe 0 serious/critical, hosted page has no external requests). **Next:** fix the H1 and H2 findings, then one Opus review (3:1 rule), then commit the verified port. Then update the published artifact "Concept Energy Optioneering" in place so it opens on a phone.
+   - **Packaging (feature/packaging, 981aa3b):** PWA done and tested (12/12). Electron desktop: app source and build scripts written but unverified; test-desktop.mjs, GitHub workflow and README still to do. Not published.
 2. **Rest of the trade-off views (stage 3):** parallel coordinates with brushing, choice-impact chart, option card, compare view, phasing timeline, schematic, key quantities.
 3. **Verification tier (stage 4):** representative-day screening, background 8760-hour verification of the top 10, dispatch visualisations.
 4. **Uncertainty and sensitivity (stage 5):** ranges, Monte Carlo, rank stability, robust pick, tornado, breakevens, scenarios.
