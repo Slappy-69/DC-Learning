@@ -462,6 +462,9 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .site-facts { margin-top: 10px; }
 .site-facts caption { text-align: left; font-weight: 600; padding: 4px 0; }
 .nowrap { white-space: nowrap; }
+/* Site-fit tables wrap inside their cells, so their minimum width fits a 375 px phone whatever the font (with DejaVu
+   Sans, the Linux default, the five-column separation checklist needed 388 px). Same rule as the site editor's tables. */
+.fit-panel table.mini th, .fit-panel table.mini td { overflow-wrap: anywhere; }
 .fit-panel table.mini td.st-pass { color: var(--ok); } .fit-panel table.mini td.st-relaxed, .fit-panel table.mini td.st-notmet { color: var(--warn); } .fit-panel table.mini td.st-fail { color: var(--bad); }
 .budget-bar { width: 100%; height: 26px; display: block; }
 .budget-bar .bb-100 { stroke: var(--ink); stroke-width: 2; }
