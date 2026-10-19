@@ -96,13 +96,13 @@ export function costAxisSpread(run) {
 }
 
 export async function ppaTests(test, { runT1, runT3 }) {
-  await test('11a. PPA settlement counts only on PPA energy physically delivered; the settlement on undelivered contracted volume is the "PPA hedge (not counted)", outside the ledger, LCOE, NPV and score (owner decision 2026-10-18)', () => {
+  await test('11a. PPA settlement counts only on PPA energy physically delivered; the settlement on undelivered contracted volume is the "PPA hedge (not counted)", outside the ledger, LCOE, NPV and score (owner decision 2026-10-18)', async () => {
     const out = [];
     for (const [label, run] of [['T1', runT1], ['T3', runT3]]) {
       const E = run.inputs.economics;
       const N = E.periodYears;
       const adder = run.ctx.priceAdder;
-      let withPPA = 0, withHedge = 0, minor = 0, info = 0, oldNeg = 0, oldNonFinite = 0;
+      let withPPA = 0, withHedge = 0, minor = 0, info = 0, oldNeg = 0, oldNonFinite = 0, mixedSign = 0;
       let hedgeIncome = 0, hedgeCost = 0;
       for (const o of run.options) {
         const d = o.dispatch.years;
@@ -145,13 +145,29 @@ export async function ppaTests(test, { runT1, runT3 }) {
           assert.ok(f.message.includes('"PPA hedge (not counted)"') && f.message.includes('not in the cost ledger, LCOE, NPV or score'), `${label} ${o.id}: flag does not explain the hedge`);
           assert.equal(f.severity, h.limitedMWh > 1e-6 ? 'minor' : 'info', `${label} ${o.id}: flag severity`);
           if (f.severity === 'minor') minor++; else info++;
+          // Opus review: a present value of the opposite sign to the total names its own sign in the flag.
+          const word = (x) => (x >= 0 ? 'income' : 'cost');
+          assert.ok(f.message.includes(`a net ${word(h.total)} of`), `${label} ${o.id}: flag names the wrong sign for the hedge total`);
+          if (word(h.pv) !== word(h.total)) {
+            mixedSign++;
+            assert.ok(f.message.includes(`present value a net ${word(h.pv)} of`), `${label} ${o.id}: hedge total ${h.total} and present value ${h.pv} differ in sign but the flag does not say so`);
+          }
         } else assert.ok(!f, `${label} ${o.id}: grid-ppa flag with every PPA MWh delivered`);
       }
       const neg = run.options.filter((o) => Number.isFinite(o.eco.lcoe) && o.eco.lcoe < 0);
       const nonFinite = run.options.filter((o) => !Number.isFinite(o.eco.lcoe)).length;
       assert.equal(neg.length, 0, `${label}: ${neg.length} options with a negative LCOE (e.g. ${neg[0] && neg[0].id} ${neg[0] && neg[0].eco.lcoe})`);
       const sp = costAxisSpread(run);
-      out.push(`${label}: ${withPPA} options with a PPA, ${withHedge} with undelivered volume (hedge income ${hedgeIncome}, cost ${hedgeCost}; flag grid-ppa minor ${minor}, info ${info}); PPA ledger line = delivered × price in every year; LCOE negative ${oldNeg} under the old rule (reconstructed) → ${neg.length}, non-finite ${oldNonFinite} → ${nonFinite}; cost axis ${sp.range.lo.toFixed(1)}–${sp.range.hi.toExponential(3)} €/MWh, ${sp.normal} options with LCOE 0–1,000 €/MWh span ${sp.spread.toFixed(3)} cost points (${sp.lo.toFixed(3)}–${sp.hi.toFixed(3)})`);
+      out.push(`${label}: ${withPPA} options with a PPA, ${withHedge} with undelivered volume (hedge income ${hedgeIncome}, cost ${hedgeCost}; ${mixedSign} with a present value of the other sign, named in the flag; flag grid-ppa minor ${minor}, info ${info}); PPA ledger line = delivered × price in every year; LCOE negative ${oldNeg} under the old rule (reconstructed) → ${neg.length}, non-finite ${oldNonFinite} → ${nonFinite}; cost axis ${sp.range.lo.toFixed(1)}–${sp.range.hi.toExponential(3)} €/MWh, ${sp.normal} options with LCOE 0–1,000 €/MWh span ${sp.spread.toFixed(3)} cost points (${sp.lo.toFixed(3)}–${sp.hi.toFixed(3)})`);
+    }
+    // Option detail (rendered): the hedge row names the present value's own sign when it differs from the total's.
+    const word = (x) => (x >= 0 ? 'income' : 'cost');
+    const mixed = runT1.options.find((o) => o.eco.ppaHedge && o.eco.ppaHedge.undeliveredMWh > 1e-6 && word(o.eco.ppaHedge.pv) !== word(o.eco.ppaHedge.total));
+    if (mixed) {
+      const B = await getViewBundle();
+      const row = (B.renderOptionDetail(mixed).match(/<tr class="hedge-row">[\s\S]*?<\/tr>/) || [''])[0];
+      assert.ok(row.includes(`net ${word(mixed.eco.ppaHedge.total)} `) && row.includes(`present value net ${word(mixed.eco.ppaHedge.pv)} `), `${mixed.id}: option detail hedge row does not name the present value's sign: ${row.replace(/<[^>]+>/g, '')}`);
+      out.push(`option detail of ${mixed.id}: "${row.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()}"`);
     }
     return out.join('; ') + '.';
   });
@@ -521,6 +537,9 @@ export async function hostedPageTests(test) {
       assert.deepEqual(refs, [], `${label}: outside or relative references ${refs.join(', ')}`);
       assert.equal(/@import|url\(\s*["']?(?!data:)(?:https?:)?\/\//i.test(html.match(/<style>[\s\S]*?<\/style>/)[0]), false, `${label}: the stylesheet loads something`);
       assert.ok(html.includes('Loading the energy optioneering tool'), `${label}: loading message missing`);
+      // Opus review: ASCII only, so the page does not depend on the charset of the document a host wraps it in.
+      const nonAscii = html.match(/[^\x00-\x7F]/);
+      assert.equal(nonAscii, null, `${label}: non-ASCII character ${nonAscii && JSON.stringify(nonAscii[0])} at ${nonAscii && nonAscii.index}`);
       const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
       assert.equal(scripts.length, 2, `${label}: expected two inline scripts (startup handler + app), found ${scripts.length}`);
       const app = scripts.reduce((a, b) => (b.length > a.length ? b : a));
@@ -535,6 +554,6 @@ export async function hostedPageTests(test) {
     assert.ok(hosted.includes('did not allow copying') && hosted.includes('rp-copy-text'), 'hosted page has no select-the-text fallback');
     assert.ok(!/\.download=/.test(hosted) && !/revokeObjectURL/.test(hosted), 'hosted page still carries the download code');
     assert.ok(single.includes('Download run log') && !single.includes('Copy run log') && /\.download=/.test(single), 'single file label or download code');
-    return `index.html: loading message in #root, noscript, startup handler (error + unhandledrejection, quiet once the app runs); single file ${(single.length / 1024).toFixed(1)} KB and hosted page ${(hosted.length / 1024).toFixed(1)} KB: 2 inline scripts each, worker inlined and equal to dist/worker.js, no <script src>, <link href> or other reference; hosted page starts with <title> then <style>, no doctype/<html>/<head>/<body>/<meta>, "Copy run log" with the select-the-text fallback and no download code; single file keeps "Download run log".`;
+    return `index.html: loading message in #root, noscript, startup handler (error + unhandledrejection, quiet once the app runs); single file ${(single.length / 1024).toFixed(1)} KB and hosted page ${(hosted.length / 1024).toFixed(1)} KB: 2 inline scripts each, worker inlined and equal to dist/worker.js, no <script src>, <link href> or other reference, ASCII only; hosted page starts with <title> then <style>, no doctype/<html>/<head>/<body>/<meta>, "Copy run log" with the select-the-text fallback and no download code; single file keeps "Download run log".`;
   });
 }
