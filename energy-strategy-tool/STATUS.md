@@ -1,16 +1,27 @@
 # Status: concept-design energy strategy tool
 
 Checkpoint updated after every completed step, so any session can resume from here.
-Last updated: 2026-10-21. **Development paused by the owner (2026-10-21)**: everything built so far is verified, merged to `main` and working; nothing new is in progress.
+Last updated: 2026-10-21 (after the user-workflow walkthrough). **Development paused by the owner (2026-10-21)**: everything built so far is verified, merged to `main` and working; nothing new is in progress.
+
+**Scope has changed since the close-out state below.** The walkthrough decisions are in `claude/walkthrough-decisions-2026-10-21.md` in the owner's Claude project (the full log, with research items). Where this file disagrees with that log, the log is newer. This file has not been re-verified against the code since the change.
 
 ## Where to look
 
 - **Brief (authoritative):** `brief-v2/BRIEF.md`, with `CHANGELOG.md`, `ASSUMPTIONS.md`, `OPEN-QUESTIONS.md`.
 - **App source and build notes:** `app/`. `app/BUILD-NOTES.md` is the reference for defaults, gaps, decisions and test output.
 - **Windows program:** GitHub → Actions → Desktop builds → latest green run → Artifacts → `desktop-win32-x64`. Unsigned: Windows shows "Windows protected your PC" the first time (More info → Run anyway). See `packaging/README.md`.
-- **Phone:** the owner's private Claude artifact "Concept Energy Optioneering" (https://claude.ai/artifact/KZ5isQcoksrwHY1AqTHU55), updated 2026-10-21 to the build on `main`.
+- **Phone:** dropped on 2026-10-21 (walkthrough). The private Claude artifact "Concept Energy Optioneering" (https://claude.ai/artifact/KZ5isQcoksrwHY1AqTHU55) still exists but is no longer maintained or part of the plan.
 - **Any browser, offline:** `energy-tool-single-file.html`. Open it directly in a browser; no setup.
 - **Verification record:** `verification/HISTORY.md`, plus one folder of reports per slice.
+
+## Scope change (2026-10-21 walkthrough)
+
+- **Audience:** data centre consultancies in general, not RED specifically. Repo stays public.
+- **Platforms:** Windows program only. Phone dropped.
+- **Location:** a map pin sets location and country. Planned: an offline map bundled with the Windows program (PMTiles-style, all of Europe, roads detail). Licence and file size not yet checked.
+- **Site tab:** kept as **Beta**. Hidden by default, turned on in the app's general settings, labelled Beta, and kept out of the ranking and the PDF export. Site area is otherwise a single number; layout and planning constraints are out of the main flow.
+- **Results and export:** top 5 cards, cost-against-carbon trade-off (either axis switchable), compare up to 3, tornado defaulting to LCOE, one PDF export (inputs first). No Excel.
+- Full list of defaults, flags and research items: the project log named above.
 
 ## Branches
 
@@ -32,15 +43,16 @@ GitHub runs the checks on every push to `main` (`.github/workflows/ci.yml`: Node
 | Pareto trade-off view | Haiku ×3 + Opus, 2026-10-16 | `npm test` 22/22; `npm run test:browser` 13/13; axe 0 serious/critical (light and dark) |
 | Site (stage 2): geometry kernel, site model with T2/T4, blocks, auto-layout, site-fit outputs, Site tab with plan, boundary drawing, GeoJSON/KML import, small multiples | Haiku ×3 + Opus, 2026-10-17 (0 invariant violations in 8,000 independently checked layouts) | `npm test` 32/32; `npm run test:browser` 21/21; axe 0 serious/critical; phone shows results first |
 
-## Launchable app (owner request 2026-10-18; narrowed 2026-10-21 to **Windows and phone only**)
+## Launchable app (owner request 2026-10-18; narrowed 2026-10-21 to **Windows only**)
 
 - **Windows program (Electron 44.9.0):** built on GitHub for download. Sandboxed window, no Node.js in the page, CSP, Electron fuses, and no network at all (checked by tracing every process, D12). Launch-tested on a Linux build of the same app (12 checks); the Windows build itself is not launch-tested automatically. Not code-signed.
-- **Phone:** the private Claude artifact (hosted build). The installable web app (PWA) is built and tested in CI but not hosted, by the owner's choice.
+- **Phone:** dropped on 2026-10-21 (see "Scope change"). The installable web app (PWA) is built and tested in CI but not hosted.
 - **Not built any more:** macOS and Linux downloads (the script can still make them).
 - **Verification:** Haiku check done and answered (`verification/packaging/H1-packaging.md`). The Opus review of the packaging stopped at the weekly usage limit and did not report; not resumed because development is paused.
 
 ## Next
 
+0. **Walkthrough implementation (not started):** follow `claude/walkthrough-decisions-2026-10-21.md`. Resume only when the owner asks.
 1. **Port from the other line: verified** (Haiku H1–H3 and Opus review, 2026-10-18; `verification/port/`). Dispatch tab, tornado Sensitivity tab, bridging-battery timing fix, hosted-page build, and the owner's PPA rule (settlement only on delivered energy). The Opus review found the engine correct and fixed three text and robustness items (hedge present-value sign, ASCII-only hosted page, a record note); GitHub CI found, and this branch fixes, a sideways scroll on the Site tab at 375 px with the Linux default font. `npm test` 44/44, `npm run test:browser` 29/29. Owner decisions raised by the review are listed below (5–7).
    - **Packaging:** done for Windows and phone (see "Launchable app"). Merged to `main`.
 2. **Rest of the trade-off views (stage 3):** parallel coordinates with brushing, choice-impact chart, option card, compare view, phasing timeline, schematic, key quantities.
@@ -56,8 +68,8 @@ GitHub runs the checks on every push to `main` (`.github/workflows/ci.yml`: Node
 3. **Brief open questions 1–17:** proposed defaults are in use (`brief-v2/OPEN-QUESTIONS.md`).
 4. **Cost axis when an option delivers almost nothing (Brief issue 21, found on T3):** grid-dependent options on a no-grid site deliver almost no energy, and a financially settled PPA gives them net revenue, so their LCOE is negative or infinite and the cost axis stops separating the other 1,844 options. **Decided by the owner on 2026-10-18: no PPA income without physical delivery.** PPA settlement counts only on delivered energy; settlement on undelivered volume is reported as a separate hedge line outside the cost ledger and the score. Implemented and verified in the port slice (test 11a).
 
-5. **PPA options that can never deliver (Opus review O1).** On a site with no grid (T3) or for islanded options, a PPA delivers nothing, so these options tie with their no-PPA twin, yet a leader's name can list a PPA and show a hedge. Options: keep (A); treat the PPA as not applicable where nothing can ever be delivered (B); keep it, add a "PPA cannot be delivered" flag and break ties toward the option without it (C). `verification/port/OPUS-review.md` section 7.1.
-6. **Carbon metrics and undelivered PPA volume (O2).** The CFE metric counts contracted PPA volume up to the residual load even when none is delivered (T3 leader 46.9 % CFE with 0 MWh delivered); market-based Scope 2 deducts the whole contract. Neither is the default metric. Options: keep the brief's rule (A); CFE counts PPA only against grid consumption in the hour (B); count only delivered volume in both (C). Section 7.2.
+5. **PPA options that can never deliver (Opus review O1).** Recorded as decided on 2026-10-21 (owner's debate): flag the PPA that cannot be delivered (no grid) and prefer the no-PPA option. Options were: keep (A); treat as not applicable (B); flag and break ties toward no-PPA (C). Chosen: flag and prefer no-PPA (the owner's O1 rule). The code change is not yet made. `verification/port/OPUS-review.md` section 7.1.
+6. **Carbon metrics and undelivered PPA volume (O2).** Recorded as decided on 2026-10-21: the carbon-free score uses hourly matching (PPA counted only against grid energy used in that hour), which is option (B). The code change is not yet made. Section 7.2.
 7. **`grid-ppa` flag headline (O3).** "PPA limited by import capacity" shows on 753 T1 options where only 0.002–0.5 % of the undelivered volume is import-limited. Options: keep (A); headline follows the larger part with a threshold (B); two separate flags (C). Section 7.3.
 
 Interpretations taken without asking (reversible, recorded in `app/BUILD-NOTES.md`):
