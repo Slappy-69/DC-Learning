@@ -250,7 +250,7 @@ await check('D12. No network from the whole program: under strace, start-up and 
   const traceFile = join(TMP, 'strace.txt');
   const env2 = { ...env, HOME: home2, XDG_CONFIG_HOME: join(home2, '.config'), HTTPS_PROXY: proxyUrl, HTTP_PROXY: proxyUrl, ALL_PROXY: proxyUrl, https_proxy: proxyUrl, http_proxy: proxyUrl, all_proxy: proxyUrl, NO_PROXY: '', no_proxy: '' };
   // --no-sandbox here only: tracing sandboxed helper processes is not reliable; this check is about the network.
-  const argv = [strace, '-f', '-qq', '--seccomp-bpf', '-e', 'trace=connect', '-o', traceFile, BIN, '--no-sandbox', '--disable-gpu'];
+  const argv = [strace, '-f', '-qq', '-yy', '--seccomp-bpf', '-e', 'trace=connect,sendto,sendmsg,sendmmsg', '-o', traceFile, BIN, '--no-sandbox', '--disable-gpu'];
   const [cmd, cargs] = needsXvfb ? ['xvfb-run', ['-a', '-s', '-screen 0 1400x900x24', ...argv]] : [argv[0], argv.slice(1)];
   const child = spawn(cmd, cargs, { env: env2, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
   child.stopAll = () => { try { process.kill(-child.pid, 'SIGKILL'); } catch { /* gone */ } };
@@ -263,19 +263,34 @@ await check('D12. No network from the whole program: under strace, start-up and 
   child.stopAll();
   await new Promise((r) => proxy.close(r));
   ok(existsSync(traceFile), `no strace output (${out.join('').slice(-300)})`);
-  const lines = readFileSync(traceFile, 'utf8').split('\n').filter((l) => /connect\(/.test(l) && /AF_INET6?/.test(l));
+  // -yy names each socket's protocol. Off-computer traffic is: any DNS (port 53), any TCP connect off loopback, or any
+  // data sent to an address off loopback. A UDP connect() alone sends nothing: Chromium connects a UDP socket to
+  // 2001:4860:4860::8888:443 at start-up only to learn whether IPv6 routing exists (seen on GitHub's runners).
+  const all = readFileSync(traceFile, 'utf8').split('\n');
+  const isLoop = (a) => /^127\./.test(a) || a === '::1' || /^::ffff:127\./.test(a);
   const off = [];
-  for (const l of lines) {
-    const port = Number((/sin6?_port=htons\((\d+)\)/.exec(l) || [])[1]);
-    const addr = (/inet_addr\("([^"]+)"\)/.exec(l) || /inet_pton\(AF_INET6, "([^"]+)"/.exec(l) || [])[1] || '?';
-    const loopback = /^127\./.test(addr) || addr === '::1' || /^::ffff:127\./.test(addr);
-    if (port === 53 || !loopback) off.push(`${addr}:${port}`);
+  const probes = [];
+  let connects = 0;
+  for (const l of all) {
+    const proto = (/(?:connect|sendto|sendmsg|sendmmsg)\(\d+<(TCPv6|TCP|UDPv6|UDP)/.exec(l) || [])[1] || '';
+    if (/\bconnect\(/.test(l) && /AF_INET6?/.test(l)) {
+      connects++;
+      const port = Number((/sin6?_port=htons\((\d+)\)/.exec(l) || [])[1]);
+      const addr = (/inet_addr\("([^"]+)"\)/.exec(l) || /inet_pton\(AF_INET6, "([^"]+)"/.exec(l) || [])[1] || '?';
+      if (port === 53) off.push(`DNS ${addr}:${port}`);
+      else if (!isLoop(addr) && !proto.startsWith('UDP')) off.push(`${proto || 'connect'} ${addr}:${port}`);
+      else if (!isLoop(addr)) probes.push(`${addr}:${port}`);
+    } else if (/\b(?:sendto|sendmsg|sendmmsg)\(/.test(l) && proto) {
+      const m = /->(\[[^\]]+\]|[0-9.]+):(\d+)\]>/.exec(l) || /(?:inet_addr\("([^"]+)"\)|inet_pton\(AF_INET6, "([^"]+)")/.exec(l);
+      const addr = m ? (m[1] || m[2] || '').replace(/^\[|\]$/g, '') : '';
+      if (addr && !isLoop(addr)) off.push(`data sent (${proto}) to ${addr}`);
+    }
   }
   const started = readFileSync(traceFile, 'utf8').length > 0;
   ok(started, 'the traced program did not start');
   ok(!off.length, `connections off this computer or DNS lookups: ${[...new Set(off)].join(', ')}`);
   ok(!proxyHits.length, `${proxyHits.length} connection(s) to the proxy set in the environment`);
-  return `${lines.length} inet connect() calls traced over 40 s, all loopback and none to port 53; 0 connections to the proxy in HTTPS_PROXY/HTTP_PROXY/ALL_PROXY`;
+  return `${connects} inet connect() calls traced over 40 s: no DNS, no TCP off this computer, no data sent off it${probes.length ? `; ${new Set(probes).size} send-nothing UDP route probe(s) (${[...new Set(probes)].join(', ')})` : ''}; 0 connections to the proxy in HTTPS_PROXY/HTTP_PROXY/ALL_PROXY`;
 });
 
 if (browser) await browser.close().catch(() => {});

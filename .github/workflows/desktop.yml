@@ -1,10 +1,9 @@
-# Builds the unsigned desktop program for Windows (x64), macOS (Intel and Apple silicon) and Linux (x64), and tests
-# the Linux build under a virtual display. Run by hand (Actions tab -> Desktop builds -> Run workflow) or by pushing a
-# tag v*. Also runs when the packaging or this workflow changes on main or a feature/ branch. The archives are attached to the workflow run
-# as artifacts; this workflow never creates a release.
-#
-# All four targets are built on Linux with the same script that is tested locally (packaging/desktop/build-desktop.mjs:
-# @electron/packager, Electron fuses, ad hoc macOS signature with rcodesign), so the CI output matches what was tested.
+# Builds the unsigned Windows (x64) desktop program and offers it as a download on the workflow run (Artifacts).
+# A Linux build is made only to launch-test the program under a virtual display (GitHub cannot launch the Windows build
+# here); it is not offered for download. The owner chose Windows and phone only (2026-10-21): no macOS or Linux downloads.
+# Runs by hand (Actions tab -> Desktop builds -> Run workflow), on a v* tag, or when the packaging or this workflow
+# changes on main or a feature/ branch. Never creates a release. Both targets are built with the script tested locally
+# (packaging/desktop/build-desktop.mjs: @electron/packager and Electron fuses).
 name: Desktop builds
 
 on:
@@ -30,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [linux-x64, win32-x64, darwin-x64, darwin-arm64]
+        target: [win32-x64, linux-x64]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -62,7 +61,8 @@ jobs:
           # them on this runner so the program is tested with its sandbox on (not with --no-sandbox).
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
           npm run test:desktop
-      - name: Upload
+      - name: Upload the Windows program
+        if: matrix.target == 'win32-x64'
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.target }}

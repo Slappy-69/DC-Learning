@@ -1,40 +1,28 @@
 # Packaging: installable web app and desktop program
 
-Two ways to run Concept Energy Optioneering outside a plain browser tab, both built from the single-file web app
-(`../app/dist/energy-tool-single-file.html`). The model is the same in every form: it runs entirely on the device,
-with no server, no account, no telemetry and no network connection while it runs.
+The owner chose **Windows and phone only** (2026-10-21):
 
-| Form | What you get | State |
+| Form | How to get it | State |
 |---|---|---|
-| **Desktop program** (Electron 44.9.0) | Windows x64, macOS Intel and Apple silicon, Linux x64 | Built by the **Desktop builds** workflow; Linux build tested 11/11 |
-| **Installable web app** (PWA) | Install from the browser on Android, iPhone, Windows or Mac; works offline after the first visit | Built and tested 12/12; **not hosted yet** |
+| **Windows program** (Electron 44.9.0) | Download from GitHub (below) | Built on GitHub by the **Desktop builds** workflow |
+| **Phone** | The private Claude artifact link "Concept Energy Optioneering", updated to the latest build | Opens in the phone's browser; private until shared |
 
-## Get the desktop program
+The model is the same in every form: it runs entirely on the device, with no server, no account and no telemetry.
 
-1. On GitHub, open **Actions → Desktop builds → Run workflow** (or open the latest run of that workflow).
-2. When the run finishes, download the archive for your computer from **Artifacts**:
+The installable web app (PWA) in `pwa/` is still built and tested by CI (12 checks) but is **not hosted**; the owner
+chose the Claude link for the phone instead. macOS and Linux downloads are no longer built; `desktop/build-desktop.mjs`
+can still make them (`--platforms darwin-arm64` etc.). A Linux build is made in CI only to launch-test the program.
 
-   | Download | For | Archive size | Unpacked |
-   |---|---|---|---|
-   | `desktop-win32-x64` | Windows 10/11, 64-bit | 151.6 MB (.zip) | 370 MB |
-   | `desktop-darwin-arm64` | Mac with Apple silicon (M1 and later) | 124.8 MB (.zip) | 311 MB |
-   | `desktop-darwin-x64` | Mac with an Intel processor | 130.2 MB (.zip) | 314 MB |
-   | `desktop-linux-x64` | Linux, 64-bit | 117.9 MB (.tar.gz) | 285 MB |
+## Get the Windows program
 
-3. Unzip it and start the program inside: `Concept Energy Optioneering.exe` (Windows),
-   `Concept Energy Optioneering.app` (macOS), `concept-energy-optioneering` (Linux).
+1. On GitHub, open **Actions → Desktop builds**, and open the latest run with a green tick (or press **Run workflow**).
+2. Under **Artifacts**, download `desktop-win32-x64` (about 151 MB). You must be signed in to GitHub to download.
+3. Unzip it (GitHub wraps it in a second zip: unzip both), open the folder and run
+   `Concept Energy Optioneering.exe`. Keep the folder together; the program needs the files next to it.
 
-**The builds are not code-signed**, so the first launch shows a warning:
-
-- **Windows:** "Windows protected your PC" (SmartScreen). Choose *More info* → *Run anyway*.
-- **macOS:** "cannot be opened because the developer cannot be verified" (Gatekeeper). Right-click the app → *Open* →
-  *Open*. The app carries an ad hoc signature, so macOS does not report it as damaged. If a download tool still
-  quarantines it, run `xattr -dr com.apple.quarantine "Concept Energy Optioneering.app"` once.
-- **Linux:** no warning. Run the executable from the unpacked folder. If your system does not allow unprivileged user
-  namespaces, start it with `--no-sandbox`.
-
-Signing needs a paid certificate (Windows) and an Apple Developer account (macOS). Both can be added to the workflow
-later without changing the app.
+**The program is not code-signed**, so the first launch shows "Windows protected your PC" (SmartScreen). Choose
+*More info* → *Run anyway*. Signing needs a paid certificate and can be added to the workflow later without changing
+the app.
 
 ## What the desktop program does and does not do
 
@@ -77,7 +65,7 @@ The version in file names (`0.2.0-site`) is the model engine version read from t
 | Suite | Checks |
 |---|---|
 | `test:pwa` (P1–P12) | Loads and runs from a GitHub-Pages-like server; manifest and icons; maskable safe zone; service worker control; other pages on the same site left alone; offline reload and full run; installability; update notice (accessible, never forces a reload); works without service workers |
-| `test:desktop` (D1–D12) | Archive checksum and layout; bundled web app unmodified; fuses; window loads; full model run with no page errors; page requests refused; CSP blocks injected scripts; no Node.js in the page; navigation and pop-ups blocked; single instance; clean quit and saved window size; whole-program network trace with strace (no DNS lookup, no connection off the computer, proxy settings ignored) |
+| `test:desktop` (D1–D12, on the Linux build) | Archive checksum and layout; bundled web app unmodified; fuses; window loads; full model run with no page errors; page requests refused; CSP blocks injected scripts; no Node.js in the page; navigation and pop-ups blocked; single instance; clean quit and saved window size; whole-program network trace with strace (no DNS lookup, no connection off the computer, proxy settings ignored) |
 
 Latest results: `test-results/pwa.json`, `test-results/desktop.json`. Each test run rewrites them, so commit them together
 with a verified change.
@@ -122,7 +110,8 @@ the macOS and Windows builds' launch.
 ## Not done
 
 - No code signing or notarisation (see above).
-- Windows and macOS builds are produced on Linux and checked for structure and fuses, and (macOS) every binary's ad hoc
-  signature is checked page by page (`desktop/macho-verify.mjs`), but they are not launch-tested here. Linux is
-  launch-tested in CI and locally.
-- The PWA is not hosted. Hosting it on GitHub Pages at `https://slappy-69.github.io/DC-Learning/` is a separate decision.
+- The Windows build is produced on Linux and checked for structure and fuses, but it is not launch-tested
+  automatically: the same app and settings are launch-tested on the Linux build (D1–D12), in CI and locally.
+- The PWA is not hosted (owner's choice: the phone uses the private Claude link).
+- The final Opus review of the packaging started on 2026-10-19 but stopped early at the weekly usage limit; it did not
+  report. The Haiku check was done and answered (`../verification/packaging/H1-packaging.md`).

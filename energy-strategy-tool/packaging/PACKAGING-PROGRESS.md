@@ -6,7 +6,7 @@ built with `npm run build` in `app/`) as (A) an installable PWA for GitHub Pages
 (x64, arm64) and Linux. Nothing is published from here.
 Keep this folder under about 1.2 GB; build one desktop platform at a time and clear Electron caches.
 
-## Status: done (2026-10-18); Haiku check done and answered; Opus review next
+## Status: closed (2026-10-21). Windows and phone only, at the owner's request. Haiku check done and answered; the Opus review stopped at the usage limit and did not report
 
 | Part | State | Files | Tests |
 |---|---|---|---|
@@ -99,6 +99,14 @@ Report: `../verification/packaging/H1-packaging.md` (commit f797cca).
 | darwin-x64 | 130.2 MB .zip | 314 MB | ad hoc, 14 Mach-O files checked |
 | darwin-arm64 | 124.8 MB .zip | 311 MB | ad hoc, 14 Mach-O files checked |
 
-## Next step
+## Close-out (2026-10-21)
 
-Opus review of the packaging, then merge to `main` (owner approved 2026-10-18).
+- **Owner: Windows and phone only; stop development and tidy up.** `desktop.yml` builds Windows for download and Linux
+  only to launch-test; macOS and Linux downloads dropped. Phone = the private Claude artifact (hosted build), not the PWA.
+- **D12 false alarm on GitHub (ea22f75):** the runner showed a UDP connect to 2001:4860:4860::8888:443, Chromium's
+  start-up check for IPv6 routing, which sends no data. D12 now traces connect and send calls with socket protocols
+  (`strace -yy`) and fails on DNS, on TCP off loopback, or on data sent off loopback; a send-nothing UDP connect is
+  reported, not failed. Local: 12/12.
+- **Opus review of the packaging:** started, stopped at the weekly usage limit (resets 2026-10-23 15:00 La Paz time)
+  without a report. Not resumed: the owner asked to stop development. Recorded as not done.
+- Merged to `main` with the owner's approval of 2026-10-18.
