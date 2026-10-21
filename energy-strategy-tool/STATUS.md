@@ -1,26 +1,26 @@
 # Status: concept-design energy strategy tool
 
 Checkpoint updated after every completed step, so any session can resume from here.
-Last updated: 2026-10-18.
+Last updated: 2026-10-21. **Development paused by the owner (2026-10-21)**: everything built so far is verified, merged to `main` and working; nothing new is in progress.
 
 ## Where to look
 
 - **Brief (authoritative):** `brief-v2/BRIEF.md`, with `CHANGELOG.md`, `ASSUMPTIONS.md`, `OPEN-QUESTIONS.md`.
 - **App source and build notes:** `app/`. `app/BUILD-NOTES.md` is the reference for defaults, gaps, decisions and test output.
-- **Phone / offline build:** `energy-tool-single-file.html`. Open it directly in a browser; no setup.
+- **Windows program:** GitHub → Actions → Desktop builds → latest green run → Artifacts → `desktop-win32-x64`. Unsigned: Windows shows "Windows protected your PC" the first time (More info → Run anyway). See `packaging/README.md`.
+- **Phone:** the owner's private Claude artifact "Concept Energy Optioneering" (https://claude.ai/artifact/KZ5isQcoksrwHY1AqTHU55), updated 2026-10-21 to the build on `main`.
+- **Any browser, offline:** `energy-tool-single-file.html`. Open it directly in a browser; no setup.
 - **Verification record:** `verification/HISTORY.md`, plus one folder of reports per slice.
 
 ## Branches
 
-| Branch | Contains | State |
-|---|---|---|
-| `main` | Brief v2, core, run log, single-file build, Pareto view (484a042) | Pareto unverified on main |
-| `feature/pareto-verification` | Pareto view verified and fixed, verification reports, this file | Not merged; the owner merges |
-| `feature/site-layout` | Site slice (brief stage 2), stacked on the branch above | Verified (Haiku ×3 + Opus), 2026-10-17 |
-| `feature/port-concept-line` | Dispatch tab, tornado sensitivity, bridging-battery timing fix and hosted-page build, ported from the other line onto this one | Next |
-| `concept-sensitivity-tab`, `concept-site-layout` | Parallel work by another session, built on the unverified `main` | Left untouched at the owner's choice (2026-10-17); their useful parts are being ported. Delete when the port is merged |
+| Branch | State |
+|---|---|
+| `main` | **Everything below, verified.** Brief v2, core, run log, single-file build, Pareto, Site, the port (Dispatch, Sensitivity, PPA rule), packaging (Windows program, PWA, workflows). Merged 2026-10-21 with the owner's approval of 2026-10-18 |
+| `feature/pareto-verification`, `feature/site-layout`, `feature/port-concept-line`, `feature/packaging` | Fully contained in `main`; kept for reference |
+| `concept-sensitivity-tab`, `concept-site-layout` | Parallel work by another session; their useful parts were ported. Left untouched (deleting them is the owner's call) |
 
-Branches are stacked: merging the newest one into `main` brings in everything below it.
+GitHub runs the checks on every push to `main` (`.github/workflows/ci.yml`: Node tests, build, PWA tests, browser tests) and builds the Windows program when the packaging changes (`desktop.yml`).
 
 ## Built and verified
 
@@ -32,16 +32,17 @@ Branches are stacked: merging the newest one into `main` brings in everything be
 | Pareto trade-off view | Haiku ×3 + Opus, 2026-10-16 | `npm test` 22/22; `npm run test:browser` 13/13; axe 0 serious/critical (light and dark) |
 | Site (stage 2): geometry kernel, site model with T2/T4, blocks, auto-layout, site-fit outputs, Site tab with plan, boundary drawing, GeoJSON/KML import, small multiples | Haiku ×3 + Opus, 2026-10-17 (0 invariant violations in 8,000 independently checked layouts) | `npm test` 32/32; `npm run test:browser` 21/21; axe 0 serious/critical; phone shows results first |
 
-## Launchable app (owner request 2026-10-18; owner chose "Both")
+## Launchable app (owner request 2026-10-18; narrowed 2026-10-21 to **Windows and phone only**)
 
-- **Installable web app (PWA):** manifest, service worker (offline), icons; to be hosted on GitHub Pages at https://slappy-69.github.io/DC-Learning/ (the owner agreed to Pages being switched on when choosing this option). Install from the browser on Android, iPhone, Windows or Mac.
-- **Desktop program (Electron):** Windows, Linux and macOS builds with secure defaults, offered as a GitHub pre-release. Not code-signed, so Windows SmartScreen and macOS Gatekeeper warn on first launch.
-- Packaging scripts live in `packaging/` once verified; nothing is published until the port slice is verified.
+- **Windows program (Electron 44.9.0):** built on GitHub for download. Sandboxed window, no Node.js in the page, CSP, Electron fuses, and no network at all (checked by tracing every process, D12). Launch-tested on a Linux build of the same app (12 checks); the Windows build itself is not launch-tested automatically. Not code-signed.
+- **Phone:** the private Claude artifact (hosted build). The installable web app (PWA) is built and tested in CI but not hosted, by the owner's choice.
+- **Not built any more:** macOS and Linux downloads (the script can still make them).
+- **Verification:** Haiku check done and answered (`verification/packaging/H1-packaging.md`). The Opus review of the packaging stopped at the weekly usage limit and did not report; not resumed because development is paused.
 
 ## Next
 
 1. **Port from the other line: verified** (Haiku H1–H3 and Opus review, 2026-10-18; `verification/port/`). Dispatch tab, tornado Sensitivity tab, bridging-battery timing fix, hosted-page build, and the owner's PPA rule (settlement only on delivered energy). The Opus review found the engine correct and fixed three text and robustness items (hedge present-value sign, ASCII-only hosted page, a record note); GitHub CI found, and this branch fixes, a sideways scroll on the Site tab at 375 px with the Linux default font. `npm test` 44/44, `npm run test:browser` 29/29. Owner decisions raised by the review are listed below (5–7).
-   - **Packaging (feature/packaging, 981aa3b):** PWA done and tested (12/12). Electron desktop: app source and build scripts written but unverified; test-desktop.mjs, GitHub workflow and README still to do. Not published.
+   - **Packaging:** done for Windows and phone (see "Launchable app"). Merged to `main`.
 2. **Rest of the trade-off views (stage 3):** parallel coordinates with brushing, choice-impact chart, option card, compare view, phasing timeline, schematic, key quantities.
 3. **Verification tier (stage 4):** representative-day screening, background 8760-hour verification of the top 10, dispatch visualisations.
 4. **Uncertainty and sensitivity (stage 5):** ranges, Monte Carlo, rank stability, robust pick, tornado, breakevens, scenarios.
@@ -65,6 +66,7 @@ Interpretations taken without asking (reversible, recorded in `app/BUILD-NOTES.m
 
 ## Known open items
 
+- Packaging Opus review not done (usage limit). Resume it, or run a fresh one, before further packaging work.
 - Screen-reader walk-through (NVDA, VoiceOver) not done yet.
 - A run takes about 9–10 s for 2,000 options, because every option runs the full 8760-hour model. The brief's speed targets need the representative-day tier (stage 4). The owner has said speed is not a priority for now.
 - Weight-change repaint measured 96–166 ms in the sandbox (brief target ≤ 100 ms on the reference machine); the browser check fails above 300 ms to catch regressions.

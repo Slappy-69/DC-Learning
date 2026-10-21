@@ -66,3 +66,13 @@ Detailed reports from 2026-10-16 onwards are in the per-slice folders next to th
 | GitHub CI (first run, Ubuntu runner) | — | FAIL: B14 and B20, Site tab at 375 px scrolled sideways (388 px) with DejaVu Sans, the runner's default font. Fixed: site-fit table cells wrap (`overflow-wrap: anywhere`); checked with three wide fonts |
 | Opus review (2026-10-18) | Opus | 57 findings judged: 31 accepted, 3 rejected (5c not a defect, confirmed from the dispatch data; H2 R30/R33 verifier errors), 23 deferred (later stages or owner decisions). 13 found in the review. Fixed: PPA hedge present value printed with the wrong sign on 23 T1 options; hosted page now pure ASCII; a record note. Record corrections (§12.6 deferral reason, B-4 evidence). S2 now verified (98.9963, 73.1602). No number, rank or flag changed on T1, T3 or T1 + BESS + solar. Owner decisions framed: O1 PPA options that can never deliver, O2 CFE and market-based carbon count undelivered volume, O3 flag headline. `npm test` 44/44, browser 29/29. Report: `port/OPUS-review.md` |
 
+
+## Packaging: Windows program, phone, PWA, GitHub workflows (2026-10-18 to 2026-10-21, branch feature/packaging)
+
+| Step | Model | Result |
+|---|---|---|
+| Build | Opus | PWA (12 checks), Electron desktop shell (sandbox, CSP, fuses), build script for Windows, macOS and Linux, desktop test (Linux under a virtual display), GitHub workflows (`ci.yml`, `desktop.yml`), READMEs. Fixed on the way: a crash of the Electron download through a proxy (retry in a child process); `rcodesign verify` rejecting every ad hoc macOS signature (own page-hash checker) |
+| GitHub CI (first runs) | — | Desktop test failed on the runner (Chromium sandbox blocked by Ubuntu 24.04's user-namespace setting; fixed in the workflow, sandbox kept on). Browser suite found the Site tab scrolling sideways at 375 px with DejaVu Sans (fixed in the app) |
+| Haiku check H1-packaging | Haiku | 7 checks: P9 (axe) had silently never run; the desktop program reached the network at start-up (Electron spell-check dictionary download); D6 could not see it; `data:` downloads not bound to the app; checker crashed on malformed input; workflow upload and README details. All fixed or recorded (`packaging/PACKAGING-PROGRESS.md`); new D12 traces every process (negative control: the pre-fix build fails it) |
+| Opus review | Opus | Started 2026-10-19; stopped at the weekly usage limit without a report. **Not done** |
+| Close-out (owner, 2026-10-21) | Opus | Windows and phone only: Windows program for download, Linux build kept only for the launch test, macOS and Linux downloads dropped; phone = private Claude artifact (updated). D12 false alarm on GitHub (Chromium's send-nothing IPv6 route probe) fixed. Merged to `main` |
