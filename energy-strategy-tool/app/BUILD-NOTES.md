@@ -1397,3 +1397,7 @@ Test changes caused by the new defaults (not by code): with UK ETS at €75/t th
 Test run: `npm test` 44/44; `npm run test:browser` 29/29 (axe 0 serious or critical, light and dark). T1 full run 13.8 s single thread (2,000 options).
 
 T1 against the "before" export of 2026-10-21 (`docs/user-guide/data/`, commit 441635e), build plan step 4: the same 2,000 options and the same top 10 in the same order. Every LCOE rises (median +4.0 %, largest +8.5 % for islanded gas engines) because the UK carbon price on Scope 1 combustion went from €50 to €75/t; the leader's LCOE moves only 0.02 % (€153.77 → €153.80/MWh, diesel test runs only), and its score rises from 92.71 to 92.92 because the other options moved further (scores are relative to the run). Hydrogen and exchange rates do not change T1 (no hydrogen plant outside archetype A10b; rates are display only).
+
+### Ramp at energisation 25 % (2026-10-22)
+
+The owner's judgement (OPEN-QUESTIONS 51, from the notes on the guide, page 48): `load.rampStart` 0.25 (was 0.5), range 0.1–0.5, basis judgement. T1 against the batch 1 run: the same 2,000 options; the leader (O1YAUJ8J) and ranks 1–9 unchanged, rank 10 changes; LCOE median +0.6 % (−0.1 % to +1.3 %), because less energy is delivered while buildings ramp up and the fixed costs are spread over less; the leader's power gap falls from 24.9 to 15.4 MW-months (less early demand above the 20 MW grid), LCOE €153.80 → €154.07/MWh, location-based carbon 113.2 → 112.7 g/kWh. `npm test` 44/44.

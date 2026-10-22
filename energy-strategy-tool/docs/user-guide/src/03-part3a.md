@@ -82,7 +82,7 @@ The net developable area is the land budget for every block of plant and the dat
 |---|---|---|
 | IT load at full build | required (T1: 100 MW) | Installed IT of the whole campus |
 | Phasing table | one phase at the grid full-connection date | IT MW and energisation date of each phase |
-| Ramp: share at energisation | 50 % | Share of a phase's IT drawn when it opens |
+| Ramp: share at energisation | 25 % (was 50 % until 22 October 2026) | Share of a phase's IT drawn when it opens |
 | Ramp duration | 12 months | Time to reach 100 % |
 | Average IT utilisation | 80 % | Average draw as a share of installed IT (energy only) |
 | Workload type | Mixed cloud | Sets the daily load wave (chapter 5) |
