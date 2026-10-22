@@ -91,7 +91,8 @@ Decided by the owner (code changes not yet made unless stated):
 8. **Main question of the tool** (2026-10-22, OPEN-QUESTIONS 37): the best power strategy to maximise IT load with up to five nines of availability.
 9. **Power adequacy first** (2026-10-22, OPEN-QUESTIONS 38): unmet load at any time puts an option at the bottom of the ranking; new build-plan package 3b. Tested against peak site demand, zero unmet hours, no availability measure (OPEN-QUESTIONS 39–41).
 10. **Bridging, lead times and backup** (2026-10-22, OPEN-QUESTIONS 42–48, package 3b): both bridging alternatives (rent and own only the gap, or buy and retire into backup); every technology for bridging; long-lead plant ordered from day one, with six months for significant environmental permits; permitting outlook; one backup technology per building; a site-wide backup option with an adjustable client-risk item.
-11. Everything else decided in the walkthrough: `docs/walkthrough-decisions-2026-10-21.md`, folded into brief revision 5.
+11. **PPA, grid capex, ramp, solar areas, removed choices** (2026-10-22, OPEN-QUESTIONS 49–53): PPA off unless ticked, coverage set by the engineer; grid connection capex default 0 with the expected country figure shown and a copy button; ramp at energisation 25 %; carport solar and "belly tanks only" removed; roof and ground areas for PV as inputs (ground default 0). The note "I want full run every time" (page 35) is left open.
+12. Everything else decided in the walkthrough: `docs/walkthrough-decisions-2026-10-21.md`, folded into brief revision 5.
 
 Waiting for the owner: `OPEN-QUESTIONS.md` 19–35 (no defaults; ask one at a time when the work package that needs the answer starts) and the known issues in `docs/KNOWN-ISSUES.md` (question 31).
 

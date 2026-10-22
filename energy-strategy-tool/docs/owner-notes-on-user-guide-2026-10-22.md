@@ -61,3 +61,9 @@ These notes ask for something different from what the walkthrough of 2026-10-21 
 
 - Pages 69, 70, 75, 76 (unmet load): power adequacy first, OPEN-QUESTIONS 38–41 (2026-10-22).
 - Option 1 of the worked example (bridging plant left idle after the grid; turbines): OPEN-QUESTIONS 42–48 (2026-10-22).
+- Pages 8 and 29 (PPA as an option, not a default): OPEN-QUESTIONS 49 (2026-10-22).
+- Page 50 (grid connection capex: user value and country standard): OPEN-QUESTIONS 50 (2026-10-22).
+- Page 48 (ramp 25 %): OPEN-QUESTIONS 51 (2026-10-22).
+- Pages 30 and 59 (carport solar, belly tanks, user-specified solar area): OPEN-QUESTIONS 52, 53 (2026-10-22).
+
+Left open on 2026-10-22: page 35 ("I want full run every time"). Not yet discussed: pages 3, 6, 7, 8 ("number of buildings?" and the grid information panel, which question 49 places in package 1), 11, 12, 20, 26, 44, 48 ("phase = buildings"), 49, 51, 53, 54, 66, 67, 69 ("What NPV?"), 76.
