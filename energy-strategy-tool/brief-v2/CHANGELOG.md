@@ -252,3 +252,61 @@ One label for every unverified default: **"indicative — unverified"**. The rea
 - **F-11: full offered capacity, not demand-sized.** Making the connection equal to the offered capacity removes the clamp to the constraint and makes the shortfall visible. Trade-off: every grid-using option now carries the same connection capex, so options with a lot of firm on-site plant no longer save on connection capex. Logged as OPEN-QUESTIONS 18; a user can set a smaller contracted capacity on a custom option.
 - **One label with a recorded basis rather than two labels.** Keeps the UI and AC 9 test simple; the brackets carry the reason without creating a second label.
 - **C17/C18: note instead of auto-open.** This keeps the help on tight sites (the "N options do not fit" note next to Include) without changing the option set by itself.
+
+## Revision 5 (2026-10-21): the owner's user-workflow walkthrough
+
+Scope: the owner and Claude walked through the whole user workflow on 2026-10-21, one decision at a time. The decision log is `../docs/walkthrough-decisions-2026-10-21.md` (a copy of the owner's project document). This revision folds every decision into the brief. Changed text in `BRIEF.md` is marked "(walkthrough, 2026-10-21)", with the earlier rule kept as "before revision 5" where a builder could otherwise be confused by the code. Nothing in the app was changed.
+
+| # | Change | BRIEF sections | Decision log section |
+|---|---|---|---|
+| 1 | Audience: data centre consultancies in general, not one firm; the repository stays public | §1.3 | Audience and principles |
+| 2 | Platform: Windows program only, no network connection; phone dropped; single HTML file kept for testing | §4, §16, §17, §22 | Site and location; Repo state |
+| 3 | New principle 10: works at any level of knowledge. Only location and site area are required; every value not entered is flagged on each option that uses it, with its source ("assumed default" flag) | §2, §3, §5, §15, §17, §21 AC 16 | Audience and principles |
+| 4 | Location by a pin on a bundled offline map (Protomaps PMTiles, Europe, roads level); country from the pin; currency per site | §3, §5.1, §10.2, §18 | Site and location; Economics |
+| 5 | Site area is one number; the Site tab becomes a Beta feature (hidden by default, general-settings switch, labelled Beta, out of the ranking and the PDF). Principle 3 "Spatial by default" replaced | §1.1, §2, §3, §5.2, §8 rules, §9.9, §10, §11, §12, §21 | Site and location |
+| 6 | Climate: nearest ASHRAE station for design temperatures (flagged); NOAA hourly records or an uploaded EPW file | §5.1, §9.3, §18 | Site and location |
+| 7 | Grid values can be "Not known" and then use country defaults (flagged); the bridging period can be known or not | §3, §5.4, §9.8 | Site and location; Demand |
+| 8 | IT load estimated from area when not entered (35 % coverage, 1 storey, 5.5 kW/m² of floor; research) | §5.3, §18 | Demand |
+| 9 | Load shapes (flat, fluctuation, AI training, AI inference) with the sub-hour caveat | §5.3, §15 | Demand |
+| 10 | Flexibility parameters and triggers; battery response sized to the historical trigger hours; battery split into resilience reserve and economic battery; battery capex in the ledger | §5.3, §5.5, §5.6, §8 C12 and C16, §9.2, §9.4, §9.5 | Demand |
+| 11 | Resilience default kept (N+1, 100 % of IT); autonomy from fuel, batteries or both; gensets included by default, 6 h/yr tests at a separate 75 % test load, optional primary-power hours | §5.5, §6.2, §9.2, §9.4, §9.7 | Requirements |
+| 12 | Weights 35/25/25/15 provisionally accepted; effect of each weight change described live; repaint target relaxed | §3, §5.7, §11, §17 | Requirements |
+| 13 | Cooling type chosen by the engineer, with typical PUE and maximum demand offered (C8 locked) | §3, §5.3, §7.3, §8 C8, §9.3 | Economics |
+| 14 | Economics: several evaluation periods; WACC 7 % real (judgement); latest EU ETS price and latest wholesale gas price with dates; published escalation forecasts; revenue options off | §5.4, §5.6, §9.5 | Economics |
+| 15 | Grid: contracted capacity per option set by the engineer; one fixed grid connection charge for every option; connection capex default 0 with the country value shown | §2, §5.4, §9.2, §9.5, §21 AC 14 and 18 | Economics; Grid capacity |
+| 16 | PPA and carbon rules O1 (flag undeliverable PPA, prefer no-PPA), O2 (hourly CFE matching), O3 (two `grid-ppa` flags with shares); open decision 1 ("Does not meet" stays) | §8 C13, §9.6, §9.7, §11, §15, §21 AC 21–23 | PPA and carbon rules |
+| 17 | Results: top five cards; trade-off chart cost (vertical) against carbon with resilience bubbles; compare up to 3; dispatch for any period of verified options; tornado with a tick-box driver list, LCOE by default | §12, §12.11, §12.13, §13.3, §21 AC 24–25 | Results |
+| 18 | Export: one PDF, inputs first, results after; no Excel | §12.10, §22, §21 AC 26 | Results |
+| 19 | General settings page with the Site tab (Beta) switch | §12.12, §21 AC 27 | Site and location |
+| 20 | Build order replaced by the implementation order recorded at the end of the walkthrough (stages of revisions 1–4 kept for reference); to confirm with the owner before the first package | §20 | Project handoff note (`claude/handoff-concept-tool.md`, 2026-10-21) |
+| 21 | Research before the first release listed with the data sources | §18 | Open research |
+| 22 | Acceptance tests 16–27 added for the decisions; AC 7, 11, 12 and 14 adjusted | §21 | All |
+
+### Open questions added
+
+Questions 19–35 in `OPEN-QUESTIONS.md`: the details the walkthrough left open (contracted capacity of generated options, the connection charge for islanded options, which evaluation period scores, how O1 ranks, the representative-day method, the top-five comparison set, the land budget with the Site tab hidden, the density rule, saving a study, cooling before a choice, screen structure, run progress, known issues, PDF sections, C12 and the economic battery, flexibility in the merit order, the repaint target). They carry no proposed default: the owner decides them one at a time. Questions 1–18 now record what the walkthrough did to each.
+
+### Judgement calls in revision 5
+
+- **Edit in place rather than a separate addendum.** One brief to read, with the section numbers the code and build notes already cite. Changes are marked so they can be found.
+- **"As built" stated next to changed rules** where the code still follows the earlier rule, so a builder reading the code is not misled.
+- **Grid connection charge read as the connection capex.** The decision log has "grid connection capex and reinforcement: default 0" and "grid connection charge: fixed, the same for every option". Open question 18 asked about "the same connection cost", so the two are read as one charge. This is an interpretation: whether they are one charge, and how it is entered, is open question 20.
+- **Defaults stated only where the walkthrough or the built program gives one.** For example contracted capacity "the full offer (as built)" and primary-power hours "0 h" (as built, backup gensets never run in normal dispatch). Where neither gives one, the point is an open question with no proposed default.
+- **Acceptance tests 16–27 are proposals.** They test the decisions as recorded; the details of each are to confirm with the owner when its work package starts.
+
+### Verifier findings (Haiku check, 2026-10-22)
+
+An independent Haiku check of revision 5, the build plan, the known issues, `STATUS.md` and `CLAUDE.md` against the decision log and the code found twelve points. All were confirmed and fixed:
+
+1. O1: the interim rule now says the option carries the O1 flag and no preference is applied until question 22 is answered; question 22 notes that a demotion or hiding by default would be an exception to principle 5.
+2. Tornado: the drivers built today were listed wrongly. As built: grid connection date, grid price, grid carbon, gas price, carbon price, WACC, IT load (§13.3, build plan package 9).
+3. NOAA weather: the decision log says the app cleans the raw hourly data; when and how is research (§5.1, §9.3, §18). It was shown as decided ("prepared at each release").
+4. "As built" labels: the load shape as built is a gentle daily cycle, not flat (§5.3); primary-power hours have no input yet, and backup gensets never run in normal dispatch (§5.5).
+5. Known issue 6: the IT estimate's coverage, storeys and density are research values, not agreed figures.
+6. `CLAUDE.md`: the defaults rule now matches the labels in use ("indicative — unverified" until researched).
+7. `STATUS.md`: "verified" now names the unfinished packaging review and the known issues.
+8. §11 ranking: the earlier rule is marked, with the walkthrough change and the as-built behaviour next to it.
+9. Build order: its source is the project's handoff note written at the end of the walkthrough; confirm the order with the owner before the first package.
+10. Grid connection charge and capex: reading them as one charge is an interpretation; question 20 now asks it.
+11. AC 27: also tests that no site-fit status, flag or penalty enters the ranking.
+12. Known issue 9: the line number of `timeToPower()` corrected.
