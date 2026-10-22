@@ -115,6 +115,8 @@ async function enableSiteBeta(page) {
   await page.locator('#gs-site-beta').check();
   await page.getByRole('button', { name: 'Close settings' }).click();
   await page.waitForSelector('#tab-site');
+  // Put the sequential focus starting point back at the top of the page, as on a fresh load.
+  await page.evaluate(() => { const b = document.body; b.tabIndex = -1; b.focus(); b.removeAttribute('tabindex'); window.scrollTo(0, 0); });
 }
 const siteTab = (page) => page.getByRole('tab', { name: 'Site Beta', exact: true });
 // Site tab helpers: wait for the thumbnails, open every collapsible section, wait for a re-run after a site edit.
@@ -1051,7 +1053,7 @@ await check('B28. Hosted page (dist/energy-tool-hosted.html) inside a host-like 
     await page.waitForFunction(() => { const st = document.querySelector('.status'); const t = st ? st.textContent : ''; return /Run failed/.test(t) || (/Last run/.test(t) && !/Screening options/.test(t)); }, null, { timeout: 180000, polling: 250 });
     const status = (await page.locator('.status').innerText()).replace(/\s+/g, ' ').trim();
     ok(!/Run failed/.test(status), `run failed: ${status}`);
-    ok(await page.locator('[role=tab]').count() === 5, 'results tabs missing');
+    ok(await page.locator('[role=tab]').count() === 4, 'results tabs missing (four with the Site tab, a Beta feature, off by default)');
     await page.evaluate(() => { const d = document.querySelector('details.run-progress'); if (d) d.open = true; });
     const label = await page.locator('.rp-dl-label').innerText();
     ok(/Copy run log/.test(label) && !/Download/.test(label), `run-log label "${label}"`);
@@ -1111,13 +1113,12 @@ await check('B29. Loading message and startup errors: with scripts off the singl
   await page.evaluate(() => { window.dispatchEvent(new ErrorEvent('error', { message: 'late test error' })); });
   await page.waitForTimeout(200);
   const late = await page.evaluate(() => ({ box: !!document.getElementById('boot-error'), boot: !!document.querySelector('#root .boot'), tabs: document.querySelectorAll('[role=tab]').length }));
-  ok(!late.box && !late.boot && late.tabs === 5, `after the app runs: ${JSON.stringify(late)}`);
+  ok(!late.box && !late.boot && late.tabs === 4, `after the app runs (four tabs: the Site tab is Beta, off by default): ${JSON.stringify(late)}`);
   await ctx.close();
   out.push('running app: a later error event leaves the page as it is (no startup box, loading message gone)');
   return out.join('; ') + '.';
 });
 
-await browser.close();
 // Site tab as a Beta feature (walkthrough, 2026-10-21; BRIEF §12.12, AC 27).
 await check('B30. Site tab (Beta): hidden by default; turned on in the general settings it appears labelled Beta; the ranking (top 20 rows, scores, leader) is identical with it on or off and nothing re-runs; with it off the header strip and the options table show no site fit', async () => {
   const { ctx, page, errors } = await openPage();
@@ -1152,6 +1153,7 @@ await check('B30. Site tab (Beta): hidden by default; turned on in the general s
   return `default tabs: ${off1.tabs.join(', ')}; on: ${on.tabs.join(', ')} (no re-run); top ${off1.rows.length} rows and leader identical off → on → off; site fit in the header strip and the table only when on; turning it off from the Site tab returns to Options.`;
 });
 
+await browser.close();
 const passed = results.filter((r) => r.status === 'PASS').length;
 const skipped = results.filter((r) => r.status === 'SKIP').length;
 console.log(`\n${passed}/${results.length} browser checks passed${skipped ? `, ${skipped} skipped` : ''}.`);
