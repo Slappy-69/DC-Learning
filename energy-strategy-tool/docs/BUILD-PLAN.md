@@ -48,6 +48,13 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Code today:** grid connection in `app/src/engine/sizing.js`; the import limit in `dispatch.js` (shared offered profile); the connection capex in `evaluate.js` line 99 (`KNOWN-ISSUES.md` item 7).
 - **Guide:** chapters 9, 17, 19, 35, 37, 39.
 
+### 3b. Power adequacy (added by the owner, 2026-10-22)
+
+- **Decision:** OPEN-QUESTIONS 37 (the tool's main question: maximise IT load with up to five nines of availability) and 38 (power adequacy first).
+- **Scope:** adequacy status per option and an adequacy-first ranking (an owner-made exception to principle 5; options are never hidden); a shortfall analysis stage before generation (temporary and permanent shortfall: when, peak MW, MWh, hours, longest event); options sized to close the shortfall (bridging to the peak temporary shortfall; shortfall-sized batteries with a recharge check; shortfall-sized on-site generation); the IT load the contracted grid supports in each period and a "grid-matched phasing" reference option; unmet load shown as MWh, hours, peak MW and longest event, before and after full connection.
+- **Ask the owner first:** whether adequacy is tested at the full contracted IT load or at the average utilisation; any tolerance; whether an availability (nines) measure is wanted.
+- **Background:** worked example `docs/examples/example-5x100MW-2026-10-22.md`.
+
 ### 4. Flexibility and battery logic
 
 - **Brief:** §5.3 (load shape, demand flexibility, battery response), §5.5 (resilience reserve, backup gensets), §8 C12 and C16, §9.2, §9.4, §9.7. **Acceptance:** AC 19, AC 20.

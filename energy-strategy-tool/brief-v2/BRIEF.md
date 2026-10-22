@@ -29,6 +29,8 @@ It answers five questions for each option:
 
 And across options: **which option leads under the user's priorities, how confident is that, and what would change the answer?**
 
+**Owner, 2026-10-22 (OPEN-QUESTIONS 37).** The main question the tool answers (owner, 2026-10-22): **what is the best power strategy for a site to maximise the IT load while offering up to five nines (99.999 %) of availability to the customer.** Having enough power to meet the load at all times is the critical aspect of the tool.
+
 ### 1.2 What it is not
 
 A decision-support aid for concept-stage screening. It is not financial, engineering, planning or legal advice, and its outputs are not a design (see §22 and §23).
@@ -626,6 +628,7 @@ Iteration with sizing: "fill residual" solar sizing is computed after the other 
 - Changing weights re-ranks live (no recompute of dispatch). The Pareto pick and summary update to match, and the effect of the change is described in words (walkthrough, 2026-10-21).
 - **O1 preference** (walkthrough, 2026-10-21): where a PPA cannot be delivered (no grid, islanded), the equivalent option without the PPA is preferred over it. How the preference works is open (OPEN-QUESTIONS 22). A tie-break toward the no-PPA option fits principle 5 (flag, never enforce); a demotion, or hiding the option by default, would make O1 an exception to principle 5, which only the owner can decide. Until the question is answered, the option carries the O1 flag and no preference is applied.
 - **Evaluation period** (walkthrough, 2026-10-21): with several periods shown, which one the Cost axis uses is open (OPEN-QUESTIONS 21).
+- **Power adequacy first** (owner, 2026-10-22; OPEN-QUESTIONS 38). Power adequacy comes first (owner, 2026-10-22, proposal approved): options with unmet load at any time rank at the bottom of the list, below every option that serves its load in every hour; they stay visible, never hidden. This is a deliberate exception to principle 5 (flag, never enforce), made by the owner. The engine is to (1) analyse the shortfall (temporary, before full grid connection; permanent, after it) before options are built, (2) generate options sized to close it (bridging, shortfall-sized on-site generation and batteries), (3) report the IT load the grid can support and a grid-matched phasing reference option, and (4) show unmet load as MWh, hours, peak MW and longest event. New work package 3b. Still to confirm with the owner: whether adequacy is tested at the full contracted IT load or at the average utilisation, and any tolerance.
 - **Site fit** (walkthrough, 2026-10-21): with the Site tab as Beta, site-fit status is not shown in the ranking and "Rank requirement-compliant options first" uses the resilience status only.
 
 ---
