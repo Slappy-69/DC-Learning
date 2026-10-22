@@ -7,7 +7,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 
 ## Project
 
-- **project.fx**: EUR 1; GBP 0.85; NOK 11.5; SEK 11.3; DKK 7.46; CHF 0.95; ISK 150 (per EUR); src. Fixed rates; display conversion only. Engine works in EUR; check against ECB reference rates.
+- **project.fx**: EUR 1; GBP 0.8377; NOK 10.488; SEK 11.112; DKK 7.4747; CHF 0.9211; ISK 136.2 (per EUR); src. Fixed rates; display conversion only. Engine works in EUR; check against ECB reference rates.
 - **project.name**: Untitled project; judg.
 - **project.country**: none; judg. null = derived from location (nearest built-in country centroid); overridable.
 - **project.currency**: by country; judg.
@@ -39,13 +39,15 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **site.access**: none (list of [lat, lon] or null); judg. null = one access point at the mid-point of the longest edge.
 - **site.receptors**: none (list of { name, point } or { name, points }); judg. None by default; used for distance-based noise flags only.
 - **site.roadsFraction**: 0.15 fraction of net developable area; range 0.1–0.25; judg. Applied to the buildable envelope area: allowance = fraction × envelope, net developable = envelope − allowance (the brief's definition is circular). Held back as a land budget, not a located area.
+- **site.pvRoofM2**: none (m² of roof available for PV, or null); judg. OPEN-QUESTIONS 53 (2026-10-22): blank = today's rule, 50 % of the free roof after roof plant is usable (solarRoof.usableFraction). An entered area replaces the rule; car-park canopies can be included here or in the ground area.
+- **site.pvGroundHa**: 0 ha of ground available for PV; judg. OPEN-QUESTIONS 53 (2026-10-22): 0 = no ground solar. An entered area makes C10 "Roof + ground" available and sizes ground PV at solarGround.haPerMWp; with the Site tab (Beta) on it is placed as one block of that area.
 - **site.offsiteLandHa**: 0 ha; judg.
 - **site.offsiteDistanceKm**: 2 km private-wire distance; range 0.5–10; judg. Used only when off-site land or off-site plant exists; replace with the real route length.
 - **site.groundConditions**: assumed suitable (free text); judg. Note only; no geotechnical modelling (flat site, §10.1).
 
 ## Load and building
 
-- **load.rampStart**: 0.5 fraction of phase IT at energisation; range 0.3–0.8; judg.
+- **load.rampStart**: 0.25 fraction of phase IT at energisation; range 0.1–0.5; judg. The owner's judgement (2026-10-22, OPEN-QUESTIONS 51; was 50 %). No source; replace with the client's fit-out programme.
 - **load.rampMonths**: 12 months; range 6–24; judg.
 - **load.utilisation**: 0.8 fraction of installed IT; range 0.6–0.95; judg.
 - **load.workload**: cloud; judg. Mixed cloud.
@@ -108,7 +110,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **economics.contingency**: 0.1 fraction of capex; range 0.05–0.2; judg.
 - **economics.capexLow**: -0.3 fraction (AACE Class 5); src; check against AACE International RP 18R-97 (confirm revision and year).
 - **economics.capexHigh**: 0.5 fraction (AACE Class 5); src; check against AACE International RP 18R-97 (confirm revision and year).
-- **economics.carbonPrice**: by country (€/tCO2e); src; check against EU ETS / UK ETS exchange data, official projections.
+- **economics.carbonPrice**: by country (€/tCO2e); src. The country default comes from the scheme records country.carbonPrice.euEts and country.carbonPrice.ukEts (sourced); Switzerland is unresearched; check against EU ETS / UK ETS exchange data, official projections.
 - **economics.carbonEscalation**: 0.02 real per yr; range 0–0.05; src; check against EU ETS / UK ETS forward curves.
 - **economics.elecEscalation**: 0 real per yr; range -0.02–0.02; src; check against ENTSO-E / forward curves.
 - **economics.gasEscalation**: 0 real per yr; range -0.02–0.02; src; check against TTF/NBP forward curves.
@@ -146,10 +148,9 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **settings.costMetric**: lcoe ("lcoe" | "npv"); judg.
 - **settings.carbonMetric**: location ("location" | "market" | "cfe"); judg.
 - **settings.absoluteScaling**: off; judg. Hook only in this slice.
-- **settings.rankCompliantFirst**: off; judg. On: options whose resilience status is "Does not meet" or whose site-fit status is "Does not fit" rank after the others (the two requirement checks, §5.7); scores do not change.
+- **settings.rankCompliantFirst**: off; judg. On: options whose resilience status is "Does not meet" rank after the others; scores do not change. Site fit does not count while the Site tab is Beta (AC 27, 2026-10-22).
 - **settings.hideDominated**: off; judg.
 - **settings.windSiteThresholdHa**: 20 ha; judg.
-- **settings.fixedSolarMWp**: 5 MWp; judg. User value for "Fixed MWp".
 - **settings.bridgeBessHours**: 24 h; judg.
 - **settings.timelineMonths**: 120 months; run. Time-to-power horizon.
 - **settings.maxDispatchYears**: 8 years; run. Distinct 8760-h dispatch years before steady state is assumed.
@@ -169,7 +170,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **choices.C7**: locked: 48; judg.
 - **choices.C8**: open: air, evap, dlc, immersion; judg.
 - **choices.C9**: open: roof, ground, split; judg.
-- **choices.C10**: open: none, roof, roofResidual; judg.
+- **choices.C10**: open: none, roof; judg. Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).
 - **choices.C11**: open: none; judg. Default "None" when site area ≤ 20 ha and no off-site land; otherwise open.
 - **choices.C12**: open: none, 2h25, 4h50; judg.
 - **choices.C12r**: locked: peakShave; judg. Default role "peak-shave against grid cap" (§8 C12).
@@ -187,7 +188,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **fuel.gasTransportAdder**: 4 €/MWh_th; range 2–8; src; check against National gas transport tariffs.
 - **fuel.dieselPrice**: 110 €/MWh_th; range 85–140; src; check against National fuel price statistics.
 - **fuel.hvoPrice**: 170 €/MWh_th; range 130–220; src; check against Fuel supplier indications.
-- **fuel.hydrogenPrice**: 150 €/MWh_th; range 90–250; src; check against Hydrogen supply price indications.
+- **fuel.hydrogenPrice**: 246 €/MWh_th; range 210–300; src. Renewable hydrogen delivered price; €8.20/kg ÷ 33.3 kWh/kg. Range €7–10/kg; check against Hydrogen supply price indications.
 - **fuel.efGas**: 0.202 tCO2e/MWh_th; range 0.2–0.205; src; check against National GHG inventory emission factors.
 - **fuel.efDiesel**: 0.267 tCO2e/MWh_th; range 0.264–0.27; src; check against National GHG inventory emission factors.
 - **fuel.efHvo**: 0.03 tCO2e/MWh_th; range 0–0.06; src. Fossil-equivalent proxy; biogenic CO₂ not counted. Indicative; check against HVO supplier sustainability data.
@@ -297,19 +298,6 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 - **planM**: 3 months; range 2–6; src.
 - **procM**: 6 months; range 3–9; src.
 - **buildM**: 4 months; range 3–6; src.
-
-### Solar PV carport
-
-Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications.
-
-- **capexPerKW**: 1,300 €/kWp; range 1,100–1,600; src.
-- **fomPerKW**: 15 €/kWp/yr; range 10–20; src.
-- **life**: 25 yr; range 20–30; src.
-- **m2PerKWp**: 8 m²/kWp; range 6–10; src.
-- **parkingFraction**: 0.3 fraction of roads/parking allowance; range 0.2–0.5; src.
-- **planM**: 6 months; range 3–9; src.
-- **procM**: 6 months; range 3–9; src.
-- **buildM**: 6 months; range 4–9; src.
 
 ### Wind onshore
 
@@ -537,7 +525,6 @@ Check against: Fuel storage regulations by country; fire engineer.
 - **m2PerM3**: 0.15 m² per m³; range 0.1–0.25; src.
 - **dieselLPerKWh**: 0.26 L/kWh at full load; range 0.24–0.28; src.
 - **bellyTankM3**: 0 m³ belly-tank volume credited; src.
-- **bellyHours**: 8 h at full load (belly tanks only); range 4–12; src.
 - **densityTPerM3**: 0.84 t/m³; range 0.78–0.86; src.
 
 ### Grid connection and substation
@@ -751,6 +738,7 @@ Check against: ISO 9613-2 (geometric divergence term only).
 - **view.pareto.display**: chart ("chart" | "table"); judg. Chart shown first; the table alternative is one click away and holds the same rows.
 - **view.site.smallMultiples**: 6 plans; run. Number of top-ranked options drawn as small-multiple plans on the Site tab, all at the same scale (§10.7 "thumbnails of pinned or top options"; pinning is not in this slice). 0 hides them.
 - **view.table.pageSize**: 50 rows per page; run. Rows per page in the ranked table and the trade-off table; every page is reachable with the pager.
+- **view.siteTabBeta**: off; judg. Site tab (Beta): site layout, boundary drawing, GeoJSON/KML import and site fit. Hidden by default; when on it is labelled Beta and never affects the ranking or the PDF.
 
 ## Sensitivity (tornado)
 

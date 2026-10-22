@@ -12,7 +12,7 @@
   "adder": 45,
   "carbon": 110,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.15
  },
@@ -29,7 +29,7 @@
   "adder": 50,
   "carbon": 140,
   "gas": 40,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.15
  },
@@ -46,7 +46,7 @@
   "adder": 35,
   "carbon": 400,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.25
  },
@@ -63,7 +63,7 @@
   "adder": 40,
   "carbon": 200,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.2
  },
@@ -80,7 +80,7 @@
   "adder": 40,
   "carbon": 600,
   "gas": 70,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.3
  },
@@ -97,7 +97,7 @@
   "adder": 45,
   "carbon": 430,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.25
  },
@@ -114,7 +114,7 @@
   "adder": 40,
   "carbon": 130,
   "gas": 40,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.1
  },
@@ -131,7 +131,7 @@
   "adder": 35,
   "carbon": 500,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.2
  },
@@ -148,7 +148,7 @@
   "adder": 30,
   "carbon": 80,
   "gas": 45,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.1
  },
@@ -165,7 +165,7 @@
   "adder": 40,
   "carbon": 55,
   "gas": 40,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.5
  },
@@ -182,7 +182,7 @@
   "adder": 55,
   "carbon": 380,
   "gas": 40,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.15
  },
@@ -199,7 +199,7 @@
   "adder": 40,
   "carbon": 330,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.2
  },
@@ -216,7 +216,7 @@
   "adder": 40,
   "carbon": 200,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.2
  },
@@ -233,7 +233,7 @@
   "adder": 50,
   "carbon": 280,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.15
  },
@@ -250,7 +250,7 @@
   "adder": 45,
   "carbon": 280,
   "gas": 45,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.2
  },
@@ -267,7 +267,7 @@
   "adder": 35,
   "carbon": 120,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.15
  },
@@ -284,7 +284,7 @@
   "adder": 35,
   "carbon": 180,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.15
  },
@@ -301,7 +301,7 @@
   "adder": 45,
   "carbon": 120,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.15
  },
@@ -318,7 +318,7 @@
   "adder": 40,
   "carbon": 380,
   "gas": 60,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.3
  },
@@ -335,7 +335,7 @@
   "adder": 45,
   "carbon": 300,
   "gas": 40,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.15
  },
@@ -352,7 +352,7 @@
   "adder": 40,
   "carbon": 660,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.3
  },
@@ -369,7 +369,7 @@
   "adder": 40,
   "carbon": 140,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.1
  },
@@ -386,7 +386,7 @@
   "adder": 35,
   "carbon": 260,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.2
  },
@@ -403,7 +403,7 @@
   "adder": 40,
   "carbon": 120,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.2
  },
@@ -420,7 +420,7 @@
   "adder": 40,
   "carbon": 230,
   "gas": 42,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.2
  },
@@ -437,7 +437,7 @@
   "adder": 40,
   "carbon": 150,
   "gas": 40,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.1
  },
@@ -454,7 +454,7 @@
   "adder": 30,
   "carbon": 25,
   "gas": 45,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": true,
   "decarb2050": 0.5
  },
@@ -471,7 +471,7 @@
   "adder": 55,
   "carbon": 200,
   "gas": 40,
-  "carbonPrice": 50,
+  "carbonPrice": 75,
   "eu": false,
   "decarb2050": 0.1
  },
@@ -488,7 +488,7 @@
   "adder": 25,
   "carbon": 25,
   "gas": 45,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": false,
   "decarb2050": 0.5
  },
@@ -522,7 +522,7 @@
   "adder": 25,
   "carbon": 15,
   "gas": 80,
-  "carbonPrice": 85,
+  "carbonPrice": 88.3,
   "eu": false,
   "decarb2050": 0.8
  }

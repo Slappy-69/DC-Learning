@@ -40,9 +40,9 @@ export function blockRows(site, res) {
   const f = res.layout.fill;
   if (f) {
     rows.push({
-      key: 'fill', name: `Ground PV (${f.mode === 'residual' ? 'fills the residual area' : 'fixed size'})${Number.isFinite(f.mwp) ? ` · ${f.mwp.toFixed(2)} MWp` : ''}`, source: 'solar', size: `${f.rects.length} strips`, areaM2: f.areaM2,
+      key: 'fill', name: `Ground PV (ground area for PV)${Number.isFinite(f.mwp) ? ` · ${f.mwp.toFixed(2)} MWp` : ''}`, source: 'solar', size: `${f.rects.length} strips`, areaM2: f.areaM2,
       heightM: res.bs.fill ? res.bs.fill.heightM : null, clearanceM: f.clearanceM,
-      status: f.shortfallM2 > 0 ? `Placed in part: ${n0(f.shortfallM2)} m² short` : f.areaM2 > 0 ? 'Placed' : 'No residual area', flag: f.shortfallM2 > 0,
+      status: f.shortfallM2 > 0 ? `Placed in part: ${n0(f.shortfallM2)} m² short` : f.areaM2 > 0 ? 'Placed' : 'No free area', flag: f.shortfallM2 > 0,
     });
   }
   for (const r of res.bs.roof) rows.push({ key: `r${r.type}`, name: r.name, source: r.source, size: 'on the roof', areaM2: r.areaM2, heightM: null, status: 'On the data-hall roof (counts toward building height)' });

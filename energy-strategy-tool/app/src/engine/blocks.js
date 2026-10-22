@@ -8,8 +8,8 @@
 //    the building, not placed on the ground).
 //  - Off-site blocks (SMR by default, off-site wind) go to the off-site tray with land take and
 //    private-wire distance and do not consume site area.
-//  - Ground solar is a fill (C10 "Roof + fill residual ground": the residual area after every other block;
-//    C10 "Fixed MWp": a target area), placed last (§10.4 step 2.8).
+//  - Ground solar is a fill of the entered ground area for PV (C10 "Roof + ground", OPEN-QUESTIONS 54), placed
+//    last (§10.4 step 2.8).
 // Pure: (ctx or { inputs, phases }, choice vector, sizing) -> block set. No positions here (layout.js).
 
 import { TECH, SPATIAL, choiceLabel } from './defaults.js';
@@ -242,9 +242,6 @@ export function buildBlocks(ctx, v, sz) {
   if (sz.solarRoofMWp > 0) {
     roof.push({ type: 'solarRoof', source: 'solar', name: `Rooftop PV · ${sz.solarRoofMWp.toFixed(2)} MWp`, areaM2: sz.solarRoofMWp * 1000 * TECH.solarRoof.p.m2PerKWp, mwp: sz.solarRoofMWp, heightAboveRoofM: S('solarRoof').heightAboveRoofM });
   }
-  // Carport PV (C10 "Roof + carport", §6.2 "over parking allowance"): the allowance is a land budget, not a
-  // located area (site.js), so the carport has no position to draw; it is sized and costed, and said here.
-  if (sz.solarCarportMWp > 0) notes.push(`Carport PV ${sz.solarCarportMWp.toFixed(2)} MWp sits over the roads and parking allowance. The allowance is held back as a land budget, not a located area, so the carport is not drawn and takes no buildable area; it is sized and costed with the option.`);
 
   // ---- 7. Wind turbines (C11): on site as pads with buffers (flag only); off-site land to the tray ----
   if (sz.windTurbines > 0 && v.C11 === 'fit') {
@@ -263,8 +260,9 @@ export function buildBlocks(ctx, v, sz) {
 
   // ---- 8. Ground solar fill ----
   let fill = null;
-  if (v.C10 === 'roofResidual') fill = { mode: 'residual', targetM2: null, haPerMWp: TECH.solarGround.p.haPerMWp };
-  else if (v.C10 === 'fixed' && sz.solarGroundMWp > 0) fill = { mode: 'fixed', targetM2: sz.solarGroundMWp * TECH.solarGround.p.haPerMWp * 10000, haPerMWp: TECH.solarGround.p.haPerMWp };
+  // Ground PV (C10 "Roof + ground", OPEN-QUESTIONS 54): one block of the entered ground area for PV. The layout
+  // places it; it never resizes it (a shortfall is flagged by site fit).
+  if (v.C10 === 'roofGround' && sz.solarGroundMWp > 0) fill = { mode: 'fixed', targetM2: sz.solarGroundMWp * TECH.solarGround.p.haPerMWp * 10000, haPerMWp: TECH.solarGround.p.haPerMWp };
   if (fill) {
     const P = S('solarGround');
     Object.assign(fill, { type: 'solarGround', source: 'solar', priority: PRIORITY.solar, clearanceM: P.clearanceM, heightM: P.heightM, minArrayM: P.minArrayM, softAllowed: inputs.site.softUsableBySolar !== false });

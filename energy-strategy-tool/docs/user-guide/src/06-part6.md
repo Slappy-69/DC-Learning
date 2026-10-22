@@ -101,7 +101,8 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | ASHRAE design station, NOAA or EPW weather | Agreed | 6 |
 | Real hourly data (ENTSO-E and others) at release | Agreed | 52 |
 | Site tab as Beta (switch, label, kept out of the ranking) | Built (22 Oct 2026) | 28, 30 |
-| Site area as one number (land for ground solar without the layout) | Agreed; open question | 15, 28 |
+| Site area as one number (land for wind without the layout) | Agreed; open question | 15, 28 |
+| Solar from roof and ground areas for PV; carport solar and belly tanks removed | Built (22 Oct 2026) | 8, 15, 35 |
 | IT load estimated from area | Agreed | 16 |
 | Load shapes, AI profiles | Agreed | 16 |
 | Flexibility with triggers; battery response | Agreed | 16 |
@@ -145,7 +146,7 @@ Collected from the chapters:
 - How "prefer the no-PPA option" (O1) works in the ranking (48).
 - Representative-day method and the number of verified options (10, 48).
 - Whether the top five show distinct strategies, and whether pros and cons compare against the whole run or the five shown (22).
-- The land budget for solar and wind with the Site tab hidden (15).
+- The land budget for wind with the Site tab hidden (15); solar was settled on 22 October 2026 (OPEN-QUESTIONS 53).
 - Which density rule to keep (16).
 - Project save and reopen (4).
 - Whether more than one cooling type can be compared in a run (6).

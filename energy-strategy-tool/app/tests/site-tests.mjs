@@ -383,7 +383,9 @@ export async function blockTests(test, { runT1 }) {
     const b3 = buildBlocks(ctx, A3.v, A3.sizing);
     const bess = b3.ground.filter((b) => b.type === 'bess');
     assert.equal(bess.reduce((a, b) => a + b.units, 0), Math.ceil(A3.sizing.storage.mwh / 4 - 1e-9));
-    assert.equal(b3.fill.mode, 'residual'); // C10 roof + fill residual ground
+    // C10: A3 asks for "Roof + ground"; with no ground area for PV it takes Roof only and has no ground fill
+    // (OPEN-QUESTIONS 54, 2026-10-22; test 16 covers an entered ground area).
+    assert.equal(A3.v.C10, 'roof'); assert.equal(b3.fill, null);
     assert.ok(b3.roof.some((x) => x.type === 'solarRoof'));
     // SMR (A10a) goes to the off-site tray: 1 ha per 100 MWe, no ground block.
     const A10a = runT1.options.find((o) => o.archetype === 'A10a');
@@ -417,7 +419,7 @@ export async function blockTests(test, { runT1 }) {
     });
     // (d) Roof plant (§5.3): max(roof-plant fraction of the roof, heat-rejection footprint on the roof), the same in
     //     sizing (rooftop PV) and in the roof-plant block; exercised with the footprint larger (400 m²/MW).
-    const R = runT1.options.find((o) => o.v.C9 === 'roof' && ['roof', 'roofResidual'].includes(o.v.C10));
+    const R = runT1.options.find((o) => o.v.C9 === 'roof' && ['roof', 'roofGround'].includes(o.v.C10));
     const roofAgree = () => {
       const s2 = sizeOption(runT1.ctx, R.v);
       const rp2 = buildBlocks(ctx, R.v, s2).roof.find((x) => x.type === 'roofPlant');
@@ -722,7 +724,7 @@ export async function siteFitTests(test, ctxRuns) {
     return out.join('; ') + '.';
   });
 
-  await test('9g. Site-fit status alone never changes a score or rank while the site-fit penalty is off; site inputs act on scores only through fill-residual PV sizing (T1 at half the area); with the penalty on, deliverability drops by 10/25 points and the axis reads "Deliverability (incl. site fit)"', async () => {
+  await test('9g. Site-fit status alone never changes a score or rank while the site-fit penalty is off; site inputs change no sizing, score or rank (T1 at half the area; ground solar comes from the ground area for PV); with the penalty on, deliverability drops by 10/25 points and the axis reads "Deliverability (incl. site fit)"', async () => {
     const out = [];
     const ctx = runT1.ctx;
     assert.equal(!!ctx.inputs.deliverability.siteFitPenalty, false, 'the site-fit penalty must default to off');
@@ -766,30 +768,25 @@ export async function siteFitTests(test, ctxRuns) {
     assert.ok(stChanged > 0, 'the threshold change did not change any status');
     out.push(`status-only change on T4 (receptor; noise threshold 45 → 60 dB(A)): ${stChanged} statuses change, 0 scores, 0 ranks, 0 raw metrics, sizes or layouts`);
     // (b3) Site inputs are not statuses (review O2, H1 6b): halving the T1 site area (POC at its default, on the
-    // boundary, so its cable route stays 10 m) changes the statuses and the fill-residual ground PV (§10.4: sized after
-    // the other blocks are placed). Nothing else in any option's sizing changes; every option whose ground PV is
-    // unchanged keeps identical raw metrics; all scores move through the relative scale (§11).
+    // boundary, so its cable route stays 10 m) changes the statuses only. Ground solar is sized from the ground area
+    // for PV, never from the layout (OPEN-QUESTIONS 54, 2026-10-22), so no sizing, raw metric, score or rank moves.
     const half = referenceT1({ analysisStart: START });
     half.site.areaHa = half.site.areaHa / 2;
     const runH = runModel(half);
     const byH = new Map(runH.options.map((o) => [o.id, o]));
-    const rest = (sz) => { const { sentences, area, solarGroundMWp, solarMWp, ...r } = sz; return JSON.stringify(r); };
-    let pvChanged = 0, metricChanged = 0, statusChanged = 0, scoreMoved = 0, rankMoved = 0;
+    const rest = (sz) => { const { sentences, area, ...r } = sz; return JSON.stringify(r); };
+    let statusChanged = 0;
     for (const a of runT1.options) {
       const b = byH.get(a.id);
       assert.ok(b, `${a.id} missing at half the area`);
-      assert.equal(rest(b.sizing), rest(a.sizing), `${a.id}: halving the site area changed sizing other than the fill-residual ground PV`);
-      const pv = a.sizing.solarGroundMWp !== b.sizing.solarGroundMWp;
-      if (pv) { pvChanged++; assert.equal(a.v.C10, 'roofResidual', `${a.id}: ground PV changed on an option that does not fill the residual area`); }
+      assert.equal(rest(b.sizing), rest(a.sizing), `${a.id}: halving the site area changed the sizing`);
       const raw = (o) => [o.eco.lcoe, o.eco.capex, o.eco.npvCost, o.carbon.locationG, o.ttp.metric, o.deliv.score];
-      const same = JSON.stringify(raw(a)) === JSON.stringify(raw(b));
-      if (!same) { metricChanged++; assert.ok(pv, `${a.id}: raw metrics changed although its ground PV did not`); }
+      assert.deepEqual(raw(b), raw(a), `${a.id}: halving the site area changed a raw metric`);
+      assert.deepEqual([b.score, b.rank], [a.score, a.rank], `${a.id}: halving the site area moved the score or rank`);
       if (a.siteFit.status !== b.siteFit.status) statusChanged++;
-      if (a.score !== b.score) scoreMoved++;
-      if (a.rank !== b.rank) rankMoved++;
     }
-    assert.ok(statusChanged > 0 && pvChanged > 0, 'halving the area changed no status or no fill-residual PV');
-    out.push(`T1 at half the area (7.5 ha): ${statusChanged} statuses change; ${pvChanged} fill-residual options change ground PV and ${metricChanged} options change raw metrics (all of them fill-residual); every other sizing value identical on all ${runT1.options.length} options; ${scoreMoved} scores and ${rankMoved} ranks move through the relative scale (§11)`);
+    assert.ok(statusChanged > 0, 'halving the area changed no status');
+    out.push(`T1 at half the area (7.5 ha): ${statusChanged} statuses change; sizing, raw metrics, scores and ranks identical on all ${runT1.options.length} options (ground solar comes from the ground area for PV, not the layout)`);
     // (c) View filters by site fit and land take never change a score or rank.
     const v = applyView(runT1.options, { ...DEFAULT_VIEW, siteFit: ['Fits'], landTakeCeilingHa: 8 });
     assert.ok(v.list.length < runT1.options.length && v.list.every((o) => o.siteFit.status === 'Fits' && o.siteFit.landTakeHa <= 8));

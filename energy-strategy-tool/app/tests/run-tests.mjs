@@ -63,6 +63,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { geometryTests, siteModelTests, blockTests, layoutTests, siteFitTests } from './site-tests.mjs';
 import { batteryTimingTests, ppaTests, inspectorTests, sensitivityTests, hostedPageTests } from './port-tests.mjs';
 import { betaTests } from './beta-tests.mjs';
+import { solarTests } from './solar-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1146,6 +1147,9 @@ await hostedPageTests(test);
 // 15. Site tab as a Beta feature (walkthrough, 2026-10-21; AC 27) (tests/beta-tests.mjs)
 // ---------------------------------------------------------------------------
 await betaTests(test, siteRuns);
+
+// 16. Solar areas and removed choices (OPEN-QUESTIONS 52–54, 2026-10-22) (tests/solar-tests.mjs)
+await solarTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

@@ -9,7 +9,7 @@ import { siteFor } from './SiteView.jsx';
 // month by month while the site is energised and hour by hour in each model year, with the annual energy balance,
 // the engine's hourly balance error and a check against the figures the ranking used. Port of the other line's
 // DispatchView (commits f236acc, e1161ce), on this line's full pipeline (inspect.js re-runs the option through
-// sizing, layout, "fill residual" solar, dispatch and economics) and this line's energy-source colours (the site
+// sizing, layout, dispatch and economics) and this line's energy-source colours (the site
 // plan's --src-* tokens). Never changes the run, its scores or its ranking.
 
 const SRC = (k) => `var(--src-${k})`;

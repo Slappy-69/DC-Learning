@@ -102,7 +102,6 @@ export function economics(ctx, v, sz, disp, ttp) {
   // Renewables
   const avail = (id) => yearOfMonth(programmeMonths(TECH[id]));
   addCapex('Solar PV rooftop', avail('solarRoof'), sz.solarRoofMWp * 1000 * TECH.solarRoof.p.capexPerKW, TECH.solarRoof.p.life);
-  addCapex('Solar PV carport', avail('solarCarport'), sz.solarCarportMWp * 1000 * TECH.solarCarport.p.capexPerKW, TECH.solarCarport.p.life);
   addCapex('Solar PV ground-mount', avail('solarGround'), sz.solarGroundMWp * 1000 * TECH.solarGround.p.capexPerKW, TECH.solarGround.p.life);
   addCapex('Wind onshore', avail('wind'), sz.windMW * 1000 * TECH.wind.p.capexPerKW, TECH.wind.p.life);
   // BESS (C12 + bridging BESS): booked in the year the battery can first supply, the month time-to-power and
@@ -183,7 +182,6 @@ export function economics(ctx, v, sz, disp, ttp) {
   for (let y = 0; y < N; y++) {
     const L = ledger[y];
     if (y >= avail('solarRoof')) L.fom += sz.solarRoofMWp * 1000 * TECH.solarRoof.p.fomPerKW;
-    if (y >= avail('solarCarport')) L.fom += sz.solarCarportMWp * 1000 * TECH.solarCarport.p.fomPerKW;
     if (y >= avail('solarGround')) L.fom += sz.solarGroundMWp * 1000 * TECH.solarGround.p.fomPerKW;
     if (y >= avail('wind')) L.fom += sz.windMW * 1000 * TECH.wind.p.fomPerKW;
     if (y >= bessYear) L.fom += bessCapex(sz.storage.mw, sz.storage.mwh) * bp.fomPct;
@@ -437,6 +435,8 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   const eu = COUNTRIES[ctx.country].eu;
   const permitSuffix = eu ? ` ${PERMIT_NOTE}` : ` ${PROXY_NOTE} ${PERMIT_NOTE}`;
   const N = disp.years.length;
+  // Roof area for PV larger than the free roof (OPEN-QUESTIONS 53): flagged, never reduced (principle 5).
+  if (sz.roofPvOverFreeM2 > 0) flags.push(flag('solar-roof-area', 'minor', 'Technology', `Roof area for PV (${Math.round(inputs.site.pvRoofM2).toLocaleString('en-GB')} m²) is ${Math.round(sz.roofPvOverFreeM2).toLocaleString('en-GB')} m² more than the free roof after roof plant; rooftop PV is sized on the entered area`, { value: sz.roofPvOverFreeM2 }));
 
   // Grid
   const unmetMWh = disp.years.reduce((s, y) => s + y.unmetMWh, 0);

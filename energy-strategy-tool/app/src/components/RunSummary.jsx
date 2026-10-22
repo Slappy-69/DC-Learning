@@ -3,9 +3,9 @@ import { LABEL } from '../engine/defaults.js';
 
 // What site fit does and does not change (§5.7, §9.9, §10.4, §11), in words. The status is never a weight:
 // it enters a score only through the optional site-fit penalty and the order only through "Rank
-// requirement-compliant options first" (both off by default). Site inputs are another matter: they size
-// fill-residual solar after the layout (§10.4), which changes that option's costs and carbon, and the POC and
-// gas-main positions set route lengths for cost (§5.2); every score moves with the relative scale (§11).
+// requirement-compliant options first" (both off by default). Site inputs are another matter: the POC and
+// gas-main positions set route lengths for cost (§5.2); every score moves with the relative scale (§11). Ground
+// solar is sized from the ground area for PV, never from the layout (OPEN-QUESTIONS 54, 2026-10-22).
 export function siteFitEffect(inputs) {
   const d = (inputs && inputs.deliverability) || {};
   const s = (inputs && inputs.settings) || {};
@@ -15,7 +15,7 @@ export function siteFitEffect(inputs) {
   const order = s.rankCompliantFirst
     ? 'No option is hidden for not fitting; "Rank requirement-compliant options first" is on, so options that do not fit rank after those that do.'
     : 'No option is hidden or demoted for not fitting.';
-  return `${status} ${order} Site inputs still change fill-residual solar sizing (§10.4), and so costs and carbon; the POC and gas-main positions set the cable and gas-pipe route costs.`;
+  return `${status} ${order} The layout never resizes an option: ground solar comes from the ground area for PV. The POC and gas-main positions set the cable and gas-pipe route costs.`;
 }
 
 // Run summary (BRIEF §12): total combinations, compatibility rules with counts, "values not
@@ -86,9 +86,9 @@ export default function RunSummary({ run, onInclude, onSamplingOff, open, onTogg
                 <li>Boundary: {run.site.source === 'area' ? 'rectangle from the site area and aspect ratio' : `${run.site.source} polygon`} ({run.site.edges} edges); gross {(run.site.grossM2 / 10000).toFixed(2)} ha, buildable envelope {(run.site.envelopeM2 / 10000).toFixed(2)} ha, net developable {(run.site.netM2 / 10000).toFixed(2)} ha after the roads, parking and landscaping allowance.</li>
                 <li>Exclusions {run.site.exclusions} ({run.site.hardExclusions} hard), height zones {run.site.heightZones}, receptors {run.site.receptors}. Raster {run.site.cellM} m cells ({run.site.nx} × {run.site.ny}) <span className="tag tag-unverified" title="run setting">{LABEL}</span>.</li>
                 {siteBeta ? <li>Site fit (Beta): <strong>{fit.Fits.toLocaleString('en-GB')}</strong> fit, <strong>{fit['Fits with flags'].toLocaleString('en-GB')}</strong> fit with flags, <strong>{fit['Does not fit'].toLocaleString('en-GB')}</strong> do not fit. Site fit is a status, not a weight. {siteFitEffect(run.inputs)} Site-fit penalty in deliverability: <strong>{run.inputs.deliverability && run.inputs.deliverability.siteFitPenalty ? 'on' : 'off'}</strong> <span className="tag tag-unverified" title="judgement">{LABEL}</span>.</li>
-                  : <li>Site fit is a Beta feature: turn on the Site tab in the general settings to see it. It never changes a score or a rank. The site inputs still size "fill residual" ground solar and set the route costs below.</li>}
+                  : <li>Site fit is a Beta feature: turn on the Site tab in the general settings to see it. It never changes a score or a rank. The site inputs still set the route costs below; ground solar comes from the ground area for PV in the Site section.</li>}
                 {run.site.routes ? <li>Route lengths for cost (straight line to the buildable envelope, the same for every option): grid cable {run.site.routes.pocM == null ? 'not costed (no buildable area)' : `${Math.round(run.site.routes.pocM).toLocaleString('en-GB')} m from the POC${run.site.pocDefault ? ' (default POC: the access point, standing in for the road side)' : ''}`}; gas pipe {run.site.routes.gasMainM == null ? 'not costed (no gas main location; default: gas off-site, location unknown)' : `${Math.round(run.site.routes.gasMainM).toLocaleString('en-GB')} m from the gas main (gas-burning options only)`}.</li> : null}
-                {run.layoutSummary ? <li>Auto-layout: {run.layoutSummary.distinctLayouts.toLocaleString('en-GB')} distinct layouts for {run.options.length.toLocaleString('en-GB')} options (options with the same blocks share one layout); {run.layoutSummary.placements.toLocaleString('en-GB')} block placements; "fill residual" solar sized from the layout.</li> : null}
+                {run.layoutSummary ? <li>Auto-layout: {run.layoutSummary.distinctLayouts.toLocaleString('en-GB')} distinct layouts for {run.options.length.toLocaleString('en-GB')} options (options with the same blocks share one layout); {run.layoutSummary.placements.toLocaleString('en-GB')} block placements; ground PV placed as one block of the entered area.</li> : null}
                 {run.site.warningMessages && run.site.warningMessages.length ? <li className="flag-text">{run.site.warningMessages.join(' ')}</li> : null}
               </ul>
             ) : <p className="small">No site model in this run.</p>}

@@ -1,12 +1,11 @@
 // One option through the run's own per-option chain (run.js stages 4–12), for the Dispatch tab inspector
 // (inspect.js) and the tornado (sensitivity.js):
-//   size → blocks → layout (one block set; equal to the run's batch, test 9d) → "fill residual" solar sized from
-//   the layout → site fit → dispatch (optionally with hourly records) → time-to-power → economics → carbon →
+//   size → blocks → layout (one block set; equal to the run's batch, test 9d) → site fit → dispatch (optionally with hourly records) → time-to-power → economics → carbon →
 //   resilience → flags (incl. the site-fit flags and the data flag) → deliverability.
 // The same functions as the run, in the same order, so every figure equals the run's figure for the same option
 // and inputs (test 12a checks it). Pure: no UI, no browser APIs.
 
-import { sizeOption, applySolarFill } from './sizing.js';
+import { sizeOption } from './sizing.js';
 import { buildBlocks } from './blocks.js';
 import { runLayout } from './layout.js';
 import { layoutFacts, siteFitOf } from './sitefit.js';
@@ -20,7 +19,6 @@ export function evaluateOption(ctx, v, { recordYears = null } = {}) {
   const bs = buildBlocks(ctx, v, sz);
   const layout = runLayout(ctx.site, bs);
   const facts = layoutFacts(ctx.site, bs, layout);
-  if (layout.fill) applySolarFill(sz, layout.fill);
   const siteFit = siteFitOf(ctx, ctx.site, bs, layout, facts, v, sz);
   const cfg = dispatchConfig(ctx, v, sz);
   const disp = dispatchAll(ctx, cfg, recordYears);

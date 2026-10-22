@@ -200,7 +200,7 @@ export function siteFitOf(ctx, site, bs, L, facts, v, sz) {
   const budgetShortfallM2 = Math.max(0, landTakeM2 - netM2);
   if (unplaced.length || fillShort) {
     const list = unplaced.map((u) => `${u.name} (${u.areaM2.toLocaleString('en-GB')} m²)`);
-    if (fillShort) list.push(`ground PV (fixed MWp): ${fillShort.toLocaleString('en-GB')} m² of ${Math.round(L.fill.targetM2).toLocaleString('en-GB')} m² not placed`);
+    if (fillShort) list.push(`ground PV (ground area for PV): ${fillShort.toLocaleString('en-GB')} m² of ${Math.round(L.fill.targetM2).toLocaleString('en-GB')} m² not placed`);
     reasons.push(`Does not fit: ${unplaced.length + (fillShort ? 1 : 0)} block${unplaced.length + (fillShort ? 1 : 0) === 1 ? '' : 's'} not placed, ${unplacedM2.toLocaleString('en-GB')} m² short`);
     f('site-does-not-fit', 'major', `Does not fit: ${list.join('; ')}; area shortfall ${unplacedM2.toLocaleString('en-GB')} m²${budgetShortfallM2 > 0 ? ` (land take ${(landTakeM2 / 10000).toFixed(2)} ha vs ${(netM2 / 10000).toFixed(2)} ha net developable)` : ''}`, { value: unplacedM2 });
   }

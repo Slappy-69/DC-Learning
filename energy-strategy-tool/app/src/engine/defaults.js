@@ -143,11 +143,11 @@ export const CHOICES = [
     ['diesel', 'Diesel gensets'], ['hvo', 'HVO gensets'], ['gas', 'Gas gensets'], ['bessUps', 'BESS-augmented UPS + reduced gensets'],
     ['retained', 'Retained bridging plant'], ['none', 'None']] },
   { id: 'C6', name: 'Backup topology', values: [['N', 'N'], ['N+1', 'N+1'], ['2N', '2N'], ['catcher', 'Distributed-redundant (catcher)']] },
-  { id: 'C7', name: 'Autonomy / fuel storage', values: [['12', '12 h'], ['24', '24 h'], ['48', '48 h'], ['72', '72 h'], ['belly', 'Belly tanks only']] },
+  { id: 'C7', name: 'Autonomy / fuel storage', values: [['12', '12 h'], ['24', '24 h'], ['48', '48 h'], ['72', '72 h']] },
   { id: 'C8', name: 'Cooling approach', values: [['air', 'Air (CHW + free cooling)'], ['evap', 'Evaporative-adiabatic'], ['dlc', 'DLC + dry coolers'], ['immersion', 'Immersion']] },
   { id: 'C9', name: 'Heat rejection location', values: [['roof', 'Roof'], ['ground', 'Ground'], ['split', 'Split']] },
   { id: 'C10', name: 'On-site solar', values: [
-    ['none', 'None'], ['roof', 'Roof only'], ['roofCarport', 'Roof + carport'], ['roofResidual', 'Roof + fill residual ground'], ['fixed', 'Fixed MWp']] },
+    ['none', 'None'], ['roof', 'Roof only'], ['roofGround', 'Roof + ground']] },
   { id: 'C11', name: 'On-site wind', values: [['none', 'None'], ['fit', 'Fit as many as separations allow'], ['offsite', 'Off-site land']] },
   { id: 'C12', name: 'BESS size', values: [
     ['none', 'None'], ['1h25', '1 h at 25 %'], ['1h50', '1 h at 50 %'], ['2h25', '2 h at 25 %'], ['2h50', '2 h at 50 %'], ['4h25', '4 h at 25 %'], ['4h50', '4 h at 50 %']] },
@@ -184,7 +184,11 @@ export function defaultChoiceState(id, inputs) {
       return ca === 'open' ? { state: 'open', values: ['air', 'evap', 'dlc', 'immersion'] } : { state: 'locked', values: [ca] };
     }
     case 'C9': return { state: 'open', values: ['roof', 'ground', 'split'] };
-    case 'C10': return { state: 'open', values: ['none', 'roof', 'roofResidual'] };
+    case 'C10': {
+      // OPEN-QUESTIONS 54 (2026-10-22): "Roof + ground" only when the engineer has entered a ground area for PV.
+      const ground = inputs ? inputs.site.pvGroundHa > 0 : false;
+      return ground ? { state: 'open', values: ['none', 'roof', 'roofGround'] } : { state: 'open', values: ['none', 'roof'], groundDefault: true };
+    }
     case 'C11': {
       const small = inputs ? inputs.site.areaHa <= inputs.settings.windSiteThresholdHa && !(inputs.site.offsiteLandHa > 0) : true;
       return small ? { state: 'open', values: ['none'], windDefault: true } : { state: 'open', values: ['none', 'fit', 'offsite'] };
@@ -206,8 +210,9 @@ export function defaultChoiceState(id, inputs) {
 for (const c of CHOICES) {
   const d = defaultChoiceState(c.id, null);
   rec(`choices.${c.id}`, d, 'choice state', {
-    basis: 'judgement', ref: '§8', derived: ['C6', 'C7', 'C8', 'C11', 'C15'].includes(c.id),
+    basis: 'judgement', ref: '§8', derived: ['C6', 'C7', 'C8', 'C10', 'C11', 'C15'].includes(c.id),
     note: c.id === 'C11' ? 'Default "None" when site area ≤ 20 ha and no off-site land; otherwise open.' :
+      c.id === 'C10' ? 'Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).' :
       c.id === 'C12r' ? 'Default role "peak-shave against grid cap" (§8 C12).' : '',
   });
 }
@@ -236,10 +241,6 @@ tech('solarRoof', { name: 'Solar PV rooftop', role: 'intermittent', maturity: 'C
   capexPerKW: [900, '€/kWp', 750, 1100], fomPerKW: [14, '€/kWp/yr', 10, 18], life: [25, 'yr', 20, 30],
   m2PerKWp: [5.5, 'm²/kWp', 4.5, 7.0], usableFraction: [0.5, 'fraction of free roof', 0.4, 0.6],
   planM: [3, 'months', 2, 6], procM: [6, 'months', 3, 9], buildM: [4, 'months', 3, 6] });
-tech('solarCarport', { name: 'Solar PV carport', role: 'intermittent', maturity: 'Commercial' }, {
-  capexPerKW: [1300, '€/kWp', 1100, 1600], fomPerKW: [15, '€/kWp/yr', 10, 20], life: [25, 'yr', 20, 30],
-  m2PerKWp: [8, 'm²/kWp', 6, 10], parkingFraction: [0.3, 'fraction of roads/parking allowance', 0.2, 0.5],
-  planM: [6, 'months', 3, 9], procM: [6, 'months', 3, 9], buildM: [6, 'months', 4, 9] });
 tech('wind', { name: 'Wind onshore', role: 'intermittent', maturity: 'Commercial' }, {
   capexPerKW: [1350, '€/kW', 1200, 1500], fomPerKW: [35, '€/kW/yr', 25, 45], life: [25, 'yr', 20, 30],
   turbineMW: [5, 'MW', 3, 6], tipHeightM: [180, 'm', 150, 220], toppleFactor: [1.5, '× tip height', 1.1, 2.0],
@@ -300,7 +301,7 @@ tech('bessUps', { name: 'BESS-augmented UPS', role: 'backup', maturity: 'Emergin
   durationH: [2, 'h at redundancy capacity', 1, 4] });
 tech('fuelStorage', { name: 'Bulk fuel storage (bunded)', role: 'backup support', maturity: 'Commercial', verify: 'Fuel storage regulations by country; fire engineer' }, {
   capexPerM3: [1200, '€/m³', 800, 1800], m2PerM3: [0.15, 'm² per m³', 0.10, 0.25], dieselLPerKWh: [0.26, 'L/kWh at full load', 0.24, 0.28],
-  bellyTankM3: [0, 'm³ belly-tank volume credited', 0, 0], bellyHours: [8, 'h at full load (belly tanks only)', 4, 12],
+  bellyTankM3: [0, 'm³ belly-tank volume credited', 0, 0],
   densityTPerM3: [0.84, 't/m³', 0.78, 0.86] });
 tech('substation', { name: 'Grid connection and on-site substation', role: 'grid', maturity: 'Commercial', verify: 'TSO/DSO design standards and connection charging statements' }, {
   connCapexPerMW_mv: [100000, '€/MW offered (11–33 kV)', 60000, 160000], connCapexPerMW_hv: [150000, '€/MW offered (110–150 kV)', 90000, 250000],
@@ -588,6 +589,8 @@ export function buildDefaultInputs(opts = {}) {
       access: rec('site.access', null, 'list of [lat, lon] or null', { basis: 'judgement', ref: '§5.2', note: 'null = one access point at the mid-point of the longest edge.' }),
       receptors: rec('site.receptors', [], 'list of { name, point } or { name, points }', { basis: 'judgement', ref: '§5.2', note: 'None by default; used for distance-based noise flags only.' }),
       roadsFraction: rec('site.roadsFraction', 0.15, 'fraction of net developable area', { low: 0.1, high: 0.25, basis: 'judgement', ref: '§5.2', note: 'Applied to the buildable envelope area: allowance = fraction × envelope, net developable = envelope − allowance (the brief\'s definition is circular). Held back as a land budget, not a located area.' }),
+      pvRoofM2: rec('site.pvRoofM2', null, 'm² of roof available for PV, or null', { low: null, high: null, basis: 'judgement', ref: '§5.2, §8 C10', note: "OPEN-QUESTIONS 53 (2026-10-22): blank = today's rule, 50 % of the free roof after roof plant is usable (solarRoof.usableFraction). An entered area replaces the rule; car-park canopies can be included here or in the ground area." }),
+      pvGroundHa: rec('site.pvGroundHa', 0, 'ha of ground available for PV', { low: 0, high: null, basis: 'judgement', ref: '§5.2, §8 C10', note: 'OPEN-QUESTIONS 53 (2026-10-22): 0 = no ground solar. An entered area makes C10 "Roof + ground" available and sizes ground PV at solarGround.haPerMWp; with the Site tab (Beta) on it is placed as one block of that area.' }),
       offsiteLandHa: rec('site.offsiteLandHa', 0, 'ha', { basis: 'judgement', ref: '§5.2' }),
       offsiteDistanceKm: rec('site.offsiteDistanceKm', 2, 'km private-wire distance', { low: 0.5, high: 10, basis: 'judgement', ref: '§5.2', note: 'Used only when off-site land or off-site plant exists; replace with the real route length.' }),
       groundConditions: rec('site.groundConditions', 'assumed suitable', 'free text', { basis: 'judgement', ref: '§5.2', note: 'Note only; no geotechnical modelling (flat site, §10.1).' }),
@@ -690,10 +693,9 @@ export function buildDefaultInputs(opts = {}) {
       costMetric: rec('settings.costMetric', 'lcoe', '"lcoe" | "npv"', { basis: 'judgement', ref: '§11' }),
       carbonMetric: rec('settings.carbonMetric', 'location', '"location" | "market" | "cfe"', { basis: 'judgement', ref: '§9.6' }),
       absoluteScaling: rec('settings.absoluteScaling', false, 'toggle', { basis: 'judgement', ref: '§11', note: 'Hook only in this slice.' }),
-      rankCompliantFirst: rec('settings.rankCompliantFirst', false, 'toggle', { basis: 'judgement', ref: '§11', note: 'On: options whose resilience status is "Does not meet" or whose site-fit status is "Does not fit" rank after the others (the two requirement checks, §5.7); scores do not change.' }),
+      rankCompliantFirst: rec('settings.rankCompliantFirst', false, 'toggle', { basis: 'judgement', ref: '§11', note: 'On: options whose resilience status is "Does not meet" rank after the others; scores do not change. Site fit does not count while the Site tab is Beta (AC 27, 2026-10-22).' }),
       hideDominated: rec('settings.hideDominated', false, 'toggle', { basis: 'judgement', ref: '§7.2 step 6' }),
       windSiteThresholdHa: rec('settings.windSiteThresholdHa', 20, 'ha', { basis: 'judgement', ref: '§8 C11' }),
-      fixedSolarMWp: rec('settings.fixedSolarMWp', 5, 'MWp', { basis: 'judgement', ref: '§8 C10', note: 'User value for "Fixed MWp".' }),
       bridgeBessHours: rec('settings.bridgeBessHours', 24, 'h', { basis: 'judgement', ref: '§9.2' }),
       timelineMonths: rec('settings.timelineMonths', 120, 'months', { basis: 'run setting', ref: '§9.8', note: 'Time-to-power horizon.' }),
       maxDispatchYears: rec('settings.maxDispatchYears', 8, 'years', { basis: 'run setting', ref: '§9.1', note: 'Distinct 8760-h dispatch years before steady state is assumed.' }),

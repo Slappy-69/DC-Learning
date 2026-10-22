@@ -210,7 +210,7 @@ function inspectionPicks(run, extra = []) {
   const add = (o, why) => { if (o && !picks.has(o.id)) picks.set(o.id, { o, why }); };
   add(ranked[0], 'leader'); add(ranked[1], 'rank 2');
   for (const o of ranked) if (o.archetype && ![...picks.values()].some((p) => p.o.archetype === o.archetype)) add(o, `archetype ${o.archetype}`);
-  add(ranked.find((o) => o.v.C10 === 'roofResidual' && o.sizing.solarGroundMWp > 0), 'fill-residual PV');
+  add(ranked.find((o) => o.v.C10 === 'roofGround' && o.sizing.solarGroundMWp > 0), 'ground PV');
   add(ranked.find((o) => o.sizing.storage.mw > 0 && o.v.C2 !== 'bessSolar'), 'main battery');
   add(ranked.find((o) => o.sizing.prime && o.sizing.bridge), 'prime + bridging plant');
   add(ranked.find((o) => o.siteFit && o.siteFit.status === 'Does not fit'), 'does not fit');

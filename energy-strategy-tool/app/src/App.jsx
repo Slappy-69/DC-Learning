@@ -109,7 +109,7 @@ export default function App() {
 
   useEffect(() => {
     if (!leader) return;
-    // The option id is the hash of its choices; its name carries sizes (e.g. fill-residual PV MWp), which a site
+    // The option id is the hash of its choices; its name carries sizes (e.g. PV MWp), which a site
     // edit can change while the choices, and so the leader, stay the same (review, H3 F3).
     const prev = prevLeader.current;
     const msg = prev && prev.id !== leader.id ? `Options updated. New leader: ${leader.name}.`
@@ -225,7 +225,7 @@ export default function App() {
           <div className="header-strip" role="region" aria-label="Results header">
             <div className="hs-item"><span className="hs-k">Options</span><span className="hs-v">{run ? `${shown.toLocaleString('en-GB')} shown / ${run.options.length.toLocaleString('en-GB')} screened / ${run.generation.totalCombinations.toLocaleString('en-GB')} combinations · ${dominated.toLocaleString('en-GB')} dominated` : '—'}</span></div>
             <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">Rank probability not available in this slice (no Monte Carlo)</span></div>
-            {siteBeta ? <div className="hs-item"><span className="hs-k">Site fit (Beta)</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit.' : 'Status only: it changes no score or rank.'} Site inputs still size fill-residual solar and set the POC and gas-main route costs.</span></div> : null}
+            {siteBeta ? <div className="hs-item"><span className="hs-k">Site fit (Beta)</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit.' : 'Status only: it changes no score or rank.'} Site inputs set the POC and gas-main route costs.</span></div> : null}
             <div className="hs-item"><span className="hs-k">Model</span><span className="hs-v">Full-year hourly (8760 h)</span><span className="hs-sub">Synthetic profiles · {run ? COUNTRIES[run.country].name : ''}</span></div>
             <div className="hs-item"><span className="hs-k">Settings</span><span className="hs-v">
               Sample above cap: {inputs.settings.sampleAboveCap ? 'On' : 'Off'} · Hide dominated: {view.hideDominated ? 'On' : 'Off'} · View filters: {viewFilterCount}

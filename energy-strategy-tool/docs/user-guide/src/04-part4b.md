@@ -12,7 +12,7 @@ Each line is booked in the year its plant can first supply power (or, for per-ph
 |---|---|---|---|
 | Grid connection and reinforcement | full capacity × €/MW for the band + cable km × €1.5 m | first month with grid capacity | 40 |
 | Substation | full capacity × €/MW for the band (× 1.4 for GIS) | same | 40 |
-| Solar (roof, carport, ground) | MWp × €/kWp × 1,000 | availability | 25, 25, 30 |
+| Solar (roof, ground) | MWp × €/kWp × 1,000 | availability | 25, 30 |
 | Wind | MW × €/kW × 1,000 | availability | 25 |
 | Battery | MWh × €250/kWh + MW × €150/kW (× 1,000) | availability | 15 |
 | Firm prime plant | MW × €/kW × 1,000 | availability | by technology |

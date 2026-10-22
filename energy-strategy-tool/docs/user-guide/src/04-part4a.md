@@ -303,7 +303,7 @@ The "design cooling fraction" is the fans plus mechanical cooling at the design 
 
 *Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).*
 
-Belly tanks only: no bulk storage, 8 hours assumed. Gas gensets: no storage, unlimited autonomy while the gas network stays up (flagged).
+Gas gensets: no storage, unlimited autonomy while the gas network stays up (flagged).
 
 ## Grid
 
@@ -361,7 +361,7 @@ Before the layout, the engine estimates the land each block needs:
 | Heat rejection on the ground | 60 m² per MW rejected (IT × (1 + design cooling + losses)); half with "Split" |
 | Wind | 0.1 ha pad per turbine |
 
-**Rooftop solar:** the roof (the building footprint) less the roof plant: with heat rejection on the roof, the larger of 40 % of the roof and 60 m² per MW rejected (half of each for "Split"). Then:
+**Rooftop solar:** from the roof area for PV when you enter one (÷ 5.5 m²/kWp). Left empty, the rule: the roof (the building footprint) less the roof plant: with heat rejection on the roof, the larger of 40 % of the roof and 60 m² per MW rejected (half of each for "Split"). Then:
 
 ::: formula
 | rooftop MWp = free roof × 50 % usable ÷ 5.5 m²/kWp ÷ 1,000
@@ -369,13 +369,14 @@ Before the layout, the engine estimates the land each block needs:
 
 *Rooftop PV: roof 27,500 m² = 27,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 2.50 MWp.* (The leader rejects heat on the ground, so the whole roof is free.)
 
-**Carport solar:** 30 % of the roads and parking allowance at 8 m²/kWp.
+An entered roof area larger than the free roof raises a minor flag ("solar-roof-area"); the PV is not reduced.
 
-**Ground solar, fill residual:** the net developable area less every other block, at 1.2 ha per MWp, as an estimate; the layout then replaces it with the area it actually filled (chapter 36).
+**Ground solar** (C10 "Roof + ground", only when the ground area for PV is above 0): the ground area for PV ÷ 1.2 ha per MWp. The layout places it as one block of that area and never resizes it; if it does not fit, site fit says so (chapter 36). Built 22 October 2026 (OPEN-QUESTIONS 52–54); carport solar, "fill residual" and "Fixed MWp" were removed.
 
-*Ground PV (fill residual), from the layout: 62,900 m² … ÷ 1.2 ha/MWp = 5.24 MWp (area-budget estimate before layout 5.31 MWp).*
-
-**Ground solar, fixed:** the "Fixed MWp" setting (5 MWp by default).
+::: formula
+| ground MWp = ground area for PV (ha) ÷ 1.2 ha/MWp
+| e.g. 3 ha ÷ 1.2 = 2.5 MWp
+:::
 
 **Wind:** on site, the net developable area ÷ 33.75 ha per turbine, rounded down, × 5 MW; off site, the off-site land the same way.
 
@@ -393,8 +394,8 @@ Firm prime and bridging plant become **dispatchable plants**, each with a mode f
 
 # 36. Site layout and site fit (Beta) {#ch36}
 
-::: {.callout .agreed}
-**Agreed, not built yet.** This stage belongs to the Site tab, which becomes a Beta feature kept out of the ranking. Today it runs in every run, sizes "fill residual" ground solar, and gives each option a site-fit status that changes no score unless you switch on the site-fit penalty or compliant-first ranking.
+::: {.callout .built}
+**Built (22 October 2026).** This stage belongs to the Site tab, a Beta feature kept out of the ranking (chapter 28). It still runs in every run and gives each option a site-fit status, which changes no score unless you switch on the site-fit penalty with the tab on. It no longer sizes ground solar: that comes from the ground area for PV (chapter 35).
 :::
 
 ## The site model

@@ -1,5 +1,27 @@
 [
  {
+  "path": "country.carbonPrice.euEts",
+  "value": 88.3,
+  "unit": "€/tCO2e",
+  "low": null,
+  "high": null,
+  "basis": "source",
+  "sourceToVerify": "",
+  "note": "EU ETS price for EU-27, Norway and Iceland. Escalates at the carbon escalation rate.",
+  "briefRef": "§5.6"
+ },
+ {
+  "path": "country.carbonPrice.ukEts",
+  "value": 75,
+  "unit": "€/tCO2e",
+  "low": null,
+  "high": null,
+  "basis": "source",
+  "sourceToVerify": "",
+  "note": "UK ETS price for the United Kingdom, rounded from €75.09. Escalates at the carbon escalation rate.",
+  "briefRef": "§5.6"
+ },
+ {
   "path": "profiles.countries",
   "value": "built-in synthetic country set (31)",
   "unit": "",
@@ -14,12 +36,12 @@
   "path": "project.fx",
   "value": {
    "EUR": 1,
-   "GBP": 0.85,
-   "NOK": 11.5,
-   "SEK": 11.3,
-   "DKK": 7.46,
-   "CHF": 0.95,
-   "ISK": 150
+   "GBP": 0.8377,
+   "NOK": 10.488,
+   "SEK": 11.112,
+   "DKK": 7.4747,
+   "CHF": 0.9211,
+   "ISK": 136.2
   },
   "unit": "per EUR",
   "low": null,
@@ -195,16 +217,16 @@
    "state": "open",
    "values": [
     "none",
-    "roof",
-    "roofResidual"
-   ]
+    "roof"
+   ],
+   "groundDefault": true
   },
   "unit": "choice state",
   "low": null,
   "high": null,
   "basis": "judgement",
   "sourceToVerify": "",
-  "note": "",
+  "note": "Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).",
   "briefRef": "§8"
  },
  {
@@ -549,94 +571,6 @@
   "unit": "months",
   "low": 3,
   "high": 6,
-  "basis": "source",
-  "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.solarCarport.capexPerKW",
-  "value": 1300,
-  "unit": "€/kWp",
-  "low": 1100,
-  "high": 1600,
-  "basis": "source",
-  "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.solarCarport.fomPerKW",
-  "value": 15,
-  "unit": "€/kWp/yr",
-  "low": 10,
-  "high": 20,
-  "basis": "source",
-  "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.solarCarport.life",
-  "value": 25,
-  "unit": "yr",
-  "low": 20,
-  "high": 30,
-  "basis": "source",
-  "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.solarCarport.m2PerKWp",
-  "value": 8,
-  "unit": "m²/kWp",
-  "low": 6,
-  "high": 10,
-  "basis": "source",
-  "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.solarCarport.parkingFraction",
-  "value": 0.3,
-  "unit": "fraction of roads/parking allowance",
-  "low": 0.2,
-  "high": 0.5,
-  "basis": "source",
-  "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.solarCarport.planM",
-  "value": 6,
-  "unit": "months",
-  "low": 3,
-  "high": 9,
-  "basis": "source",
-  "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.solarCarport.procM",
-  "value": 6,
-  "unit": "months",
-  "low": 3,
-  "high": 9,
-  "basis": "source",
-  "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.solarCarport.buildM",
-  "value": 6,
-  "unit": "months",
-  "low": 4,
-  "high": 9,
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
@@ -2315,17 +2249,6 @@
   "briefRef": "§6"
  },
  {
-  "path": "tech.fuelStorage.bellyHours",
-  "value": 8,
-  "unit": "h at full load (belly tanks only)",
-  "low": 4,
-  "high": 12,
-  "basis": "source",
-  "sourceToVerify": "Fuel storage regulations by country; fire engineer",
-  "note": "",
-  "briefRef": "§6"
- },
- {
   "path": "tech.fuelStorage.densityTPerM3",
   "value": 0.84,
   "unit": "t/m³",
@@ -3625,13 +3548,13 @@
  },
  {
   "path": "fuel.hydrogenPrice",
-  "value": 150,
+  "value": 246,
   "unit": "€/MWh_th",
-  "low": 90,
-  "high": 250,
+  "low": 210,
+  "high": 300,
   "basis": "source",
   "sourceToVerify": "Hydrogen supply price indications",
-  "note": "",
+  "note": "Renewable hydrogen delivered price; €8.20/kg ÷ 33.3 kWh/kg. Range €7–10/kg.",
   "briefRef": "§5.4"
  },
  {
@@ -4403,6 +4326,17 @@
   "briefRef": "§13.3"
  },
  {
+  "path": "view.siteTabBeta",
+  "value": false,
+  "unit": "toggle",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Site tab (Beta): site layout, boundary drawing, GeoJSON/KML import and site fit. Hidden by default; when on it is labelled Beta and never affects the ranking or the PDF.",
+  "briefRef": "§12.12"
+ },
+ {
   "path": "project.name",
   "value": "Untitled project",
   "unit": "",
@@ -4601,6 +4535,28 @@
   "briefRef": "§5.2"
  },
  {
+  "path": "site.pvRoofM2",
+  "value": null,
+  "unit": "m² of roof available for PV, or null",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "OPEN-QUESTIONS 53 (2026-10-22): blank = today's rule, 50 % of the free roof after roof plant is usable (solarRoof.usableFraction). An entered area replaces the rule; car-park canopies can be included here or in the ground area.",
+  "briefRef": "§5.2, §8 C10"
+ },
+ {
+  "path": "site.pvGroundHa",
+  "value": 0,
+  "unit": "ha of ground available for PV",
+  "low": 0,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "OPEN-QUESTIONS 53 (2026-10-22): 0 = no ground solar. An entered area makes C10 \"Roof + ground\" available and sizes ground PV at solarGround.haPerMWp; with the Site tab (Beta) on it is placed as one block of that area.",
+  "briefRef": "§5.2, §8 C10"
+ },
+ {
   "path": "site.offsiteLandHa",
   "value": 0,
   "unit": "ha",
@@ -4635,13 +4591,13 @@
  },
  {
   "path": "load.rampStart",
-  "value": 0.5,
+  "value": 0.25,
   "unit": "fraction of phase IT at energisation",
-  "low": 0.3,
-  "high": 0.8,
+  "low": 0.1,
+  "high": 0.5,
   "basis": "judgement",
   "sourceToVerify": "",
-  "note": "",
+  "note": "The owner's judgement (2026-10-22, OPEN-QUESTIONS 51; was 50 %). No source; replace with the client's fit-out programme.",
   "briefRef": "§5.3"
  },
  {
@@ -5194,7 +5150,7 @@
   "high": null,
   "basis": "source",
   "sourceToVerify": "EU ETS / UK ETS exchange data, official projections",
-  "note": "",
+  "note": "The country default comes from the scheme records country.carbonPrice.euEts and country.carbonPrice.ukEts (sourced); Switzerland is unresearched.",
   "briefRef": "§5.6"
  },
  {
@@ -5502,7 +5458,7 @@
   "high": null,
   "basis": "judgement",
   "sourceToVerify": "",
-  "note": "On: options whose resilience status is \"Does not meet\" or whose site-fit status is \"Does not fit\" rank after the others (the two requirement checks, §5.7); scores do not change.",
+  "note": "On: options whose resilience status is \"Does not meet\" rank after the others; scores do not change. Site fit does not count while the Site tab is Beta (AC 27, 2026-10-22).",
   "briefRef": "§11"
  },
  {
@@ -5526,17 +5482,6 @@
   "sourceToVerify": "",
   "note": "",
   "briefRef": "§8 C11"
- },
- {
-  "path": "settings.fixedSolarMWp",
-  "value": 5,
-  "unit": "MWp",
-  "low": null,
-  "high": null,
-  "basis": "judgement",
-  "sourceToVerify": "",
-  "note": "User value for \"Fixed MWp\".",
-  "briefRef": "§8 C10"
  },
  {
   "path": "settings.bridgeBessHours",

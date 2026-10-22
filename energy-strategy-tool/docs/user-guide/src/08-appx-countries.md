@@ -45,37 +45,37 @@ Prices: mean wholesale price and non-commodity adder (â‚¬/MWh), gas commodity pr
 
 | Country | Price + adder | Gas | Carbon | Currency |
 |---|---|---|---|---|
-| Austria (AT) | 100 + 45 | 42 | 85 | EUR |
-| Belgium (BE) | 90 + 50 | 40 | 85 | EUR |
-| Bulgaria (BG) | 95 + 35 | 42 | 85 | EUR |
-| Croatia (HR) | 100 + 40 | 42 | 85 | EUR |
-| Cyprus (CY) | 140 + 40 | 70 | 85 | EUR |
-| Czechia (CZ) | 95 + 45 | 42 | 85 | EUR |
-| Denmark (DK) | 80 + 40 | 40 | 85 | DKK |
-| Estonia (EE) | 90 + 35 | 42 | 85 | EUR |
-| Finland (FI) | 55 + 30 | 45 | 85 | EUR |
-| France (FR) | 85 + 40 | 40 | 85 | EUR |
-| Germany (DE) | 95 + 55 | 40 | 85 | EUR |
-| Greece (GR) | 105 + 40 | 42 | 85 | EUR |
-| Hungary (HU) | 105 + 40 | 42 | 85 | EUR |
-| Ireland (IE) | 110 + 50 | 42 | 85 | EUR |
-| Italy (IT) | 120 + 45 | 45 | 85 | EUR |
-| Latvia (LV) | 90 + 35 | 42 | 85 | EUR |
-| Lithuania (LT) | 90 + 35 | 42 | 85 | EUR |
-| Luxembourg (LU) | 95 + 45 | 42 | 85 | EUR |
-| Malta (MT) | 130 + 40 | 60 | 85 | EUR |
-| Netherlands (NL) | 90 + 45 | 40 | 85 | EUR |
-| Poland (PL) | 110 + 40 | 42 | 85 | EUR |
-| Portugal (PT) | 75 + 40 | 42 | 85 | EUR |
-| Romania (RO) | 100 + 35 | 42 | 85 | EUR |
-| Slovakia (SK) | 100 + 40 | 42 | 85 | EUR |
-| Slovenia (SI) | 105 + 40 | 42 | 85 | EUR |
-| Spain (ES) | 70 + 40 | 40 | 85 | EUR |
-| Sweden (SE) | 45 + 30 | 45 | 85 | SEK |
-| United Kingdom (GB) | 95 + 55 | 40 | 50 | GBP |
-| Norway (NO) | 50 + 25 | 45 | 85 | NOK |
+| Austria (AT) | 100 + 45 | 42 | 88.3 | EUR |
+| Belgium (BE) | 90 + 50 | 40 | 88.3 | EUR |
+| Bulgaria (BG) | 95 + 35 | 42 | 88.3 | EUR |
+| Croatia (HR) | 100 + 40 | 42 | 88.3 | EUR |
+| Cyprus (CY) | 140 + 40 | 70 | 88.3 | EUR |
+| Czechia (CZ) | 95 + 45 | 42 | 88.3 | EUR |
+| Denmark (DK) | 80 + 40 | 40 | 88.3 | DKK |
+| Estonia (EE) | 90 + 35 | 42 | 88.3 | EUR |
+| Finland (FI) | 55 + 30 | 45 | 88.3 | EUR |
+| France (FR) | 85 + 40 | 40 | 88.3 | EUR |
+| Germany (DE) | 95 + 55 | 40 | 88.3 | EUR |
+| Greece (GR) | 105 + 40 | 42 | 88.3 | EUR |
+| Hungary (HU) | 105 + 40 | 42 | 88.3 | EUR |
+| Ireland (IE) | 110 + 50 | 42 | 88.3 | EUR |
+| Italy (IT) | 120 + 45 | 45 | 88.3 | EUR |
+| Latvia (LV) | 90 + 35 | 42 | 88.3 | EUR |
+| Lithuania (LT) | 90 + 35 | 42 | 88.3 | EUR |
+| Luxembourg (LU) | 95 + 45 | 42 | 88.3 | EUR |
+| Malta (MT) | 130 + 40 | 60 | 88.3 | EUR |
+| Netherlands (NL) | 90 + 45 | 40 | 88.3 | EUR |
+| Poland (PL) | 110 + 40 | 42 | 88.3 | EUR |
+| Portugal (PT) | 75 + 40 | 42 | 88.3 | EUR |
+| Romania (RO) | 100 + 35 | 42 | 88.3 | EUR |
+| Slovakia (SK) | 100 + 40 | 42 | 88.3 | EUR |
+| Slovenia (SI) | 105 + 40 | 42 | 88.3 | EUR |
+| Spain (ES) | 70 + 40 | 40 | 88.3 | EUR |
+| Sweden (SE) | 45 + 30 | 45 | 88.3 | SEK |
+| United Kingdom (GB) | 95 + 55 | 40 | 75 | GBP |
+| Norway (NO) | 50 + 25 | 45 | 88.3 | NOK |
 | Switzerland (CH) | 95 + 50 | 45 | 85 | CHF |
-| Iceland (IS) | 40 + 25 | 80 | 85 | ISK |
+| Iceland (IS) | 40 + 25 | 80 | 88.3 | ISK |
 
 ## B2. Wholesale price: app target against published figures
 
@@ -157,9 +157,9 @@ Published values: Ember's 2025 carbon intensity of electricity generation (g COâ
 
 | Currency | App (per euro) | ECB, 21 Oct 2026 | Difference |
 |---|---|---|---|
-| GBP | 0.85 | 0.83825 | +1.4 % |
-| NOK | 11.5 | 10.512 | +9.4 % |
-| SEK | 11.3 | 11.0975 | +1.8 % |
-| DKK | 7.46 | 7.4746 | -0.2 % |
-| CHF | 0.95 | 0.9256 | +2.6 % |
-| ISK | 150 | 136.2 | +10.1 % |
+| GBP | 0.8377 | 0.83825 | -0.1 % |
+| NOK | 10.488 | 10.512 | -0.2 % |
+| SEK | 11.112 | 11.0975 | +0.1 % |
+| DKK | 7.4747 | 7.4746 | +0.0 % |
+| CHF | 0.9211 | 0.9256 | -0.5 % |
+| ISK | 136.2 | 136.2 | +0.0 % |

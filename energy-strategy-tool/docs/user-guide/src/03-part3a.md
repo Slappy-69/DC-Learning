@@ -49,6 +49,8 @@ This part goes through every input and every results view. For each, it says wha
 | Height limit | 25 m | Flags blocks and stacks above it |
 | Roads, parking, landscaping | 15 % | Share of the buildable area held back |
 | Noise threshold at receptors (night) | 45 dB(A) | Flags the noise proxy at houses you add |
+| Roof area for PV | empty (rule) | Roof covered by PV; empty = 50 % of the free roof after roof plant. Built 22 October 2026 |
+| Ground area for PV | 0 ha | Ground covered by PV; above 0 adds the C10 choice "Roof + ground". Built 22 October 2026 |
 | Off-site land for generation | 0 ha | Land for off-site wind or solar |
 | Private-wire distance to off-site land | 2 km | Length of the cable to it |
 | Soft exclusions usable by ground solar | on | Lets ground solar use soft exclusion zones |
@@ -62,7 +64,7 @@ This part goes through every input and every results view. For each, it says wha
 | T1: 15 ha → 13.46 ha envelope → 11.44 ha net developable
 :::
 
-The net developable area is the land budget for every block of plant and the data halls. It decides whether the plant fits, how much ground solar "fill residual" can take, and (with the 20 ha threshold) whether wind is generated.
+The net developable area is the land budget for every block of plant and the data halls. It decides whether the plant fits and (with the 20 ha threshold) whether wind is generated. Ground solar has its own input, the ground area for PV, below.
 
 **Boundary and features.** The boundary polygon, setbacks per edge, exclusion zones (hard, such as easements and ecology; soft, such as flood zones), height zones, the grid point of connection (POC), the gas main, access points and noise receptors are edited on the Site tab (chapter 28).
 
@@ -71,7 +73,7 @@ The net developable area is the land budget for every block of plant and the dat
 :::
 
 ::: {.callout .open}
-**Open.** With the Site tab hidden, the engine still needs a land budget for "fill residual" ground solar and for the wind default. The simplest reading is that it uses the area-budget estimate it already makes before the layout (chapter 35) with the default setback and roads share. This needs confirming when the change is built.
+**Open.** With the Site tab hidden, the engine still needs a land budget for the wind default. Ground solar was settled on 22 October 2026 (OPEN-QUESTIONS 53): it has its own area input.
 :::
 
 # 16. Inputs: load and building {#ch16}
@@ -260,10 +262,10 @@ The table lists every choice, its values, and the values included by default (ma
 | C4 Primary firm on-site generation | **None**, **Gas CHP-trigen**, Gas recips, **Fuel cells**, SMR, Hydrogen |
 | C5 Backup power technology | **Diesel gensets**, **HVO gensets**, Gas gensets, BESS-augmented UPS + reduced gensets, **Retained bridging plant**, None |
 | C6 Backup topology | locked to the required topology (**N+1**); N, 2N, catcher available |
-| C7 Autonomy / fuel storage | locked to the required autonomy (**48 h**); 12, 24, 72 h, belly tanks only |
+| C7 Autonomy / fuel storage | locked to the required autonomy (**48 h**); 12, 24, 72 h |
 | C8 Cooling approach | **all four** open, unless the cooling approach input fixes one |
 | C9 Heat rejection location | **Roof**, **Ground**, **Split** |
-| C10 On-site solar | **None**, **Roof only**, Roof + carport, **Roof + fill residual ground**, Fixed MWp |
+| C10 On-site solar | **None**, **Roof only**; **Roof + ground** when the ground area for PV is above 0 |
 | C11 On-site wind | **None** on sites ≤ 20 ha; otherwise **None**, **Fit as many as separations allow**, **Off-site land** |
 | C12 BESS size | **None**, 1 h at 25 %, 1 h at 50 %, **2 h at 25 %**, 2 h at 50 %, 4 h at 25 %, **4 h at 50 %** |
 | C12r BESS role | locked to **Peak-shave**; Shifting, Bridging support, Grid services available |

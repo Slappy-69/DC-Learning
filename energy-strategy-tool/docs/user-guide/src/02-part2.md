@@ -174,7 +174,7 @@ Diesel and HVO (hydrotreated vegetable oil, a renewable diesel) are stored in bu
 | T1: 105.1 MW × 48 h × 0.26 L/kWh = 1,311 m³ (about 1,101 tonnes)
 :::
 
-"Belly tanks only" (the fuel tanks built into the genset base) is assumed to give 8 hours. Gas gensets store no fuel: they depend on the gas network staying up during a grid outage, which the tool flags.
+Autonomy is set in hours (12, 24, 48 or 72). The former choice "belly tanks only" was removed on 22 October 2026 (OPEN-QUESTIONS 52). Gas gensets store no fuel: they depend on the gas network staying up during a grid outage, which the tool flags.
 
 Large fuel stores can trigger major-hazard rules (in the EU, the Seveso III directive's lower tier starts at 2,500 tonnes of petroleum products); the tool flags this.
 
@@ -231,7 +231,6 @@ Every technology has a planning, procurement and construction time in months. Th
 | Rooftop solar | 13 | Commercial |
 | Fuel cells (SOFC) | 15 | Emerging |
 | HVO-diesel prime gensets | 18 | Commercial |
-| Carport solar | 18 | Commercial |
 | Ground-mounted solar | 21 | Commercial |
 | Battery storage (BESS) | 21 | Commercial |
 | Gas reciprocating engines | 24 | Commercial |
@@ -265,11 +264,12 @@ The tool counts PPA energy only where it is **physically delivered**: up to the 
 
 ## On-site solar
 
-Photovoltaic panels on the roof, over car parks (carports) or on spare ground. The tool sizes:
+Photovoltaic panels on the data-hall roofs or on the ground. You give two areas in the Site section, and the solar choice C10 is None, Roof only or Roof + ground (built 22 October 2026, OPEN-QUESTIONS 52–54):
 
-- **rooftop** solar from the free roof area: 50 % of the roof not used by plant, at 5.5 m² per kWp;
-- **carport** solar from 30 % of the roads and parking allowance, at 8 m² per kWp;
-- **ground** solar either at a fixed size, or by "filling the residual": all the buildable land left after every other block, at 1.2 ha per MWp.
+- **Roof area for PV.** Leave it empty and the tool uses its rule: 50 % of the roof not used by plant, at 5.5 m² per kWp. Enter an area and the tool uses that instead. An area larger than the free roof is flagged, not reduced.
+- **Ground area for PV.** 0 by default, so there is no ground solar. Enter an area and the tool adds "Roof + ground" options, with ground solar at 1.2 ha per MWp.
+
+Car-park canopies go in either area; there is no separate carport choice any more. Ground solar no longer fills the land left over after the layout, so its size never depends on the Site tab (Beta).
 
 Solar output follows the hourly solar profile (about 950 kWh per kWp a year in the United Kingdom profile).
 

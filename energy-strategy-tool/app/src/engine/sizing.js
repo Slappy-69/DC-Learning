@@ -106,16 +106,12 @@ export function sizeOption(ctx, v) {
     // Fuel storage (§9.2): liquid fuel only. Gas gensets rely on the network.
     if (t.fuel === 'diesel' || t.fuel === 'hvo') {
       const fs = TECH.fuelStorage.p;
-      const hours = v.C7 === 'belly' ? TECH.fuelStorage.p.bellyHours : Number(v.C7);
+      // Autonomy in hours only: "belly tanks only" was removed as a choice (OPEN-QUESTIONS 52, 2026-10-22).
+      const hours = Number(v.C7);
       backup.autonomyH = hours;
-      if (v.C7 === 'belly') {
-        backup.fuelM3 = 0;
-        sentences.push(`Fuel storage: belly tanks only (${hours} h at critical load assumed); no bulk storage.`);
-      } else {
-        const m3 = Math.max(0, (criticalMW * 1000 * hours * fs.dieselLPerKWh) / 1000 - fs.bellyTankM3);
-        backup.fuelM3 = m3;
-        sentences.push(`Fuel storage: ${r1(criticalMW)} MW × ${hours} h × ${fs.dieselLPerKWh} L/kWh = ${Math.round(m3).toLocaleString('en-GB')} m³ (${Math.round(m3 * fs.densityTPerM3).toLocaleString('en-GB')} t).`);
-      }
+      const m3 = Math.max(0, (criticalMW * 1000 * hours * fs.dieselLPerKWh) / 1000 - fs.bellyTankM3);
+      backup.fuelM3 = m3;
+      sentences.push(`Fuel storage: ${r1(criticalMW)} MW × ${hours} h × ${fs.dieselLPerKWh} L/kWh = ${Math.round(m3).toLocaleString('en-GB')} m³ (${Math.round(m3 * fs.densityTPerM3).toLocaleString('en-GB')} t).`);
     } else {
       backup.autonomyH = Infinity;
       sentences.push('Fuel storage: none; gas gensets depend on the gas network during a grid outage.');
@@ -221,8 +217,8 @@ export function sizeOption(ctx, v) {
   }
   const storage = { mw: bess.mw + bridgeBess.mw, mwh: bess.mwh + bridgeBess.mwh, role: bess.role || (bridgeBess.mw > 0 ? 'bridgingSupport' : null) };
 
-  // --- Area budget: estimate for "fill residual" solar before the layout; the layout stage (layout.js)
-  // replaces it with the area actually filled (§10.4 "fill residual solar sizing after placement") ---
+  // --- Area budget (site areas, land take). Ground solar is sized from the ground area for PV the engineer
+  // enters (OPEN-QUESTIONS 53–54, 2026-10-22), never from the layout ---
   const site = inputs.site;
   let grossM2, innerM2, netM2;
   if (ctx.site) {
@@ -268,7 +264,6 @@ export function sizeOption(ctx, v) {
   const windM2 = v.C11 === 'fit' ? windTurbines * 1000 : 0; // 0.1 ha pad each
 
   const othersM2 = footprint + subM2 + backupM2 + fuelM2 + bessM2 + primeM2 + bridgeM2 + hrM2 + windM2 + hydrogenM2;
-  const residualM2 = netM2 - othersM2;
 
   // Solar (C10). Roof plant (§5.3): the roof-plant fraction of the roof, or the heat-rejection footprint on the
   // roof (§6.3, 60 m² per MW rejected) where that is larger; the roof share is 1 (C9 roof) or 0.5 (split). The
@@ -279,29 +274,31 @@ export function sizeOption(ctx, v) {
   const roofPlantM2 = roofShare > 0 ? Math.max(roofPlantByFraction, roofPlantByFootprint) : 0;
   const roofFree = roofPlantByFootprint > roofPlantByFraction ? Math.max(0, footprint - roofPlantByFootprint) : footprint * (1 - TECH.heatRejection.p.roofPlantFraction * roofShare);
   const sr = TECH.solarRoof.p;
-  const roofMWp = (roofFree * sr.usableFraction) / sr.m2PerKWp / 1000;
+  const roofRuleM2 = roofFree * sr.usableFraction;
+  // Solar (C10, OPEN-QUESTIONS 52–54, 2026-10-22): None / Roof / Roof + ground. Roof PV is sized from the roof
+  // area for PV (blank = the rule: usable fraction of the free roof after roof plant); ground PV from the ground
+  // area for PV (default 0, so "Roof + ground" is generated only when an area is entered).
+  const pvRoofM2 = site.pvRoofM2 == null ? null : Math.max(0, site.pvRoofM2);
+  const roofPvM2 = pvRoofM2 == null ? roofRuleM2 : pvRoofM2;
+  const pvGroundHa = Math.max(0, site.pvGroundHa || 0);
   let solarRoofMWp = 0;
-  let solarCarportMWp = 0;
   let solarGroundMWp = 0;
-  if (['roof', 'roofCarport', 'roofResidual'].includes(v.C10)) {
-    solarRoofMWp = roofMWp;
-    const plantText = roofShare > 0 ? ` less roof plant (${v.C9}: ${roofPlantByFootprint > roofPlantByFraction ? `heat-rejection footprint ${Math.round(roofPlantByFootprint).toLocaleString('en-GB')} m², larger than ${(TECH.heatRejection.p.roofPlantFraction * roofShare * 100).toFixed(0)} % of the roof` : `${(TECH.heatRejection.p.roofPlantFraction * roofShare * 100).toFixed(0)} % of the roof, ${Math.round(roofPlantM2).toLocaleString('en-GB')} m²`})` : '';
-    sentences.push(`Rooftop PV: roof ${Math.round(footprint).toLocaleString('en-GB')} m²${plantText} = ${Math.round(roofFree).toLocaleString('en-GB')} m² free × ${sr.usableFraction * 100} % usable ÷ ${sr.m2PerKWp} m²/kWp = ${roofMWp.toFixed(2)} MWp.`);
+  let roofPvOverFreeM2 = 0;
+  if (v.C10 === 'roof' || v.C10 === 'roofGround') {
+    solarRoofMWp = roofPvM2 / sr.m2PerKWp / 1000;
+    if (pvRoofM2 == null) {
+      const plantText = roofShare > 0 ? ` less roof plant (${v.C9}: ${roofPlantByFootprint > roofPlantByFraction ? `heat-rejection footprint ${Math.round(roofPlantByFootprint).toLocaleString('en-GB')} m², larger than ${(TECH.heatRejection.p.roofPlantFraction * roofShare * 100).toFixed(0)} % of the roof` : `${(TECH.heatRejection.p.roofPlantFraction * roofShare * 100).toFixed(0)} % of the roof, ${Math.round(roofPlantM2).toLocaleString('en-GB')} m²`})` : '';
+      sentences.push(`Rooftop PV: roof ${Math.round(footprint).toLocaleString('en-GB')} m²${plantText} = ${Math.round(roofFree).toLocaleString('en-GB')} m² free × ${sr.usableFraction * 100} % usable ÷ ${sr.m2PerKWp} m²/kWp = ${solarRoofMWp.toFixed(2)} MWp (roof area for PV not entered: default rule).`);
+    } else {
+      roofPvOverFreeM2 = Math.max(0, pvRoofM2 - roofFree);
+      sentences.push(`Rooftop PV: roof area for PV ${Math.round(pvRoofM2).toLocaleString('en-GB')} m² (entered) ÷ ${sr.m2PerKWp} m²/kWp = ${solarRoofMWp.toFixed(2)} MWp${roofPvOverFreeM2 > 0 ? `; the entered area is ${Math.round(roofPvOverFreeM2).toLocaleString('en-GB')} m² more than the free roof of ${Math.round(roofFree).toLocaleString('en-GB')} m² after roof plant (flagged, not reduced)` : ''}.`);
+    }
   }
-  if (v.C10 === 'roofCarport') {
-    const cp2 = TECH.solarCarport.p;
-    solarCarportMWp = (innerM2 * site.roadsFraction * cp2.parkingFraction) / cp2.m2PerKWp / 1000;
-    sentences.push(`Carport PV: ${(cp2.parkingFraction * 100).toFixed(0)} % of the roads/parking allowance ÷ ${cp2.m2PerKWp} m²/kWp = ${solarCarportMWp.toFixed(2)} MWp.`);
+  if (v.C10 === 'roofGround') {
+    solarGroundMWp = pvGroundHa / TECH.solarGround.p.haPerMWp;
+    sentences.push(`Ground PV: ground area for PV ${pvGroundHa} ha (entered) ÷ ${TECH.solarGround.p.haPerMWp} ha/MWp = ${solarGroundMWp.toFixed(2)} MWp.`);
   }
-  if (v.C10 === 'roofResidual') {
-    solarGroundMWp = Math.max(0, residualM2) / 10000 / TECH.solarGround.p.haPerMWp;
-    sentences.push(`Ground PV (fill residual), area-budget estimate before layout: net developable ${(netM2 / 10000).toFixed(2)} ha − other blocks ${(othersM2 / 10000).toFixed(2)} ha = ${(Math.max(0, residualM2) / 10000).toFixed(2)} ha ÷ ${TECH.solarGround.p.haPerMWp} ha/MWp = ${solarGroundMWp.toFixed(2)} MWp (replaced by the layout fill, §10.4).`);
-  }
-  if (v.C10 === 'fixed') {
-    solarGroundMWp = inputs.settings.fixedSolarMWp;
-    sentences.push(`Ground PV (fixed): ${solarGroundMWp} MWp.`);
-  }
-  const solarMWp = solarRoofMWp + solarCarportMWp + solarGroundMWp;
+  const solarMWp = solarRoofMWp + solarGroundMWp;
   const groundSolarM2 = solarGroundMWp * TECH.solarGround.p.haPerMWp * 10000;
   const landTakeM2 = othersM2 + groundSolarM2;
 
@@ -369,7 +366,7 @@ export function sizeOption(ctx, v) {
     coolingId, peakPUE, designMW, avgMW, criticalMW, itMW,
     building: { whitespaceM2: whitespace, gfaM2: gfa, footprintM2: footprint, heightM },
     backup, prime, bridge, bridgeBess, bess, storage,
-    solarMWp, solarRoofMWp, solarCarportMWp, solarGroundMWp, windMW, windTurbines, ppa,
+    solarMWp, solarRoofMWp, solarGroundMWp, roofPvOverFreeM2, windMW, windTurbines, ppa,
     grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })), cableKm },
     gasConnection,
     area: { grossM2, netM2, landTakeM2, residualM2: netM2 - landTakeM2, parts: { building: footprint, substation: subM2, backup: backupM2, fuel: fuelM2, bess: bessM2, prime: primeM2, bridge: bridgeM2, heatRejection: hrM2, wind: windM2, groundSolar: groundSolarM2 } },
@@ -404,17 +401,3 @@ function makePlant(ctx, s, v, role, T) {
   };
 }
 
-// After the layout (§10.4): "fill residual" ground solar is sized from the area it filled. The only sizing
-// that depends on the layout. Updates the sizing in place before dispatch.
-export function applySolarFill(sz, fill) {
-  if (!fill || fill.mode !== 'residual') return sz;
-  const before = sz.solarGroundMWp;
-  sz.solarGroundMWp = fill.mwp;
-  sz.solarMWp = sz.solarRoofMWp + sz.solarCarportMWp + sz.solarGroundMWp;
-  const groundM2 = fill.areaM2;
-  sz.area = { ...sz.area, landTakeM2: sz.area.landTakeM2 - sz.area.parts.groundSolar + groundM2, residualM2: sz.area.netM2 - (sz.area.landTakeM2 - sz.area.parts.groundSolar + groundM2), parts: { ...sz.area.parts, groundSolar: groundM2 } };
-  const i = sz.sentences.findIndex((x) => x.startsWith('Ground PV (fill residual)'));
-  const text = `Ground PV (fill residual), from the layout: ${Math.round(groundM2).toLocaleString('en-GB')} m² of free buildable area after every other block (5 m clearance, strips under ${fill.minArrayM ?? 10} m wide left out, within the net developable area) ÷ ${fill.haPerMWp} ha/MWp = ${sz.solarGroundMWp.toFixed(2)} MWp (area-budget estimate before layout ${before.toFixed(2)} MWp).`;
-  if (i >= 0) sz.sentences[i] = text; else sz.sentences.push(text);
-  return sz;
-}
