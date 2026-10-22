@@ -542,7 +542,7 @@ For every month of the 120-month horizon:
 
 ## The measures
 
-- **First power**: the first month in which the supply is positive and at least phase 1's initial load (phase 1 IT × 50 % ramp start × (peak PUE + ancillary)). It is when the site *could* be energised, not when phase 1 is built.
+- **First power**: the first month in which the supply is positive and at least phase 1's initial load (phase 1 IT × ramp start × (peak PUE + ancillary); the T1 worked examples use the 50 % ramp start of 21 October 2026, now 25 %). It is when the site *could* be energised, not when phase 1 is built.
 - **Full load**: the first month in which the supply is at least the full design load of the whole campus.
 - **Power gap**: the sum over months of (design load of the installed IT that month − supply), where positive, in MW-months; and the number of months with a gap.
 

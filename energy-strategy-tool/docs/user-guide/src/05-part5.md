@@ -116,7 +116,7 @@ Many defaults cannot be checked against a source because they are choices about 
 - weights (35/25/25/15) and the five presets;
 - every deliverability penalty (15, 40, 8, 3, 10, 10, 5 points; 24-month threshold);
 - backup block size (10 units) and catcher ratio (1 per 4 blocks);
-- load ramp (50 % over 12 months), utilisation (80 %), ancillary load (2 %);
+- load ramp (25 % at energisation, the owner's judgement since 22 October 2026, over 12 months), utilisation (80 %), ancillary load (2 %);
 - building gross-up (2.2), storeys (2), storey and roof-zone heights;
 - site setback (10 m), height limit (25 m), roads share (15 %), noise threshold (45 dB(A)), aspect ratio (1.5);
 - wind threshold (20 ha), fixed solar size (5 MWp), bridging battery (24 h), BESS-augmented UPS (2 h);

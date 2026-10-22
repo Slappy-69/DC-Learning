@@ -595,7 +595,7 @@ export function buildDefaultInputs(opts = {}) {
     load: {
       itMW: REQUIRED_EXAMPLE['load.itMW'],
       phases: null, // set below
-      rampStart: rec('load.rampStart', 0.5, 'fraction of phase IT at energisation', { low: 0.3, high: 0.8, basis: 'judgement', ref: '§5.3' }),
+      rampStart: rec('load.rampStart', 0.25, 'fraction of phase IT at energisation', { low: 0.1, high: 0.5, basis: 'judgement', ref: '§5.3', note: "The owner's judgement (2026-10-22, OPEN-QUESTIONS 51; was 50 %). No source; replace with the client's fit-out programme." }),
       rampMonths: rec('load.rampMonths', 12, 'months', { low: 6, high: 24, basis: 'judgement', ref: '§5.3' }),
       utilisation: rec('load.utilisation', 0.8, 'fraction of installed IT', { low: 0.6, high: 0.95, basis: 'judgement', ref: '§5.3' }),
       workload: rec('load.workload', 'cloud', '', { basis: 'judgement', note: 'Mixed cloud', ref: '§5.3' }),

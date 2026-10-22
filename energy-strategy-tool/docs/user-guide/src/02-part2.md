@@ -15,7 +15,7 @@ Two numbers matter:
 
 ## Phasing and ramp
 
-Campuses are built in phases. The phasing table lists each phase's IT MW and the date it is energised. After energisation, a phase does not fill up at once: the tool assumes each phase starts at **50 %** of its IT and rises in a straight line to 100 % over **12 months** (the "ramp"). With no phasing table, the tool assumes one phase of the full IT load on the grid full-connection date.
+Campuses are built in phases. The phasing table lists each phase's IT MW and the date it is energised. After energisation, a phase does not fill up at once: the tool assumes each phase starts at **25 %** of its IT (the owner's judgement, 22 October 2026; it was 50 % when the worked examples in Part IV were run) and rises in a straight line to 100 % over **12 months** (the "ramp"). With no phasing table, the tool assumes one phase of the full IT load on the grid full-connection date.
 
 In the T1 example, four 25 MW phases open in July 2028, 2029, 2030 and 2031. Installed IT therefore steps up every July and ramps in between, reaching 100 MW in July 2032.
 
