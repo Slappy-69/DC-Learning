@@ -1401,3 +1401,5 @@ T1 against the "before" export of 2026-10-21 (`docs/user-guide/data/`, commit 44
 ### Ramp at energisation 25 % (2026-10-22)
 
 The owner's judgement (OPEN-QUESTIONS 51, from the notes on the guide, page 48): `load.rampStart` 0.25 (was 0.5), range 0.1–0.5, basis judgement. T1 against the batch 1 run: the same 2,000 options; the leader (O1YAUJ8J) and ranks 1–9 unchanged, rank 10 changes; LCOE median +0.6 % (−0.1 % to +1.3 %), because less energy is delivered while buildings ramp up and the fixed costs are spread over less; the leader's power gap falls from 24.9 to 15.4 MW-months (less early demand above the 20 MW grid), LCOE €153.80 → €154.07/MWh, location-based carbon 113.2 → 112.7 g/kWh. `npm test` 44/44.
+
+Browser checks with the 25 % ramp: `npm run test:browser` 29/29.
