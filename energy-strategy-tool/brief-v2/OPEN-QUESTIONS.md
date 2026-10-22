@@ -48,3 +48,9 @@ No defaults are proposed for these. "As built" says what the program does today;
 | 33 | **Economic battery and choice C12: is C12 still generated as alternatives (none / 2 h at 25 % / 4 h at 50 %), or does the economic battery come only from the flexibility and battery-response sizing?** | Decides how many battery options are generated and how battery response is compared | C12 generated as alternatives; one battery, no split | Keep C12 for the economic battery; replace it by the sizing rule when flexibility is on | 4 |
 | 34 | **Flexibility with triggers: where does it sit in the merit order, and does it still act on grid-limit shortfalls?** | Changes unmet load, curtailment and cost | Flexibility is the last step, used against shortfalls | Trigger hours only; both | 4 |
 | 35 | **Weight-change repaint target: what is the new value?** | The walkthrough relaxed the 100 ms target without a number | Browser test fails above 300 ms (measured 96–166 ms in the sandbox) | — | 6 |
+
+## Decided during the build
+
+| # | Question | Answer (owner, with date) | Work package |
+|---|---|---|---|
+| 36 | **How is a researched default shown once the owner has approved it against a published source?** | **Answered 2026-10-22** (confirmed in writing): A default that has been researched, given its source, year, link and access date, and approved by the owner carries the label **"sourced — not independently checked"** instead of "indicative — unverified". It is not marked verified (`verified: false`) because the research was done by Claude and approved by the owner, not checked by a person responsible for the data; it becomes verified only after such a check. Values with no published source keep the label "judgement" with a reason. The owner chose this middle label over marking approved values verified, and over keeping them "indicative — unverified". Options were: mark it verified; fill the source but keep "indicative — unverified"; a middle label | 0 |

@@ -86,7 +86,8 @@ Decided by the owner (code changes not yet made unless stated):
 4. **O3** (2026-10-21): two separate `grid-ppa` flags, one for PPA volume limited by the grid import capacity and one for other undelivered PPA volume, each showing its share. Section 7.3.
 5. **No-backup option** whose on-site plant meets every requirement item: stays "Does not meet" (2026-10-21).
 6. **Contracted grid capacity** (brief question 18, 2026-10-21): each option has its own contracted grid capacity, set by the engineer; the grid connection charge is one fixed amount, the same for every option. Details: `OPEN-QUESTIONS.md` 19 and 20.
-7. Everything else decided in the walkthrough: `docs/walkthrough-decisions-2026-10-21.md`, folded into brief revision 5.
+7. **Label for researched defaults** (2026-10-22, OPEN-QUESTIONS 36): once a default has its source and the owner's approval, it shows "sourced — not independently checked", not "verified"; it stays `verified: false` until a person responsible for the data checks it.
+8. Everything else decided in the walkthrough: `docs/walkthrough-decisions-2026-10-21.md`, folded into brief revision 5.
 
 Waiting for the owner: `OPEN-QUESTIONS.md` 19–35 (no defaults; ask one at a time when the work package that needs the answer starts) and the known issues in `docs/KNOWN-ISSUES.md` (question 31).
 
