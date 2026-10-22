@@ -55,7 +55,11 @@ export function* runModelSteps(rawInputs, opts = {}) {
   log.start(STAGE.context, 1);
   const ctx = buildContext(inputs);
   log.warning(STAGE.context, 'profiles-synthetic', `${PROFILE_LABEL} (country ${ctx.country})`);
-  log.warning(STAGE.context, 'defaults-unverified', `All ${Object.keys(getRegistry()).length} default records are indicative — unverified`);
+  {
+    const recs = Object.values(getRegistry());
+    const unv = recs.filter((r) => r.verified !== true && r.confidence === 'C').length;
+    log.warning(STAGE.context, 'defaults-unverified', `${unv} of ${recs.length} default records are indicative — unverified; ${recs.length - unv} are sourced — not independently checked; none is verified`);
+  }
   for (const w of ctx.site.warnings) log.warning(STAGE.context, `site-${w.code}`, w.message);
   log.end(STAGE.context, 1, 1, {
     country: ctx.country, months: ctx.nMonths, timelineMonths: ctx.nMonthsTimeline, coolingProfiles: Object.keys(ctx.cooling).length,

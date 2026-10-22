@@ -2,15 +2,34 @@
 //
 // Every default (numeric input, threshold, weight, penalty, run setting, view/ranking
 // setting, input-state default and choice default state) is stored as a §18 record.
-// No default has a verified source in this slice, so every record has
-// confidence "C", verified false and label "indicative — unverified" (§23 label rule).
-// Where the brief names a source to verify against, it is kept in `sourceToVerify`;
-// `source`, `year` and `url` stay empty until a person verifies the value.
+// A record that has not been researched has confidence "C", verified false and label
+// "indicative — unverified" (§23 label rule); where the brief names a source to verify against,
+// it is kept in `sourceToVerify`. A record researched and approved by the owner (work package 0,
+// owner decision 2026-10-22, OPEN-QUESTIONS 36) has `source`, `year`, `url` and `accessed` filled,
+// confidence "B", verified false and label "sourced — not independently checked". No record is
+// verified until a person responsible for the data has checked it.
 
 import { defaultAnalysisStart, addMonths } from './dates.js';
 import { makeProjection, meanLatLon, validateRing } from './geometry.js';
 
 export const LABEL = 'indicative — unverified';
+export const LABEL_SOURCED = 'sourced — not independently checked';
+
+// Source records approved by the owner (work package 0). Each: source (publication and the figure used),
+// year (date of the value), url, accessed (date the link was opened), approved (owner approval date).
+const SRC = {
+  euEts: { source: 'ICE EUA December 2026 futures close, reported by GMK Center, "European carbon prices rose to €88/t in October" (15 Oct 2026)', year: '2026-10-12', url: 'https://gmk.center/en/news/european-carbon-prices-rose-to-e88-t-in-october/', accessed: '2026-10-22', approved: '2026-10-22' },
+  ukEts: { source: 'ICE UKA December 2026 futures, £62.90/t on 7 Oct 2026, reported by ClearBlue Markets (9 Oct 2026); converted at the ECB reference rate of 22 Oct 2026 (0.83770 £/€) = €75.09/t', year: '2026-10-07', url: 'https://www.clearbluemarkets.com/knowledge-base/ukas-rally-4-on-reports-of-a-uk-eu-ets-linkage-deal', accessed: '2026-10-22', approved: '2026-10-22' },
+  hydrogen: { source: 'EEX HYDRIX renewable hydrogen index, 2025 average €8.20/kg; range €7–10/kg from ACER European hydrogen markets 2025, reported by pv magazine (3 Dec 2025); 33.3 kWh/kg (LHV)', year: '2025', url: 'https://www.pv-magazine.com/2025/12/03/price-gap-between-conventional-renewable-hydrogen-widens-in-europe/', accessed: '2026-10-22', approved: '2026-10-22' },
+  fx: { source: 'European Central Bank euro foreign exchange reference rates', year: '2026-10-22', url: 'https://www.ecb.europa.eu/stats/shared/pdf/eurofxref.pdf', accessed: '2026-10-22', approved: '2026-10-22' },
+};
+
+// Fill a record's source fields and give it the "sourced" label.
+function applySource(r, src) {
+  if (!src) return r;
+  Object.assign(r, { source: src.source, year: src.year, url: src.url, accessed: src.accessed, approved: src.approved, confidence: 'B', verified: false, label: LABEL_SOURCED });
+  return r;
+}
 
 const REGISTRY = {};
 
@@ -36,6 +55,7 @@ function rec(path, value, unit, opts = {}) {
     label: LABEL,
     derived: opts.derived ?? false,
   };
+  applySource(REGISTRY[path], opts.src);
   return value;
 }
 
@@ -47,41 +67,47 @@ function rec(path, value, unit, opts = {}) {
 // carbon (gCO2e/kWh), gas (€/MWh_th commodity), carbonPrice (€/t), eu (EU member),
 // decarb2050 (grid carbon multiplier reached in 2050).
 // ---------------------------------------------------------------------------
+// Carbon prices (§5.6): latest market price with its date (walkthrough, 2026-10-21). One record per
+// scheme; the country table takes its value from these. Switzerland keeps an unresearched value.
+const EU_ETS = rec('country.carbonPrice.euEts', 88.3, '€/tCO2e', { dist: 'fixed', ref: '§5.6', src: SRC.euEts,
+  note: 'EU ETS price for EU-27, Norway and Iceland. Escalates at the carbon escalation rate.' });
+const UK_ETS = rec('country.carbonPrice.ukEts', 75, '€/tCO2e', { dist: 'fixed', ref: '§5.6', src: SRC.ukEts,
+  note: 'UK ETS price for the United Kingdom, rounded from €75.09. Escalates at the carbon escalation rate.' });
 const C = (name, currency, lat, lon, tMean, tAmp, solarYield, windCF, price, adder, carbon, gas, carbonPrice, eu, decarb2050) =>
   ({ name, currency, lat, lon, tMean, tAmp, solarYield, windCF, price, adder, carbon, gas, carbonPrice, eu, decarb2050 });
 
 export const COUNTRIES = {
-  AT: C('Austria', 'EUR', 47.6, 14.1, 8.5, 10.0, 1100, 0.24, 100, 45, 110, 42, 85, true, 0.15),
-  BE: C('Belgium', 'EUR', 50.6, 4.6, 10.5, 7.5, 950, 0.28, 90, 50, 140, 40, 85, true, 0.15),
-  BG: C('Bulgaria', 'EUR', 42.7, 25.5, 11.5, 11.0, 1350, 0.22, 95, 35, 400, 42, 85, true, 0.25),
-  HR: C('Croatia', 'EUR', 45.1, 15.2, 12.0, 10.0, 1250, 0.25, 100, 40, 200, 42, 85, true, 0.2),
-  CY: C('Cyprus', 'EUR', 35.1, 33.4, 19.5, 8.5, 1650, 0.22, 140, 40, 600, 70, 85, true, 0.3),
-  CZ: C('Czechia', 'EUR', 49.8, 15.5, 8.5, 9.5, 1000, 0.24, 95, 45, 430, 42, 85, true, 0.25),
-  DK: C('Denmark', 'DKK', 56.0, 10.0, 8.5, 7.5, 950, 0.34, 80, 40, 130, 40, 85, true, 0.1),
-  EE: C('Estonia', 'EUR', 58.6, 25.0, 6.0, 10.5, 900, 0.30, 90, 35, 500, 42, 85, true, 0.2),
-  FI: C('Finland', 'EUR', 61.9, 25.7, 4.0, 11.0, 850, 0.30, 55, 30, 80, 45, 85, true, 0.1),
-  FR: C('France', 'EUR', 46.6, 2.2, 12.0, 8.0, 1200, 0.26, 85, 40, 55, 40, 85, true, 0.5),
-  DE: C('Germany', 'EUR', 51.2, 10.4, 9.5, 8.5, 1000, 0.27, 95, 55, 380, 40, 85, true, 0.15),
-  GR: C('Greece', 'EUR', 39.1, 21.8, 16.5, 9.5, 1550, 0.27, 105, 40, 330, 42, 85, true, 0.2),
-  HU: C('Hungary', 'EUR', 47.2, 19.5, 11.0, 11.0, 1250, 0.22, 105, 40, 200, 42, 85, true, 0.2),
-  IE: C('Ireland', 'EUR', 53.4, -8.2, 10.0, 5.0, 900, 0.35, 110, 50, 280, 42, 85, true, 0.15),
-  IT: C('Italy', 'EUR', 42.8, 12.6, 14.5, 9.5, 1400, 0.22, 120, 45, 280, 45, 85, true, 0.2),
-  LV: C('Latvia', 'EUR', 56.9, 24.6, 6.5, 10.5, 900, 0.28, 90, 35, 120, 42, 85, true, 0.15),
-  LT: C('Lithuania', 'EUR', 55.2, 23.9, 7.0, 10.5, 950, 0.28, 90, 35, 180, 42, 85, true, 0.15),
-  LU: C('Luxembourg', 'EUR', 49.8, 6.1, 9.5, 8.0, 980, 0.25, 95, 45, 120, 42, 85, true, 0.15),
-  MT: C('Malta', 'EUR', 35.9, 14.4, 19.0, 7.5, 1650, 0.25, 130, 40, 380, 60, 85, true, 0.3),
-  NL: C('Netherlands', 'EUR', 52.1, 5.3, 10.5, 7.0, 950, 0.32, 90, 45, 300, 40, 85, true, 0.15),
-  PL: C('Poland', 'EUR', 51.9, 19.1, 8.5, 10.0, 1000, 0.27, 110, 40, 660, 42, 85, true, 0.3),
-  PT: C('Portugal', 'EUR', 39.4, -8.2, 16.0, 6.5, 1550, 0.27, 75, 40, 140, 42, 85, true, 0.1),
-  RO: C('Romania', 'EUR', 45.9, 24.9, 10.5, 11.5, 1300, 0.24, 100, 35, 260, 42, 85, true, 0.2),
-  SK: C('Slovakia', 'EUR', 48.7, 19.7, 9.5, 10.5, 1150, 0.22, 100, 40, 120, 42, 85, true, 0.2),
-  SI: C('Slovenia', 'EUR', 46.1, 14.9, 10.5, 10.0, 1200, 0.22, 105, 40, 230, 42, 85, true, 0.2),
-  ES: C('Spain', 'EUR', 40.4, -3.7, 15.0, 9.0, 1650, 0.26, 70, 40, 150, 40, 85, true, 0.1),
-  SE: C('Sweden', 'SEK', 60.1, 18.6, 6.5, 10.0, 900, 0.31, 45, 30, 25, 45, 85, true, 0.5),
-  GB: C('United Kingdom', 'GBP', 52.4, -1.5, 10.0, 6.5, 950, 0.34, 95, 55, 200, 40, 50, false, 0.1),
-  NO: C('Norway', 'NOK', 60.5, 8.5, 5.5, 9.0, 850, 0.32, 50, 25, 25, 45, 85, false, 0.5),
+  AT: C('Austria', 'EUR', 47.6, 14.1, 8.5, 10.0, 1100, 0.24, 100, 45, 110, 42, EU_ETS, true, 0.15),
+  BE: C('Belgium', 'EUR', 50.6, 4.6, 10.5, 7.5, 950, 0.28, 90, 50, 140, 40, EU_ETS, true, 0.15),
+  BG: C('Bulgaria', 'EUR', 42.7, 25.5, 11.5, 11.0, 1350, 0.22, 95, 35, 400, 42, EU_ETS, true, 0.25),
+  HR: C('Croatia', 'EUR', 45.1, 15.2, 12.0, 10.0, 1250, 0.25, 100, 40, 200, 42, EU_ETS, true, 0.2),
+  CY: C('Cyprus', 'EUR', 35.1, 33.4, 19.5, 8.5, 1650, 0.22, 140, 40, 600, 70, EU_ETS, true, 0.3),
+  CZ: C('Czechia', 'EUR', 49.8, 15.5, 8.5, 9.5, 1000, 0.24, 95, 45, 430, 42, EU_ETS, true, 0.25),
+  DK: C('Denmark', 'DKK', 56.0, 10.0, 8.5, 7.5, 950, 0.34, 80, 40, 130, 40, EU_ETS, true, 0.1),
+  EE: C('Estonia', 'EUR', 58.6, 25.0, 6.0, 10.5, 900, 0.30, 90, 35, 500, 42, EU_ETS, true, 0.2),
+  FI: C('Finland', 'EUR', 61.9, 25.7, 4.0, 11.0, 850, 0.30, 55, 30, 80, 45, EU_ETS, true, 0.1),
+  FR: C('France', 'EUR', 46.6, 2.2, 12.0, 8.0, 1200, 0.26, 85, 40, 55, 40, EU_ETS, true, 0.5),
+  DE: C('Germany', 'EUR', 51.2, 10.4, 9.5, 8.5, 1000, 0.27, 95, 55, 380, 40, EU_ETS, true, 0.15),
+  GR: C('Greece', 'EUR', 39.1, 21.8, 16.5, 9.5, 1550, 0.27, 105, 40, 330, 42, EU_ETS, true, 0.2),
+  HU: C('Hungary', 'EUR', 47.2, 19.5, 11.0, 11.0, 1250, 0.22, 105, 40, 200, 42, EU_ETS, true, 0.2),
+  IE: C('Ireland', 'EUR', 53.4, -8.2, 10.0, 5.0, 900, 0.35, 110, 50, 280, 42, EU_ETS, true, 0.15),
+  IT: C('Italy', 'EUR', 42.8, 12.6, 14.5, 9.5, 1400, 0.22, 120, 45, 280, 45, EU_ETS, true, 0.2),
+  LV: C('Latvia', 'EUR', 56.9, 24.6, 6.5, 10.5, 900, 0.28, 90, 35, 120, 42, EU_ETS, true, 0.15),
+  LT: C('Lithuania', 'EUR', 55.2, 23.9, 7.0, 10.5, 950, 0.28, 90, 35, 180, 42, EU_ETS, true, 0.15),
+  LU: C('Luxembourg', 'EUR', 49.8, 6.1, 9.5, 8.0, 980, 0.25, 95, 45, 120, 42, EU_ETS, true, 0.15),
+  MT: C('Malta', 'EUR', 35.9, 14.4, 19.0, 7.5, 1650, 0.25, 130, 40, 380, 60, EU_ETS, true, 0.3),
+  NL: C('Netherlands', 'EUR', 52.1, 5.3, 10.5, 7.0, 950, 0.32, 90, 45, 300, 40, EU_ETS, true, 0.15),
+  PL: C('Poland', 'EUR', 51.9, 19.1, 8.5, 10.0, 1000, 0.27, 110, 40, 660, 42, EU_ETS, true, 0.3),
+  PT: C('Portugal', 'EUR', 39.4, -8.2, 16.0, 6.5, 1550, 0.27, 75, 40, 140, 42, EU_ETS, true, 0.1),
+  RO: C('Romania', 'EUR', 45.9, 24.9, 10.5, 11.5, 1300, 0.24, 100, 35, 260, 42, EU_ETS, true, 0.2),
+  SK: C('Slovakia', 'EUR', 48.7, 19.7, 9.5, 10.5, 1150, 0.22, 100, 40, 120, 42, EU_ETS, true, 0.2),
+  SI: C('Slovenia', 'EUR', 46.1, 14.9, 10.5, 10.0, 1200, 0.22, 105, 40, 230, 42, EU_ETS, true, 0.2),
+  ES: C('Spain', 'EUR', 40.4, -3.7, 15.0, 9.0, 1650, 0.26, 70, 40, 150, 40, EU_ETS, true, 0.1),
+  SE: C('Sweden', 'SEK', 60.1, 18.6, 6.5, 10.0, 900, 0.31, 45, 30, 25, 45, EU_ETS, true, 0.5),
+  GB: C('United Kingdom', 'GBP', 52.4, -1.5, 10.0, 6.5, 950, 0.34, 95, 55, 200, 40, UK_ETS, false, 0.1),
+  NO: C('Norway', 'NOK', 60.5, 8.5, 5.5, 9.0, 850, 0.32, 50, 25, 25, 45, EU_ETS, false, 0.5),
   CH: C('Switzerland', 'CHF', 46.8, 8.2, 9.0, 9.0, 1150, 0.20, 95, 50, 40, 45, 85, false, 0.5),
-  IS: C('Iceland', 'ISK', 64.9, -19.0, 4.5, 6.0, 700, 0.38, 40, 25, 15, 80, 85, false, 0.8),
+  IS: C('Iceland', 'ISK', 64.9, -19.0, 4.5, 6.0, 700, 0.38, 40, 25, 15, 80, EU_ETS, false, 0.8),
 };
 REGISTRY['profiles.countries'] = {
   path: 'profiles.countries', value: 'built-in synthetic country set (31)', unit: '', low: null, high: null,
@@ -92,12 +118,13 @@ REGISTRY['profiles.countries'] = {
 };
 
 // Exchange rates to EUR (display only). Indicative; ECB reference rates to verify.
-export const FX = { EUR: 1, GBP: 0.85, NOK: 11.5, SEK: 11.3, DKK: 7.46, CHF: 0.95, ISK: 150 };
+export const FX = { EUR: 1, GBP: 0.83770, NOK: 10.4880, SEK: 11.1120, DKK: 7.4747, CHF: 0.9211, ISK: 136.20 };
 REGISTRY['project.fx'] = {
   path: 'project.fx', value: FX, unit: 'per EUR', low: null, high: null, distribution: 'fixed', basis: 'source',
   source: '', year: '', url: '', accessed: '', confidence: 'C', verified: false, sourceToVerify: 'ECB reference rates',
   note: 'Fixed rates; display conversion only. Engine works in EUR.', briefRef: '§5.1', label: LABEL, derived: false,
 };
+applySource(REGISTRY['project.fx'], SRC.fx);
 
 // ---------------------------------------------------------------------------
 // Choice definitions (BRIEF §8). Only choices that change the energy strategy.
@@ -452,7 +479,7 @@ export const FUEL = {
   gasTransportAdder: rec('fuel.gasTransportAdder', 4, '€/MWh_th', { low: 2, high: 8, verify: 'National gas transport tariffs', ref: '§5.4' }),
   dieselPrice: rec('fuel.dieselPrice', 110, '€/MWh_th', { low: 85, high: 140, verify: 'National fuel price statistics', ref: '§6' }),
   hvoPrice: rec('fuel.hvoPrice', 170, '€/MWh_th', { low: 130, high: 220, verify: 'Fuel supplier indications', ref: '§6' }),
-  hydrogenPrice: rec('fuel.hydrogenPrice', 150, '€/MWh_th', { low: 90, high: 250, verify: 'Hydrogen supply price indications', ref: '§5.4' }),
+  hydrogenPrice: rec('fuel.hydrogenPrice', 246, '€/MWh_th', { low: 210, high: 300, verify: 'Hydrogen supply price indications', ref: '§5.4', src: SRC.hydrogen, note: 'Renewable hydrogen delivered price; €8.20/kg ÷ 33.3 kWh/kg. Range €7–10/kg.' }),
   efGas: rec('fuel.efGas', 0.202, 'tCO2e/MWh_th', { low: 0.2, high: 0.205, verify: 'National GHG inventory emission factors', ref: '§9.6' }),
   efDiesel: rec('fuel.efDiesel', 0.267, 'tCO2e/MWh_th', { low: 0.264, high: 0.27, verify: 'National GHG inventory emission factors', ref: '§9.6' }),
   efHvo: rec('fuel.efHvo', 0.03, 'tCO2e/MWh_th', { low: 0.0, high: 0.06, verify: 'HVO supplier sustainability data', ref: '§9.6', note: 'Fossil-equivalent proxy; biogenic CO₂ not counted. Indicative.' }),
@@ -629,7 +656,7 @@ export function buildDefaultInputs(opts = {}) {
       contingency: rec('economics.contingency', 0.10, 'fraction of capex', { low: 0.05, high: 0.2, basis: 'judgement', ref: '§5.6' }),
       capexLow: rec('economics.capexLow', -0.30, 'fraction (AACE Class 5)', { basis: 'source', verify: 'AACE International RP 18R-97 (confirm revision and year)', ref: '§5.6' }),
       capexHigh: rec('economics.capexHigh', 0.50, 'fraction (AACE Class 5)', { basis: 'source', verify: 'AACE International RP 18R-97 (confirm revision and year)', ref: '§5.6' }),
-      carbonPrice: rec('economics.carbonPrice', 'by country', '€/tCO2e', { basis: 'source', derived: true, verify: 'EU ETS / UK ETS exchange data, official projections', ref: '§5.6' }),
+      carbonPrice: rec('economics.carbonPrice', 'by country', '€/tCO2e', { basis: 'source', derived: true, verify: 'EU ETS / UK ETS exchange data, official projections', ref: '§5.6', note: 'The country default comes from the scheme records country.carbonPrice.euEts and country.carbonPrice.ukEts (sourced); Switzerland is unresearched.' }),
       carbonEscalation: rec('economics.carbonEscalation', 0.02, 'real per yr', { low: 0, high: 0.05, basis: 'source', verify: 'EU ETS / UK ETS forward curves', ref: '§5.6' }),
       elecEscalation: rec('economics.elecEscalation', 0, 'real per yr', { low: -0.02, high: 0.02, basis: 'source', verify: 'ENTSO-E / forward curves', ref: '§5.6' }),
       gasEscalation: rec('economics.gasEscalation', 0, 'real per yr', { low: -0.02, high: 0.02, basis: 'source', verify: 'TTF/NBP forward curves', ref: '§5.6' }),
@@ -760,6 +787,9 @@ export function referenceT4(opts = {}) {
   inputs.load.phases = [{ itMW: 5, date: addMonths(s, 12) }];
   return inputs;
 }
+
+// Is this record researched and approved (label "sourced — not independently checked")?
+export function isSourced(r) { return !!r && r.label === LABEL_SOURCED; }
 
 export function getRegistry() {
   return REGISTRY;

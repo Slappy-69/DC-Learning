@@ -99,6 +99,7 @@ button, input, select { font: inherit; color: inherit; }
 .notice { background: var(--warn-bg); color: var(--warn); padding: 6px 8px; border-radius: var(--radius); font-size: 12px; }
 .tag { display: inline-block; font-size: 11px; line-height: 1.3; padding: 1px 6px; border-radius: 10px; white-space: nowrap; }
 .tag-unverified { background: var(--unv-bg); color: var(--unv); border: 1px solid color-mix(in srgb, var(--unv) 35%, transparent); }
+.tag-sourced { background: var(--info-bg); color: var(--info); border: 1px dashed color-mix(in srgb, var(--info) 55%, transparent); }
 .tag-basis { font-weight: 400; }
 .tag-required { background: var(--info-bg); color: var(--info); }
 .weights, .phases, .choice-row { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; margin: 10px 0; }

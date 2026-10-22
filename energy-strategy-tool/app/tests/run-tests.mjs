@@ -48,7 +48,7 @@
 import assert from 'node:assert/strict';
 import {
   referenceT1, referenceT3, runModel, normalizeInputs, buildContext, sizeOption, dispatchConfig, dispatchYear,
-  applyView, DEFAULT_VIEW, getRegistry, LABEL, generateOptions, effectiveWeights, H,
+  applyView, DEFAULT_VIEW, getRegistry, LABEL, LABEL_SOURCED, generateOptions, effectiveWeights, H,
   runModelSteps, mergeRuns, startPooledRun, toTransferable, STAGES, validateRunLog, stripTimestamps,
   logToCSV, logToJSON, logFileName, hashInputs, PROGRESS_EVERY,
   HOOKS, paretoFrontier, weightedPick, paretoTableRows, PRESETS,
@@ -368,13 +368,21 @@ await test('5c. "Show exceedance" removes unmet load on T3 and raises "Import ex
   return `${gridDep.length} grid-dependent T3 options: unmet 0 MWh, all flagged "Import exceeds grid capacity" (major).`;
 });
 
-await test('5d. Every default record carries the "indicative — unverified" label and a basis', () => {
+await test('5d. Every default record carries a label (unverified, or sourced with a full source record) and a basis', () => {
   const reg = getRegistry();
   const recs = Object.values(reg);
-  const bad = recs.filter((r) => r.label !== LABEL || !['source', 'run setting', 'judgement'].includes(r.basis) || r.verified !== false || r.confidence !== 'C');
-  assert.equal(bad.length, 0, `records without label/basis: ${bad.map((r) => r.path).join(', ')}`);
+  // OPEN-QUESTIONS 36 (owner, 2026-10-22): an unresearched record is "indicative — unverified", confidence C; a record
+  // researched and approved by the owner is "sourced — not independently checked", confidence B, with source, year,
+  // url, accessed and approved filled. No record is verified.
+  const okUnv = (r) => r.label === LABEL && r.confidence === 'C';
+  const okSrc = (r) => r.label === LABEL_SOURCED && r.confidence === 'B' && r.basis === 'source'
+    && ['source', 'year', 'url', 'accessed', 'approved'].every((k) => typeof r[k] === 'string' && r[k].length > 0) && /^https:\/\//.test(r.url)
+    && /^\d{4}-\d{2}-\d{2}$/.test(r.accessed) && /^\d{4}-\d{2}-\d{2}$/.test(r.approved);
+  const bad = recs.filter((r) => !(okUnv(r) || okSrc(r)) || !['source', 'run setting', 'judgement'].includes(r.basis) || r.verified !== false);
+  assert.equal(bad.length, 0, `records without label/basis/source record: ${bad.map((r) => r.path).join(', ')}`);
   const byBasis = recs.reduce((a, r) => ((a[r.basis] = (a[r.basis] || 0) + 1), a), {});
-  return `${recs.length} default records; all "${LABEL}", confidence C, verified false; basis: ${Object.entries(byBasis).map(([k, v]) => `${k} ${v}`).join(', ')}.`;
+  const nSrc = recs.filter(okSrc).length;
+  return `${recs.length} default records: ${recs.length - nSrc} "${LABEL}" (confidence C), ${nSrc} "${LABEL_SOURCED}" (confidence B, full source record); none verified; basis: ${Object.entries(byBasis).map(([k, v]) => `${k} ${v}`).join(', ')}.`;
 });
 
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useState } from 'react';
-import { getRegistry, registryValue, isAtDefault, LABEL } from '../engine/defaults.js';
+import { getRegistry, registryValue, isAtDefault, LABEL, isSourced } from '../engine/defaults.js';
 
 // The §18 record of a path; input records are created by buildDefaultInputs, so fill the registry on first use.
 function recordOf(path) {
@@ -13,10 +13,14 @@ function recordOf(path) {
 export function unverifiedTip(path) {
   const r = recordOf(path);
   if (!r) return null;
+  if (isSourced(r)) {
+    return `${r.label} — ${r.source} (value dated ${r.year}; ${r.url}; accessed ${r.accessed}; approved by the owner ${r.approved})${r.note ? ` — ${r.note}` : ''}`;
+  }
   return `${LABEL} (${r.basis})${r.sourceToVerify ? ` — source to verify against: ${r.sourceToVerify}` : ' — no source'}${r.note ? ` — ${r.note}` : ''}`;
 }
 
-// "indicative — unverified" label (§23). It has no action, so it is not a tab stop (it used to be:
+// "indicative — unverified" label (§23), or "sourced — not independently checked" for a record researched
+// and approved by the owner (OPEN-QUESTIONS 36, 2026-10-22). It has no action, so it is not a tab stop (it used to be:
 // 54+ empty stops in the inputs panel, and aria-label on a role-less span). The basis shows on hover
 // (title). For screen readers: with `descId`, a hidden copy of the text carries that id so the control
 // it labels can point at it with aria-describedby (heard with the control, not as part of its name);
@@ -25,10 +29,11 @@ export function UnverifiedTag({ path, compact, descId, text }) {
   const r = recordOf(path);
   if (!r) return null;
   const tip = unverifiedTip(path);
+  const sourced = isSourced(r);
   return (
-    <span className="tag tag-unverified" title={tip}>
-      {text || (compact ? 'unverified' : LABEL)}
-      {!compact && !text && <span className="tag-basis"> ({r.basis})</span>}
+    <span className={sourced ? 'tag tag-sourced' : 'tag tag-unverified'} title={tip}>
+      {text || (compact ? (sourced ? 'sourced' : 'unverified') : r.label)}
+      {!compact && !text && !sourced && <span className="tag-basis"> ({r.basis})</span>}
       {descId ? <span id={descId} hidden>{tip}</span> : <span className="sr-only">{`: ${tip}`}</span>}
     </span>
   );

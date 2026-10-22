@@ -130,9 +130,9 @@ export default function App() {
     });
   };
 
-  const unverifiedCount = useMemo(() => {
-    const reg = getRegistry();
-    return Object.keys(reg).length;
+  const [unverifiedCount, recordCount] = useMemo(() => {
+    const reg = Object.values(getRegistry());
+    return [reg.filter((r) => r.label === LABEL).length, reg.length];
   }, []);
   const { w } = effectiveWeights(inputs.weights);
   const start = run ? run.meta.analysisStart : inputs.project.analysisStart;
@@ -204,7 +204,7 @@ export default function App() {
               {penaltyOn ? <> · <strong>Site-fit penalty in deliverability: on</strong></> : null}
             </span></div>
             <div className="hs-item"><span className="hs-k">Weights</span><span className="hs-v">Cost {(w.cost * 100).toFixed(0)} · Carbon {(w.carbon * 100).toFixed(0)} · TTP {(w.ttp * 100).toFixed(0)} · {penaltyOn ? 'Deliverability (incl. site fit)' : 'Deliv.'} {(w.deliverability * 100).toFixed(0)} %</span></div>
-            <div className="hs-item"><span className="hs-k">Unverified defaults</span><span className="hs-v">All {unverifiedCount} default records are <span className="tag tag-unverified">{LABEL}</span></span><span className="hs-sub">The count affecting the leader needs a per-option record map (not in this slice)</span></div>
+            <div className="hs-item"><span className="hs-k">Unverified defaults</span><span className="hs-v">{unverifiedCount} of {recordCount} default records are <span className="tag tag-unverified">{LABEL}</span>{recordCount - unverifiedCount > 0 ? <> · {recordCount - unverifiedCount} <span className="tag tag-sourced">sourced — not independently checked</span></> : null}</span><span className="hs-sub">The count affecting the leader needs a per-option record map (not in this slice)</span></div>
           </div>
 
           <div className="status" role="status" aria-live="polite">
