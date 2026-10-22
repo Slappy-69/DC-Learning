@@ -1,0 +1,113 @@
+# Build plan: the walkthrough changes
+
+The owner's walkthrough of 2026-10-21 agreed a set of changes to the tool. This plan breaks them into work packages in the order recorded in the project's handoff note at the end of the walkthrough (`claude/handoff-concept-tool.md` in the owner's Claude project); confirm the order with the owner before the first package. **Nothing here has been started.** Start only when the owner asks, and take the packages in order unless the owner says otherwise.
+
+The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lists the brief sections, the open questions to ask the owner first, the acceptance tests (brief §21) and the user-guide chapters and mock-ups that show the agreed design. The working rules are in `../../CLAUDE.md`.
+
+## For every package
+
+1. **Read** the brief sections listed, the open questions listed (`../brief-v2/OPEN-QUESTIONS.md`), `KNOWN-ISSUES.md`, and the user-guide chapters listed (`user-guide/src/`). Open the mock-ups listed in a browser (`user-guide/mock/*.html`); they are drawings of the agreed screens, and their layout and wording are illustrative.
+2. **Ask the owner** the listed open questions, **one question per message**, in plain words, with the options and what each would mean. Do not assume an answer. Record each answer, with its date, in `OPEN-QUESTIONS.md` and the brief.
+3. **Branch** from `main`: `feature/<short-name>`. Push it as work progresses. GitHub runs the checks on every push to a `feature/` branch.
+4. **Build and test.** `npm test` and `npm run test:browser` in `app/` must pass. Add tests for each acceptance test listed. Compare T1 results with the "before" export in `user-guide/data/` (a full T1 run of 2026-10-21) and explain every difference.
+5. **Verify** (the owner's rule): builder and reviewer Claude Opus, verifier Claude Haiku; after every three Haiku checks, one Opus review. Reports go in `../verification/<package>/` and a line in `../verification/HISTORY.md`.
+6. **Record**: update `../STATUS.md` after every completed step, `../app/BUILD-NOTES.md` for defaults, decisions and test runs, and the user guide (move the feature from "Agreed" to "Built", replace its mock-up with a screenshot of the program, update the status table in chapter 56). Rebuild the EPUB and PDF only when the owner asks (`user-guide/README.md`).
+7. **Ask before merging** into `main`. Explain what changed in plain words.
+
+## Work packages
+
+### 0. Research the defaults before the first release
+
+- **Goal:** every value labelled judgement or indicative gets a source, year, link and access date, or stays labelled "judgement" with a reason.
+- **Scope:** the research list in the decision log (`walkthrough-decisions-2026-10-21.md`, "Open research before first release"); the defaults that chapter 50 of the user guide marks "update suggested" (UK carbon price, hydrogen price, exchange rates, wholesale prices for seven countries, grid carbon for 19 countries, roof PV O&M, battery and gas-turbine capex, wind PPA, genset unit size and lead time, SMR) and the basis for grid carbon; the new country tables (grid availability, connection time, connection capex); the data sources in brief §18.
+- **Start from:** user guide chapter 50 (important defaults compared with published values on 2026-10-21, with sources), Appendix B (country data against Ember 2025, wholesale prices and ECB rates), chapter 52 (data sources and APIs), chapter 53 (licences), chapter 59 (references).
+- **Ask the owner:** propose each change of a default with its source; the owner approves before the default changes. OPEN-QUESTIONS 26 (density rule) is part of this research.
+- **Acceptance:** AC 9 and AC 15 still pass; every changed default has a filled §18 record; Appendix A of the guide is regenerated from the registry (`user-guide/tools/make_appendices.py`).
+
+### 1. Map pin and country setup
+
+- **Brief:** §4, §5.1, §10.2, §18. **Acceptance:** AC 17.
+- **Decisions:** location by a pin on a map bundled with the program (OpenStreetMap data in Protomaps PMTiles format, all of Europe, roads level); country from the pin, shown and editable; currency per site from a fixed list; nearest ASHRAE design station named with its distance and flagged; hourly weather from NOAA station records cleaned into a usable year by the app (method to research), or an uploaded EPW file.
+- **Ask the owner:** the map licence, attribution and file size found in research (the size adds to the 370 MB program); the ASHRAE licence result; whether weather processing (NOAA cleaning) belongs here or in package 0.
+- **Watch:** the Windows program must still make no network connection (packaging check D12 traces every process); the map must load from the program's own files.
+- **Mock-up:** `m01-location`. **Guide:** chapters 2, 14, 52, 53.
+
+### 2. Input model with flagged defaults (and the Beta switch)
+
+- **Brief:** §2 principles 3 and 10, §3, §5 (all sections), §12.12, §15 "Assumed defaults". **Acceptance:** AC 16, AC 27.
+- **Decisions:** only the location and site area are required; the IT load can be estimated from area; the grid values can be "Not known" (country defaults); every value not entered raises an "assumed default" flag on each option that uses it, with its source; an economics section (evaluation periods, WACC with its plain explanation, latest carbon and gas prices with dates, escalation forecasts, revenue options off, currency); the cooling type chosen by the engineer with a typical PUE and maximum demand offered; site area as one number, and the Site tab as Beta (general settings page with the switch, off by default; Beta label; kept out of the ranking and the PDF).
+- **Ask the owner:** OPEN-QUESTIONS 21 (which evaluation period scores), 25 (land budget for ground solar and wind with the Site tab hidden), 26 (density rule), 28 (cooling before a choice; comparing types).
+- **Code today:** "Rank requirement-compliant options first" also counts "Does not fit" (`app/src/engine/scoring.js`, `isRequirementCompliant`), and the site layout runs in every run and sets the land for ground solar. With the Site tab as Beta, site fit must not count in the ranking (AC 27); how ground solar gets its land without the layout is OPEN-QUESTIONS 25.
+- **Mock-ups:** `m02-knowledge-levels`, `m05-economics`, `m10-settings`. **Guide:** chapters 14–19, 28, 30, 32, 42.
+
+### 3. Contracted grid capacity and the fixed grid connection charge
+
+- **Brief:** §5.4, §9.2, §9.4, §9.5. **Acceptance:** AC 14, AC 18.
+- **Decisions:** each option has its own contracted grid capacity, set by the engineer (its import limit); one fixed grid connection charge, the same for every option; grid connection capex and reinforcement default 0 with the country value shown for reference, flagged as assumed. Brief revision 5 reads the charge and the capex as one; whether they are is part of OPEN-QUESTIONS 20.
+- **Ask the owner:** OPEN-QUESTIONS 19 (how the capacity is set for generated options), 20 (how the charge is entered; islanded options at 0 MW).
+- **Code today:** grid connection in `app/src/engine/sizing.js`; the import limit in `dispatch.js` (shared offered profile); the connection capex in `evaluate.js` line 99 (`KNOWN-ISSUES.md` item 7).
+- **Guide:** chapters 9, 17, 19, 35, 37, 39.
+
+### 4. Flexibility and battery logic
+
+- **Brief:** §5.3 (load shape, demand flexibility, battery response), §5.5 (resilience reserve, backup gensets), §8 C12 and C16, §9.2, §9.4, §9.7. **Acceptance:** AC 19, AC 20.
+- **Decisions:** load shapes (flat, daily fluctuation, AI training, AI inference) with editable defaults and the sub-hour caveat; flexibility off by default with the full parameter set and a historical analysis of trigger hours; battery response sized by default to cover the trigger hours, with the engineer choosing which of battery size, trigger threshold or hours covered is held fixed; batteries split into a resilience reserve (5 minutes of UPS, always kept) and an economic battery; battery capex in the ledger; gensets tested 6 h a year at a separate 75 % test load; optional primary-power hours, dispatched and costed.
+- **Ask the owner:** OPEN-QUESTIONS 33 (C12 and the economic battery), 34 (flexibility in the merit order); the AI load-shape defaults found in research.
+- **Mock-ups:** `m03-load-flexibility`, `m04-batteries-backup`. **Guide:** chapters 5, 7, 16, 18, 35, 37.
+
+### 5. The O1–O3 PPA and carbon rules
+
+- **Brief:** §8 C13, §9.6, §11, §15. **Acceptance:** AC 21, AC 22, AC 23.
+- **Decisions:** O1, a PPA that cannot be delivered (no grid, islanded) is flagged and the equivalent no-PPA option is preferred; O2, hourly CFE counts PPA energy only against grid energy used in that hour; O3, two `grid-ppa` flags (import-limited, and other undelivered volume above the load), each with its share of the undelivered volume.
+- **Ask the owner:** OPEN-QUESTIONS 22 (how O1 works in the ranking).
+- **Code today:** the `grid-ppa` flag in `evaluate.js` `optionFlags()`; CFE in `dispatch.js` (`cfeMWh`) and `evaluate.js` `carbon()`; ranking in `scoring.js`. Background: `../verification/port/OPUS-review.md` section 7.
+- **Guide:** chapters 12, 40, 42, 44.
+
+### 6. Results cards and the trade-off chart
+
+- **Brief:** §11 (weight-change description), §12, §12.2, §12.11, §16. **Acceptance:** AC 24 (cards and trade-off parts).
+- **Decisions:** the results open on the top five cards (scores, LCOE, carbon intensity, resilience, capex, main flags, assumed defaults with sources, up to three pros and three cons, with the comparison set stated); the trade-off chart defaults to cost (vertical) against carbon (horizontal) with resilience as bubble size and colour, either axis switchable; the effect of each weight change described live.
+- **Ask the owner:** OPEN-QUESTIONS 24 (which five; comparison set), 29 (screen structure), 30 (run progress), 35 (repaint target); `KNOWN-ISSUES.md` item 5 (identical options).
+- **Mock-ups:** `m06-top5`, `m11-tradeoff`. **Guide:** chapters 13, 22, 24, 45.
+
+### 7. Compare
+
+- **Brief:** §12.7. **Acceptance:** AC 24 (compare part).
+- **Decisions:** up to three options side by side, chosen from the cards or the trade-off chart, with a deep-dive card each; headline figures and the choices on which they differ.
+- **Mock-up:** `m07-compare`. **Guide:** chapter 25.
+
+### 8. Dispatch views (and the screening tier)
+
+- **Brief:** §9.1, §12.13, §17. **Acceptance:** AC 25, and AC 4 (screening against verification within ±5 %).
+- **Decisions:** representative-day screening for every option, full 8,760-hour verification for the top options; dispatch views of any period of the year, for verified options only; every figure says which model produced it.
+- **Ask the owner:** OPEN-QUESTIONS 23 (representative-day method; number verified).
+- **Watch:** this is the largest engine change. The owner's run time today is 15–20 s for 2,000 options; the brief's targets need the screening tier. The Dispatch and Sensitivity tabs re-run an option and check it reproduces the ranking's figures; keep that check.
+- **Guide:** chapters 10, 26, 37.
+
+### 9. Tornado
+
+- **Brief:** §13.3. **Acceptance:** AC 24 (tornado part).
+- **Decisions:** a tick-box list of drivers: the seven the decision log names (gas price, grid price, WACC, carbon price, capex, capacity factors, grid connection date) plus additions such as IT load, PUE, battery capex, grid connection capex, evaluation period, escalation, flexibility trigger and generator test hours; the result measured defaults to LCOE, with NPV, carbon and weighted score selectable.
+- **Built today:** seven fixed drivers: grid connection date, grid price, grid carbon, gas price, carbon price, WACC and IT load. Capex, capacity factors and the other additions are new.
+- **Code today:** `app/src/engine/sensitivity.js`; `KNOWN-ISSUES.md` item 3 affects the grid-price bar.
+- **Mock-up:** `m08-tornado`. **Guide:** chapters 27, 46.
+
+### 10. PDF export
+
+- **Brief:** §12.10. **Acceptance:** AC 26.
+- **Decisions:** one PDF, inputs first, results after, saved through a file dialog; no Excel; the Site tab (Beta) is not included.
+- **Ask the owner:** OPEN-QUESTIONS 32 (sections and order).
+- **Watch:** the program must stay offline; the run log already uses a save dialog (see `../packaging/README.md`).
+- **Mock-up:** `m09-pdf`. **Guide:** chapter 29.
+
+## Not scheduled
+
+Ask the owner before starting any of these:
+
+- Small fixes waiting for a decision: `KNOWN-ISSUES.md` items 1, 2, 3, 8 and 9 (each is small, with a test).
+- Saving and reopening a study (OPEN-QUESTIONS 27).
+- The plain-English summary (§14; OPEN-QUESTIONS 12).
+- Ranges, Monte Carlo, robust pick, breakevens and scenarios (§13).
+- Parallel coordinates, the choice-impact chart, the schematic, key quantities, presentation mode, snapshots, undo and redo (§12, §16).
+- Code signing for the Windows program (`../packaging/README.md`).
+- The packaging Opus review that did not complete, and the NVDA screen-reader walk-through.

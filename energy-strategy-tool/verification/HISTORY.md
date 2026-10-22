@@ -76,3 +76,10 @@ Detailed reports from 2026-10-16 onwards are in the per-slice folders next to th
 | Haiku check H1-packaging | Haiku | 7 checks: P9 (axe) had silently never run; the desktop program reached the network at start-up (Electron spell-check dictionary download); D6 could not see it; `data:` downloads not bound to the app; checker crashed on malformed input; workflow upload and README details. All fixed or recorded (`packaging/PACKAGING-PROGRESS.md`); new D12 traces every process (negative control: the pre-fix build fails it) |
 | Opus review | Opus | Started 2026-10-19; stopped at the weekly usage limit without a report. **Not done** |
 | Close-out (owner, 2026-10-21) | Opus | Windows and phone only: Windows program for download, Linux build kept only for the launch test, macOS and Linux downloads dropped; phone = private Claude artifact (updated). D12 false alarm on GitHub (Chromium's send-nothing IPv6 route probe) fixed. Merged to `main` |
+
+## Brief revision 5 and the build handoff (2026-10-21 to 2026-10-22)
+
+| Step | Model | Result |
+|---|---|---|
+| Revision 5 and handoff documents | Opus | The owner's walkthrough of 2026-10-21 folded into the brief; `docs/BUILD-PLAN.md`, `docs/KNOWN-ISSUES.md`, the decision log, the user guide and `CLAUDE.md` added; `STATUS.md` brought up to date. The guide's tools rebuilt the EPUB (EPUBCheck: no messages) and the PDF (171 pages), and every generator reproduced its stored files |
+| Haiku check 1 | Haiku | 12 findings (2 high, 8 medium, 2 low). High: the O1 interim rule was weaker than the decision and the demotion option clashed with principle 5; the tornado's built drivers were listed wrongly. All 12 confirmed against the code and fixed (`brief-v2/CHANGELOG.md`, "Verifier findings (Haiku check, 2026-10-22)") |
