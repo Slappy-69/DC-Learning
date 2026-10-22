@@ -1128,7 +1128,7 @@ await check('B30. Site tab (Beta): hidden by default; turned on in the general s
   const headers = () => page.$$eval('.rank-table thead th', (ths) => ths.map((t) => t.textContent.trim()));
   const off1 = { tabs: await tabNames(), rows: await rows(), leader: await leader(), heads: await headers(), strip: await page.locator('.header-strip').innerText() };
   ok(!off1.tabs.some((t) => /^Site/.test(t)), `Site tab shown by default: ${off1.tabs.join(', ')}`);
-  ok(!/Site fit/.test(off1.strip), 'header strip shows site fit with the tab off');
+  ok(!/Site fit/i.test(off1.strip), 'header strip shows site fit with the tab off');
   ok(!off1.heads.some((h) => /Site fit|Land take/.test(h)), `options table shows site columns with the tab off: ${off1.heads.join(', ')}`);
   ok(!(await page.locator('a.skip', { hasText: 'Skip to site plan' }).count()), '"Skip to site plan" shown with the tab off');
   await enableSiteBeta(page);
@@ -1136,7 +1136,7 @@ await check('B30. Site tab (Beta): hidden by default; turned on in the general s
   ok(!/Screening options/.test(status), 'turning the Site tab on started a re-run');
   const on = { tabs: await tabNames(), rows: await rows(), leader: await leader(), heads: await headers(), strip: await page.locator('.header-strip').innerText() };
   ok(on.tabs.includes('Site Beta'), `Site tab not labelled Beta: ${on.tabs.join(', ')}`);
-  ok(/Site fit \(Beta\)/.test(on.strip), 'header strip has no site-fit item with the tab on');
+  ok(/Site fit \(Beta\)/i.test(on.strip), 'header strip has no site-fit item with the tab on');
   ok(on.heads.some((h) => /Site fit \(Beta\)/.test(h)), 'options table has no site-fit column with the tab on');
   ok(JSON.stringify(on.rows) === JSON.stringify(off1.rows) && on.leader === off1.leader, 'the ranking differs with the Site tab on');
   // Off again from the Site tab: back to Options, the same ranking.
