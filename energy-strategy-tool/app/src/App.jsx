@@ -9,6 +9,8 @@ import DispatchView from './components/DispatchView.jsx';
 import SensitivityView from './components/SensitivityView.jsx';
 import { useCompute } from './useCompute.js';
 import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount } from './engine/index.js';
+import { viewSetting, withoutSiteFilters } from './engine/view.js';
+import { UnverifiedTag } from './components/Field.jsx';
 import { scoreOptions, effectiveWeights, applyView } from './engine/scoring.js';
 import { GUARDRAIL, sig } from './format.js';
 
@@ -65,6 +67,10 @@ export default function App() {
   const [sensOptionId, setSensOptionId] = useState(null); // option tested on the Sensitivity tab (null = the leader)
   const [focusChart, setFocusChart] = useState(false); // "Skip to trade-offs chart" request
   const [focusPlan, setFocusPlan] = useState(false); // "Skip to site plan" request
+  // General settings (§12.12): the Site tab (Beta) switch, off by default (walkthrough, 2026-10-21). A view setting:
+  // it changes what is shown, never a score, a rank or a run (AC 27).
+  const [siteBeta, setSiteBetaState] = useState(() => viewSetting('siteTabBeta') === true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   // Phone width (review O1): once a run has finished, the run progress panel, its event log and the run summary
   // fold into one "Run details" disclosure (closed by default, one tap away) so the results come first; while a
   // run is in progress the progress panel stays visible.
@@ -76,6 +82,16 @@ export default function App() {
   const prevRunRules = useRef(null);
 
   const update = useCallback((path, val) => setInputs((cur) => setIn(cur, path, val)), []);
+  // Turning the Site tab off removes every site-fit part of the main flow: the tab, site-fit view filters and the
+  // optional site-fit penalty (which belongs to the Beta settings only, BRIEF §9.9).
+  const setSiteBeta = (on) => {
+    setSiteBetaState(on);
+    if (!on) {
+      setTab((t) => (t === 'site' ? 'options' : t));
+      setView((v) => withoutSiteFilters(v));
+      if (inputs.deliverability.siteFitPenalty) update('deliverability.siteFitPenalty', false);
+    }
+  };
   const setWeights = useCallback((w) => setInputs((cur) => ({ ...cur, weights: { ...w } })), []);
 
   // Re-score the latest run with the current weights and scoring settings (no dispatch).
@@ -149,13 +165,13 @@ export default function App() {
     return c;
   }, [run]);
   const penaltyOn = !!inputs.deliverability.siteFitPenalty;
-  const TABS = [['options', 'Options'], ['tradeoffs', 'Trade-offs'], ['site', 'Site'], ['dispatch', 'Dispatch'], ['sensitivity', 'Sensitivity']];
+  const TABS = [['options', 'Options'], ['tradeoffs', 'Trade-offs'], ...(siteBeta ? [['site', 'Site']] : []), ['dispatch', 'Dispatch'], ['sensitivity', 'Sensitivity']];
 
   // Run progress, run summary and run-level flags; on a phone they fold into "Run details" (review O1).
   const progressEl = <RunProgress compute={compute} open={progressOpen} onToggle={setProgressOpen} />;
   const summaryEl = run ? (
     <>
-      <RunSummary run={run} open={summaryOpen} onToggle={setSummaryOpen} onInclude={onInclude} onSamplingOff={() => update('settings.sampleAboveCap', false)} />
+      <RunSummary run={run} open={summaryOpen} onToggle={setSummaryOpen} onInclude={onInclude} onSamplingOff={() => update('settings.sampleAboveCap', false)} siteBeta={siteBeta} />
       {run.runFlags.length ? (
         <ul className="run-flags">{run.runFlags.map((f) => <li key={f.id} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
       ) : null}
@@ -173,7 +189,7 @@ export default function App() {
     <div className="app">
       <a className="skip" href="#results">Skip to results</a>
       {run ? <a className="skip" href={`#tradeoffs-chart`} onClick={skipToChart}>Skip to trade-offs chart</a> : null}
-      {run ? <a className="skip" href="#site-plan" onClick={skipToPlan}>Skip to site plan</a> : null}
+      {run && siteBeta ? <a className="skip" href="#site-plan" onClick={skipToPlan}>Skip to site plan</a> : null}
       <header className="topbar">
         <div className="brand">
           <h1>Concept energy optioneering</h1>
@@ -183,19 +199,33 @@ export default function App() {
           <button type="button" className="chip-btn panel-toggle" aria-expanded={panelOpen} aria-controls="inputs-panel" onClick={() => setPanelOpen(!panelOpen)}>{panelOpen ? 'Close inputs' : 'Inputs'}</button>
           <button type="button" className="chip-btn" onClick={() => setInputs(referenceT1())}>Load T1 example</button>
           <button type="button" className="chip-btn" onClick={() => setInputs(buildDefaultInputs())}>Reset to defaults</button>
+          <button type="button" className="chip-btn" aria-expanded={settingsOpen} aria-controls="general-settings" onClick={() => setSettingsOpen(!settingsOpen)}>General settings</button>
         </div>
       </header>
+      {settingsOpen ? (
+        <section id="general-settings" className="general-settings" aria-labelledby="gs-title">
+          <h2 id="gs-title">General settings</h2>
+          <h3>Features</h3>
+          <div className="gs-row">
+            <input id="gs-site-beta" type="checkbox" checked={siteBeta} onChange={(e) => setSiteBeta(e.target.checked)} aria-describedby="gs-site-beta-desc" />
+            <label htmlFor="gs-site-beta">Site tab <span className="beta-badge">Beta</span></label>
+            {siteBeta === (viewSetting('siteTabBeta') === true) ? <UnverifiedTag path="view.siteTabBeta" compact /> : null}
+            <p id="gs-site-beta-desc" className="field-hint">Site layout, boundary drawing, GeoJSON/KML import and site fit. Hidden by default. When on, it is labelled Beta, and it never affects the ranking or the PDF export.</p>
+          </div>
+          <button type="button" className="chip-btn" onClick={() => setSettingsOpen(false)}>Close settings</button>
+        </section>
+      ) : null}
 
       <div className="layout">
         <aside id="inputs-panel" className={`panel ${panelOpen ? 'open' : ''}`} aria-label="Inputs">
-          <InputsPanel inputs={inputs} update={update} setWeights={setWeights} />
+          <InputsPanel inputs={inputs} update={update} setWeights={setWeights} siteBeta={siteBeta} />
         </aside>
 
         <main id="results" className="main" tabIndex={-1}>
           <div className="header-strip" role="region" aria-label="Results header">
             <div className="hs-item"><span className="hs-k">Options</span><span className="hs-v">{run ? `${shown.toLocaleString('en-GB')} shown / ${run.options.length.toLocaleString('en-GB')} screened / ${run.generation.totalCombinations.toLocaleString('en-GB')} combinations · ${dominated.toLocaleString('en-GB')} dominated` : '—'}</span></div>
             <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">Rank probability not available in this slice (no Monte Carlo)</span></div>
-            <div className="hs-item"><span className="hs-k">Site fit</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit.' : `Status only: it changes no score${inputs.settings.rankCompliantFirst ? ' (compliant-first ranking is on)' : ' or rank'}.`} Site inputs still size fill-residual solar and set the POC and gas-main route costs.</span></div>
+            {siteBeta ? <div className="hs-item"><span className="hs-k">Site fit (Beta)</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit.' : 'Status only: it changes no score or rank.'} Site inputs still size fill-residual solar and set the POC and gas-main route costs.</span></div> : null}
             <div className="hs-item"><span className="hs-k">Model</span><span className="hs-v">Full-year hourly (8760 h)</span><span className="hs-sub">Synthetic profiles · {run ? COUNTRIES[run.country].name : ''}</span></div>
             <div className="hs-item"><span className="hs-k">Settings</span><span className="hs-v">
               Sample above cap: {inputs.settings.sampleAboveCap ? 'On' : 'Off'} · Hide dominated: {view.hideDominated ? 'On' : 'Off'} · View filters: {viewFilterCount}
@@ -248,13 +278,13 @@ export default function App() {
                       e.preventDefault();
                       const n = TABS[k][0];
                       setTab(n); setTimeout(() => document.getElementById(`tab-${n}`)?.focus(), 0);
-                    }}>{label}</button>
+                    }}>{label}{id === 'site' ? <> <span className="beta-badge">Beta</span></> : null}</button>
                 ))}
               </div>
               <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} onShowDispatch={showDispatch} />
-                  : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} onShowSite={showSite} onShowDispatch={showDispatch} />
-                    : tab === 'site' ? <SiteView run={run} inputs={inputs} update={update} optionId={siteOptionId} setOptionId={setSiteOptionId} computing={compute.status === 'running'} focusPlan={focusPlan} onPlanFocused={() => setFocusPlan(false)} />
+                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} />
+                  : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} />
+                    : tab === 'site' && siteBeta ? <SiteView run={run} inputs={inputs} update={update} optionId={siteOptionId} setOptionId={setSiteOptionId} computing={compute.status === 'running'} focusPlan={focusPlan} onPlanFocused={() => setFocusPlan(false)} />
                       : tab === 'dispatch' ? <DispatchView run={run} optionId={dispatchOptionId} setOptionId={setDispatchOptionId} />
                         : <SensitivityView run={run} optionId={sensOptionId} setOptionId={setSensOptionId} />}
               </div>

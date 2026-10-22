@@ -694,9 +694,14 @@ export async function siteFitTests(test, ctxRuns) {
       assert.ok(e && e.doesNotFit === noFit.length && e.note.startsWith(`${noFit.length.toLocaleString('en-GB')} options do not fit`), `${id} note: ${e && e.note}`);
     }
     const B = await getViewBundle();
-    const html = B.renderSummary(runT2);
+    // AC 7 applies with the Site tab (Beta) turned on (walkthrough, 2026-10-21); with it off the notes carry no
+    // site-fit count (BRIEF §8 rules).
+    const html = B.renderSummary(runT2, true);
     const notes = [...html.matchAll(/class="sub site-note">([^<]*)</g)].map((m) => m[1]);
     assert.equal(notes.length, 2, 'run summary does not show the C17 and C18 notes');
+    const htmlOff = B.renderSummary(runT2, false);
+    assert.equal((htmlOff.match(/site-note/g) || []).length, 0, 'Site tab off: the run summary still shows "do not fit" notes');
+    assert.ok(!/options do not fit/.test(htmlOff), 'Site tab off: the run summary still counts options that do not fit');
     assert.ok(notes.every((t) => t.startsWith(`${noFit.length.toLocaleString('en-GB')} options do not fit`)));
     out.push(`C17/C18 at defaults; run summary notes: "${notes[0]}" / "${notes[1]}"`);
     // No option hidden: with default settings "Hide dominated options" is off and every option is listed.

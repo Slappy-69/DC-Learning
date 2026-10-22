@@ -94,7 +94,7 @@ export function paretoFrontier(points) {
 // plain-English summary (when built) use this same function, so they always name the same option.
 // With "Rank requirement-compliant options first" off (default), rank 1 is the highest weighted score,
 // ties to the lower id. With it on, rank 1 is the best-scoring requirement-compliant option: resilience not
-// "Does not meet" and site fit not "Does not fit" (scoring.js isRequirementCompliant).
+// "Does not meet" (scoring.js isRequirementCompliant; site fit no longer counts, walkthrough 2026-10-21).
 export function weightedPick(options) {
   let best = null;
   for (const o of options) if (Number.isFinite(o.rank) && (!best || o.rank < best.rank)) best = o;
@@ -103,7 +103,7 @@ export function weightedPick(options) {
 
 // Highest weighted score, ties broken by id (the order rankOptions() uses within a group). Differs
 // from weightedPick() only when "Rank requirement-compliant options first" is on and the top scorer is not
-// requirement-compliant (resilience "Does not meet" or site fit "Does not fit"); the view then marks it
+// requirement-compliant (resilience "Does not meet"); the view then marks it
 // separately and says why.
 export function highestWeightedScore(options) {
   let best = null;
@@ -243,7 +243,6 @@ export function paretoView(run, axes, view = defaultView()) {
     // The requirement checks it fails, in words (for the pick line), when the reason is compliant-first.
     topScoreFailing: topDiffers ? [
       ...(top.resilience && top.resilience.status === 'Does not meet' ? ['its resilience status is "Does not meet"'] : []),
-      ...(top.siteFit && top.siteFit.status === 'Does not fit' ? ['its site-fit status is "Does not fit"'] : []),
     ] : null,
     topScoreVisible: topDiffers && shownIds.has(top.id) && finiteXY(top),
     scoringSetSize: opts.length,

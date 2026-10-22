@@ -1,7 +1,7 @@
 # Status: concept-design energy strategy tool
 
 Checkpoint updated after every completed step, so any session can resume from here.
-Last updated: 2026-10-22 (build started: work package 0 on `feature/defaults-research`). Development was paused by the owner on 2026-10-21 and **restarted on 2026-10-22**: everything built so far is merged to `main`, passed its verification (table below) and works; defects found since are listed in `docs/KNOWN-ISSUES.md` (none fixed), and the packaging Opus review did not finish. The owner's walkthrough of 2026-10-21 is folded into the brief (revision 5) and broken into work packages in `docs/BUILD-PLAN.md`. **The owner confirmed the build order on 2026-10-22 (as recorded, packages 0 to 10) and asked to start package 0.** New sessions: read `../CLAUDE.md` first.
+Last updated: 2026-10-22 (package 0 batch 1 done; Site tab Beta switch built on `feature/site-tab-beta`). Development was paused by the owner on 2026-10-21 and **restarted on 2026-10-22**: everything built so far is merged to `main`, passed its verification (table below) and works; defects found since are listed in `docs/KNOWN-ISSUES.md` (none fixed), and the packaging Opus review did not finish. The owner's walkthrough of 2026-10-21 is folded into the brief (revision 5) and broken into work packages in `docs/BUILD-PLAN.md`. **The owner confirmed the build order on 2026-10-22 (as recorded, packages 0 to 10) and asked to start package 0.** New sessions: read `../CLAUDE.md` first.
 
 The walkthrough's decision log is `docs/walkthrough-decisions-2026-10-21.md` (a copy of the owner's project document). Where this file or the brief disagrees with it, the log is newer. The built program was checked against the guide and the code on `main` (commit 441635e) on 2026-10-21 while writing the user guide; the defects found are in `docs/KNOWN-ISSUES.md`.
 
@@ -35,7 +35,8 @@ The walkthrough's decision log is `docs/walkthrough-decisions-2026-10-21.md` (a 
 | `concept-sensitivity-tab`, `concept-site-layout` | Parallel work by another session; their useful parts were ported. Left untouched (deleting them is the owner's call) |
 | `docs/status-walkthrough-2026-10-21` | The status update of 2026-10-21, merged into `main` (commit 441635e). Can be deleted (the owner's call) |
 | `feature/build-handoff-2026-10-21` | The handoff for the build (2026-10-22): brief revision 5, build plan, known issues, decision log, user guide, `CLAUDE.md`. Merged into `main` on 2026-10-22 with the owner's approval; kept for reference |
-| `feature/defaults-research` | Work package 0, research the defaults (started 2026-10-22). Not merged |
+| `feature/defaults-research` | Work package 0, research the defaults (started 2026-10-22). Batch 1 applied and tested (EU and UK ETS, hydrogen, exchange rates; label "sourced — not independently checked"); checks pass on GitHub. Not merged |
+| `feature/site-tab-beta` | From `feature/defaults-research`. Work package 2, part: the Site tab's Beta switch and AC 27 (2026-10-22), built while the owner was away. Not merged |
 | `codex/energy-tool-experiment` | The owner's own branch (2026-10-19); not part of this line. Left untouched |
 
 GitHub runs the checks on every push to `main` or a `feature/` branch and on pull requests (`.github/workflows/ci.yml`: Node tests, build, PWA tests, browser tests) and builds the Windows program when the packaging changes (`desktop.yml`). Last result on `main` (commit 441635e): passed (2026-10-21).
@@ -60,7 +61,7 @@ GitHub runs the checks on every push to `main` or a `feature/` branch and on pul
 
 ## Next
 
-Follow `docs/BUILD-PLAN.md` in order. Order confirmed by the owner on 2026-10-22: as recorded, 0 then 1 to 10 (the owner chose this over moving the research last or splitting it, knowing packages 1, 2 and 4 add defaults that will need a second research pass). **In progress: package 0** (branch `feature/defaults-research`).
+Follow `docs/BUILD-PLAN.md` in order. Order confirmed by the owner on 2026-10-22: as recorded, 0 then 1 to 10 (the owner chose this over moving the research last or splitting it, knowing packages 1, 2 and 4 add defaults that will need a second research pass). **In progress: package 0** (branch `feature/defaults-research`): batch 1 done; further research batches wait for the owner (each source needs the owner's approval to open while working, and each default change needs the owner's approval). **Started out of order:** the Site tab's Beta switch from package 2 (branch `feature/site-tab-beta`), on the owner's instruction of 2026-10-22 to progress independently on sections their notes do not touch. **Waiting for the owner:** the notes on the guide (`docs/owner-notes-on-user-guide-2026-10-22.md`), next being the bridging plant after the grid arrives (rent, retire into backup, or both).
 
 0. Research the defaults before the first release.
 1. Map pin and country setup.

@@ -36,7 +36,7 @@ function AxisSelect({ label, value, onChange, describedBy }) {
   );
 }
 
-export default function ParetoView({ run, view, setView, start, focusChart = false, onChartFocused, onShowSite = null, onShowDispatch = null }) {
+export default function ParetoView({ run, view, setView, start, focusChart = false, onChartFocused, onShowSite = null, onShowDispatch = null, siteBeta = false }) {
   const settings = run.inputs.settings;
   const defaultDisplay = paretoDefaultDisplay();
   const pageSize = tablePageSize();
@@ -46,7 +46,8 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
   const [page, setPage] = useState(0);
   const ax = axes || defaultParetoAxes(settings);
   const X = PARETO_AXES.x[ax.x], Y = PARETO_AXES.y[ax.y];
-  const model = useMemo(() => HOOKS.paretoView(run, ax, view), [run, ax.x, ax.y, view]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Site fit (marker shape, tooltip, table column) shows only with the Site tab (Beta) on (walkthrough, 2026-10-21).
+  const model = useMemo(() => ({ ...HOOKS.paretoView(run, ax, view), showSiteFit: siteBeta }), [run, ax.x, ax.y, view, siteBeta]); // eslint-disable-line react-hooks/exhaustive-deps
   const byId = useMemo(() => new Map(run.options.map((o) => [o.id, o])), [run]);
   const open = openId ? byId.get(openId) : null;
   const pick = model.pickId ? byId.get(model.pickId) : null;
@@ -137,12 +138,14 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
                 })}
               </span>
             </div>
-            <div className="lg-group">
-              <span className="lg-title">Shape: site fit</span>
-              <span><span aria-hidden="true">{SHAPE_LABEL.circle}</span> Fits</span>
-              <span><span aria-hidden="true">{SHAPE_LABEL.triangle}</span> Fits with flags</span>
-              <span><span aria-hidden="true">{SHAPE_LABEL.square}</span> Does not fit</span>
-            </div>
+            {siteBeta ? (
+              <div className="lg-group">
+                <span className="lg-title">Shape: site fit (Beta)</span>
+                <span><span aria-hidden="true">{SHAPE_LABEL.circle}</span> Fits</span>
+                <span><span aria-hidden="true">{SHAPE_LABEL.triangle}</span> Fits with flags</span>
+                <span><span aria-hidden="true">{SHAPE_LABEL.square}</span> Does not fit</span>
+              </div>
+            ) : null}
             <div className="lg-group">
               <span className="lg-title">Fill</span>
               <span><span className="lg-dot" aria-hidden="true" /> Not dominated</span>
@@ -158,7 +161,7 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
               {model.topScoreId ? <span><span className="lg-ring lg-ring-top" aria-hidden="true" /> Highest weighted score</span> : null}
             </div>
           </div>
-          <p className="note">Shape shows site-fit status (§12.2); resilience status is in the tooltip and the table. Site fit is a status, not a weight: the status changes no score, and no rank unless "Rank requirement-compliant options first" is on; options that do not fit stay in the chart. Points are P50 values from the full-year hourly model; P10–P90 error crosses arrive with the uncertainty slice.</p>
+          <p className="note">{siteBeta ? 'Shape shows site-fit status (Site tab, Beta); it changes no score and no rank, and options that do not fit stay in the chart. ' : ''}Resilience status is in the tooltip and the table. Points are P50 values from the full-year hourly model; P10–P90 error crosses arrive with the uncertainty slice.</p>
         </>
       ) : (
         <>
@@ -176,7 +179,7 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
 
       {open ? (
         <div className="pareto-detail">
-          <OptionDetail o={open} start={start} dominator={open.dominatedBy ? byId.get(open.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={onShowSite} onShowDispatch={onShowDispatch} />
+          <OptionDetail o={open} start={start} dominator={open.dominatedBy ? byId.get(open.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} />
         </div>
       ) : null}
     </section>

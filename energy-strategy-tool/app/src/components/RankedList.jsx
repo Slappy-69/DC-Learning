@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { applyView } from '../engine/scoring.js';
-import { defaultView, tablePageSize, FLAG_FILTERS } from '../engine/view.js';
+import { defaultView, tablePageSize, flagFilters, visibleFlags } from '../engine/view.js';
 import { sig, money, monthLabel, pct } from '../format.js';
 import OptionDetail from './OptionDetail.jsx';
 import FilterChips from './FilterChips.jsx';
@@ -71,7 +71,8 @@ function ResBadge({ s }) {
   return <span className={`badge badge-${cls}`}><span aria-hidden="true">{icon}</span> {s}</span>;
 }
 
-export default function RankedList({ run, view, setView, start, onShowSite, onShowDispatch = null }) {
+export default function RankedList({ run, view, setView, start, onShowSite, onShowDispatch = null, siteBeta = false }) {
+  const FLAG_FILTERS = flagFilters(siteBeta);
   const [page, setPage] = useState(0);
   const [openId, setOpenId] = useState(null);
   const { list, hiddenDominated } = useMemo(() => applyView(run.options, view), [run, view]);
@@ -99,12 +100,14 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
           <button key={s} type="button" className={`chip ${view.resilience.includes(s) ? 'on' : ''}`} aria-pressed={view.resilience.includes(s)}
             onClick={() => { setPage(0); setView({ ...view, resilience: toggleIn(view.resilience, s) }); }}>{s}</button>
         ))}
-        <span className="filters-sep" aria-hidden="true">·</span>
-        {FIT_STATUSES.map((s) => (
-          <button key={s} type="button" className={`chip ${(view.siteFit || []).includes(s) ? 'on' : ''}`} aria-pressed={(view.siteFit || []).includes(s)}
-            onClick={() => { setPage(0); setView({ ...view, siteFit: toggleIn(view.siteFit || [], s) }); }}>{s}</button>
-        ))}
-        <LandTakeFilter value={view.landTakeCeilingHa ?? null} onCommit={(v) => { setPage(0); setView({ ...view, landTakeCeilingHa: v }); }} />
+        {siteBeta ? <>
+          <span className="filters-sep" aria-hidden="true">·</span>
+          {FIT_STATUSES.map((s) => (
+            <button key={s} type="button" className={`chip ${(view.siteFit || []).includes(s) ? 'on' : ''}`} aria-pressed={(view.siteFit || []).includes(s)}
+              onClick={() => { setPage(0); setView({ ...view, siteFit: toggleIn(view.siteFit || [], s) }); }}>{s} <span className="beta-mini">Beta</span></button>
+          ))}
+          <LandTakeFilter value={view.landTakeCeilingHa ?? null} onCommit={(v) => { setPage(0); setView({ ...view, landTakeCeilingHa: v }); }} />
+        </> : null}
         <label className="inline-select">
           <span>Show only</span>
           <select value="" onChange={(e) => { if (e.target.value) { setPage(0); setView({ ...view, flagIds: toggleIn(view.flagIds, e.target.value) }); } }}>
@@ -158,15 +161,15 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
               <th scope="col">First power</th>
               <th scope="col">Full load</th>
               {th('unmet', 'Unmet MWh', 'num')}
-              {th('landTake', 'Land take ha', 'num')}
-              {th('siteFit', 'Site fit')}
+              {siteBeta ? th('landTake', 'Land take ha', 'num') : null}
+              {siteBeta ? th('siteFit', 'Site fit (Beta)') : null}
               <th scope="col">Resilience</th>
               {th('flags', 'Flags', 'num')}
             </tr>
           </thead>
           <tbody>
             {rows.map((o) => {
-              const c = sevCounts(o.flags);
+              const c = sevCounts(visibleFlags(o, siteBeta));
               const open = openId === o.id;
               return (
                 <React.Fragment key={o.id}>
@@ -194,13 +197,13 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
                     <td>{monthLabel(start, o.ttp.firstPowerM)}</td>
                     <td>{monthLabel(start, o.ttp.fullLoadM)}</td>
                     <td className={`num ${o.unmet.mwh > 0 ? 'flag-text' : ''}`}>{o.unmet.mwh > 0 ? sig(o.unmet.mwh, 2) : '0'}{o.unmet.hours ? <div className="sub">{o.unmet.hours.toLocaleString('en-GB')} h</div> : null}</td>
-                    <td className="num">{o.siteFit ? sig(o.siteFit.landTakeHa, 3) : '—'}{o.siteFit && o.siteFit.offsiteHa > 0 ? <div className="sub">+{sig(o.siteFit.offsiteHa, 2)} off site</div> : null}</td>
-                    <td><SiteFitBadge s={o.siteFit ? o.siteFit.status : null} />{o.siteFit && o.siteFit.status === 'Does not fit' ? <div className="sub">{o.siteFit.unplacedM2.toLocaleString('en-GB')} m² short</div> : null}</td>
+                    {siteBeta ? <td className="num">{o.siteFit ? sig(o.siteFit.landTakeHa, 3) : '—'}{o.siteFit && o.siteFit.offsiteHa > 0 ? <div className="sub">+{sig(o.siteFit.offsiteHa, 2)} off site</div> : null}</td> : null}
+                    {siteBeta ? <td><SiteFitBadge s={o.siteFit ? o.siteFit.status : null} />{o.siteFit && o.siteFit.status === 'Does not fit' ? <div className="sub">{o.siteFit.unplacedM2.toLocaleString('en-GB')} m² short</div> : null}</td> : null}
                     <td><ResBadge s={o.resilience.status} /></td>
                     <td className="num"><span className="flag-counts" title={`${c.major} major, ${c.minor} minor, ${c.info} info`}>{c.major ? <span className="fc fc-major">{c.major}</span> : null}{c.minor ? <span className="fc fc-minor">{c.minor}</span> : null}<span className="fc fc-info">{c.info}</span></span></td>
                   </tr>
                   {open ? (
-                    <tr className="detail-row"><td colSpan={15}><OptionDetail o={o} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={onShowSite} onShowDispatch={onShowDispatch} /></td></tr>
+                    <tr className="detail-row"><td colSpan={siteBeta ? 15 : 13}><OptionDetail o={o} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} /></td></tr>
                   ) : null}
                 </React.Fragment>
               );

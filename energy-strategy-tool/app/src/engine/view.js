@@ -45,6 +45,19 @@ export const FLAG_FILTERS = [
 ];
 const flagLabel = (id) => (FLAG_FILTERS.find((f) => f[0] === id) || [id, id])[1];
 
+// Site-fit flags belong to the Site tab (Beta): they are shown, counted and offered as filters in the main views
+// only when the Site tab is turned on in the general settings (walkthrough, 2026-10-21). They never enter a score.
+export const isSiteFlagId = (id) => id.startsWith('site-') || id === 'target-landtake';
+export const isSiteFlag = (f) => f.siteFit === true || isSiteFlagId(f.id);
+export const visibleFlags = (o, siteBeta) => (siteBeta ? o.flags : o.flags.filter((f) => !isSiteFlag(f)));
+export const flagFilters = (siteBeta) => (siteBeta ? FLAG_FILTERS : FLAG_FILTERS.filter(([id]) => !isSiteFlagId(id)));
+
+// Remove every site-fit part of a view (used when the Site tab is turned off).
+export function withoutSiteFilters(v) {
+  return { ...v, siteFit: [], landTakeCeilingHa: null, flagIds: (v.flagIds || []).filter((x) => !isSiteFlagId(x)), hideFlagIds: (v.hideFlagIds || []).filter((x) => !isSiteFlagId(x)),
+    sortKey: v.sortKey === 'siteFit' || v.sortKey === 'landTake' ? 'rank' : v.sortKey };
+}
+
 function moneyM(x) {
   return `€${Number((x / 1e6).toPrecision(4)).toLocaleString('en-GB')} m`;
 }

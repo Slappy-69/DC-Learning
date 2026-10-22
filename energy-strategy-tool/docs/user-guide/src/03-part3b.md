@@ -188,8 +188,8 @@ Drivers are sorted by the swing in score, largest first. A check confirms that t
 
 # 28. Site (Beta) {#ch28}
 
-::: {.callout .agreed}
-**Agreed, not built yet.** The Site tab stays, as a **Beta** feature: hidden by default, turned on in the general settings, labelled Beta, and kept out of the ranking and the PDF export. Everything below describes the tab as built today.
+::: {.callout .built}
+**Built (22 October 2026).** The Site tab is a **Beta** feature: hidden by default, turned on in the general settings (chapter 30), and labelled Beta. Site fit never changes a score or a rank: "Rank requirement-compliant options first" uses the resilience status only, and dominance marks ignore site fit. With the tab off, the main views show no site fit at all: no header item, table columns, filters, chart shapes, option-detail section or site-fit flags. Turning the tab off also switches off the optional site-fit penalty, which is a Beta setting. The site inputs other than the area are still used while the tab is off: the layout runs in every run and sizes "fill residual" ground solar and the route costs (how ground solar gets its land without the layout is still open, chapter 56). Keeping the Site tab out of the PDF follows when the PDF is built.
 :::
 
 ![Current version: the site plan of the T1 leader: four data halls, heat rejection, gensets and fuel storage next to the halls, the substation near the default point of connection, and ground solar filling the rest.](img/s22-site-plan.png)
@@ -235,8 +235,12 @@ The mock-up suggests these sections: cover (project, date, app and data version,
 
 # 30. General settings {#ch30}
 
+::: {.callout .built}
+**Built (22 October 2026): the Site tab (Beta) switch.** The **General settings** button at the top of the window opens the settings, which hold features outside the main flow. The one built item is the **Site tab (Beta)** switch, off by default. It is a view setting: turning it on or off changes what is shown, never a score, a rank or a run.
+:::
+
 ::: {.callout .agreed}
-**Agreed, not built yet.** A general settings page holds features that are not part of the main flow. The walkthrough fixed one item: the **Site tab (Beta)** switch, off by default. The mock-up also shows the theme (follow Windows, light or dark), a run-log option, and an "About this copy" panel with the app version, the data version (with the dates of prices, carbon and profiles) and a reminder that the program never connects to the internet.
+**Proposals, not agreed yet.** The mock-up below also shows the theme (follow Windows, light or dark), a run-log option, and an "About this copy" panel with the app version, the data version (with the dates of prices, carbon and profiles) and a reminder that the program never connects to the internet. The walkthrough did not decide these; they wait for the owner.
 :::
 
 ![MOCK-UP of the agreed general settings.](img/m10-settings.png)

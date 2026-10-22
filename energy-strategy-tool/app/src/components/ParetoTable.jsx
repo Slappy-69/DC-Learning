@@ -28,9 +28,9 @@ export default function ParetoTable({ model, page = 0, pageSize = 50, onOpen, op
           <th scope="col" className="num">{model.yAxis.label} ({model.yAxis.unit})</th>
           <th scope="col" className="num">Time-to-power (months)</th>
           <th scope="col" className="num">Capex</th>
-          <th scope="col">Site fit</th>
+          {model.showSiteFit !== false ? <th scope="col">Site fit (Beta)</th> : null}
           <th scope="col">Resilience</th>
-          <th scope="col">Dominance (4 axes and status)</th>
+          <th scope="col">Dominance (4 axes and resilience)</th>
           <th scope="col">On 2-axis frontier</th>
         </tr>
       </thead>
@@ -50,7 +50,7 @@ export default function ParetoTable({ model, page = 0, pageSize = 50, onOpen, op
             <td className="num">{fmtAxis(model.yAxis, r.y)}</td>
             <td className="num">{sig(r.ttp, 3)}</td>
             <td className="num">{money(r.capex, 2)}</td>
-            <td>{r.siteFit || 'not assessed'}</td>
+            {model.showSiteFit !== false ? <td>{r.siteFit || 'not assessed'}</td> : null}
             <td>{r.resilience}</td>
             <td>{r.dominated}</td>
             <td>{r.frontier ? 'Yes' : 'No'}</td>

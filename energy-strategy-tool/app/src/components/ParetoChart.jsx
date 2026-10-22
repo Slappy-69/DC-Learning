@@ -121,7 +121,7 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
   }, [cmin, cmax, rMin, rMax]);
 
   const geo = useMemo(() => pts.map((p) => ({
-    p, cx: sx(p.x), cy: sy(p.y), r: radius(p.capex), shape: SHAPES[p.siteFit] || 'circle',
+    p, cx: sx(p.x), cy: sy(p.y), r: radius(p.capex), shape: (model.showSiteFit !== false && SHAPES[p.siteFit]) || 'circle',
     fill: p.ttpClass == null ? colours.ink : colours.ttp[Math.min(4, p.ttpClass)],
   })), [pts, sx, sy, radius, colours]);
   // Draw order: dominated first, then non-dominated, then frontier, so the useful points sit on top.
@@ -217,7 +217,7 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
     return d;
   }, [model, sx, sy]);
 
-  const describe = (g) => g ? `${g.p.name}. Rank ${g.p.rank}, score ${g.p.score.toFixed(1)}. ${model.xAxis.label} ${fmtAxis(model.xAxis, g.p.x)}; ${model.yAxis.label} ${fmtAxis(model.yAxis, g.p.y)}; time-to-power ${sig(g.p.ttp, 2)} months; capex ${money(g.p.capex, 2)}; site fit ${g.p.siteFit || 'not assessed'}; resilience ${g.p.resilience}; ${g.p.dominatedBy ? `dominated by ${g.p.dominatedByName} (rank ${g.p.dominatedByRank})` : 'not dominated'}${g.p.onFrontier ? '; on the frontier' : ''}${g.p.isPick ? '; weighted pick' : ''}${g.p.isTopScore ? '; highest weighted score, ranked below the pick because requirement-compliant options are ranked first' : ''}.` : '';
+  const describe = (g) => g ? `${g.p.name}. Rank ${g.p.rank}, score ${g.p.score.toFixed(1)}. ${model.xAxis.label} ${fmtAxis(model.xAxis, g.p.x)}; ${model.yAxis.label} ${fmtAxis(model.yAxis, g.p.y)}; time-to-power ${sig(g.p.ttp, 2)} months; capex ${money(g.p.capex, 2)}; ${model.showSiteFit !== false ? `site fit ${g.p.siteFit || 'not assessed'}; ` : ''}resilience ${g.p.resilience}; ${g.p.dominatedBy ? `dominated by ${g.p.dominatedByName} (rank ${g.p.dominatedByRank})` : 'not dominated'}${g.p.onFrontier ? '; on the frontier' : ''}${g.p.isPick ? '; weighted pick' : ''}${g.p.isTopScore ? '; highest weighted score, ranked below the pick because requirement-compliant options are ranked first' : ''}.` : '';
   const dirText = (a) => `${a.better} is better`;
   // Axis titles carry the better direction when they fit (about 6.9 px per character at 12 px semi-bold);
   // otherwise label and unit only. The direction is always stated in the help text below the chart.
@@ -288,7 +288,7 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
             <div><strong>{fmtAxis(model.xAxis, active.p.x)}</strong> <span className="pc-tip-k">{model.xAxis.label}</span></div>
             <div><strong>{fmtAxis(model.yAxis, active.p.y)}</strong> <span className="pc-tip-k">{model.yAxis.label}</span></div>
             <div><strong>{sig(active.p.ttp, 2)} months</strong> <span className="pc-tip-k">time-to-power</span> · <strong>{money(active.p.capex, 2)}</strong> <span className="pc-tip-k">capex</span></div>
-            <div><strong>{active.p.score.toFixed(1)}</strong> <span className="pc-tip-k">score</span> · site: {active.p.siteFit || 'not assessed'} · resilience: {active.p.resilience}{active.p.onFrontier ? ' · frontier' : ''}{active.p.isPick ? ' · weighted pick' : ''}{active.p.isTopScore ? ' · highest weighted score' : ''}</div>
+            <div><strong>{active.p.score.toFixed(1)}</strong> <span className="pc-tip-k">score</span>{model.showSiteFit !== false ? ` · site: ${active.p.siteFit || 'not assessed'}` : ''} · resilience: {active.p.resilience}{active.p.onFrontier ? ' · frontier' : ''}{active.p.isPick ? ' · weighted pick' : ''}{active.p.isTopScore ? ' · highest weighted score' : ''}</div>
             {active.p.dominatedBy ? <div className="pc-tip-k">Dominated by #{active.p.dominatedByRank} {active.p.dominatedByName}</div> : null}
             <div className="pc-tip-k">Click or press Enter to open</div>
           </div>

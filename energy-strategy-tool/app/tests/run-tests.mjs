@@ -62,6 +62,7 @@ import { Worker } from 'node:worker_threads';
 import { readFileSync, existsSync } from 'node:fs';
 import { geometryTests, siteModelTests, blockTests, layoutTests, siteFitTests } from './site-tests.mjs';
 import { batteryTimingTests, ppaTests, inspectorTests, sensitivityTests, hostedPageTests } from './port-tests.mjs';
+import { betaTests } from './beta-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -961,8 +962,13 @@ await test('8f. Every registered view setting and run setting is the value the c
   await withRecord(breg, 'view.site.smallMultiples', 3, () => assert.equal(multIds(B.renderSite(runT1, runT1.inputs)).length, 3));
   await withRecord(breg, 'view.site.smallMultiples', 0, () => assert.equal(multIds(B.renderSite(runT1, runT1.inputs)).length, 0));
   out.push(`site smallMultiples ${breg['view.site.smallMultiples'].value} (top options in rank order; record 3 → 3, 0 → none)`);
+  // (h2) view.siteTabBeta: the Site tab (Beta) switch, off by default; App.jsx starts from the record (the switch's
+  // behaviour is checked in test 15 and browser check B30).
+  assert.equal(reg['view.siteTabBeta'].value, false, 'the Site tab (Beta) must be off by default');
+  assert.match(readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8'), /useState\(\(\) => viewSetting\('siteTabBeta'\) === true\)/, 'App.jsx does not start the Site tab switch from view.siteTabBeta');
+  out.push('siteTabBeta off (App starts from the record)');
   // (i) Coverage: every registered view setting has a check above.
-  const probed = ['view.pareto.canvasAbove', 'view.pareto.display', 'view.pareto.ttpClasses', 'view.pareto.xAxis', 'view.pareto.yAxis', 'view.site.smallMultiples', 'view.table.pageSize'];
+  const probed = ['view.pareto.canvasAbove', 'view.pareto.display', 'view.pareto.ttpClasses', 'view.pareto.xAxis', 'view.pareto.yAxis', 'view.site.smallMultiples', 'view.siteTabBeta', 'view.table.pageSize'];
   assert.deepEqual(Object.keys(reg).filter((k) => k.startsWith('view.')).sort(), probed, 'a registered view setting has no usage check in test 8f');
   assert.deepEqual(Object.keys(breg).filter((k) => k.startsWith('view.')).sort(), probed);
   return out.join('; ') + '.';
@@ -998,8 +1004,9 @@ await test('8g. AC5: the highlighted pick is the weighted leader (rank 1, the he
       assert.match(html, /is on and its resilience status is/, 'pick line does not say why the highest score is not the pick');
     }
   }
-  // Site fit is the other requirement check (§5.7, §11): with the toggle on, an option that does not fit ranks
-  // after the options that fit, even when it meets the resilience requirement (review D9).
+  // Site fit is not a requirement check any more (walkthrough, 2026-10-21; BRIEF §11, AC 27): with the Site tab as
+  // Beta, "compliant" means the resilience status only. An option that does not fit keeps its place with the
+  // toggle on or off, and no score changes. (Before 2026-10-22 this checked the opposite, review D9.)
   const mkSite = (cf) => {
     const opts = [synth('x', 50, 50, 12, 90, 'Meets'), synth('y', 60, 60, 18, 80, 'Meets'), synth('z', 70, 55, 20, 70, 'Meets with flags')];
     opts[0].siteFit = { status: 'Does not fit' }; opts[1].siteFit = { status: 'Fits' }; opts[2].siteFit = { status: 'Fits with flags' };
@@ -1012,12 +1019,10 @@ await test('8g. AC5: the highlighted pick is the weighted leader (rank 1, the he
     const m = HOOKS.paretoView(run, { x: 'lcoe', y: 'location' });
     const scores = Object.fromEntries(run.options.map((o) => [o.id, o.score]));
     assert.deepEqual(scores, Object.fromEntries(mk(cf).options.map((o) => [o.id, o.score])), 'site fit changed a score');
-    if (!cf) { assert.equal(m.pickId, 'x'); assert.equal(m.topScoreId, null); } else {
-      assert.equal(m.pickId, 'y', 'with compliant-first on, an option that does not fit must rank after those that fit');
-      assert.equal(run.options.find((o) => o.id === 'x').rank, 3);
-      assert.equal(m.topScoreId, 'x'); assert.equal(m.topScoreReason, 'compliant-first'); assert.equal(m.topScoreSiteFit, 'Does not fit');
-      assert.match(B.renderView(run, defaultView()), /is on and its site-fit status is (&quot;|")Does not fit/, 'pick line does not name the site-fit status');
-    }
+    assert.equal(m.pickId, 'x', `compliant-first ${cf ? 'on' : 'off'}: an option that does not fit must not be demoted`);
+    assert.equal(run.options.find((o) => o.id === 'x').rank, 1);
+    assert.equal(m.topScoreId, null);
+    assert.ok(!('topScoreSiteFit' in m) || m.topScoreSiteFit == null);
   }
   // Real data: the test-3 sample (36 options) and a smaller C5 = None sample (other open choices locked to their
   // first value), every weight preset, toggle off and on.
@@ -1136,6 +1141,11 @@ await ppaTests(test, portRuns);
 await inspectorTests(test, portRuns);
 await sensitivityTests(test, portRuns);
 await hostedPageTests(test);
+
+// ---------------------------------------------------------------------------
+// 15. Site tab as a Beta feature (walkthrough, 2026-10-21; AC 27) (tests/beta-tests.mjs)
+// ---------------------------------------------------------------------------
+await betaTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

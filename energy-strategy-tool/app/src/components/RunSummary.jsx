@@ -20,7 +20,10 @@ export function siteFitEffect(inputs) {
 
 // Run summary (BRIEF §12): total combinations, compatibility rules with counts, "values not
 // generated" with Include controls, sampling state and counts, dispatch handling modes.
-export default function RunSummary({ run, onInclude, onSamplingOff, open, onToggle }) {
+// C17/C18 notes without the site-fit count, for when the Site tab (Beta) is off (BRIEF §8 rules, walkthrough 2026-10-21).
+const SITE_NOTE_BASE = { C17: 'GIS reduces substation footprint.', C18: 'Double-deck and in-building arrangements reduce genset footprint.' };
+
+export default function RunSummary({ run, onInclude, onSamplingOff, open, onToggle, siteBeta = false }) {
   const g = run.generation;
   const fit = { Fits: 0, 'Fits with flags': 0, 'Does not fit': 0 };
   for (const o of run.options) if (o.siteFit) fit[o.siteFit.status]++;
@@ -70,7 +73,8 @@ export default function RunSummary({ run, onInclude, onSamplingOff, open, onTogg
                   <strong>{c.id} {c.name}:</strong> {c.omitted.map((o) => `${o.label}${o.reason === 'excluded by user' ? ' (excluded by user)' : ''}`).join(', ')} not generated
                   {' '}({[...new Set(c.omitted.map((o) => o.reason))].filter((r) => r !== 'excluded by user').join(', ') || 'excluded by user'})
                   {' '}<button type="button" className="link-btn" onClick={() => onInclude(c.id, c.omitted.map((o) => o.value))}>{c.id === 'C11' ? 'Include wind' : 'Include'}</button>
-                  {c.note ? <div className={c.doesNotFit ? 'sub site-note' : 'sub'}>{c.note}</div> : null}
+                  {!siteBeta && SITE_NOTE_BASE[c.id] ? <div className="sub">{SITE_NOTE_BASE[c.id]}</div>
+                    : c.note ? <div className={c.doesNotFit ? 'sub site-note' : 'sub'}>{c.note}</div> : null}
                 </li>
               ))}
             </ul>
@@ -81,7 +85,8 @@ export default function RunSummary({ run, onInclude, onSamplingOff, open, onTogg
               <ul className="plain">
                 <li>Boundary: {run.site.source === 'area' ? 'rectangle from the site area and aspect ratio' : `${run.site.source} polygon`} ({run.site.edges} edges); gross {(run.site.grossM2 / 10000).toFixed(2)} ha, buildable envelope {(run.site.envelopeM2 / 10000).toFixed(2)} ha, net developable {(run.site.netM2 / 10000).toFixed(2)} ha after the roads, parking and landscaping allowance.</li>
                 <li>Exclusions {run.site.exclusions} ({run.site.hardExclusions} hard), height zones {run.site.heightZones}, receptors {run.site.receptors}. Raster {run.site.cellM} m cells ({run.site.nx} × {run.site.ny}) <span className="tag tag-unverified" title="run setting">{LABEL}</span>.</li>
-                <li>Site fit: <strong>{fit.Fits.toLocaleString('en-GB')}</strong> fit, <strong>{fit['Fits with flags'].toLocaleString('en-GB')}</strong> fit with flags, <strong>{fit['Does not fit'].toLocaleString('en-GB')}</strong> do not fit. Site fit is a status, not a weight. {siteFitEffect(run.inputs)} Site-fit penalty in deliverability: <strong>{run.inputs.deliverability && run.inputs.deliverability.siteFitPenalty ? 'on' : 'off'}</strong> <span className="tag tag-unverified" title="judgement">{LABEL}</span>.</li>
+                {siteBeta ? <li>Site fit (Beta): <strong>{fit.Fits.toLocaleString('en-GB')}</strong> fit, <strong>{fit['Fits with flags'].toLocaleString('en-GB')}</strong> fit with flags, <strong>{fit['Does not fit'].toLocaleString('en-GB')}</strong> do not fit. Site fit is a status, not a weight. {siteFitEffect(run.inputs)} Site-fit penalty in deliverability: <strong>{run.inputs.deliverability && run.inputs.deliverability.siteFitPenalty ? 'on' : 'off'}</strong> <span className="tag tag-unverified" title="judgement">{LABEL}</span>.</li>
+                  : <li>Site fit is a Beta feature: turn on the Site tab in the general settings to see it. It never changes a score or a rank. The site inputs still size "fill residual" ground solar and set the route costs below.</li>}
                 {run.site.routes ? <li>Route lengths for cost (straight line to the buildable envelope, the same for every option): grid cable {run.site.routes.pocM == null ? 'not costed (no buildable area)' : `${Math.round(run.site.routes.pocM).toLocaleString('en-GB')} m from the POC${run.site.pocDefault ? ' (default POC: the access point, standing in for the road side)' : ''}`}; gas pipe {run.site.routes.gasMainM == null ? 'not costed (no gas main location; default: gas off-site, location unknown)' : `${Math.round(run.site.routes.gasMainM).toLocaleString('en-GB')} m from the gas main (gas-burning options only)`}.</li> : null}
                 {run.layoutSummary ? <li>Auto-layout: {run.layoutSummary.distinctLayouts.toLocaleString('en-GB')} distinct layouts for {run.options.length.toLocaleString('en-GB')} options (options with the same blocks share one layout); {run.layoutSummary.placements.toLocaleString('en-GB')} block placements; "fill residual" solar sized from the layout.</li> : null}
                 {run.site.warningMessages && run.site.warningMessages.length ? <li className="flag-text">{run.site.warningMessages.join(' ')}</li> : null}

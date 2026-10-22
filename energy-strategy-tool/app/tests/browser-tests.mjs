@@ -88,7 +88,7 @@ try { browser = await launch(); } catch (e) {
 }
 console.log(`Browser tests on ${pathToFileURL(FILE).href}\nChromium ${browser.version()}, Playwright ${pw.chromium ? require(require.resolve('playwright/package.json')).version : '?'}, axe-core ${AXE ? require(AXE.replace(/axe\.min\.js$/, 'package.json')).version : 'not found'}`);
 
-async function openPage({ width = 1400, height = 900, colorScheme = 'light', isMobile = false, hasTouch = false } = {}) {
+async function openPage({ width = 1400, height = 900, colorScheme = 'light', isMobile = false, hasTouch = false, siteBeta = false } = {}) {
   const ctx = await browser.newContext({ viewport: { width, height }, colorScheme, isMobile, hasTouch, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   page.setDefaultTimeout(60000);
@@ -104,10 +104,19 @@ async function openPage({ width = 1400, height = 900, colorScheme = 'light', isM
   }, null, { timeout: 180000, polling: 250 });
   const status = (await page.locator('.status').innerText()).replace(/\s+/g, ' ').trim();
   ok(!/Run failed/.test(status), `run failed: ${status}`);
+  // The Site tab is a Beta feature, off by default (walkthrough, 2026-10-21): checks that use it turn it on in the
+  // general settings first, as a user would. It is a view setting, so no re-run follows.
+  if (siteBeta) await enableSiteBeta(page);
   return { ctx, page, errors, loadS: (Date.now() - t0) / 1000, status };
 }
 const tradeoffsTab = (page) => page.getByRole('tab', { name: 'Trade-offs', exact: true });
-const siteTab = (page) => page.getByRole('tab', { name: 'Site', exact: true });
+async function enableSiteBeta(page) {
+  await page.getByRole('button', { name: 'General settings' }).click();
+  await page.locator('#gs-site-beta').check();
+  await page.getByRole('button', { name: 'Close settings' }).click();
+  await page.waitForSelector('#tab-site');
+}
+const siteTab = (page) => page.getByRole('tab', { name: 'Site Beta', exact: true });
 // Site tab helpers: wait for the thumbnails, open every collapsible section, wait for a re-run after a site edit.
 async function openSite(page) {
   await siteTab(page).click();
@@ -572,7 +581,7 @@ await check('B13. Phone width (375 px): Trade-offs chart and table cause no hori
 // Site tab (§10.7): phone width with touch drawing, keyboard, axe light and dark.
 // ---------------------------------------------------------------------------
 await check('B14. Phone width (375 px, touch): the Site tab causes no horizontal page scroll with every section open; a boundary drawn by tapping re-screens the options', async () => {
-  const { ctx, page, errors } = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true });
+  const { ctx, page, errors } = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true, siteBeta: true });
   await openSite(page);
   await openAllSiteDetails(page);
   await page.waitForTimeout(300);
@@ -603,7 +612,7 @@ await check('B14. Phone width (375 px, touch): the Site tab causes no horizontal
 });
 
 await check('B15. Keyboard on the Site tab: Tab reaches the plan; arrow keys focus blocks with dimensions, tooltip, live text and the matching table row; the table alternative is reachable; a boundary can be drawn with the keyboard alone', async () => {
-  const { ctx, page, errors } = await openPage();
+  const { ctx, page, errors } = await openPage({ siteBeta: true });
   await page.locator('#tab-options').focus();
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
@@ -671,7 +680,7 @@ await check('B15. Keyboard on the Site tab: Tab reaches the plan; arrow keys foc
 });
 
 await check('B16. GeoJSON import on the Site tab: each feature gets a "use as" choice (guessed from its name), and applying sets the boundary, a soft flood exclusion, the POC and a receptor, then re-screens the options', async () => {
-  const { ctx, page, errors } = await openPage();
+  const { ctx, page, errors } = await openPage({ siteBeta: true });
   await openSite(page);
   // A 0.007° × 0.0036° boundary (about 240 × 400 m) around the current site, a flood zone, a POC and a dwelling.
   const corners = await page.evaluate(() => document.querySelector('.site-editor .typed textarea').value.trim().split('\n').map((l) => l.split(',').map(Number)));
@@ -709,7 +718,7 @@ await check('B16. GeoJSON import on the Site tab: each feature gets a "use as" c
 });
 
 async function siteAxe(colorScheme) {
-  const { ctx, page, errors } = await openPage({ colorScheme });
+  const { ctx, page, errors } = await openPage({ colorScheme, siteBeta: true });
   await openSite(page);
   await openAllSiteDetails(page);
   const out = [];
@@ -804,7 +813,7 @@ await check('B19. Phone width (375 px, touch): after the run, the tab bar and th
 });
 
 await check('B20. Site tab at 1400, 1000 and 375 px: no horizontal page scroll with the option selector listing every screened option; the closed selector shows its full name as the title', async () => {
-  const { ctx, page, errors } = await openPage({ width: 1400, height: 900 });
+  const { ctx, page, errors } = await openPage({ width: 1400, height: 900, siteBeta: true });
   await openSite(page);
   const screened = Number(((await page.locator('.header-strip').innerText()).match(/([\d,]+) screened/) || [])[1].replace(/,/g, ''));
   const out = [];
@@ -829,7 +838,7 @@ await check('B20. Site tab at 1400, 1000 and 375 px: no horizontal page scroll w
 });
 
 await check('B21. "Skip to site plan" is the third Tab stop: Enter selects the Site tab and focuses the plan', async () => {
-  const { ctx, page, errors } = await openPage();
+  const { ctx, page, errors } = await openPage({ siteBeta: true });
   const stops = [];
   for (let i = 0; i < 3; i++) { await page.keyboard.press('Tab'); stops.push(await active(page)); }
   ok(/Skip to results/.test(stops[0].text) && /Skip to trade-offs chart/.test(stops[1].text) && /Skip to site plan/.test(stops[2].text) && stops[2].visible, `first three Tab stops: ${stops.map((a) => a.text).join(' | ')}`);
@@ -879,7 +888,7 @@ async function chartReadout(page, sel, keys) {
   }, sel);
 }
 
-const phonePort = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true });
+const phonePort = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true, siteBeta: true });
 await check('B22. Phone width (375 px, touch): the Dispatch tab causes no horizontal page scroll with its tables open; the timeline and hourly charts give a keyboard readout on screen and in a live region; year, week box (8-day week 52) and presets work; the check against the ranking says it matches', async () => {
   const { page, errors } = phonePort;
   const t0 = Date.now();
@@ -967,7 +976,7 @@ await check('B24. Tab bar with five tabs at 375 px: the tab list scrolls sideway
 await phonePort.ctx.close();
 
 await check('B25. Skip links with five tabs at 375 px: "Skip to results", "Skip to trade-offs chart" and "Skip to site plan" are still the first three Tab stops, and "Skip to site plan" selects the Site tab (scrolled into view in the tab list) and focuses the plan', async () => {
-  const { ctx, page, errors } = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true });
+  const { ctx, page, errors } = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true, siteBeta: true });
   const stops = [];
   for (let i = 0; i < 3; i++) { await page.keyboard.press('Tab'); stops.push(await active(page)); }
   ok(/Skip to results/.test(stops[0].text) && /Skip to trade-offs chart/.test(stops[1].text) && /Skip to site plan/.test(stops[2].text), `first three Tab stops: ${stops.map((a) => a.text).join(' | ')}`);
@@ -981,7 +990,7 @@ await check('B25. Skip links with five tabs at 375 px: "Skip to results", "Skip 
 });
 
 async function portAxe(colorScheme) {
-  const { ctx, page, errors } = await openPage({ colorScheme });
+  const { ctx, page, errors } = await openPage({ colorScheme, siteBeta: true });
   const out = [];
   await openDispatch(page);
   await openAllDetails(page, '.dv');
@@ -1109,6 +1118,40 @@ await check('B29. Loading message and startup errors: with scripts off the singl
 });
 
 await browser.close();
+// Site tab as a Beta feature (walkthrough, 2026-10-21; BRIEF §12.12, AC 27).
+await check('B30. Site tab (Beta): hidden by default; turned on in the general settings it appears labelled Beta; the ranking (top 20 rows, scores, leader) is identical with it on or off and nothing re-runs; with it off the header strip and the options table show no site fit', async () => {
+  const { ctx, page, errors } = await openPage();
+  const tabNames = () => page.$$eval('[role=tab]', (ts) => ts.map((t) => t.textContent.trim()));
+  const rows = () => page.$$eval('.rank-table tbody tr:not(.detail-row)', (trs) => trs.slice(0, 20).map((tr) => [...tr.querySelectorAll('td')].slice(0, 3).map((td) => td.textContent.trim()).join('|')));
+  const leader = () => page.locator('.header-strip .hs-item').nth(1).innerText();
+  const headers = () => page.$$eval('.rank-table thead th', (ths) => ths.map((t) => t.textContent.trim()));
+  const off1 = { tabs: await tabNames(), rows: await rows(), leader: await leader(), heads: await headers(), strip: await page.locator('.header-strip').innerText() };
+  ok(!off1.tabs.some((t) => /^Site/.test(t)), `Site tab shown by default: ${off1.tabs.join(', ')}`);
+  ok(!/Site fit/.test(off1.strip), 'header strip shows site fit with the tab off');
+  ok(!off1.heads.some((h) => /Site fit|Land take/.test(h)), `options table shows site columns with the tab off: ${off1.heads.join(', ')}`);
+  ok(!(await page.locator('a.skip', { hasText: 'Skip to site plan' }).count()), '"Skip to site plan" shown with the tab off');
+  await enableSiteBeta(page);
+  const status = await page.locator('.status').innerText();
+  ok(!/Screening options/.test(status), 'turning the Site tab on started a re-run');
+  const on = { tabs: await tabNames(), rows: await rows(), leader: await leader(), heads: await headers(), strip: await page.locator('.header-strip').innerText() };
+  ok(on.tabs.includes('Site Beta'), `Site tab not labelled Beta: ${on.tabs.join(', ')}`);
+  ok(/Site fit \(Beta\)/.test(on.strip), 'header strip has no site-fit item with the tab on');
+  ok(on.heads.some((h) => /Site fit \(Beta\)/.test(h)), 'options table has no site-fit column with the tab on');
+  ok(JSON.stringify(on.rows) === JSON.stringify(off1.rows) && on.leader === off1.leader, 'the ranking differs with the Site tab on');
+  // Off again from the Site tab: back to Options, the same ranking.
+  await siteTab(page).click();
+  await page.waitForSelector('#site-plan');
+  await page.getByRole('button', { name: 'General settings' }).click();
+  await page.locator('#gs-site-beta').uncheck();
+  await page.getByRole('button', { name: 'Close settings' }).click();
+  const off2 = { tabs: await tabNames(), sel: await page.$eval('[role=tab][aria-selected=true]', (t) => t.textContent.trim()), rows: await rows(), leader: await leader() };
+  ok(!off2.tabs.some((t) => /^Site/.test(t)) && off2.sel === 'Options', `after turning it off: tabs ${off2.tabs.join(', ')}, selected ${off2.sel}`);
+  ok(JSON.stringify(off2.rows) === JSON.stringify(off1.rows) && off2.leader === off1.leader, 'the ranking changed after turning the Site tab off');
+  ok(errors.length === 0, errors.join('; '));
+  await ctx.close();
+  return `default tabs: ${off1.tabs.join(', ')}; on: ${on.tabs.join(', ')} (no re-run); top ${off1.rows.length} rows and leader identical off → on → off; site fit in the header strip and the table only when on; turning it off from the Site tab returns to Options.`;
+});
+
 const passed = results.filter((r) => r.status === 'PASS').length;
 const skipped = results.filter((r) => r.status === 'SKIP').length;
 console.log(`\n${passed}/${results.length} browser checks passed${skipped ? `, ${skipped} skipped` : ''}.`);

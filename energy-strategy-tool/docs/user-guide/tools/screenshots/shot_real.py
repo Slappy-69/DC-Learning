@@ -73,7 +73,12 @@ async def main():
         await page.wait_for_selector('.sens-base', timeout=120000)
         await page.wait_for_timeout(800)
         await clip_el(page, page.locator('section.sens'), OUT / "real-sensitivity.png", max_h=3000, pad=2)
-        await page.get_by_role('tab', name='Site', exact=True).click()
+        # The Site tab is a Beta feature (2026-10-22): turn it on in the general settings first, and capture the settings.
+        await page.get_by_role('button', name='General settings').click()
+        await page.locator('#gs-site-beta').check()
+        await clip_el(page, page.locator('#general-settings'), OUT / "real-general-settings.png", pad=4)
+        await page.get_by_role('button', name='Close settings').click()
+        await page.get_by_role('tab', name='Site Beta', exact=True).click()
         await page.wait_for_selector('#site-plan')
         await page.wait_for_function("() => !document.querySelector('.mult-wait')", timeout=120000)
         await page.wait_for_timeout(1000)

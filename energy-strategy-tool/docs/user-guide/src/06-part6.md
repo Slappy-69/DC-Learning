@@ -100,7 +100,8 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Currency per site | Agreed | 14 |
 | ASHRAE design station, NOAA or EPW weather | Agreed | 6 |
 | Real hourly data (ENTSO-E and others) at release | Agreed | 52 |
-| Site area as one number; Site tab as Beta | Agreed | 15, 28 |
+| Site tab as Beta (switch, label, kept out of the ranking) | Built (22 Oct 2026) | 28, 30 |
+| Site area as one number (land for ground solar without the layout) | Agreed; open question | 15, 28 |
 | IT load estimated from area | Agreed | 16 |
 | Load shapes, AI profiles | Agreed | 16 |
 | Flexibility with triggers; battery response | Agreed | 16 |
@@ -128,7 +129,8 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Tornado with driver list, LCOE default | Agreed | 27 |
 | Run log export | Built | 29 |
 | PDF report; no Excel | Agreed | 29 |
-| General settings | Agreed | 30 |
+| General settings: Site tab (Beta) switch | Built (22 Oct 2026) | 28, 30 |
+| General settings: theme, run-log option, "About this copy" | Proposed | 30 |
 | Project save and reopen | Open | 4 |
 | Plain-English summary of the result | Not built; in the brief, not discussed in the walkthrough | — |
 | Parallel coordinates, choice-impact chart | Not built; in the brief, not discussed in the walkthrough | — |

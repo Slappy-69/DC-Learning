@@ -2,6 +2,7 @@ import React from 'react';
 import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
 import { sig, money, monthLabel, pct } from '../format.js';
+import { visibleFlags } from '../engine/view.js';
 
 function FitBadge({ s }) {
   const cls = s === 'Fits' ? 'ok' : s === 'Fits with flags' ? 'warn' : 'bad';
@@ -15,7 +16,7 @@ function SiteFitSummary({ o, onShowSite }) {
   if (!f) return null;
   return (
     <div className="detail-site">
-      <h4>Site fit <FitBadge s={f.status} /></h4>
+      <h4>Site fit <span className="beta-badge">Beta</span> <FitBadge s={f.status} /></h4>
       {f.reasons.length ? <ul className="plain small">{f.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul> : <p className="small">Every block placed with the default clearances, separations and height limits.</p>}
       {f.unplaced.length ? (
         <p className="small"><strong>Unplaced tray:</strong> {f.unplaced.map((u) => `${u.name} (${u.areaM2.toLocaleString('en-GB')} m²; ${u.reason})`).join('; ')}.</p>
@@ -53,7 +54,8 @@ export function PpaHedgeRow({ h }) {
   );
 }
 
-export default function OptionDetail({ o, start, onClose, dominator = null, onShowSite = null, onShowDispatch = null }) {
+export default function OptionDetail({ o, start, onClose, dominator = null, onShowSite = null, onShowDispatch = null, siteBeta = false }) {
+  const shownFlags = visibleFlags(o, siteBeta);
   const sz = o.sizing;
   const ss = o.dispatch.years[o.dispatch.years.length - 1];
   return (
@@ -65,7 +67,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
       <p className="model-badge">Full-year hourly (8760 h) · synthetic profiles · all defaults indicative — unverified</p>
       <p className="small">
         {o.dominatedBy
-          ? <>Dominated by #{dominator ? dominator.rank : '?'} {dominator ? dominator.name : o.dominatedBy}: equal or better on cost, carbon, time-to-power and deliverability, and better on at least one, with no worse resilience or site-fit status. Still ranked and shown.</>
+          ? <>Dominated by #{dominator ? dominator.rank : '?'} {dominator ? dominator.name : o.dominatedBy}: equal or better on cost, carbon, time-to-power and deliverability, and better on at least one, with no worse resilience status. Still ranked and shown.</>
           : 'Not dominated on cost, carbon, time-to-power and deliverability.'}
       </p>
       <div className="detail-grid">
@@ -80,7 +82,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
               <tr><th scope="row">{o.deliv.includesSiteFit ? 'Deliverability (incl. site fit)' : 'Deliverability'}</th><td className="num">{o.axisScores.deliverability.toFixed(0)}</td></tr>
             </tbody>
           </table>
-          <SiteFitSummary o={o} onShowSite={onShowSite} />
+          {siteBeta ? <SiteFitSummary o={o} onShowSite={onShowSite} /> : null}
           <h4>Economics</h4>
           <table className="mini">
             <tbody>
@@ -138,8 +140,8 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
       </div>
       <h4>Sizing</h4>
       <ul className="sizing">{sz.sentences.map((s, i) => <li key={i}>{s}</li>)}</ul>
-      <h4>Flags ({o.flags.length})</h4>
-      <ul className="flags-list">{o.flags.map((f, i) => <li key={i} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
+      <h4>Flags ({shownFlags.length})</h4>
+      <ul className="flags-list">{shownFlags.map((f, i) => <li key={i} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
       <h4>Choice vector</h4>
       <table className="mini choice-vector">
         <tbody>{CHOICES.map((c) => <tr key={c.id}><th scope="row">{c.id} {c.name}</th><td>{o.v[c.id] === NA ? 'n/a' : choiceLabel(c.id, o.v[c.id])}</td></tr>)}</tbody>

@@ -4,7 +4,7 @@ import { COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtD
 
 const YM = '^\\d{4}-(0[1-9]|1[0-2])$';
 
-export default function InputsPanel({ inputs, update, setWeights }) {
+export default function InputsPanel({ inputs, update, setWeights, siteBeta = false }) {
   const set = (path) => (val) => update(path, val);
   const norm = useMemo(() => normalizeInputs(inputs), [inputs]);
   const countryAuto = nearestCountry(inputs.project.lat, inputs.project.lon);
@@ -108,8 +108,8 @@ export default function InputsPanel({ inputs, update, setWeights }) {
         </div>
         <NumberField label="Carbon target (annual average cap)" unit="gCO₂e/kWh" value={inputs.requirements.carbonTarget} onCommit={set('requirements.carbonTarget')} path="requirements.carbonTarget" inputs={inputs} nullable min={0} />
         <NumberField label="Capex ceiling" unit="€ m" scale={1e-6} value={inputs.requirements.capexCeiling} onCommit={set('requirements.capexCeiling')} path="requirements.capexCeiling" inputs={inputs} nullable min={0} />
-        <NumberField label="Land-take ceiling (on site)" unit="ha" value={inputs.requirements.landTakeCeilingHa} onCommit={set('requirements.landTakeCeilingHa')} path="requirements.landTakeCeilingHa" inputs={inputs} nullable min={0}
-          hint="Flag only. Empty = the net developable area (where it coincides with &quot;Does not fit&quot;); a lower value raises a minor flag without changing the site-fit status." />
+        {siteBeta ? <NumberField label="Land-take ceiling (on site, Site tab Beta)" unit="ha" value={inputs.requirements.landTakeCeilingHa} onCommit={set('requirements.landTakeCeilingHa')} path="requirements.landTakeCeilingHa" inputs={inputs} nullable min={0}
+          hint="Flag only, shown with the Site tab (Beta). Empty = the net developable area (where it coincides with &quot;Does not fit&quot;); a lower value raises a minor flag without changing the site-fit status." /> : null}
         <NumberField label="Max annual run-hours, on-site combustion" unit="h/yr" value={inputs.requirements.maxRunHours} onCommit={set('requirements.maxRunHours')} path="requirements.maxRunHours" inputs={inputs} nullable min={0} />
 
         <fieldset className="weights">
@@ -142,9 +142,9 @@ export default function InputsPanel({ inputs, update, setWeights }) {
         <SelectField label="Carbon axis metric" value={inputs.settings.carbonMetric} onCommit={set('settings.carbonMetric')} path="settings.carbonMetric" inputs={inputs}
           options={[['location', 'Location-based'], ['market', 'Market-based'], ['cfe', '1 − hourly CFE %']]} />
         <ToggleField label="Rank requirement-compliant options first" checked={inputs.settings.rankCompliantFirst} onCommit={set('settings.rankCompliantFirst')} path="settings.rankCompliantFirst" inputs={inputs}
-          hint={'Off by default. On: options whose resilience is "Does not meet" or whose site fit is "Does not fit" rank after the others; no score changes.'} />
-        <ToggleField label="Include site-fit penalty in deliverability" checked={inputs.deliverability.siteFitPenalty} onCommit={set('deliverability.siteFitPenalty')} path="deliverability.siteFitPenalty" inputs={inputs}
-          hint={`Off by default: site fit is a status, not a weight. On: −${inputs.deliverability.siteFitFlagsPenalty} for "Fits with flags", −${inputs.deliverability.siteFitNoFitPenalty} for "Does not fit", and the axis reads "Deliverability (incl. site fit)".`} />
+          hint={'Off by default. On: options whose resilience is "Does not meet" rank after the others; no score changes. Site fit does not count (Site tab is Beta).'} />
+        {siteBeta ? <ToggleField label="Include site-fit penalty in deliverability (Site tab, Beta)" checked={inputs.deliverability.siteFitPenalty} onCommit={set('deliverability.siteFitPenalty')} path="deliverability.siteFitPenalty" inputs={inputs}
+          hint={`Off by default: site fit is a status, not a weight. On: −${inputs.deliverability.siteFitFlagsPenalty} for "Fits with flags", −${inputs.deliverability.siteFitNoFitPenalty} for "Does not fit", and the axis reads "Deliverability (incl. site fit)". It is switched off whenever the Site tab is turned off.`} /> : null}
         <NumberField label="Generation cap" unit="options" value={inputs.settings.generationCap} onCommit={(v) => update('settings.generationCap', Math.round(v))} path="settings.generationCap" inputs={inputs} min={20} step={1} />
         <ToggleField label="Sample above cap" checked={inputs.settings.sampleAboveCap} onCommit={set('settings.sampleAboveCap')} path="settings.sampleAboveCap" inputs={inputs}
           hint="Off screens every combination (slow above the cap)." />

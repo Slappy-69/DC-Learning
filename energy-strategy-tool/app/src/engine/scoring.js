@@ -67,28 +67,24 @@ function statusRank(o) {
   const r = o.resilience.status === 'Meets' ? 2 : o.resilience.status === 'Meets with flags' ? 1 : 0;
   return r;
 }
-// Site-fit status rank (§7.2 step 6). Options without a site-fit result (synthetic test options) rank equal.
-function siteRank(o) {
-  if (!o.siteFit) return 1;
-  return o.siteFit.status === 'Fits' ? 2 : o.siteFit.status === 'Fits with flags' ? 1 : 0;
-}
-
-// Pareto-dominated on (cost, carbon, ttp, deliverability) AND no better resilience or site-fit status
-// (§7.2 step 6): j dominates i only if j's resilience and site-fit statuses are both at least as good.
-// Dominance is a mark, not a score: it never changes a score or rank.
+// Pareto-dominated on (cost, carbon, ttp, deliverability) AND no better resilience status (§7.2 step 6):
+// j dominates i only if j's resilience status is at least as good. Dominance is a mark, not a score: it never
+// changes a score or rank. Site fit is no longer part of it: the Site tab is a Beta feature kept out of the main
+// flow and the ranking (walkthrough, 2026-10-21; BRIEF §2 principle 3, §11, AC 27), so no main-flow result may
+// depend on it (interpretation recorded in BUILD-NOTES, "Slice: Site tab as Beta").
 export function markDominance(options) {
   const n = options.length;
   const m = options.map((o) => [o.metrics.cost, o.metrics.carbon, o.metrics.ttp, -o.metrics.deliverability]);
-  const sr = options.map(statusRank), fr = options.map(siteRank);
+  const sr = options.map(statusRank);
   const eps = 1e-9;
   for (let i = 0; i < n; i++) {
     options[i].dominatedBy = null;
     const a = m[i];
-    const si = sr[i], fi = fr[i];
+    const si = sr[i];
     for (let j = 0; j < n; j++) {
       if (i === j) continue;
       const b = m[j];
-      if (sr[j] < si || fr[j] < fi) continue;
+      if (sr[j] < si) continue;
       let allLE = true, anyLT = false;
       for (let k = 0; k < 4; k++) {
         // Tolerance on a finite scale: with an infinite metric (LCOE with no delivered energy) the
@@ -102,12 +98,11 @@ export function markDominance(options) {
   }
 }
 
-// "Rank requirement-compliant options first" (§11, off by default): resilience and site fit are the two
-// requirement checks (§5.7), so an option is compliant unless its resilience status is "Does not meet" or its
-// site-fit status is "Does not fit" (the two statuses §11 names). Options without a site-fit result
-// (synthetic test options) count as compliant on site fit. Scores never change; only the order does.
+// "Rank requirement-compliant options first" (§11, off by default): an option is compliant unless its resilience
+// status is "Does not meet". Site fit no longer counts (walkthrough, 2026-10-21: with the Site tab as Beta,
+// "compliant" means the resilience status only; BRIEF §11, AC 27).
 export function isRequirementCompliant(o) {
-  return !(o.resilience && o.resilience.status === 'Does not meet') && !(o.siteFit && o.siteFit.status === 'Does not fit');
+  return !(o.resilience && o.resilience.status === 'Does not meet');
 }
 
 export function rankOptions(options, compliantFirst) {

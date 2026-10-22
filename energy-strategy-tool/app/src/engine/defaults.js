@@ -791,6 +791,11 @@ export function referenceT4(opts = {}) {
 // Is this record researched and approved (label "sourced — not independently checked")?
 export function isSourced(r) { return !!r && r.label === LABEL_SOURCED; }
 
+// Site tab (Beta) switch in the general settings (walkthrough, 2026-10-21; BRIEF §2 principle 3, §10, §12.12):
+// off by default. A view setting: it changes what is shown, never a score, a rank or a run.
+rec('view.siteTabBeta', false, 'toggle', { basis: 'judgement', dist: 'fixed', ref: '§12.12',
+  note: 'Site tab (Beta): site layout, boundary drawing, GeoJSON/KML import and site fit. Hidden by default; when on it is labelled Beta and never affects the ranking or the PDF.' });
+
 export function getRegistry() {
   return REGISTRY;
 }

@@ -27,8 +27,8 @@ export async function getViewBundle() {
       export function renderTable(model, pageSize = Infinity) {
         return renderToStaticMarkup(React.createElement(ParetoTable, { model, pageSize }));
       }
-      export function renderView(run, view) {
-        return renderToStaticMarkup(React.createElement(ParetoView, { run, view, setView: () => {}, start: '2027-01' }));
+      export function renderView(run, view, siteBeta = false) {
+        return renderToStaticMarkup(React.createElement(ParetoView, { run, view, setView: () => {}, start: '2027-01', siteBeta }));
       }
       import SiteView from ${src('src/components/SiteView.jsx')};
       import RunSummary from ${src('src/components/RunSummary.jsx')};
@@ -37,11 +37,11 @@ export async function getViewBundle() {
       export function renderSite(run, inputs, optionId = null) {
         return renderToStaticMarkup(React.createElement(SiteView, { run, inputs, update: () => {}, optionId, setOptionId: () => {}, computing: false }));
       }
-      export function renderSummary(run) {
-        return renderToStaticMarkup(React.createElement(RunSummary, { run, open: true, onToggle: () => {}, onInclude: () => {}, onSamplingOff: () => {} }));
+      export function renderSummary(run, siteBeta = false) {
+        return renderToStaticMarkup(React.createElement(RunSummary, { run, open: true, onToggle: () => {}, onInclude: () => {}, onSamplingOff: () => {}, siteBeta }));
       }
-      export function renderOptionDetail(o) {
-        return renderToStaticMarkup(React.createElement(OptionDetail, { o, start: '2027-01', onClose: () => {} }));
+      export function renderOptionDetail(o, siteBeta = false) {
+        return renderToStaticMarkup(React.createElement(OptionDetail, { o, start: '2027-01', onClose: () => {}, siteBeta }));
       }
       import { DispatchPanel } from ${src('src/components/DispatchView.jsx')};
       import { SensitivityResult } from ${src('src/components/SensitivityView.jsx')};
