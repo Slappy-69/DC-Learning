@@ -15,6 +15,10 @@ through an 8,760-hour dispatch model and one cash-flow ledger, and scores them o
 
 Weights are editable. Site fit is shown as a badge ("Fits", "Fits with flags", "Does not fit"), not a weight.
 
+The owner's walkthrough of 2026-10-21 agreed changes that are not built yet: a Windows program only, a map pin for the
+location, every input optional with flagged defaults, top-five result cards, compare, a single PDF export, and the Site
+tab as a Beta feature. See `energy-strategy-tool/docs/BUILD-PLAN.md`.
+
 Views: ranked options, a Pareto trade-off chart with a table alternative, a **Dispatch** tab (phasing timeline, hourly
 dispatch, annual balance), a **Sensitivity** tab (tornado), a **Site** tab (draw or import a boundary as GeoJSON/KML,
 automatic block layout, site-fit checks), and a run log you can export as JSON or CSV.
@@ -31,9 +35,7 @@ The model runs entirely on your device, with no server and no network connection
    run `Concept Energy Optioneering.exe`. It is **not code-signed**, so Windows shows "Windows protected your PC" the
    first time: choose *More info* → *Run anyway*. Details in
    [`energy-strategy-tool/packaging/README.md`](energy-strategy-tool/packaging/README.md).
-2. **Phone.** The owner's private Claude link, "Concept Energy Optioneering", holds the latest build and opens in the
-   phone's browser.
-3. **Any browser, offline.** Download
+2. **Any browser, offline.** Download
    [`energy-strategy-tool/energy-tool-single-file.html`](energy-strategy-tool/energy-tool-single-file.html)
    ("Download raw file") and open it in Chrome, Edge, Firefox or Safari.
 
@@ -41,8 +43,10 @@ The model runs entirely on your device, with no server and no network connection
 
 | Path | What it is |
 |---|---|
-| `energy-strategy-tool/STATUS.md` | Current state, decisions waiting for the owner, known gaps. **Read this first.** |
-| `energy-strategy-tool/brief-v2/` | The authoritative brief (`BRIEF.md`), change log, assumptions, open questions |
+| `CLAUDE.md` | Start-here notes for Claude sessions: what to read, in what order, and the working rules |
+| `energy-strategy-tool/STATUS.md` | Current state, decisions, known gaps. **Read this first.** |
+| `energy-strategy-tool/brief-v2/` | The authoritative brief (`BRIEF.md`, revision 5), change log, assumptions, open questions |
+| `energy-strategy-tool/docs/` | The plan for building the agreed changes (`BUILD-PLAN.md`), known issues, the decision log of the 2026-10-21 walkthrough, and the user guide (text, figures, mock-ups and the tools that build the EPUB and PDF) |
 | `energy-strategy-tool/app/` | Source (React + a plain-JS engine), tests, build script; `BUILD-NOTES.md` records every default, decision and test run |
 | `energy-strategy-tool/verification/` | Independent verification reports for each slice (`HISTORY.md` summarises them) |
 | `energy-strategy-tool/packaging/` | PWA and Electron desktop packaging, with their tests |

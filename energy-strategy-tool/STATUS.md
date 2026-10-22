@@ -1,13 +1,16 @@
 # Status: concept-design energy strategy tool
 
 Checkpoint updated after every completed step, so any session can resume from here.
-Last updated: 2026-10-21 (after the user-workflow walkthrough). **Development paused by the owner (2026-10-21)**: everything built so far is verified, merged to `main` and working; nothing new is in progress.
+Last updated: 2026-10-22 (handoff for the build). **Development paused by the owner (2026-10-21)**: everything built so far is merged to `main`, passed its verification (table below) and works; defects found since are listed in `docs/KNOWN-ISSUES.md` (none fixed), and the packaging Opus review did not finish. The owner's walkthrough of 2026-10-21 is folded into the brief (revision 5) and broken into work packages in `docs/BUILD-PLAN.md`. **Nothing in that plan has been started; start only when the owner asks.** New sessions: read `../CLAUDE.md` first.
 
-**Scope has changed since the close-out state below.** The walkthrough decisions are in `claude/walkthrough-decisions-2026-10-21.md` in the owner's Claude project (the full log, with research items). Where this file disagrees with that log, the log is newer. This file has not been re-verified against the code since the change.
+The walkthrough's decision log is `docs/walkthrough-decisions-2026-10-21.md` (a copy of the owner's project document). Where this file or the brief disagrees with it, the log is newer. The built program was checked against the guide and the code on `main` (commit 441635e) on 2026-10-21 while writing the user guide; the defects found are in `docs/KNOWN-ISSUES.md`.
 
 ## Where to look
 
-- **Brief (authoritative):** `brief-v2/BRIEF.md`, with `CHANGELOG.md`, `ASSUMPTIONS.md`, `OPEN-QUESTIONS.md`.
+- **Brief (authoritative):** `brief-v2/BRIEF.md` (revision 5, walkthrough folded in), with `CHANGELOG.md`, `ASSUMPTIONS.md`, `OPEN-QUESTIONS.md` (questions 19–35 are the points the walkthrough left open; they have no default).
+- **Build plan:** `docs/BUILD-PLAN.md`: the walkthrough changes as work packages 0–10, with the questions to ask first and the acceptance tests.
+- **Decision log:** `docs/walkthrough-decisions-2026-10-21.md`. **Known issues:** `docs/KNOWN-ISSUES.md` (nine defects in the built engine, none fixed).
+- **User guide:** `docs/user-guide/`: the guide's text, figures, mock-ups of the agreed screens and the tools that build the EPUB and the PDF (`docs/user-guide/README.md`).
 - **App source and build notes:** `app/`. `app/BUILD-NOTES.md` is the reference for defaults, gaps, decisions and test output.
 - **Windows program:** GitHub → Actions → Desktop builds → latest green run → Artifacts → `desktop-win32-x64`. Unsigned: Windows shows "Windows protected your PC" the first time (More info → Run anyway). See `packaging/README.md`.
 - **Phone:** dropped on 2026-10-21 (walkthrough). The private Claude artifact "Concept Energy Optioneering" (https://claude.ai/artifact/KZ5isQcoksrwHY1AqTHU55) still exists but is no longer maintained or part of the plan.
@@ -21,17 +24,20 @@ Last updated: 2026-10-21 (after the user-workflow walkthrough). **Development pa
 - **Location:** a map pin sets location and country. Planned: an offline map bundled with the Windows program (PMTiles-style, all of Europe, roads detail). Licence and file size not yet checked.
 - **Site tab:** kept as **Beta**. Hidden by default, turned on in the app's general settings, labelled Beta, and kept out of the ranking and the PDF export. Site area is otherwise a single number; layout and planning constraints are out of the main flow.
 - **Results and export:** top 5 cards, cost-against-carbon trade-off (either axis switchable), compare up to 3, tornado defaulting to LCOE, one PDF export (inputs first). No Excel.
-- Full list of defaults, flags and research items: the project log named above.
+- Full list of defaults, flags and research items: `docs/walkthrough-decisions-2026-10-21.md` and brief revision 5.
 
 ## Branches
 
 | Branch | State |
 |---|---|
-| `main` | **Everything below, verified.** Brief v2, core, run log, single-file build, Pareto, Site, the port (Dispatch, Sensitivity, PPA rule), packaging (Windows program, PWA, workflows). Merged 2026-10-21 with the owner's approval of 2026-10-18 |
+| `main` | **Everything below, verified** (except the packaging Opus review, which did not finish; known issues in `docs/KNOWN-ISSUES.md`). Brief v2, core, run log, single-file build, Pareto, Site, the port (Dispatch, Sensitivity, PPA rule), packaging (Windows program, PWA, workflows). Merged 2026-10-21 with the owner's approval of 2026-10-18 |
 | `feature/pareto-verification`, `feature/site-layout`, `feature/port-concept-line`, `feature/packaging` | Fully contained in `main`; kept for reference |
 | `concept-sensitivity-tab`, `concept-site-layout` | Parallel work by another session; their useful parts were ported. Left untouched (deleting them is the owner's call) |
+| `docs/status-walkthrough-2026-10-21` | The status update of 2026-10-21, merged into `main` (commit 441635e). Can be deleted (the owner's call) |
+| `feature/build-handoff-2026-10-21` | The handoff for the build (2026-10-22): brief revision 5, build plan, known issues, decision log, user guide, `CLAUDE.md`. Goes into `main` only with the owner's yes |
+| `codex/energy-tool-experiment` | The owner's own branch (2026-10-19); not part of this line. Left untouched |
 
-GitHub runs the checks on every push to `main` (`.github/workflows/ci.yml`: Node tests, build, PWA tests, browser tests) and builds the Windows program when the packaging changes (`desktop.yml`).
+GitHub runs the checks on every push to `main` or a `feature/` branch and on pull requests (`.github/workflows/ci.yml`: Node tests, build, PWA tests, browser tests) and builds the Windows program when the packaging changes (`desktop.yml`). Last result on `main` (commit 441635e): passed (2026-10-21).
 
 ## Built and verified
 
@@ -41,7 +47,8 @@ GitHub runs the checks on every push to `main` (`.github/workflows/ci.yml`: Node
 | Trackable run log (12 stages, JSON/CSV export, progress panel) | Haiku ×3 + Opus | Included below |
 | Single-file build with inline worker and fallback/watchdog | Haiku ×3 + Opus | Included below |
 | Pareto trade-off view | Haiku ×3 + Opus, 2026-10-16 | `npm test` 22/22; `npm run test:browser` 13/13; axe 0 serious/critical (light and dark) |
-| Site (stage 2): geometry kernel, site model with T2/T4, blocks, auto-layout, site-fit outputs, Site tab with plan, boundary drawing, GeoJSON/KML import, small multiples | Haiku ×3 + Opus, 2026-10-17 (0 invariant violations in 8,000 independently checked layouts) | `npm test` 32/32; `npm run test:browser` 21/21; axe 0 serious/critical; phone shows results first |
+| Site (stage 2): geometry kernel, site model with T2/T4, blocks, auto-layout, site-fit outputs, Site tab with plan, boundary drawing, GeoJSON/KML import, small multiples. Now a Beta feature (walkthrough, 2026-10-21) | Haiku ×3 + Opus, 2026-10-17 (0 invariant violations in 8,000 independently checked layouts) | `npm test` 32/32; `npm run test:browser` 21/21; axe 0 serious/critical |
+| Port from the other line: Dispatch tab, tornado (Sensitivity tab), bridging-battery timing fix, hosted-page build, the owner's PPA rule (settlement only on delivered energy) | Haiku H1–H3 + Opus, 2026-10-18 (`verification/port/`) | `npm test` 44/44; `npm run test:browser` 29/29 |
 
 ## Launchable app (owner request 2026-10-18; narrowed 2026-10-21 to **Windows only**)
 
@@ -52,25 +59,35 @@ GitHub runs the checks on every push to `main` (`.github/workflows/ci.yml`: Node
 
 ## Next
 
-0. **Walkthrough implementation (not started):** follow `claude/walkthrough-decisions-2026-10-21.md`. Resume only when the owner asks.
-1. **Port from the other line: verified** (Haiku H1–H3 and Opus review, 2026-10-18; `verification/port/`). Dispatch tab, tornado Sensitivity tab, bridging-battery timing fix, hosted-page build, and the owner's PPA rule (settlement only on delivered energy). The Opus review found the engine correct and fixed three text and robustness items (hedge present-value sign, ASCII-only hosted page, a record note); GitHub CI found, and this branch fixes, a sideways scroll on the Site tab at 375 px with the Linux default font. `npm test` 44/44, `npm run test:browser` 29/29. Owner decisions raised by the review are listed below (5–7).
-   - **Packaging:** done for Windows and phone (see "Launchable app"). Merged to `main`.
-2. **Rest of the trade-off views (stage 3):** parallel coordinates with brushing, choice-impact chart, option card, compare view, phasing timeline, schematic, key quantities.
-3. **Verification tier (stage 4):** representative-day screening, background 8760-hour verification of the top 10, dispatch visualisations.
-4. **Uncertainty and sensitivity (stage 5):** ranges, Monte Carlo, rank stability, robust pick, tornado, breakevens, scenarios.
-5. **Plain-English summary, flags register, exports (stage 6).**
-6. **Polish (stage 7):** manual layout editing, 2.5D massing, online map tiles, custom profiles, screen-reader audit, performance tuning.
+Follow `docs/BUILD-PLAN.md` in order, and only when the owner asks:
 
-## Decisions for the owner (defaults in use until decided)
+0. Research the defaults before the first release.
+1. Map pin and country setup.
+2. Input model with flagged defaults (and the Site tab's Beta switch).
+3. Contracted grid capacity and the fixed grid connection charge.
+4. Flexibility and battery logic.
+5. The O1–O3 PPA and carbon rules.
+6. Results cards and the trade-off chart.
+7. Compare.
+8. Dispatch views (and the representative-day screening tier).
+9. Tornado.
+10. PDF export.
 
-1. **No-backup option whose on-site plant meets every requirement item:** "Does not meet" (default) or "Meets with flags".
-2. **Contracted grid capacity below the offer (open question 18):** default is the full offer for every option, at the same connection cost.
-3. **Brief open questions 1–17:** proposed defaults are in use (`brief-v2/OPEN-QUESTIONS.md`).
-4. **Cost axis when an option delivers almost nothing (Brief issue 21, found on T3):** grid-dependent options on a no-grid site deliver almost no energy, and a financially settled PPA gives them net revenue, so their LCOE is negative or infinite and the cost axis stops separating the other 1,844 options. **Decided by the owner on 2026-10-18: no PPA income without physical delivery.** PPA settlement counts only on delivered energy; settlement on undelivered volume is reported as a separate hedge line outside the cost ledger and the score. Implemented and verified in the port slice (test 11a).
+Not scheduled (ask the owner first): the small fixes in `docs/KNOWN-ISSUES.md`, saving and reopening a study, the plain-English summary, the uncertainty features (ranges, Monte Carlo, breakevens, scenarios), the other trade-off views, code signing, the unfinished packaging Opus review, the NVDA walk-through. The stages of the brief before revision 5 are kept in brief §20 for reference.
 
-5. **PPA options that can never deliver (Opus review O1).** Recorded as decided on 2026-10-21 (owner's debate): flag the PPA that cannot be delivered (no grid) and prefer the no-PPA option. Options were: keep (A); treat as not applicable (B); flag and break ties toward no-PPA (C). Chosen: flag and prefer no-PPA (the owner's O1 rule). The code change is not yet made. `verification/port/OPUS-review.md` section 7.1.
-6. **Carbon metrics and undelivered PPA volume (O2).** Recorded as decided on 2026-10-21: the carbon-free score uses hourly matching (PPA counted only against grid energy used in that hour), which is option (B). The code change is not yet made. Section 7.2.
-7. **`grid-ppa` flag headline (O3).** "PPA limited by import capacity" shows on 753 T1 options where only 0.002–0.5 % of the undelivered volume is import-limited. Options: keep (A); headline follows the larger part with a threshold (B); two separate flags (C). Section 7.3.
+## Decisions
+
+Decided by the owner (code changes not yet made unless stated):
+
+1. **No PPA income without physical delivery** (2026-10-18; built and verified, test 11a). PPA settlement counts only on delivered energy; settlement on undelivered volume is a separate hedge line outside the cost ledger and the score. This settled Brief issue 21 (the cost axis on a no-grid site).
+2. **O1** (2026-10-21): a PPA that cannot be delivered (no grid, islanded) is flagged and the equivalent no-PPA option is preferred. How it works in the ranking: `OPEN-QUESTIONS.md` 22. Background: `verification/port/OPUS-review.md` section 7.1.
+3. **O2** (2026-10-21): the carbon-free energy score uses hourly matching (PPA energy counted only against grid energy used in that hour). Section 7.2.
+4. **O3** (2026-10-21): two separate `grid-ppa` flags, one for PPA volume limited by the grid import capacity and one for other undelivered PPA volume, each showing its share. Section 7.3.
+5. **No-backup option** whose on-site plant meets every requirement item: stays "Does not meet" (2026-10-21).
+6. **Contracted grid capacity** (brief question 18, 2026-10-21): each option has its own contracted grid capacity, set by the engineer; the grid connection charge is one fixed amount, the same for every option. Details: `OPEN-QUESTIONS.md` 19 and 20.
+7. Everything else decided in the walkthrough: `docs/walkthrough-decisions-2026-10-21.md`, folded into brief revision 5.
+
+Waiting for the owner: `OPEN-QUESTIONS.md` 19–35 (no defaults; ask one at a time when the work package that needs the answer starts) and the known issues in `docs/KNOWN-ISSUES.md` (question 31).
 
 Interpretations taken without asking (reversible, recorded in `app/BUILD-NOTES.md`):
 - The highlighted Pareto pick follows rank 1, the same option as the header leader, so acceptance criterion 5 holds with "Rank requirement-compliant options first" on or off.
@@ -79,9 +96,9 @@ Interpretations taken without asking (reversible, recorded in `app/BUILD-NOTES.m
 ## Known open items
 
 - Packaging Opus review not done (usage limit). Resume it, or run a fresh one, before further packaging work.
-- Screen-reader walk-through (NVDA, VoiceOver) not done yet.
-- A run takes about 9–10 s for 2,000 options, because every option runs the full 8760-hour model. The brief's speed targets need the representative-day tier (stage 4). The owner has said speed is not a priority for now.
-- Weight-change repaint measured 96–166 ms in the sandbox (brief target ≤ 100 ms on the reference machine); the browser check fails above 300 ms to catch regressions.
+- Screen-reader walk-through with NVDA not done yet (VoiceOver no longer applies with the Windows-only scope).
+- A run takes **15–20 s for 2,000 options** on the owner's machine (owner's figure, 2026-10-21; the engine alone took 13.6–15.9 s in the sandbox), because every option runs the full 8760-hour model. The brief's speed targets need the representative-day tier (build plan package 8). The owner has said speed is not a priority for now.
+- Weight-change repaint measured 96–166 ms in the sandbox; the walkthrough relaxed the ≤ 100 ms target and the new value is `OPEN-QUESTIONS.md` 35. The browser check fails above 300 ms to catch regressions.
 - Stage 2 gaps deferred: carport PV block, roads allowance driven by access points, image underlay, footprint override, heat-reuse blocks. The gas-pipe rate (€0.8 m/km) is a judgement value.
 - Some core run constants have no §18 default record yet.
 - No default has a verified source: every one is labelled "indicative — unverified".
@@ -90,7 +107,7 @@ Interpretations taken without asking (reversible, recorded in `app/BUILD-NOTES.m
 
 ```
 cd app
-npm install
+npm ci
 npm test               # Node test suite
 npm run build          # writes dist/, including energy-tool-single-file.html
 npm run test:browser   # needs Playwright and Chromium; skips with a message if absent
@@ -98,6 +115,9 @@ npm run test:browser   # needs Playwright and Chromium; skips with a message if 
 
 ## Working rules
 
+The full list is in `../CLAUDE.md`. In short:
+
 - Builder and reviewer: Claude Opus 5.5. Verifier: Claude Haiku 5.5. After every three Haiku checks, one Opus review.
 - Work goes to feature branches. Nothing is merged to `main` without the owner.
+- One question per message; never assume an answer to an open question; explain GitHub and software terms in plain words.
 - This file is updated after every completed step.
