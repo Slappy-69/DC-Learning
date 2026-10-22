@@ -1,6 +1,6 @@
 # Build plan: the walkthrough changes
 
-The owner's walkthrough of 2026-10-21 agreed a set of changes to the tool. This plan breaks them into work packages in the order recorded in the project's handoff note at the end of the walkthrough (`claude/handoff-concept-tool.md` in the owner's Claude project); confirm the order with the owner before the first package. **Nothing here has been started.** Start only when the owner asks, and take the packages in order unless the owner says otherwise.
+The owner's walkthrough of 2026-10-21 agreed a set of changes to the tool. This plan breaks them into work packages in the order recorded in the project's handoff note at the end of the walkthrough (`claude/handoff-concept-tool.md` in the owner's Claude project); **The owner confirmed this order on 2026-10-22** (as recorded, 0 to 10) and asked to start package 0. Take the packages in order unless the owner says otherwise.
 
 The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lists the brief sections, the open questions to ask the owner first, the acceptance tests (brief §21) and the user-guide chapters and mock-ups that show the agreed design. The working rules are in `../../CLAUDE.md`.
 
