@@ -1,0 +1,105 @@
+{
+ "country": "GB",
+ "designTemp": 26.3606872657883,
+ "designWetbulb": 19.871508185200707,
+ "stats": {
+  "tMean": 9.784958872775315,
+  "tMax": 26.3606872657883,
+  "twMax": 19.871508185200707,
+  "solarYield": 949.9999999999991,
+  "windCF": 0.3399999999997424,
+  "priceMean": 95,
+  "carbonMean": 200.0000000000002
+ },
+ "pue": {
+  "air": {
+   "coolAvg": 0.10959287925528563,
+   "coolPeak": 0.27675178862299843,
+   "lossFrac": 0.07,
+   "annualPUE": 1.1795928792552857,
+   "peakPUE": 1.3467517886229985,
+   "adiabaticHours": 4159,
+   "params": {
+    "tempBasis": "drybulb",
+    "fcThreshold": 10,
+    "band": 10,
+    "copRef": 5,
+    "tRef": 25,
+    "copSlope": 0.12,
+    "fanFrac": 0.07,
+    "lossFrac": 0.07,
+    "densityKWm2": 1.5,
+    "wueBase": 0.05,
+    "capexDeltaPerKW": 0
+   }
+  },
+  "evap": {
+   "coolAvg": 0.052955328345438875,
+   "coolPeak": 0.20010639708113237,
+   "lossFrac": 0.07,
+   "annualPUE": 1.122955328345439,
+   "peakPUE": 1.2701063970811324,
+   "adiabaticHours": 673,
+   "params": {
+    "tempBasis": "wetbulb",
+    "fcThreshold": 14,
+    "band": 6,
+    "copRef": 6.5,
+    "tRef": 20,
+    "copSlope": 0.15,
+    "fanFrac": 0.05,
+    "lossFrac": 0.07,
+    "densityKWm2": 1.8,
+    "wueBase": 0.3,
+    "wueEvap": 1.8,
+    "capexDeltaPerKW": -40
+   }
+  },
+  "dlc": {
+   "coolAvg": 0.04500193392411531,
+   "coolPeak": 0.05066768009099506,
+   "lossFrac": 0.06,
+   "annualPUE": 1.1050019339241153,
+   "peakPUE": 1.1106676800909951,
+   "adiabaticHours": 6,
+   "params": {
+    "tempBasis": "drybulb",
+    "fcThreshold": 26,
+    "band": 10,
+    "copRef": 5.5,
+    "tRef": 35,
+    "copSlope": 0.1,
+    "fanFrac": 0.045,
+    "lossFrac": 0.06,
+    "densityKWm2": 4,
+    "wueBase": 0.02,
+    "capexDeltaPerKW": 150
+   }
+  },
+  "immersion": {
+   "coolAvg": 0.03000000000000031,
+   "coolPeak": 0.03,
+   "lossFrac": 0.06,
+   "annualPUE": 1.0900000000000003,
+   "peakPUE": 1.09,
+   "adiabaticHours": 0,
+   "params": {
+    "tempBasis": "drybulb",
+    "fcThreshold": 30,
+    "band": 10,
+    "copRef": 5.5,
+    "tRef": 38,
+    "copSlope": 0.1,
+    "fanFrac": 0.03,
+    "lossFrac": 0.06,
+    "densityKWm2": 3,
+    "wueBase": 0.02,
+    "capexDeltaPerKW": 250
+   }
+  }
+ },
+ "gasPrice": 44,
+ "gasCommodity": 40,
+ "carbonPrice": 50,
+ "priceAdder": 55
+}

@@ -1,0 +1,3282 @@
+[
+ {
+  "id": "O1YAUJ8J",
+  "rank": 1,
+  "name": "Grid · Diesel N+1 · DLC · PV 7.7 MWp · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 92.71244106269394,
+  "axisScores": {
+   "cost": 98.55335455047312,
+   "carbon": 99.76645747663746,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 153.77439636734684,
+   "carbon": 113.1584772980166,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 153.77439636734684,
+  "npv": 936733514.1247916,
+  "capex": 113652161.24280804,
+  "capexLow": 79556512.86996563,
+  "capexHigh": 170478241.86421207,
+  "capexShare": 0.09851359087498547,
+  "locationG": 113.1584772980166,
+  "marketG": 0.9744721044306479,
+  "cfePct": 0.6673710907124816,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW Diesel gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 821 h, 650 MWh unmet (peak 2.0 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,475,368 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (140 MWh limited by import capacity, 4,475,228 MWh above the load in the hour). Its settlement, a net income of €16.2 m (present value €7.85 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 650.3538212662183,
+   "hours": 821,
+   "peakMW": 2.023391795226974,
+   "byYear": [
+    0,
+    0,
+    650.3538212662183,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": null,
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Rooftop PV: roof 27,500 m² = 27,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 2.50 MWp.",
+   "Ground PV (fill residual), from the layout: 62,900 m² of free buildable area after every other block (5 m clearance, strips under 10 m wide left out, within the net developable area) ÷ 1.2 ha/MWp = 5.24 MWp (area-budget estimate before layout 5.31 MWp).",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 791,905 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "ground",
+   "C10": "roofResidual",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 16175470.355286598,
+   "pv": 7845694.746386142,
+   "undeliveredMWh": 4475368.427173545
+  }
+ },
+ {
+  "id": "O1BM95B8",
+  "rank": 2,
+  "name": "Grid · Diesel N+1 · DLC · PV 2.5 MWp · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 92.58441336609361,
+  "axisScores": {
+   "cost": 98.32288151812777,
+   "carbon": 99.57700893551964,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 154.0836968653611,
+   "carbon": 113.95512072987404,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 154.0836968653611,
+  "npv": 938554453.606146,
+  "capex": 109616077.90947472,
+  "capexLow": 76731254.5366323,
+  "capexHigh": 164424116.86421207,
+  "capexShare": 0.09471094073852293,
+  "locationG": 113.95512072987404,
+  "marketG": 0.9745096393084743,
+  "cfePct": 0.6664021929499462,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW Diesel gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,294 h, 1,153 MWh unmet (peak 2.2 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,396,505 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (584 MWh limited by import capacity, 4,395,922 MWh above the load in the hour). Its settlement, a net income of €14.8 m (present value €7.19 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1152.8117467567897,
+   "hours": 1294,
+   "peakMW": 2.2293114830646488,
+   "byYear": [
+    0,
+    0,
+    1152.8117467567897,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "O1YAUJ8J",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Rooftop PV: roof 27,500 m² = 27,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 2.50 MWp.",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 791,905 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "ground",
+   "C10": "roof",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 14839468.57925691,
+   "pv": 7187954.885570208,
+   "undeliveredMWh": 4396505.296817413
+  }
+ },
+ {
+  "id": "OSCP27D",
+  "rank": 3,
+  "name": "Grid · Diesel N+1 · DLC · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 92.5480975485856,
+  "axisScores": {
+   "cost": 98.28332718780149,
+   "carbon": 99.48712172794438,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 154.1367797529512,
+   "carbon": 114.33310228148866,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 154.1367797529512,
+  "npv": 938790389.1618506,
+  "capex": 107141077.90947472,
+  "capexLow": 74998754.5366323,
+  "capexHigh": 160711616.86421207,
+  "capexShare": 0.09238674896142074,
+  "locationG": 114.33310228148866,
+  "marketG": 0.9745615367472865,
+  "cfePct": 0.6659252447386912,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW Diesel gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,655 h, 1,847 MWh unmet (peak 2.6 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,359,535 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (1,244 MWh limited by import capacity, 4,358,290 MWh above the load in the hour). Its settlement, a net income of €14.2 m (present value €6.88 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1847.469302922417,
+   "hours": 1655,
+   "peakMW": 2.598158037990075,
+   "byYear": [
+    0,
+    0,
+    1847.469302922417,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "O1BM95B8",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 791,905 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "split",
+   "C10": "none",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 14216656.740779461,
+   "pv": 6884747.374911168,
+   "undeliveredMWh": 4359534.617941857
+  }
+ },
+ {
+  "id": "O1GBHO2A",
+  "rank": 4,
+  "name": "Grid · HVO N+1 · DLC · PV 1.5 MWp · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 92.53464169223058,
+  "axisScores": {
+   "cost": 98.05945461989101,
+   "carbon": 99.74671989759898,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 154.43722226477917,
+   "carbon": 113.24147510105588,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 154.43722226477917,
+  "npv": 940678585.687245,
+  "capex": 109926827.90947472,
+  "capexLow": 76948779.5366323,
+  "capexHigh": 164890241.86421207,
+  "capexShare": 0.09464250648974108,
+  "locationG": 113.24147510105588,
+  "marketG": 0.10949741343261482,
+  "cfePct": 0.6662125661867364,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW HVO gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,443 h, 1,385 MWh unmet (peak 2.4 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,381,657 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (803 MWh limited by import capacity, 4,380,854 MWh above the load in the hour). Its settlement, a net income of €14.6 m (present value €7.07 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (HVO standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1384.9225678359549,
+   "hours": 1443,
+   "peakMW": 2.3574736684629514,
+   "byYear": [
+    0,
+    0,
+    1384.9225678359549,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "O1YAUJ8J",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "HVO standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Rooftop PV: roof 27,500 m² less roof plant (roof: 40 % of the roof, 11,000 m²) = 16,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 1.50 MWp.",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 791,905 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "hvo",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "roof",
+   "C10": "roof",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 14589092.581842363,
+   "pv": 7065732.758827855,
+   "undeliveredMWh": 4381656.831606694
+  }
+ },
+ {
+  "id": "O14EVMZU",
+  "rank": 5,
+  "name": "Grid · HVO N+1 · DLC · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 92.51279549612377,
+  "axisScores": {
+   "cost": 98.03552229758905,
+   "carbon": 99.69284036439447,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 154.46934003201338,
+   "carbon": 113.46804204100513,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 154.46934003201338,
+  "npv": 940815891.4092762,
+  "capex": 108441827.90947472,
+  "capexLow": 75909279.5366323,
+  "capexHigh": 162662741.86421207,
+  "capexShare": 0.09325143209960203,
+  "locationG": 113.46804204100513,
+  "marketG": 0.109501296263753,
+  "cfePct": 0.6659252447386912,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW HVO gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,655 h, 1,847 MWh unmet (peak 2.6 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,359,535 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (1,244 MWh limited by import capacity, 4,358,290 MWh above the load in the hour). Its settlement, a net income of €14.2 m (present value €6.88 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (HVO standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1847.469302922417,
+   "hours": 1655,
+   "peakMW": 2.598158037990075,
+   "byYear": [
+    0,
+    0,
+    1847.469302922417,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "O1GBHO2A",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "HVO standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 791,905 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "hvo",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "roof",
+   "C10": "none",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 14216656.740779461,
+   "pv": 6884747.374911168,
+   "undeliveredMWh": 4359534.617941857
+  }
+ },
+ {
+  "id": "OMTCPB2",
+  "rank": 6,
+  "name": "Grid · Diesel N+1 · Immersion · PV 3.3 MWp · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 92.19686154424777,
+  "axisScores": {
+   "cost": 97.18487390906729,
+   "carbon": 99.61058513799313,
+   "ttp": 88.56903521831147,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 155.61093116537668,
+   "carbon": 113.81393061561192,
+   "ttp": 30.10008445945946,
+   "deliverability": 89
+  },
+  "lcoe": 155.61093116537668,
+  "npv": 935327706.9019969,
+  "capex": 120045780.8,
+  "capexLow": 84032046.55999999,
+  "capexHigh": 180068671.2,
+  "capexShare": 0.10461972086702301,
+  "locationG": 113.81393061561192,
+  "marketG": 0.9646213691528673,
+  "cfePct": 0.6665654059154342,
+  "ttp": {
+   "metric": 30.10008445945946,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 22.218750000000014
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "38 × 2.75 MW Diesel gensets = 104.5 MW (redundant units removed) → 104.5 MW firm vs 103.0 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 931 h, 709 MWh unmet (peak 1.8 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,350,965 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (305 MWh limited by import capacity, 4,350,660 MWh above the load in the hour). Its settlement, a net income of €14.9 m (present value €7.2 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 6.6 MW in months 24–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 304 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 708.6759038253497,
+   "hours": 931,
+   "peakMW": 1.844150507120247,
+   "byYear": [
+    0,
+    0,
+    708.6759038253497,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": null,
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.090 (Immersion, design-day dry-bulb 26.4 °C) + ancillary 2 % = 111 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 3.0 MW mechanical at design) = 103 MW.",
+   "Diesel standby gensets: 103 MW ÷ 2.75 MW per unit = 37.5 → 38 units; 38 units form 4 blocks (block size 10); N+1 adds 4; total 42 units (116 MW).",
+   "Fuel storage: 103 MW × 48 h × 0.26 L/kWh = 1,285 m³ (1,080 t).",
+   "Rooftop PV: roof 36,667 m² = 36,667 m² free × 50 % usable ÷ 5.5 m²/kWp = 3.33 MWp.",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 781,392 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 24–29: design load 26.6 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 6.6 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "immersion",
+   "C9": "ground",
+   "C10": "roof",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 14858837.60276347,
+   "pv": 7197750.0383067215,
+   "undeliveredMWh": 4350964.9671073025
+  }
+ },
+ {
+  "id": "O6FDBB2",
+  "rank": 7,
+  "name": "Grid · Diesel N+1 · DLC · PV 2.0 MWp · PPA hybrid 80 %",
+  "archetype": null,
+  "score": 92.08402164165652,
+  "axisScores": {
+   "cost": 96.9060535051763,
+   "carbon": 99.55900125590334,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 155.98511502933,
+   "carbon": 114.03084419337856,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 155.98511502933,
+  "npv": 950122484.8428599,
+  "capex": 109121077.90947472,
+  "capexLow": 76384754.5366323,
+  "capexHigh": 163681616.86421207,
+  "capexShare": 0.09310321563972153,
+  "locationG": 114.03084419337856,
+  "marketG": 23.313964472208546,
+  "cfePct": 0.6132614431564554,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW Diesel gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,369 h, 1,262 MWh unmet (peak 2.3 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 2,471,844 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (597 MWh limited by import capacity, 2,471,247 MWh above the load in the hour). Its settlement, a net income of €5.66 m (present value €2.84 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1261.8596175799855,
+   "hours": 1369,
+   "peakMW": 2.292663727603781,
+   "byYear": [
+    0,
+    0,
+    1261.8596175799855,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "O14EVMZU",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Rooftop PV: roof 27,500 m² less roof plant (split: 20 % of the roof, 5,500 m²) = 22,000 m² free × 50 % usable ÷ 5.5 m²/kWp = 2.00 MWp.",
+   "Offsite PPA (hybrid): 80 % of each year's facility consumption (steady state ≈ 633,524 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "split",
+   "C10": "roof",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "80",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 5655322.149398027,
+   "pv": 2836050.4941429654,
+   "undeliveredMWh": 2471843.786219181
+  }
+ },
+ {
+  "id": "O1OSKM4K",
+  "rank": 8,
+  "name": "Grid · Diesel N+1 · DLC · PV 1.5 MWp · PPA hybrid 80 %",
+  "archetype": null,
+  "score": 92.07615342445108,
+  "axisScores": {
+   "cost": 96.8964248132543,
+   "carbon": 99.54100855577236,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 155.9980369715477,
+   "carbon": 114.10650466717347,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 155.9980369715477,
+  "npv": 950185522.8708575,
+  "capex": 108626077.90947472,
+  "capexLow": 76038254.5366323,
+  "capexHigh": 162939116.86421207,
+  "capexShare": 0.09264247857577737,
+  "locationG": 114.10650466717347,
+  "marketG": 23.392101873004567,
+  "cfePct": 0.6131044752475866,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW Diesel gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,443 h, 1,385 MWh unmet (peak 2.4 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 2,465,232 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (708 MWh limited by import capacity, 2,464,524 MWh above the load in the hour). Its settlement, a net income of €5.56 m (present value €2.79 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1384.9225678359549,
+   "hours": 1443,
+   "peakMW": 2.3574736684629514,
+   "byYear": [
+    0,
+    0,
+    1384.9225678359549,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "O14EVMZU",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Rooftop PV: roof 27,500 m² less roof plant (roof: 40 % of the roof, 11,000 m²) = 16,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 1.50 MWp.",
+   "Offsite PPA (hybrid): 80 % of each year's facility consumption (steady state ≈ 633,524 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "roof",
+   "C10": "roof",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "80",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 5559773.451352177,
+   "pv": 2789468.6348636663,
+   "undeliveredMWh": 2465231.9380772854
+  }
+ },
+ {
+  "id": "OUTRYDE",
+  "rank": 9,
+  "name": "Grid · HVO N+1 · DLC · PV 2.5 MWp · PPA hybrid 80 %",
+  "archetype": null,
+  "score": 92.0565740864513,
+  "axisScores": {
+   "cost": 96.66783523236208,
+   "carbon": 99.78271661702237,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 156.3048098312239,
+   "carbon": 113.09010655565638,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 156.3048098312239,
+  "npv": 952083694.5867441,
+  "capex": 110916827.90947472,
+  "capexLow": 77641779.5366323,
+  "capexHigh": 166375241.86421207,
+  "capexShare": 0.0944160822746521,
+  "locationG": 113.09010655565638,
+  "marketG": 22.370637909626385,
+  "cfePct": 0.6134177722012751,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW HVO gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,294 h, 1,153 MWh unmet (peak 2.2 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 2,478,478 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (500 MWh limited by import capacity, 2,477,978 MWh above the load in the hour). Its settlement, a net income of €5.75 m (present value €2.88 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (HVO standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1152.8117467567897,
+   "hours": 1294,
+   "peakMW": 2.2293114830646488,
+   "byYear": [
+    0,
+    0,
+    1152.8117467567897,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": null,
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "HVO standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Rooftop PV: roof 27,500 m² = 27,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 2.50 MWp.",
+   "Offsite PPA (hybrid): 80 % of each year's facility consumption (steady state ≈ 633,524 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "hvo",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "ground",
+   "C10": "roof",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "80",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 5751379.791924346,
+   "pv": 2882990.063739294,
+   "undeliveredMWh": 2478477.6269639903
+  }
+ },
+ {
+  "id": "O12DDOCS",
+  "rank": 10,
+  "name": "Grid · Diesel N+1 · DLC · PPA hybrid 80 %",
+  "archetype": null,
+  "score": 92.05242400813128,
+  "axisScores": {
+   "cost": 96.86711707221772,
+   "carbon": 99.48712172794438,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 156.03736868340152,
+   "carbon": 114.3331022814887,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 156.03736868340152,
+  "npv": 950366176.7481356,
+  "capex": 107141077.90947472,
+  "capexLow": 74998754.5366323,
+  "capexHigh": 160711616.86421207,
+  "capexShare": 0.0912614465170259,
+  "locationG": 114.3331022814887,
+  "marketG": 23.62536132336214,
+  "cfePct": 0.6126302560488394,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW Diesel gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,655 h, 1,847 MWh unmet (peak 2.6 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 2,445,531 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (1,133 MWh limited by import capacity, 2,444,398 MWh above the load in the hour). Its settlement, a net income of €5.28 m (present value €2.65 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1847.469302922417,
+   "hours": 1655,
+   "peakMW": 2.598158037990075,
+   "byYear": [
+    0,
+    0,
+    1847.469302922417,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "O14EVMZU",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Offsite PPA (hybrid): 80 % of each year's facility consumption (steady state ≈ 633,524 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "roof",
+   "C10": "none",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "80",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 5276107.016415212,
+   "pv": 2651831.406194794,
+   "undeliveredMWh": 2445530.866951804
+  }
+ },
+ {
+  "id": "OJL1VOQ",
+  "rank": 11,
+  "name": "Grid · Diesel N+1 · DLC · PPA hybrid 80 %",
+  "archetype": null,
+  "score": 92.05242400813128,
+  "axisScores": {
+   "cost": 96.86711707221772,
+   "carbon": 99.48712172794438,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 156.03736868340152,
+   "carbon": 114.3331022814887,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 156.03736868340152,
+  "npv": 950366176.7481356,
+  "capex": 107141077.90947472,
+  "capexLow": 74998754.5366323,
+  "capexHigh": 160711616.86421207,
+  "capexShare": 0.0912614465170259,
+  "locationG": 114.3331022814887,
+  "marketG": 23.62536132336214,
+  "cfePct": 0.6126302560488394,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW Diesel gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,655 h, 1,847 MWh unmet (peak 2.6 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 2,445,531 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (1,133 MWh limited by import capacity, 2,444,398 MWh above the load in the hour). Its settlement, a net income of €5.28 m (present value €2.65 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1847.469302922417,
+   "hours": 1655,
+   "peakMW": 2.598158037990075,
+   "byYear": [
+    0,
+    0,
+    1847.469302922417,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "O14EVMZU",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Offsite PPA (hybrid): 80 % of each year's facility consumption (steady state ≈ 633,524 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "split",
+   "C10": "none",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "80",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 5276107.016415212,
+   "pv": 2651831.406194794,
+   "undeliveredMWh": 2445530.866951804
+  }
+ },
+ {
+  "id": "O1VA67D3",
+  "rank": 12,
+  "name": "Grid + fuel cells bridge → remove · HVO N+1 · DLC · PV 7.2 MWp · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 92.00362556625564,
+  "axisScores": {
+   "cost": 96.75923239057667,
+   "carbon": 99.84506455311067,
+   "ttp": 88.66358513117436,
+   "deliverability": 73.40487872321694
+  },
+  "metrics": {
+   "cost": 156.18215258900696,
+   "carbon": 112.82792943103168,
+   "ttp": 30,
+   "deliverability": 88.73476538197059
+  },
+  "lcoe": 156.18215258900696,
+  "npv": 951482186.1526297,
+  "capex": 142067911.24280804,
+  "capexLow": 99447537.86996563,
+  "capexHigh": 213101866.86421207,
+  "capexShare": 0.11261071925446373,
+  "locationG": 112.82792943103168,
+  "marketG": 1.2190849266221053,
+  "cfePct": 0.6672806673265441,
+  "ttp": {
+   "metric": 30,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 0
+  },
+  "deliv": 88.73476538197059,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0.017682307868627,
+    "points": -0.265234618029405
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW HVO gensets = 107.3 MW (redundant units removed) → 107.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 74 h, 11 MWh unmet (peak 0.3 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,467,793 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (156 MWh limited by import capacity, 4,467,637 MWh above the load in the hour). Its settlement, a net income of €16 m (present value €7.78 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (HVO standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "fuel-gas-assumed",
+    "severity": "info",
+    "category": "Fuel and utilities",
+    "message": "Gas capacity and date assumed, not confirmed"
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 10.605242270363984,
+   "hours": 74,
+   "peakMW": 0.29255582382146983,
+   "byYear": [
+    0,
+    0,
+    10.605242270363984,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": null,
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "HVO standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Bridging Fuel cells (SOFC): largest shortfall (design demand − offered grid) 7.1 MW in month 29 ÷ 1 MW = 8 units + N+1 per block of 10 (+1) = 9 units (9.0 MW); available from month 15 (fuel from month 18).",
+   "After the grid full-connection date (month 30) the bridging plant is: remove.",
+   "Rooftop PV: roof 27,500 m² less roof plant (roof: 40 % of the roof, 11,000 m²) = 16,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 1.50 MWp.",
+   "Ground PV (fill residual), from the layout: 68,900 m² of free buildable area after every other block (5 m clearance, strips under 10 m wide left out, within the net developable area) ÷ 1.2 ha/MWp = 5.74 MWp (area-budget estimate before layout 5.78 MWp).",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 791,905 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex).",
+   "Gas connection: no gas main location given (default: gas off-site, location unknown), so no connection pipe is costed."
+  ],
+  "v": {
+   "C1": "bridge",
+   "C2": "fuelCell",
+   "C3": "remove",
+   "C4": "none",
+   "C5": "hvo",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "roof",
+   "C10": "roofResidual",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 16046575.482143855,
+   "pv": 7781993.498023391,
+   "undeliveredMWh": 4467793.492695291
+  }
+ },
+ {
+  "id": "OYBJ1GX",
+  "rank": 13,
+  "name": "Grid · Diesel N+1 · Immersion · PV 7.5 MWp · PPA hybrid 80 %",
+  "archetype": null,
+  "score": 91.81932805339912,
+  "axisScores": {
+   "cost": 95.99807995720268,
+   "carbon": 99.76196270720902,
+   "ttp": 88.56903521831147,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 157.20363794159505,
+   "carbon": 113.17737809567781,
+   "ttp": 30.10008445945946,
+   "deliverability": 89
+  },
+  "lcoe": 157.20363794159505,
+  "npv": 944933372.204355,
+  "capex": 123077930.8,
+  "capexLow": 86154551.55999999,
+  "capexHigh": 184616896.2,
+  "capexShare": 0.10622822788739965,
+  "locationG": 113.17737809567781,
+  "marketG": 22.427743602130242,
+  "cfePct": 0.6149598836183843,
+  "ttp": {
+   "metric": 30.10008445945946,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 22.218750000000014
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "38 × 2.75 MW Diesel gensets = 104.5 MW (redundant units removed) → 104.5 MW firm vs 103.0 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 628 h, 456 MWh unmet (peak 1.7 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 2,512,908 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (62 MWh limited by import capacity, 2,512,846 MWh above the load in the hour). Its settlement, a net income of €6.66 m (present value €3.33 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 6.6 MW in months 24–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 304 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 456.0942543657097,
+   "hours": 628,
+   "peakMW": 1.7345373393732686,
+   "byYear": [
+    0,
+    0,
+    456.0942543657097,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": null,
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.090 (Immersion, design-day dry-bulb 26.4 °C) + ancillary 2 % = 111 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 3.0 MW mechanical at design) = 103 MW.",
+   "Diesel standby gensets: 103 MW ÷ 2.75 MW per unit = 37.5 → 38 units; 38 units form 4 blocks (block size 10); N+1 adds 4; total 42 units (116 MW).",
+   "Fuel storage: 103 MW × 48 h × 0.26 L/kWh = 1,285 m³ (1,080 t).",
+   "Rooftop PV: roof 36,667 m² less roof plant (split: 20 % of the roof, 7,333 m²) = 29,333 m² free × 50 % usable ÷ 5.5 m²/kWp = 2.67 MWp.",
+   "Ground PV (fill residual), from the layout: 57,540 m² of free buildable area after every other block (5 m clearance, strips under 10 m wide left out, within the net developable area) ÷ 1.2 ha/MWp = 4.79 MWp (area-budget estimate before layout 4.84 MWp).",
+   "Offsite PPA (hybrid): 80 % of each year's facility consumption (steady state ≈ 625,114 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 24–29: design load 26.6 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 6.6 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "immersion",
+   "C9": "split",
+   "C10": "roofResidual",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "80",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 6660415.026452353,
+   "pv": 3331063.087135244,
+   "undeliveredMWh": 2512908.4767134567
+  }
+ },
+ {
+  "id": "OV4UD3O",
+  "rank": 14,
+  "name": "Grid · HVO N+1 · DLC · PV 7.1 MWp · BESS 2 h · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 91.71620481566427,
+  "axisScores": {
+   "cost": 95.55591477866695,
+   "carbon": 99.97792816904742,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 157.79703452484796,
+   "carbon": 112.26922928826826,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 157.79703452484796,
+  "npv": 961257498.0726731,
+  "capex": 134430262.69110125,
+  "capexLow": 94101183.88377087,
+  "capexHigh": 201645394.03665188,
+  "capexShare": 0.119154148147534,
+  "locationG": 112.26922928826826,
+  "marketG": 0.10948996765564335,
+  "cfePct": 0.6672503948020435,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW HVO gensets = 107.3 MW (redundant units removed) + BESS 28.3 MW for 2.0 h → 135.5 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 517 h, 498 MWh unmet (peak 2.0 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,465,271 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (163 MWh limited by import capacity, 4,465,108 MWh above the load in the hour). Its settlement, a net income of €16 m (present value €7.76 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (HVO standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 497.844026054225,
+   "hours": 517,
+   "peakMW": 2.037117326930698,
+   "byYear": [
+    0,
+    0,
+    497.844026054225,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": null,
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "HVO standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "BESS: 25 % of design facility load 113 MW = 28.3 MW × 2 h = 56.5 MWh; role peak-shave against grid cap; size kept as given.",
+   "Rooftop PV: roof 27,500 m² less roof plant (roof: 40 % of the roof, 11,000 m²) = 16,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 1.50 MWp.",
+   "Ground PV (fill residual), from the layout: 66,900 m² of free buildable area after every other block (5 m clearance, strips under 10 m wide left out, within the net developable area) ÷ 1.2 ha/MWp = 5.58 MWp (area-budget estimate before layout 5.63 MWp).",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 791,905 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "hvo",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "roof",
+   "C10": "roofResidual",
+   "C11": "none",
+   "C12": "2h25",
+   "C12r": "peakShave",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 16003693.074415598,
+   "pv": 7760808.637149276,
+   "undeliveredMWh": 4465270.909030724
+  }
+ },
+ {
+  "id": "O1I15ECY",
+  "rank": 15,
+  "name": "Grid + gas recips bridge → retain for grid services · Diesel N+1 · DLC · PV 7.4 MWp · PPA hybrid 80 %",
+  "archetype": null,
+  "score": 91.68969660362914,
+  "axisScores": {
+   "cost": 95.62646843436922,
+   "carbon": 99.66923603832839,
+   "ttp": 88.66349222007901,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 157.70234977746833,
+   "carbon": 113.56729976668102,
+   "ttp": 30.000098349712605,
+   "deliverability": 89
+  },
+  "lcoe": 157.70234977746833,
+  "npv": 960737472.3530908,
+  "capex": 126786161.24280804,
+  "capexLow": 88750312.86996563,
+  "capexHigh": 190179241.86421207,
+  "capexShare": 0.10764138694545657,
+  "locationG": 113.56729976668102,
+  "marketG": 22.87962544751888,
+  "cfePct": 0.614926391120277,
+  "ttp": {
+   "metric": 30.000098349712605,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 0.022240168278042205
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets with flags",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW Diesel gensets = 107.3 MW (redundant units removed) + retained bridging Gas reciprocating engines 9.0 MW (redundant units removed) → 116.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "res-gas",
+    "severity": "minor",
+    "category": "Resilience",
+    "message": "Backup depends on gas network availability during a grid outage"
+   },
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 116 h, 57 MWh unmet (peak 1.3 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 2,545,086 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (105 MWh limited by import capacity, 2,544,981 MWh above the load in the hour). Its settlement, a net income of €6.73 m (present value €3.36 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 0.0 MW in months 23–23"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 342 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 10.2 MWth (Gas reciprocating engines), 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "fuel-gas-assumed",
+    "severity": "info",
+    "category": "Fuel and utilities",
+    "message": "Gas capacity and date assumed, not confirmed"
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 56.86201055903335,
+   "hours": 116,
+   "peakMW": 1.3483942550959576,
+   "byYear": [
+    0,
+    0,
+    56.86201055903335,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": null,
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Bridging Gas reciprocating engines: largest shortfall (design demand − offered grid) 7.1 MW in month 29 ÷ 4.5 MW = 2 units + N+1 per block of 10 (+1) = 3 units (13.5 MW); available from month 24.",
+   "After the grid full-connection date (month 30) the bridging plant is: retain for grid services.",
+   "Rooftop PV: roof 27,500 m² = 27,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 2.50 MWp.",
+   "Ground PV (fill residual), from the layout: 59,300 m² of free buildable area after every other block (5 m clearance, strips under 10 m wide left out, within the net developable area) ÷ 1.2 ha/MWp = 4.94 MWp (area-budget estimate before layout 5.09 MWp).",
+   "Offsite PPA (hybrid): 80 % of each year's facility consumption (steady state ≈ 633,524 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–23: design load 20.0 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 0.0 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex).",
+   "Gas connection: no gas main location given (default: gas off-site, location unknown), so no connection pipe is costed."
+  ],
+  "v": {
+   "C1": "bridge",
+   "C2": "gasRecip",
+   "C3": "gridServices",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "ground",
+   "C10": "roofResidual",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "80",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 6725632.95191217,
+   "pv": 3363894.1277309656,
+   "undeliveredMWh": 2545086.3269530083
+  }
+ },
+ {
+  "id": "O1DJONAB",
+  "rank": 16,
+  "name": "Grid + gas recips bridge → retain for grid services · Diesel N+1 · DLC · PV 7.0 MWp · PPA hybrid 80 %",
+  "archetype": null,
+  "score": 91.6895904236727,
+  "axisScores": {
+   "cost": 95.63660031275987,
+   "carbon": 99.65462668875573,
+   "ttp": 88.66349222007901,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 157.6887525465899,
+   "carbon": 113.62873303141923,
+   "ttp": 30.000098349712605,
+   "deliverability": 89
+  },
+  "lcoe": 157.6887525465899,
+  "npv": 960653526.2845299,
+  "capex": 126258161.24280804,
+  "capexLow": 88380712.86996563,
+  "capexHigh": 189387241.86421207,
+  "capexShare": 0.1071554701357924,
+  "locationG": 113.62873303141923,
+  "marketG": 22.943734560615056,
+  "cfePct": 0.6148071202695982,
+  "ttp": {
+   "metric": 30.000098349712605,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 0.022240168278042205
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets with flags",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW Diesel gensets = 107.3 MW (redundant units removed) + retained bridging Gas reciprocating engines 9.0 MW (redundant units removed) → 116.3 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "res-gas",
+    "severity": "minor",
+    "category": "Resilience",
+    "message": "Backup depends on gas network availability during a grid outage"
+   },
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 132 h, 65 MWh unmet (peak 1.3 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 2,539,637 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (117 MWh limited by import capacity, 2,539,520 MWh above the load in the hour). Its settlement, a net income of €6.65 m (present value €3.32 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 0.0 MW in months 23–23"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 342 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 10.2 MWth (Gas reciprocating engines), 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "fuel-gas-assumed",
+    "severity": "info",
+    "category": "Fuel and utilities",
+    "message": "Gas capacity and date assumed, not confirmed"
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 65.4889299976735,
+   "hours": 132,
+   "peakMW": 1.2978900657436334,
+   "byYear": [
+    0,
+    0,
+    65.4889299976735,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": null,
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Bridging Gas reciprocating engines: largest shortfall (design demand − offered grid) 7.1 MW in month 29 ÷ 4.5 MW = 2 units + N+1 per block of 10 (+1) = 3 units (13.5 MW); available from month 24.",
+   "After the grid full-connection date (month 30) the bridging plant is: retain for grid services.",
+   "Rooftop PV: roof 27,500 m² less roof plant (roof: 40 % of the roof, 11,000 m²) = 16,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 1.50 MWp.",
+   "Ground PV (fill residual), from the layout: 66,500 m² of free buildable area after every other block (5 m clearance, strips under 10 m wide left out, within the net developable area) ÷ 1.2 ha/MWp = 5.54 MWp (area-budget estimate before layout 5.64 MWp).",
+   "Offsite PPA (hybrid): 80 % of each year's facility consumption (steady state ≈ 633,524 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–23: design load 20.0 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 0.0 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex).",
+   "Gas connection: no gas main location given (default: gas off-site, location unknown), so no connection pipe is costed."
+  ],
+  "v": {
+   "C1": "bridge",
+   "C2": "gasRecip",
+   "C3": "gridServices",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "roof",
+   "C10": "roofResidual",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "80",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 6645183.844497203,
+   "pv": 3323983.9722369965,
+   "undeliveredMWh": 2539637.329542902
+  }
+ },
+ {
+  "id": "O1254RHX",
+  "rank": 17,
+  "name": "Grid · HVO N+1 · Immersion · PPA hybrid 80 %",
+  "archetype": null,
+  "score": 91.6173397834067,
+  "axisScores": {
+   "cost": 95.47057311468029,
+   "carbon": 99.69251920677068,
+   "ttp": 88.56903521831147,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 157.91156514434743,
+   "carbon": 113.46939252969233,
+   "ttp": 30.10008445945946,
+   "deliverability": 89
+  },
+  "lcoe": 157.91156514434743,
+  "npv": 949065022.3226402,
+  "capex": 118016280.8,
+  "capexLow": 82611396.55999999,
+  "capexHigh": 177024421.2,
+  "capexShare": 0.1011012350382122,
+  "locationG": 113.46939252969233,
+  "marketG": 22.764359825086505,
+  "cfePct": 0.6126279842300356,
+  "ttp": {
+   "metric": 30.10008445945946,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 22.218750000000014
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "38 × 2.75 MW HVO gensets = 104.5 MW (redundant units removed) → 104.5 MW firm vs 103.0 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,427 h, 1,415 MWh unmet (peak 2.3 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 2,412,859 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (884 MWh limited by import capacity, 2,411,975 MWh above the load in the hour). Its settlement, a net income of €5.2 m (present value €2.61 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 6.6 MW in months 24–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 304 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (HVO standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1415.1156107774873,
+   "hours": 1427,
+   "peakMW": 2.2979002365693972,
+   "byYear": [
+    0,
+    0,
+    1415.1156107774873,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "OYBJ1GX",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.090 (Immersion, design-day dry-bulb 26.4 °C) + ancillary 2 % = 111 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 3.0 MW mechanical at design) = 103 MW.",
+   "HVO standby gensets: 103 MW ÷ 2.75 MW per unit = 37.5 → 38 units; 38 units form 4 blocks (block size 10); N+1 adds 4; total 42 units (116 MW).",
+   "Fuel storage: 103 MW × 48 h × 0.26 L/kWh = 1,285 m³ (1,080 t).",
+   "Offsite PPA (hybrid): 80 % of each year's facility consumption (steady state ≈ 625,114 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 24–29: design load 26.6 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 6.6 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "hvo",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "immersion",
+   "C9": "split",
+   "C10": "none",
+   "C11": "none",
+   "C12": "none",
+   "C12r": "n/a",
+   "C13": "hybrid",
+   "C14": "80",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 5202535.0295735765,
+   "pv": 2613592.7155759563,
+   "undeliveredMWh": 2412859.1584070623
+  }
+ },
+ {
+  "id": "O1AZJUUY",
+  "rank": 18,
+  "name": "Grid · Diesel N+1 · DLC · PV 1.5 MWp · BESS 2 h · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 91.61459992409286,
+  "axisScores": {
+   "cost": 95.55636418534746,
+   "carbon": 99.57087943340902,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 157.7964314099903,
+   "carbon": 113.98089568474136,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 157.7964314099903,
+  "npv": 961146316.0408238,
+  "capex": 128836762.69110125,
+  "capexLow": 90185733.88377087,
+  "capexHigh": 193255144.03665188,
+  "capexShare": 0.11437594575308327,
+  "locationG": 113.98089568474136,
+  "marketG": 0.9745230613827134,
+  "cfePct": 0.6662125661867364,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW Diesel gensets = 107.3 MW (redundant units removed) + BESS 28.3 MW for 2.0 h → 135.5 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,233 h, 1,332 MWh unmet (peak 2.4 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,381,657 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (803 MWh limited by import capacity, 4,380,854 MWh above the load in the hour). Its settlement, a net income of €14.6 m (present value €7.07 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (Diesel standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1332.4759771790377,
+   "hours": 1233,
+   "peakMW": 2.3574736684629514,
+   "byYear": [
+    0,
+    0,
+    1332.4759771790377,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "O14EVMZU",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "BESS: 25 % of design facility load 113 MW = 28.3 MW × 2 h = 56.5 MWh; role peak-shave against grid cap; size kept as given.",
+   "Rooftop PV: roof 27,500 m² less roof plant (roof: 40 % of the roof, 11,000 m²) = 16,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 1.50 MWp.",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 791,905 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "diesel",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "roof",
+   "C10": "roof",
+   "C11": "none",
+   "C12": "2h25",
+   "C12r": "peakShave",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 14589092.581842363,
+   "pv": 7065732.758827855,
+   "undeliveredMWh": 4381656.831606694
+  }
+ },
+ {
+  "id": "ORCKDL0",
+  "rank": 19,
+  "name": "Grid + rented temporary generation bridge → remove · HVO N+1 · DLC · PV 6.9 MWp · BESS 2 h · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 91.60889202525802,
+  "axisScores": {
+   "cost": 95.30523460605849,
+   "carbon": 99.7956521733836,
+   "ttp": 88.66358513117436,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 158.13345350385418,
+   "carbon": 113.03571170018907,
+   "ttp": 30,
+   "deliverability": 89
+  },
+  "lcoe": 158.13345350385418,
+  "npv": 963369260.9256098,
+  "capex": 134314762.69110125,
+  "capexLow": 94020333.88377087,
+  "capexHigh": 201472144.03665188,
+  "capexShare": 0.11879226698894192,
+  "locationG": 113.03571170018907,
+  "marketG": 1.4185076164671704,
+  "cfePct": 0.6672230736944628,
+  "ttp": {
+   "metric": 30,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 0
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW HVO gensets = 107.3 MW (redundant units removed) + BESS 28.3 MW for 2.0 h → 135.5 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 50 h, 15 MWh unmet (peak 0.6 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,463,002 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (168 MWh limited by import capacity, 4,462,834 MWh above the load in the hour). Its settlement, a net income of €16 m (present value €7.74 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 338 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 5.3 MWth (Rented temporary generation (gas)), 7.2 MWth (HVO standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "fuel-gas-assumed",
+    "severity": "info",
+    "category": "Fuel and utilities",
+    "message": "Gas capacity and date assumed, not confirmed"
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 14.530433079811285,
+   "hours": 50,
+   "peakMW": 0.5787566161470465,
+   "byYear": [
+    0,
+    0,
+    14.530433079811285,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": null,
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "HVO standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "Bridging Rented temporary generation (gas): largest shortfall (design demand − offered grid) 7.1 MW in month 29 ÷ 2 MW = 4 units + N+1 per block of 10 (+1) = 5 units (10.0 MW); available from month 6 (fuel from month 18).",
+   "After the grid full-connection date (month 30) the bridging plant is: remove.",
+   "BESS: 25 % of design facility load 113 MW = 28.3 MW × 2 h = 56.5 MWh; role peak-shave against grid cap; size kept as given.",
+   "Rooftop PV: roof 27,500 m² less roof plant (roof: 40 % of the roof, 11,000 m²) = 16,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 1.50 MWp.",
+   "Ground PV (fill residual), from the layout: 65,100 m² of free buildable area after every other block (5 m clearance, strips under 10 m wide left out, within the net developable area) ÷ 1.2 ha/MWp = 5.42 MWp (area-budget estimate before layout 5.51 MWp).",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 791,905 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex).",
+   "Gas connection: no gas main location given (default: gas off-site, location unknown), so no connection pipe is costed."
+  ],
+  "v": {
+   "C1": "bridge",
+   "C2": "rented",
+   "C3": "remove",
+   "C4": "none",
+   "C5": "hvo",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "roof",
+   "C10": "roofResidual",
+   "C11": "none",
+   "C12": "2h25",
+   "C12r": "peakShave",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 15965138.191402785,
+   "pv": 7741764.712132546,
+   "undeliveredMWh": 4463001.894051419
+  }
+ },
+ {
+  "id": "O1QWIDO",
+  "rank": 20,
+  "name": "Grid · HVO N+1 · DLC · PV 2.5 MWp · BESS 2 h · PPA hybrid 100 %",
+  "archetype": null,
+  "score": 91.59387999330724,
+  "axisScores": {
+   "cost": 95.32449640337596,
+   "carbon": 99.8126146050267,
+   "ttp": 88.55960805548368,
+   "deliverability": 74.24833724665379
+  },
+  "metrics": {
+   "cost": 158.1076036964285,
+   "carbon": 112.9643835723657,
+   "ttp": 30.110063447988246,
+   "deliverability": 89
+  },
+  "lcoe": 158.1076036964285,
+  "npv": 963072857.3572688,
+  "capex": 131127512.69110125,
+  "capexLow": 91789258.88377087,
+  "capexHigh": 196691269.03665188,
+  "capexShare": 0.1160831068439797,
+  "locationG": 112.9643835723657,
+  "marketG": 0.10949494566480844,
+  "cfePct": 0.6664021929499462,
+  "ttp": {
+   "metric": 30.110063447988246,
+   "firstPowerM": 0,
+   "fullLoadM": 30,
+   "gapMWm": 24.8890366799368
+  },
+  "deliv": 89,
+  "delivItems": [
+   {
+    "item": "Emerging technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Nascent technology share",
+    "value": 0,
+    "points": 0
+   },
+   {
+    "item": "Permitting flags: 1 major, 1 minor",
+    "value": 2,
+    "points": -11
+   }
+  ],
+  "resilience": "Meets",
+  "resItems": [
+   {
+    "item": "Backed load",
+    "ok": true,
+    "text": "39 × 2.75 MW HVO gensets = 107.3 MW (redundant units removed) + BESS 28.3 MW for 2.0 h → 135.5 MW firm vs 105.1 MW critical load"
+   },
+   {
+    "item": "Topology",
+    "ok": true,
+    "text": "N+1 vs N+1 required"
+   },
+   {
+    "item": "Autonomy",
+    "ok": true,
+    "text": "48 h vs 48 h required"
+   }
+  ],
+  "siteFit": "Fits",
+  "flags": [
+   {
+    "id": "grid-binding",
+    "severity": "major",
+    "category": "Grid",
+    "message": "Grid capacity binding: 1,094 h, 1,091 MWh unmet (peak 2.2 MW) over the 6 dispatched years"
+   },
+   {
+    "id": "grid-ppa",
+    "severity": "minor",
+    "category": "Grid",
+    "message": "PPA limited by import capacity: 4,396,505 MWh of contracted PPA volume over the 20-year evaluation period is not delivered physically (584 MWh limited by import capacity, 4,395,922 MWh above the load in the hour). Its settlement, a net income of €14.8 m (present value €7.19 m), is reported as \"PPA hedge (not counted)\": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection."
+   },
+   {
+    "id": "grid-shortfall",
+    "severity": "info",
+    "category": "Grid",
+    "message": "Grid shortfall at design load: up to 7.1 MW in months 23–29"
+   },
+   {
+    "id": "permit-ied",
+    "severity": "major",
+    "category": "Permitting",
+    "message": "Aggregated combustion thermal input 311 MWth ≥ 50 MWth (IED threshold). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "permit-mcp",
+    "severity": "minor",
+    "category": "Permitting",
+    "message": "Individual combustion units of 7.2 MWth (HVO standby gensets) are within 1–50 MWth (medium combustion plant rules). EU threshold used as a proxy; national equivalent not checked by this tool. Screening flag, not a permitting determination."
+   },
+   {
+    "id": "data-unverified",
+    "severity": "info",
+    "category": "Data",
+    "message": "Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles"
+   }
+  ],
+  "unmet": {
+   "mwh": 1090.9298318895164,
+   "hours": 1094,
+   "peakMW": 2.2293114830646488,
+   "byYear": [
+    0,
+    0,
+    1090.9298318895164,
+    0,
+    0,
+    0
+   ]
+  },
+  "dominatedBy": "OV4UD3O",
+  "sentences": [
+   "Design facility load: 100 MW IT × peak PUE 1.111 (DLC + dry coolers, design-day dry-bulb 26.4 °C) + ancillary 2 % = 113 MW.",
+   "Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.",
+   "HVO standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).",
+   "Fuel storage: 105 MW × 48 h × 0.26 L/kWh = 1,311 m³ (1,101 t).",
+   "BESS: 25 % of design facility load 113 MW = 28.3 MW × 2 h = 56.5 MWh; role peak-shave against grid cap; size kept as given.",
+   "Rooftop PV: roof 27,500 m² = 27,500 m² free × 50 % usable ÷ 5.5 m²/kWp = 2.50 MWp.",
+   "Offsite PPA (hybrid): 100 % of each year's facility consumption (steady state ≈ 791,905 MWh/yr), delivered over the grid connection and capped by import capacity.",
+   "Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).",
+   "Grid shortfall at design load, months 23–29: design load 27.1 MW less 0.0 MW firm on site less 20.0 MW grid leaves up to 7.1 MW; dispatched as unmet load under \"Show unmet load\".",
+   "Grid cable route: 10 m from the POC (default: the access point, standing in for the road side; replace with the real POC) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex)."
+  ],
+  "v": {
+   "C1": "wait",
+   "C2": "n/a",
+   "C3": "n/a",
+   "C4": "none",
+   "C5": "hvo",
+   "C6": "N+1",
+   "C7": "48",
+   "C8": "dlc",
+   "C9": "ground",
+   "C10": "roof",
+   "C11": "none",
+   "C12": "2h25",
+   "C12r": "peakShave",
+   "C13": "hybrid",
+   "C14": "100",
+   "C15": "none",
+   "C16": "off",
+   "C17": "AIS",
+   "C18": "single",
+   "C19": "perPhase",
+   "C20": "none"
+  },
+  "ppaHedge": {
+   "total": 14839468.57925691,
+   "pv": 7187954.885570208,
+   "undeliveredMWh": 4396505.296817413
+  }
+ }
+]

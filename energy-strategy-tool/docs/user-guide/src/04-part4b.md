@@ -1,0 +1,485 @@
+# 39. Economics: the cost ledger {#ch39}
+
+The economics stage builds one **ledger** per option: a row for each year from year 0 (the analysis start year) to year N (the end of the evaluation period, 20 by default). It is the single source of every cost figure: LCOE, NPV, capex, opex and the capex share.
+
+![The T1 leader's ledger: capex (hatched) in years 0 to 4 and the residual value credit in year 20; opex (dark) growing with the load to €108 m a year; and the present value of each year (line), which falls as the discount factor shrinks.](img/d05-ledger.png)
+
+## Capex lines
+
+Each line is booked in the year its plant can first supply power (or, for per-phase plant, in the year of each phase), with **10 % contingency** added.
+
+| Line | Amount | Year booked | Life |
+|---|---|---|---|
+| Grid connection and reinforcement | full capacity × €/MW for the band + cable km × €1.5 m | first month with grid capacity | 40 |
+| Substation | full capacity × €/MW for the band (× 1.4 for GIS) | same | 40 |
+| Solar (roof, carport, ground) | MWp × €/kWp × 1,000 | availability | 25, 25, 30 |
+| Wind | MW × €/kW × 1,000 | availability | 25 |
+| Battery | MWh × €250/kWh + MW × €150/kW (× 1,000) | availability | 15 |
+| Firm prime plant | MW × €/kW × 1,000 | availability | by technology |
+| Bridging plant (not rented) | MW × €/kW × 1,000 | availability | by technology |
+| Gas connection pipe | km × €0.8 m | first gas plant | 40 |
+| Backup gensets | MW × €/kW × 1,000, split by phase | each phase | 25 |
+| Battery for UPS augmentation | as battery, split by phase | each phase | 15 |
+| Bulk fuel storage | m³ × €1,200, split by phase | each phase | 30 |
+| Cooling capex delta vs air | IT kW × €/kW delta, split by phase | each phase | none |
+
+The connection and substation rates are €100k, €150k and €120k per MW (connection) and €60k, €80k and €70k per MW (substation) for the MV, HV and EHV bands. With C19 "Build all at phase 1", per-phase items are all booked in the first phase's year.
+
+**The grid connection is the same for every option**, including islanded options and options that never use it fully, because the current version gives every option the full offered capacity.
+
+## Replacements and residual value
+
+For each item with a life:
+
+- **Replacement**: at its installation year + life, + 2 × life, and so on, while before the end (the removal year or year N), at its cost plus contingency. Fuel-cell stacks are replaced every 7 years at 25 % of the fuel-cell capex.
+- **Residual value**: at the end, the share of life remaining since the last installation, as a credit:
+
+::: formula
+| remaining share = max(0, 1 − (end year − last installation year) ÷ life)
+| residual credit = cost × (1 + contingency) × remaining share   (in year N)
+| salvage credit = the same × 50 %   (in the removal year, for removed bridging plant)
+:::
+
+## Fixed operating costs
+
+Each year, from each item's availability: fixed O&M per kW (solar €12–15/kWp, wind €35/kW, firm plant €10–40/kW and the SMR €120/kW, backup gensets €8–9/kW), the battery at 1.5 % of its capex a year, and rented bridging plant at **€12 per kW per month** for every month it is on site. Backup genset O&M scales with the share of the IT installed in the middle of that year.
+
+## Energy, fuel and carbon costs
+
+Each year uses its simulated year (or the last simulated year once they repeat):
+
+- **Variable O&M**: plant MWh × €/MWh (recips €8, turbines €6, CHP €10, fuel cells €5, HVO-diesel €12, rented €10, SMR €3, hydrogen €5).
+- **Fuel**: plant fuel MWh × fuel price (gas: the context gas price, escalated by the gas escalation; diesel €110, HVO €170, hydrogen €150 per MWh of fuel); SMR fuel €9 per MWh of electricity.
+- **Generator tests**: installed units × unit MW × test hours (12 a year) × test load (75 %) ÷ efficiency = MWh of fuel, times the fuel price, scaled by the IT share of the year.
+- **Grid**: the hourly grid energy times the hourly price (wholesale × multiplier + adder), escalated by the electricity escalation (0 % by default), **plus the adder on every MWh of PPA energy delivered** (the network charge on PPA energy).
+- **PPA**: PPA MWh delivered × (strike + €5 shaping).
+- **Carbon**: Scope 1 tonnes × carbon price × (1 + carbon escalation)^y (2 % a year real).
+- **Revenue**: export MWh × 90 % of the hourly wholesale price (only with C1 "Grid + export"), escalated like electricity.
+
+## Totals and discounting
+
+::: formula
+| capex(y) = capex + contingency + replacements − residual and salvage credits
+| opex(y) = fixed O&M + variable O&M + fuel + grid + PPA + carbon + rental + tests − revenue
+| present value = capex(y) ÷ (1 + r)^y + opex(y) ÷ (1 + r)^(y+1)
+| NPV of net cost = sum of present values, years 0 to N
+| delivered energy(y) = facility demand − unmet load
+| LCOE = NPV ÷ sum of delivered energy(y) ÷ (1 + r)^(y+1)
+:::
+
+The **capex** reported with each option is the initial capex: the sum of the capex lines plus contingency, excluding replacements and residual value, with a range of −30 % to +50 %.
+
+## The PPA rule and the hedge
+
+**No PPA income without physical delivery** (owner decision, 18 October 2026). The ledger books the PPA price only on PPA energy delivered to the load over the grid connection. For the contracted volume that is not delivered, the settlement (its wholesale value less the PPA price) is reported as the **PPA hedge (not counted)**: shown in the option detail and the `grid-ppa` flag, discounted like opex, but never added to the ledger, LCOE, NPV, the capex/opex split or the score.
+
+Before the decision, the ledger booked the PPA price on the whole contract and credited the undelivered volume at the hourly grid price including the network adder. On the no-grid T3 example that made grid-dependent options look profitable, which is why the rule changed.
+
+## Worked example: the T1 leader
+
+**Capex lines** (before contingency):
+
+| Line | Year | € m |
+|---|---|---|
+| Grid connection (120 MW × €150k + 10 m of cable) | 0 | 18.02 |
+| Substation, HV AIS (120 MW × €80k) | 0 | 9.60 |
+| Rooftop solar (2.50 MWp × €900/kWp) | 1 | 2.25 |
+| Ground solar (5.24 MWp × €700/kWp) | 1 | 3.67 |
+| Diesel gensets (118.25 MW × €450/kW), four phases | 1–4 | 53.21 |
+| Bulk fuel storage (1,311 m³ × €1,200), four phases | 1–4 | 1.57 |
+| DLC cooling delta (100 MW × €150/kW), four phases | 1–4 | 15.00 |
+| **Total** | | **103.32** |
+| Contingency 10 % | | 10.33 |
+| **Capex reported** | | **113.65** (range 79.6 to 170.5) |
+
+**Residual value** in year 20 (€35.54 m credit): the grid connection and substation have half their 40-year life left (€15.19 m); the gensets bought in years 1 to 4 have 24 to 36 % of their 25-year life left (€17.56 m); solar and fuel storage the rest. Discounted, it is worth €9.19 m.
+
+**Steady-state opex** (2032 onwards): grid €72.06 m (of which €28.2 m is the €55/MWh adder on 513,000 MWh of PPA energy), PPA €34.37 m (513,000 MWh × €67), fixed O&M €1.04 m, generator tests €0.31 m, carbon €0.04 m: **€107.8 m a year**.
+
+**Totals**: present value of capex €92.28 m; of opex €844.45 m; **NPV €936.73 m**. Present value of delivered energy 6,091,609 MWh. **LCOE = 936.73 ÷ 6.0916 = €153.77/MWh**. Capex is 10 % of the present-value cost: this option's cost is mostly the energy it buys.
+
+**PPA hedge**: of about 13 TWh contracted over 20 years, 4.48 TWh is not delivered; its settlement is a net income of €16.2 m (present value €7.85 m), not counted.
+
+# 40. Carbon and water {#ch40}
+
+## Each year
+
+::: formula
+| Scope 1 (t) = sum over plant of fuel MWh × emission factor
+|   + test-run fuel MWh × emission factor × IT share
+| Scope 2 location (t) = (grid MWh + PPA MWh) × hourly grid carbon ÷ 1,000 × decarbonisation factor
+| Scope 2 market (t) = Scope 2 location × max(0, 1 − PPA contract MWh ÷ (grid MWh + PPA MWh))
+:::
+
+Grid MWh here includes grid energy used to charge the battery. The hourly grid carbon includes the carbon multiplier.
+
+## Over the evaluation period
+
+::: formula
+| location-based (g/kWh) = (sum of Scope 1 + sum of Scope 2 location) ÷ sum of delivered MWh × 1,000
+| market-based (g/kWh) = (sum of Scope 1 + sum of Scope 2 market) ÷ sum of delivered MWh × 1,000
+| hourly CFE (%) = sum of carbon-free MWh ÷ sum of net demand MWh
+:::
+
+where, in each hour:
+
+::: formula
+| carbon-free MWh = min(net demand, renewables used + min(PPA contract volume, demand − renewables used)
+|   + firm output × share of firm capacity that is SMR or hydrogen)
+:::
+
+Note that the current CFE count uses the PPA's **contracted** hourly volume (up to the remaining demand), whether or not it was delivered over the import capacity. Decision O2 changes this (chapter 48).
+
+## Water
+
+::: formula
+| WUE (L/kWh) = base WUE + evaporative WUE × hours with adiabatic or mechanical assist ÷ 8,760
+| water (m³ a year) = WUE × IT MWh in the steady-state year
+:::
+
+A minor flag is raised if water per day exceeds the water available (when entered).
+
+## Worked example: the T1 leader
+
+- **2029** (the first full year with load): Scope 2 location = (20,515 t on grid energy + 26,672 t on PPA energy) × 0.9217 = 43,494 t; Scope 1 = 280 t (generator tests); delivered 242,700 MWh; that year alone is about **180 g/kWh**.
+- **Over 20 years**: the grid decarbonises towards 10 % of today's carbon by 2050, so the average is **113 g/kWh** location-based.
+- **Market-based**: the PPA contract (100 % of consumption) covers all imported energy, so market-based Scope 2 is zero and only Scope 1 remains: **0.97 g/kWh**.
+- **Hourly CFE**: **67 %** (65 % in 2029).
+- Scope 1 averages 636 t a year; Scope 2 (location) 73,200 t a year; WUE 0.02 L/kWh.
+
+# 41. Resilience check {#ch41}
+
+## Firm capacity in an outage
+
+::: formula
+| firm MW = backup units needed (N) × unit MW
+|   + retained bridging plant: N units × unit MW (if fuelled)
+|   + firm prime plant: (units − one per block, with N+1 or better required) × unit MW (if fuelled)
+|   + battery MW (main, bridging and UPS augmentation)
+:::
+
+Redundant units are removed: the check asks whether the site can still carry the critical load with one unit per block out of service.
+
+## The items
+
+| Item | Passes when |
+|---|---|
+| Backed load | firm MW ≥ critical load |
+| Topology | the backup topology (C6) ranks at least the required one: N < N+1 = catcher < 2N |
+| Autonomy | the autonomy ≥ the required hours (see below) |
+| Islanding (if required) | prime + retained bridging plant MW ≥ critical load |
+| Backup technology | fails if C5 is "None" |
+
+**Autonomy** is: the fuel hours (C7) when liquid-fuel firm capacity alone covers the critical load; unlimited (while the gas network stays up) when gas plant covers it; otherwise the stored battery energy ÷ the critical load.
+
+## Status
+
+- **Does not meet**: any item fails (the failing items are listed, each with a major flag).
+- **Meets with flags**: all pass, but the backup depends on the gas network (minor flag), or uses BESS-augmented UPS (minor flag: an emerging approach whose redundancy lasts only as long as the battery).
+- **Meets**: otherwise.
+
+## Worked example: the T1 leader
+
+- Backed load: 39 × 2.75 MW = 107.3 MW ≥ 105.1 MW critical load: pass.
+- Topology: N+1 against N+1 required: pass.
+- Autonomy: 48 h against 48 h required: pass.
+- Status: **Meets**.
+
+In the T1 run, 185 options meet the requirement and 1,815 meet it with flags (most because they burn gas on site); none fails, because C5 "None" is not in the default choices.
+
+# 42. Flags {#ch42}
+
+Flags are how the tool reports problems without enforcing them. Each has an identifier, a **severity** (**major**: a requirement or limit is breached, or a significant risk; **minor**: a concern to check; **info**: context), a category and a message with the numbers. Permitting flags end with "Screening flag, not a permitting determination", and outside the EU with "EU threshold used as a proxy; national equivalent not checked by this tool".
+
+## Grid
+
+| Flag | Severity | Raised when |
+|---|---|---|
+| grid-binding | major | unmet load in any simulated year ("Show unmet load") |
+| grid-exceed | major | import above the offered capacity ("Show exceedance") |
+| grid-ppa | minor or info | contracted PPA volume not delivered (minor if any of it was limited by import capacity); reports the PPA hedge |
+| grid-bess-peakshave | minor | a peak-shave battery cannot hold the import within capacity on the design day |
+| grid-shortfall | info | design load exceeds grid plus firm plant in some months |
+| grid-export | info | surplus above the export capacity is curtailed |
+
+## Permitting
+
+| Flag | Severity | Raised when |
+|---|---|---|
+| permit-ied | major | combustion plant thermal input ≥ 50 MWth in total (prime, bridging and backup units ÷ efficiency) |
+| permit-mcp | minor | any combustion unit between 1 and 50 MWth |
+| permit-seveso-fuel | major | diesel or HVO stored ≥ 2,500 t |
+| permit-h2 | major (≥ 5 t) or minor | hydrogen plant on site (always raised) |
+| permit-wind | major | wind turbines on site |
+| permit-stack | minor | a stack above the height limit |
+| permit-runhours | minor | plant runs more hours than the limit |
+| site-noise | minor | the noise proxy exceeds the night threshold at a receptor |
+
+## Fuel and utilities
+
+| Flag | Severity | Raised when |
+|---|---|---|
+| fuel-gas-unknown | minor | gas used and gas availability "Unknown" |
+| fuel-gas-assumed | info | gas used: capacity and date assumed |
+| fuel-gas-none | major | gas plant with gas availability "No" (it never runs) |
+| fuel-h2-unavailable | major | hydrogen plant and no hydrogen supply |
+| fuel-h2-assumed | minor | hydrogen supply assumed |
+| fuel-water | minor | water use above availability |
+| fuel-diesel-prime | minor | HVO-diesel prime bridging |
+
+## Targets and ceilings
+
+| Flag | Severity | Raised when |
+|---|---|---|
+| target-carbon | minor | location-based carbon above the target |
+| target-ttp | minor | first power or full load after its target date |
+| target-capex | minor | capex above the ceiling |
+| target-capex-p90 | info | only the high estimate above the ceiling |
+| target-landtake | minor | land take above the ceiling |
+
+## Technology, resilience, site and data
+
+| Flag | Severity | Raised when |
+|---|---|---|
+| tech-nascent | info | SMR or hydrogen in the option |
+| tech-late | minor | prime plant available after the full-load target |
+| res-backed, res-topology, res-autonomy, res-island | major | that resilience item fails |
+| res-none | major | no backup technology |
+| res-gas | minor | backup depends on the gas network |
+| res-bessups | minor | BESS-augmented UPS |
+| site-does-not-fit | major | blocks not placed (shortfall in m²) |
+| site-relaxed, site-height, site-soft, site-genset-distance | minor | a layout rule relaxed |
+| site-wind-buffer, site-hydrogen, site-offsite-land, site-roof | minor | wind buffers, hydrogen separation, off-site land, roof over-allocated |
+| site-soft-solar, site-smr | info | ground solar in soft exclusions; SMR off site |
+| data-unverified | info | on every option: indicative defaults and synthetic profiles |
+
+## Run flags
+
+Information flags for the whole run: compatibility-rule counts (gen-rules), values not generated (gen-values), sampling active (gen-sampling), wind not generated on a small site (tech-wind-default), AI training transients not modelled (load-ai), and the utilisation assumption (load-util).
+
+::: {.callout .agreed}
+**Agreed, not built yet (decision O3).** The single `grid-ppa` flag becomes **two flags**: one for PPA volume limited by the grid import capacity and one for other undelivered volume (above the load in the hour). **Each shows its calculated share of the undelivered PPA volume.** Today the flag headline says "PPA limited by import capacity" whenever any volume is import-limited: on 753 options of the T1 run, where only 0.002 to 0.5 % of the undelivered volume was. For the T1 leader the split is 140 MWh (0.003 %) limited by import capacity and 4,475,228 MWh (99.997 %) above the load.
+
+Also agreed: an "assumed default" flag on every option for each default it uses that the engineer did not enter, with its source.
+:::
+
+# 43. Deliverability {#ch43}
+
+Deliverability is a score out of 100 for how hard an option will be to deliver: immature technology, permits, fuel supply and long lead times.
+
+::: formula
+| deliverability = 100
+|   − 15 × emerging share − 40 × nascent share
+|   − 8 × major permitting flags − 3 × minor permitting flags
+|   − 10 if gas is used and its availability is "Unknown"
+|   − 10 if the option depends on hydrogen
+|   − 5 × each technology with procurement over 24 months
+|   − site-fit penalty (only if switched on: 10 for "Fits with flags", 25 for "Does not fit")
+| limited to 0–100
+:::
+
+**Shares.** The emerging (or nascent) share is the average of two shares: its share of the installed capacity (solar, wind, battery, prime, bridging, backup and the grid connection), and its share of the energy supplied in the steady-state year (grid and PPA, renewables used, each plant). Fuel cells and BESS-augmented UPS are emerging; SMR and hydrogen are nascent; everything else is commercial.
+
+**Permitting flags** counted are those marked as permitting (IED, MCP, Seveso fuel, hydrogen, wind, stack, run-hours). The noise proxy and site-fit flags are never counted.
+
+**Long lead times.** In the current defaults only the SMR (36 months of procurement) exceeds 24 months. Published data suggests large diesel gensets now take 18 to 24 months (chapter 50).
+
+**Worked example: the T1 leader.** No emerging or nascent technology; one major permitting flag (IED: 43 × 2.75 MW ÷ 0.38 = 311 MWth of gensets) and one minor (MCP: each 2.75 MW genset is 7.2 MWth): 100 − 8 − 3 = **89**. In T1 the scores range from 65.7 (the hydrogen archetype) to 97.1.
+
+All the penalty values are judgements, labelled indicative, and on the research list.
+
+# 44. Scoring, dominance and ranking {#ch44}
+
+## Axis metrics
+
+| Axis | Metric (default first) |
+|---|---|
+| Cost | LCOE; or NPV of net cost |
+| Carbon | location-based g/kWh; or market-based; or 1 − hourly CFE |
+| Time-to-power | the time-to-power metric (months) |
+| Deliverability | the deliverability score (higher is better) |
+
+## Axis scores
+
+Over **all screened options** (view filters never change this set), the engine finds the lowest and highest finite value of each metric. Then:
+
+::: formula
+| lower-is-better axis: score = 100 × (highest − value) ÷ (highest − lowest)
+| higher-is-better axis: score = 100 × (value − lowest) ÷ (highest − lowest)
+:::
+
+A non-finite value (for example the LCOE of an option that delivers nothing) scores 0. If every option has the same value, all score 100.
+
+## Weights and the weighted score
+
+::: formula
+| effective weight = raw weight ÷ sum of raw weights   (25 % each if all are 0)
+| weighted score = sum over axes of effective weight × axis score
+:::
+
+**T1 leader.** Ranges over the 2,000 options: LCOE €151.83–286.04/MWh, carbon 112.18–532.68 g/kWh, time-to-power 18.00–123.85 months, deliverability 65.65–97.10. The leader's axis scores are 98.55, 99.77, 88.56 and 74.25, so:
+
+::: formula
+| 0.35 × 98.55 + 0.25 × 99.77 + 0.25 × 88.56 + 0.15 × 74.25
+|   = 34.49 + 24.94 + 22.14 + 11.14 = 92.71
+:::
+
+Note that the leader is not the cheapest option: a gas-bridging option has the lowest LCOE (€151.83/MWh) but ranks 25th, mainly on carbon (147 g/kWh).
+
+## Dominance
+
+Option j dominates option i when j is no worse on all four metrics, strictly better on at least one, and its resilience and site-fit statuses are at least as good as i's. A small tolerance (one part in a billion) avoids marking options that differ only by rounding. The mark names the first dominating option found. **Dominance never changes a score or a rank.**
+
+## Ranking
+
+Options are sorted by weighted score, highest first; equal scores go to the lower identifier. With "rank requirement-compliant options first" on, options whose resilience is "Does not meet" or whose site fit is "Does not fit" are placed after all the others, each group still in score order. The **leader** (also called the weighted pick) is rank 1.
+
+# 45. The trade-off view {#ch45}
+
+**Frontier.** On the two chosen axes (each turned so that lower is better), the frontier is the set of options not beaten on both: sort by the first axis, then keep each option whose second value is lower than that of every option with a smaller first value. Options with exactly equal values are all kept. The frontier is computed over all screened options, so filters never move it.
+
+**Time-to-power colours.** The options' time-to-power metrics are split into up to five classes at quantiles (20 %, 40 % …) of all screened options; class edges that coincide (many options reach full load in the same month) are merged. T1 has four classes: 18 to 24, 24 to 30, 30 to 30.1, and 30.1 to 124 months.
+
+**Size** is scaled between the smallest and largest capex of the run (€26 m to €960 m in T1).
+
+**The weighted pick** is always rank 1, the header's leader. If "rank requirement-compliant options first" puts a different option at rank 1 than the highest score, the chart marks the highest-scoring option separately and says why.
+
+# 46. The tornado {#ch46}
+
+For the chosen option, the engine:
+
+1. re-runs the option with the base inputs, checking that it reproduces the ranking's score;
+2. for each driver, sets it to its low value, re-runs the option through every stage (sizing, layout, dispatch, economics, carbon, resilience, flags, deliverability), then does the same for its high value;
+3. scores each re-run against the **base run's** axis ranges and weights, clipping each axis score to 0–100, so no other option is touched;
+4. sorts the drivers by the swing in weighted score and shows the top ones (up to 12; seven exist today).
+
+How each driver is applied:
+
+- **Grid full-connection date**: the full-connection date and every grid step move together.
+- **Grid import price, grid carbon**: the multipliers are scaled.
+- **Gas price, carbon price**: entered as inputs at the factor times the current value (the country default or your value).
+- **WACC**: set to 4 % and 12 %.
+- **IT load**: the IT load at full build and every phase are scaled.
+
+The ranges are records in the registry, all labelled indicative: the inputs' own low and high for price, carbon and WACC; the grid-date uncertainty (−6 / +24 months); and sensitivity records for gas price (× 0.7 / × 1.3), carbon price (× 0.5 / × 1.5) and IT load (× 0.8 / × 1.2).
+
+The T1 results are in chapter 27.
+
+# 47. Worked example: the T1 run end to end {#ch47}
+
+## Generation
+
+209,952 raw combinations; 147,744 collapsed as not applicable; 5,184 removed by rule (e); 57,024 valid; 4 archetypes outside the open choices; 57,028 combinations; 2,000 screened (11 archetypes + 1,989 sampled, 364 repaired). 1,769 distinct dispatch configurations; 1,324 distinct layouts.
+
+## The top twelve
+
+| Rank | Option (abridged) | Score | LCOE | Capex € m |
+|---|---|---|---|---|
+| 1 | Diesel N+1 · DLC · PV 7.7 · PPA 100 % | 92.71 | 153.8 | 113.7 |
+| 2 | Diesel N+1 · DLC · PV 2.5 · PPA 100 % | 92.58 | 154.1 | 109.6 |
+| 3 | Diesel N+1 · DLC · PPA 100 % | 92.55 | 154.1 | 107.1 |
+| 4 | HVO N+1 · DLC · PV 1.5 · PPA 100 % | 92.53 | 154.4 | 109.9 |
+| 5 | HVO N+1 · DLC · PPA 100 % | 92.51 | 154.5 | 108.4 |
+| 6 | Diesel N+1 · Immersion · PV 3.3 · PPA 100 % | 92.20 | 155.6 | 120.0 |
+| 7 | Diesel N+1 · DLC · PV 2.0 · PPA 80 % | 92.08 | 156.0 | 109.1 |
+| 8 | Diesel N+1 · DLC · PV 1.5 · PPA 80 % | 92.08 | 156.0 | 108.6 |
+| 9 | HVO N+1 · DLC · PV 2.5 · PPA 80 % | 92.06 | 156.3 | 110.9 |
+| 10 | Diesel N+1 · DLC · PPA 80 % | 92.05 | 156.0 | 107.1 |
+| 11 | Diesel N+1 · DLC · PPA 80 % | 92.05 | 156.0 | 107.1 |
+| 12 | Fuel cells bridge → remove · HVO N+1 · DLC · PV 7.2 · PPA 100 % | 92.00 | 156.2 | 142.1 |
+
+Ranks 1 to 11 all wait for the grid. Ranks 10 and 11 have identical figures: they differ only in a choice that changes nothing measurable.
+
+## The eleven archetypes
+
+| Archetype | Rank | Score | LCOE | Full load |
+|---|---|---|---|---|
+| A5 Gas bridging to grid | 147 | 87.5 | 175.4 | month 24 |
+| A4 Grid + CHP + BESS | 677 | 73.6 | 172.4 | month 33 |
+| A2 Grid + offsite PPA | 867 | 70.7 | 153.1 | never |
+| A9 Low-carbon backup + PPA | 1,014 | 68.6 | 153.6 | never |
+| A8 Fuel cells + grid | 1,015 | 68.6 | 179.5 | month 30 |
+| A1 Grid-only | 1,110 | 67.6 | 164.8 | never |
+| A7 Renewables-led | 1,184 | 66.9 | 168.2 | never |
+| A6 Islanded gas + solar + BESS | 1,185 | 66.8 | 179.8 | month 24 |
+| A3 Grid + solar + BESS | 1,358 | 63.8 | 180.0 | never |
+| A10a SMR | 1,806 | 54.5 | 197.5 | never |
+| A10b Hydrogen | 1,892 | 45.8 | 205.9 | never |
+
+## What the T1 run teaches
+
+1. **The cooling choice decides grid fit.** Every archetype took the first open cooling value, air, whose design load (136.7 MW) exceeds the 120 MW grid offer. Without firm plant they never reach full load, their time-to-power metric is about 124 months, and their time-to-power score is near zero. That alone costs them about 22 points. DLC (113 MW) fits under the offer, which is why it dominates the top of the ranking.
+2. **Cheapest per MWh is not best.** A2 (grid + PPA, air-cooled) has a lower LCOE than the leader (€153.1/MWh), but it cannot take the full load, and LCOE does not see that.
+3. **Bridging buys time, at a price.** Gas bridging (A5) reaches full load 6 months earlier than the grid, but costs more per MWh and does not fit the 15 ha site. Fuel-cell bridging (#12) almost removes the leader's 650 MWh of unmet load in 2029, for €28 m more capex.
+4. **Energy, not plant, is the cost.** The leader's capex is 10 % of its present-value cost; grid energy, the network adder and the PPA make up the rest. The grid price is the input that moves its LCOE most.
+5. **A PPA does not change location-based carbon.** Grid options score about 113 g/kWh with or without a PPA; the PPA shows in the market-based figure and in hourly CFE.
+6. **Most of a 100 % PPA can be "undelivered".** About a third of the leader's contracted volume (4.48 of 13 TWh) arrives in hours when the site does not need it; by the owner's rule its settlement stays outside the ledger.
+7. **The top is crowded.** The top five differ by 0.2 points and share one strategy (chapter 22).
+
+# 48. Agreed changes to the engine (not built yet) {#ch48}
+
+This chapter lists every walkthrough decision that changes what the engine calculates, with the stage it touches. Changes that only affect screens are in Part III. None of these is built.
+
+## Inputs and knowledge levels
+
+- **Every input has a default; anything not entered is flagged on each option that uses it, with its source.** Touches the registry (sources filled in) and the flags stage (one "assumed default" flag per default used).
+- **Grid capacity and connection time** default to country values when unknown, labelled indicative and flagged. Needs a country table (research).
+- **IT load estimated from area** when unknown: area × 35 % coverage × 1 storey × 5.5 kW/m² (research; see the density conflict in chapter 16).
+- **Bridging period**: known or unknown, both supported.
+
+## Location, climate and data
+
+- **Map pin** sets the location; **country from the pin**; offline map bundled.
+- **Hourly data from published sources** (ENTSO-E prices and generation, with Ember, the World Bank and Eurostat as alternatives; weather from NOAA or an uploaded EPW file), prepared at release time (chapter 52). Replaces the synthetic profiles in the context stage.
+- **Design temperatures from the nearest ASHRAE station**, flagged as such.
+- **Currency** per site from a fixed list, rates fixed per release.
+
+## Demand
+
+- **Load shapes**: flat, fluctuation, AI training and AI inference, with editable parameters.
+- **Flexibility**: off by default; triggers on price, carbon or weather and grid stress, with level, duration, notice, recovery and cost; historical analysis of trigger hours.
+- **Battery response** to triggers instead of curtailment, sized by default to cover the historical trigger hours; the engineer chooses which of battery size, trigger threshold or hours covered is held fixed. Battery capex into the ledger.
+- **Two battery allocations**: resilience reserve (always kept; 5 minutes of UPS by default) and economic battery.
+
+## Resilience
+
+- Default N+1 with 100 % of IT backed (as today); autonomy from fuel, batteries or both.
+- **Test running 6 hours a year per generator** (today 12) and **test load as a separate input** (75 %).
+- **Gensets as primary power** for a set number of hours a year, dispatched and costed.
+
+## Grid and economics
+
+- **Contracted grid capacity per option**, set by the engineer: the dispatch import limit and the connection size become per-option values instead of the shared offer.
+- **Fixed grid connection charge**, the same for every option.
+- **Grid connection capex default 0**, with the country value shown for reference; flagged as assumed.
+- **Several evaluation periods** at once.
+- **Carbon price** from the latest EU ETS market price with its date; **gas price** from the latest published wholesale price with its date (free monthly source); **escalation** from published forecasts per commodity.
+- **Revenue options** (battery arbitrage and grid services, waste-heat reuse) available but off by default.
+- **Cooling type chosen by the engineer**, with typical PUE and maximum demand offered and editable.
+
+## PPA and carbon rules
+
+- **O1**: a PPA that cannot be delivered (no grid, islanded) is flagged and the equivalent no-PPA option is preferred.
+- **O2**: hourly CFE counts PPA energy only against grid energy used in that hour.
+- **O3**: two `grid-ppa` flags (import-limited and other), each with its share of the undelivered volume.
+- No PPA income without physical delivery (already built).
+
+## Model tiers and results
+
+- **Representative-day screening** for all options and full 8,760-hour verification for the top options; dispatch views for any period, for verified options only.
+- **Tornado** with a tick-box list of drivers (the brief's seven plus additions), measuring LCOE by default.
+- **Site tab as Beta**, kept out of the ranking and the PDF.
+
+## Details still to settle
+
+::: {.callout .open}
+**Open.** The walkthrough fixed the decisions above but not every detail of how to build them. Among the details still to decide:
+
+- how contracted capacities are set for options that only exist after generation (a rule per grid strategy, or editing after the run), and whether an islanded option at 0 MW pays the fixed charge;
+- which evaluation period sets the score when several are shown;
+- whether "prefer the no-PPA option" (O1) is a tie-break, a demotion or a hide-by-default;
+- how the representative days are chosen and how many options are verified at full resolution;
+- whether the top five should show five distinct strategies;
+- how the land budget for ground solar and wind is set with the Site tab hidden;
+- which density rule (IT estimate from area, or building massing) is kept.
+:::

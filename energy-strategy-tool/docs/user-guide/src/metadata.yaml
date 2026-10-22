@@ -1,0 +1,17 @@
+---
+title: "Data Centre Energy Strategy Tool"
+subtitle: "User guide and technical reference"
+creator:
+  - role: author
+    text: "Energy Strategy Tool project"
+date: "21 October 2026"
+lang: en-GB
+description: >
+  How to use the concept-design energy strategy tool for data centre campuses,
+  how every value is calculated, which defaults it uses and where they come from,
+  and which data sources and APIs it needs. Describes the app as agreed in the
+  walkthrough of 21 October 2026, with screenshots of the current version and
+  labelled mock-ups of screens not yet built.
+subject: "Data centre energy strategy; concept design; optioneering"
+rights: "Internal reference document. Screenshots and figures from the T1 example run."
+---
