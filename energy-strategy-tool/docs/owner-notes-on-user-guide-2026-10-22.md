@@ -56,3 +56,8 @@ These notes ask for something different from what the walkthrough of 2026-10-21 
 9. **Islanding and diesel backup** (page 54) and **BESS in the backup chain** (page 26): questions about how the resilience model works; related to the battery split (resilience reserve and economic battery, build plan package 4).
 10. **Map for the location** (page 44): already agreed (build plan package 1).
 11. **Guide changes** (pages 3, 7, 11, 12, 51, 66, 69): move the T1 example to the end; a separate, more detailed conventions page; remove "Who it is for" and "Phone"; more detail on load shape and flexibility; explain each pro and con on the cards; explain which NPV is shown.
+
+## Settled so far
+
+- Pages 69, 70, 75, 76 (unmet load): power adequacy first, OPEN-QUESTIONS 38–41 (2026-10-22).
+- Option 1 of the worked example (bridging plant left idle after the grid; turbines): OPEN-QUESTIONS 42–48 (2026-10-22).

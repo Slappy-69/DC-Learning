@@ -61,7 +61,7 @@ GitHub runs the checks on every push to `main` or a `feature/` branch and on pul
 
 ## Next
 
-Follow `docs/BUILD-PLAN.md` in order. Order confirmed by the owner on 2026-10-22: as recorded, 0 then 1 to 10 (the owner chose this over moving the research last or splitting it, knowing packages 1, 2 and 4 add defaults that will need a second research pass). **In progress: package 0** (branch `feature/defaults-research`): batch 1 done; further research batches wait for the owner (each source needs the owner's approval to open while working, and each default change needs the owner's approval). **Started out of order:** the Site tab's Beta switch from package 2 (branch `feature/site-tab-beta`), on the owner's instruction of 2026-10-22 to progress independently on sections their notes do not touch. **Waiting for the owner:** the notes on the guide (`docs/owner-notes-on-user-guide-2026-10-22.md`), next being the bridging plant after the grid arrives (rent, retire into backup, or both).
+Follow `docs/BUILD-PLAN.md` in order. Order confirmed by the owner on 2026-10-22: as recorded, 0 then 1 to 10 (the owner chose this over moving the research last or splitting it, knowing packages 1, 2 and 4 add defaults that will need a second research pass). **In progress: package 0** (branch `feature/defaults-research`): batch 1 done; further research batches wait for the owner (each source needs the owner's approval to open while working, and each default change needs the owner's approval). **Started out of order:** the Site tab's Beta switch from package 2 (branch `feature/site-tab-beta`), on the owner's instruction of 2026-10-22 to progress independently on sections their notes do not touch. **Waiting for the owner:** the rest of the notes on the guide (`docs/owner-notes-on-user-guide-2026-10-22.md`); the bridging-plant note is settled (OPEN-QUESTIONS 42–48); next is "I want full run every time" (page 35).
 
 0. Research the defaults before the first release.
 1. Map pin and country setup.
@@ -90,7 +90,8 @@ Decided by the owner (code changes not yet made unless stated):
 7. **Label for researched defaults** (2026-10-22, OPEN-QUESTIONS 36): once a default has its source and the owner's approval, it shows "sourced — not independently checked", not "verified"; it stays `verified: false` until a person responsible for the data checks it.
 8. **Main question of the tool** (2026-10-22, OPEN-QUESTIONS 37): the best power strategy to maximise IT load with up to five nines of availability.
 9. **Power adequacy first** (2026-10-22, OPEN-QUESTIONS 38): unmet load at any time puts an option at the bottom of the ranking; new build-plan package 3b. Tested against peak site demand, zero unmet hours, no availability measure (OPEN-QUESTIONS 39–41).
-10. Everything else decided in the walkthrough: `docs/walkthrough-decisions-2026-10-21.md`, folded into brief revision 5.
+10. **Bridging, lead times and backup** (2026-10-22, OPEN-QUESTIONS 42–48, package 3b): both bridging alternatives (rent and own only the gap, or buy and retire into backup); every technology for bridging; long-lead plant ordered from day one, with six months for significant environmental permits; permitting outlook; one backup technology per building; a site-wide backup option with an adjustable client-risk item.
+11. Everything else decided in the walkthrough: `docs/walkthrough-decisions-2026-10-21.md`, folded into brief revision 5.
 
 Waiting for the owner: `OPEN-QUESTIONS.md` 19–35 (no defaults; ask one at a time when the work package that needs the answer starts) and the known issues in `docs/KNOWN-ISSUES.md` (question 31).
 
