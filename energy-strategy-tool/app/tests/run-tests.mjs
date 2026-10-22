@@ -756,8 +756,10 @@ await test('8b. Weighted pick is the highest weighted score and moves with the w
   assert.equal(runT1.timing.dispatchRuns, dispatchRunsBefore, 'dispatch counter changed');
   const distinct = new Set(picks.map((p) => p[1]));
   assert.ok(distinct.size >= 2, 'the pick did not change across the weight presets');
-  const bal = picks.find((p) => p[0] === 'Balanced'), cheap = picks.find((p) => p[0] === 'Lowest cost');
-  assert.notEqual(bal[1], cheap[1], 'Balanced and Lowest cost give the same pick');
+  // Until 2026-10-22 this also required Balanced and Lowest cost to differ. With the UK ETS price approved on
+  // 2026-10-22 (work package 0, batch 1) the T1 Balanced leader is also the Lowest cost and Lowest carbon pick, so a
+  // fixed pair is a property of the data, not a requirement. The requirement (the pick moves with the weights) is
+  // the distinct-picks check above.
   // Each preset (re-score + Pareto view on 2,000 options) is far below one 8760-h dispatch run (T1 took seconds).
   assert.ok(ms / presets.length < 1000, `re-score + view took ${(ms / presets.length).toFixed(0)} ms per preset`);
   return `${presets.length} weight presets, ${distinct.size} distinct picks: ${picks.map((p) => `${p[0]} → ${p[1]} (${p[3].toFixed(1)})`).join('; ')}. Pick = hand-computed argmax = rank 1 every time; dispatch/economics objects identical by reference; dispatch counter ${dispatchRunsBefore} before and after; ${(ms / presets.length).toFixed(0)} ms per preset for re-score + view (T1 full run ${(runT1Ms / 1000).toFixed(1)} s).`;

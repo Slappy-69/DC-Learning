@@ -477,15 +477,17 @@ await check(`B9. A weight preset moves the pick without a re-run; repaint assert
       setTimeout(() => resolve(-1), 5000);
     });
   }, label);
-  const samples = [await timeClick('Lowest cost')];
+  // "Speed to market" since 2026-10-22: with the UK ETS price approved that day the T1 Balanced leader is also the
+  // Lowest cost pick, so that preset no longer moves the pick (work package 0, batch 1).
+  const samples = [await timeClick('Speed to market')];
   const after = await page.locator('.pick-line strong').first().innerText();
   const leaderAfter = await page.locator('.header-strip .hs-item').nth(1).innerText();
   const status = await page.locator('.status').innerText();
-  ok(samples[0] >= 0 && after !== before, 'the pick did not change with the "Lowest cost" preset');
+  ok(samples[0] >= 0 && after !== before, 'the pick did not change with the "Speed to market" preset');
   ok(leaderAfter.includes(after.replace(/^#\d+ /, '')), `header leader "${leaderAfter}" is not the pick "${after}"`);
   ok(!/Screening options/.test(status), 'a weight change started a re-run');
   samples.push(await timeClick('Balanced'));
-  samples.push(await timeClick('Lowest cost'));
+  samples.push(await timeClick('Speed to market'));
   ok(samples.every((x) => x >= 0), `a preset change did not move the pick within 5 s (${samples.join(', ')})`);
   ok(!/Screening options/.test(await page.locator('.status').innerText()), 'a weight change started a re-run');
   const med = samples.slice().sort((a, b) => a - b)[1];
