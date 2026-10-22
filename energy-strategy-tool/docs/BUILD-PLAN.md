@@ -52,7 +52,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 
 - **Decision:** OPEN-QUESTIONS 37 (the tool's main question: maximise IT load with up to five nines of availability) and 38 (power adequacy first).
 - **Scope:** adequacy status per option and an adequacy-first ranking (an owner-made exception to principle 5; options are never hidden); a shortfall analysis stage before generation (temporary and permanent shortfall: when, peak MW, MWh, hours, longest event); options sized to close the shortfall (bridging to the peak temporary shortfall; shortfall-sized batteries with a recharge check; shortfall-sized on-site generation); the IT load the contracted grid supports in each period and a "grid-matched phasing" reference option; unmet load shown as MWh, hours, peak MW and longest event, before and after full connection.
-- **Ask the owner first:** whether adequacy is tested at the full contracted IT load or at the average utilisation; any tolerance; whether an availability (nines) measure is wanted.
+- **Answered (2026-10-22, OPEN-QUESTIONS 39–41):** adequacy is tested against peak site demand (full contracted IT at design-day PUE); zero unmet hours, no tolerance; no availability measure (the owner uses a RAMS model). Still open for this package: the owner's points on option 1 of the example (bridging plant left idle after the grid arrives: rent for the bridge or retire plant into backup; dual-fuel engines; gas turbines), listed in the example file.
 - **Background:** worked example `docs/examples/example-5x100MW-2026-10-22.md`.
 
 ### 4. Flexibility and battery logic
