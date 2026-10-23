@@ -5,7 +5,7 @@
 import { TECH, COOLING, SPATIAL, choiceLabel } from './defaults.js';
 import { designDemandByMonth, demandYear } from './context.js';
 import { NA } from './generator.js';
-import { permittingTriggers, permitRegimes } from './permitting.js';
+import { permittingTriggers, permitRegimes, permitOutlookItem } from './permitting.js';
 
 const r1 = (x) => (Math.abs(x) >= 100 ? x.toFixed(0) : x.toFixed(1));
 
@@ -274,6 +274,32 @@ export function sizeOption(ctx, v) {
     sentences.push(`${t.name} (${p.role === 'prime' ? (p.sizing === 'shortfall' ? 'firm top-up' : 'firm prime') : 'bridging'}) available from month ${p.availMonth}: ${steps} months${early}${p.fuelMonth === Infinity ? '; fuel not available at current inputs, so it does not run' : p.fuelMonth > p.availMonth ? ` (fuel from month ${p.fuelMonth})` : ''}.`);
   }
 
+  // --- Permitting outlook (OPEN-QUESTIONS 46): held plant, its outlook, and its float against the month it is first
+  // needed: bridging plant at the first month of shortfall (islanded: of load); a baseload prime at the first month of
+  // load; a top-up plant, and the kept share of split bridging plant, at the first month of permanent shortfall. ---
+  const firstWhere = (from, f) => { for (let m = Math.max(0, from); m < ctx.nMonthsTimeline; m++) if (f(m)) return m; return null; };
+  const loadM = firstWhere(0, (m) => designByMonth[m] > 1e-6);
+  const shortM = (from) => firstWhere(from, (m) => designByMonth[m] - (v.C1 === 'islanded' ? 0 : gridByMonth[m]) > 1e-6);
+  const permitOutlook = [];
+  if (prime) {
+    const it = permitOutlookItem(prime, ctx.country, prime.sizing === 'shortfall' && v.C1 !== 'islanded' ? shortM(T) : loadM);
+    if (it) permitOutlook.push(it);
+  }
+  if (bridge) {
+    const it = permitOutlookItem(bridge, ctx.country, v.C1 === 'islanded' ? loadM : (bridge.shortfallMW > 0 ? shortM(0) : shortM(T)));
+    if (it) permitOutlook.push(it);
+  }
+  // Standby gensets: held by the same test; needed when the first load is energised. Their month is reported here
+  // only (the engine gives backup no availability month elsewhere).
+  if (backup.tech) {
+    const bt = TECH[backup.tech];
+    const bp = { role: 'backup', tech: bt.id };
+    bp.permitRegimes = permitRegimes(bp, permits);
+    bp.availMonth = techAvailMonth(ctx, bt, bp.permitRegimes.length ? req.permitAllowanceM : 0);
+    const it = permitOutlookItem(bp, ctx.country, loadM);
+    if (it) permitOutlook.push(it);
+  }
+
   // --- Area budget (site areas, land take). Ground solar is sized from the ground area for PV the engineer
   // enters (OPEN-QUESTIONS 53–54, 2026-10-22), never from the layout ---
   const site = inputs.site;
@@ -425,7 +451,7 @@ export function sizeOption(ctx, v) {
   return {
     coolingId, peakPUE, designMW, avgMW, criticalMW, itMW,
     building: { whitespaceM2: whitespace, gfaM2: gfa, footprintM2: footprint, heightM },
-    backup, prime, bridge, bridgeBess, bess, storage,
+    backup, prime, bridge, bridgeBess, bess, storage, permitOutlook,
     solarMWp, solarRoofMWp, solarGroundMWp, roofPvOverFreeM2, windMW, windTurbines, ppa,
     grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })), cableKm },
     gasConnection,

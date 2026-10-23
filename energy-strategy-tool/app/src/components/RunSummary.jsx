@@ -45,6 +45,34 @@ function ShortfallSection({ sf, start }) {
           ))}
         </tbody>
       </table>
+      <h4>IT load the grid supports, by grid period</h4>
+      <table className="mini">
+        <thead><tr><th scope="col">Grid period</th><th scope="col" className="num">Grid</th>{sf.byCooling.map((c) => <th key={c.cooling} scope="col" className="num">{coolingName(c.cooling)}</th>)}</tr></thead>
+        <tbody>
+          {(sf.byCooling[0] && sf.byCooling[0].periods ? sf.byCooling[0].periods : []).map((p, i) => (
+            <tr key={p.fromMonth}>
+              <th scope="row">{monthLabel(start, p.fromMonth)} – {monthLabel(start, p.toMonth)}</th>
+              <td className="num">{sig(p.gridMW, 3)} MW</td>
+              {sf.byCooling.map((c) => <td key={c.cooling} className="num">{sig(c.periods[i].itSupportedMW, 3)} MW IT</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <h4>Grid-matched phasing (reference, not ranked)</h4>
+      <p className="small">Each phase energised no earlier than planned and only once the grid alone carries the cumulative IT at the design-day PUE plus ancillary load: what the campus could do with no on-site generation.</p>
+      <table className="mini">
+        <thead><tr><th scope="col">Phase</th><th scope="col" className="num">Cumulative IT</th><th scope="col">Planned</th>{sf.byCooling.map((c) => <th key={c.cooling} scope="col">{coolingName(c.cooling)}</th>)}</tr></thead>
+        <tbody>
+          {(sf.byCooling[0] && sf.byCooling[0].gridMatched ? sf.byCooling[0].gridMatched : []).map((g, i) => (
+            <tr key={g.phase}>
+              <th scope="row">{g.phase}</th>
+              <td className="num">{sig(g.cumITMW, 3)} MW</td>
+              <td>{monthLabel(start, g.plannedMonth)}</td>
+              {sf.byCooling.map((c) => { const x = c.gridMatched[i]; return <td key={c.cooling}>{x.gridMonth == null ? <span className="flag-text">not within the timeline</span> : <>{monthLabel(start, x.gridMonth)}{x.delayMonths > 0 ? <div className="sub">{x.delayMonths} months later</div> : <div className="sub">on time</div>}</>}</td>; })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </section>
   );
 }

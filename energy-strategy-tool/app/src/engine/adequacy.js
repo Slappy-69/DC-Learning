@@ -67,10 +67,29 @@ export function shortfallAnalysis(ctx, coolingIds) {
     };
     const fullMW = ctx.gridCap[Math.min(Math.max(T, 0), ctx.gridCap.length - 1)] || 0;
     const perMWIT = peakPUE + anc;
+    // IT the grid supports in each grid period (OPEN-QUESTIONS 38, step 3).
+    const periods = [];
+    for (let m = 0; m < ctx.nMonthsTimeline; m++) {
+      const g = ctx.gridCap[m];
+      const last = periods[periods.length - 1];
+      if (last && Math.abs(last.gridMW - g) < EPS) last.toMonth = m;
+      else periods.push({ fromMonth: m, toMonth: m, gridMW: g, itSupportedMW: g / perMWIT });
+    }
+    // Grid-matched phasing (reference, not ranked): each phase energised no earlier than planned and only when the
+    // grid alone carries the cumulative IT at the design-day PUE plus ancillary load.
+    let cum = 0;
+    const gridMatched = ctx.phases.map((ph, k) => {
+      cum += ph.it;
+      const need = cum * perMWIT;
+      let mm = null;
+      for (let m = Math.max(0, ph.m); m < ctx.nMonthsTimeline; m++) if (ctx.gridCap[m] + EPS >= need) { mm = m; break; }
+      return { phase: k + 1, itMW: ph.it, cumITMW: cum, designMW: need, plannedMonth: ph.m, gridMonth: mm, delayMonths: mm == null ? null : mm - ph.m };
+    });
     out.push({
       cooling: id, peakPUE, designMW: inputs.load.itMW * perMWIT,
       temporary: part(0, T), permanent: part(T, ctx.nMonthsTimeline),
       fullGridMW: fullMW, itSupportedMW: fullMW / perMWIT,
+      periods, gridMatched,
     });
   }
   return { fullGridMonth: ctx.fullGridM, byCooling: out };

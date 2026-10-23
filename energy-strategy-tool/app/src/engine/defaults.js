@@ -333,6 +333,25 @@ tech('heatRejection', { name: 'Heat rejection (dry / adiabatic coolers, chillers
 // values the brief does not give (L:W ratios, unit cell sizes, minimum values for relaxation, sound power
 // levels, the building clearance) are builder judgements and say so.
 // ---------------------------------------------------------------------------
+// Permitting outlook (owner, 2026-10-22, OPEN-QUESTIONS 46): for plant held by significant environmental permitting
+// (IED, Seveso), a three-level outlook with its reason, to advise the client whether the plant can be consented in
+// time. Judgement by technology, indicative — unverified; the same in every country until country differences are
+// researched (PERMIT_OUTLOOK_COUNTRY, empty: a research item for work package 0).
+export const PERMIT_OUTLOOKS = ['likely', 'uncertain', 'unlikely'];
+export const PERMIT_OUTLOOK = {};
+for (const [id, value, reason] of [
+  ['gasRecip', 'uncertain', 'Gas engines running in normal operation need an IED permit with NOx limits and an air-quality assessment; consentable on many sites but site-specific'],
+  ['gasTurbine', 'uncertain', 'Gas turbines running in normal operation need an IED permit with NOx limits and an air-quality assessment; consentable on many sites but site-specific'],
+  ['chp', 'uncertain', 'Gas CHP needs an IED permit with NOx limits and an air-quality assessment; the use of the heat helps the case'],
+  ['rented', 'uncertain', 'Temporary gas generation running for months counts towards the installation and its permit; regulators increasingly scrutinise long-running temporary plant'],
+  ['dieselPrime', 'unlikely', 'Diesel or HVO engines running as prime power in normal operation are unlikely to be consented under air-quality rules in most of Europe'],
+  ['hydrogen', 'uncertain', 'Hydrogen storage above the Seveso threshold adds a major-accident regime and separation distances; few precedents at data centres'],
+  ['backup', 'likely', 'Standby gensets tested a few hours a year are routinely permitted at data centres, although they bring the site under the IED'],
+]) {
+  PERMIT_OUTLOOK[id] = { outlook: rec(`permitting.outlook.${id}`, value, 'likely / uncertain / unlikely', { basis: 'judgement', ref: '§9.8', note: reason }), reason };
+}
+export const PERMIT_OUTLOOK_COUNTRY = {};
+
 export const SPATIAL = {};
 function spatial(id, base, params) {
   SPATIAL[id] = { id, ...base, p: {} };

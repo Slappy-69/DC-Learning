@@ -90,6 +90,8 @@ The note under the table restates the capex scope: energy, backup, grid connecti
 
 **Time-to-power.** First power, full load, the power gap in MW-months, and the axis metric (chapter 38). A link opens the option on the Dispatch tab.
 
+**Permitting outlook** (built 23 October 2026). For plant held by the IED or Seveso: the outlook (likely, uncertain, unlikely) with its reason, and the month it is ready against the month it is first needed, with the float or the months late (chapter 8).
+
 **Resilience.** The status and each check (backed load, topology, autonomy, islanding) with its numbers.
 
 **Deliverability.** The score and each penalty (chapter 43).

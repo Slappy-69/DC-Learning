@@ -216,6 +216,10 @@ Flags are how the tool reports problems without enforcing them. Each has an iden
 | permit-runhours | minor | plant runs more hours than the limit |
 | site-noise | minor | the noise proxy exceeds the night threshold at a receptor |
 
+::: {.callout .built}
+**Built 23 October 2026.** `permit-outlook` (minor when an item is "unlikely" or not ready when first needed, info otherwise) lists every plant held by the IED or Seveso with its outlook, ready month, needed month and float (chapter 8). It is not counted in deliverability, so it changes no score.
+:::
+
 ## Fuel and utilities
 
 | Flag | Severity | Raised when |

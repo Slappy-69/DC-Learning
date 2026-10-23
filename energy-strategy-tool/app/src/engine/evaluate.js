@@ -495,6 +495,14 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   if (sz.prime && sz.prime.tech === 'hydrogen') {
     flags.push(flag('permit-h2', h2t >= req.sevesoH2t ? 'major' : 'minor', 'Permitting', `Hydrogen storage ${h2t.toFixed(0)} t on site${h2t >= req.sevesoH2t ? ` ≥ ${req.sevesoH2t} t (hazardous substance storage above threshold)` : ''}; large separation distances, hazardous-substance flag always raised.${permitSuffix}`, { permitting: true }));
   }
+  // Permitting outlook (OPEN-QUESTIONS 46): one flag listing every held item, its outlook and its float. Minor when an
+  // item is "unlikely" or not ready when first needed; info otherwise. Not a permitting flag for deliverability (it
+  // restates the IED/Seveso flags above with timing), so it changes no score.
+  if (sz.permitOutlook && sz.permitOutlook.length) {
+    const worry = sz.permitOutlook.some((x) => x.outlook === 'unlikely' || (x.floatMonths != null && x.floatMonths < 0));
+    const txt = sz.permitOutlook.map((x) => `${x.name} (${x.role === 'bridge' ? 'bridging' : x.role}; ${x.regimes.join(', ')}): ${x.outlook}; ready month ${x.readyMonth}${x.neededMonth == null ? '' : `, needed month ${x.neededMonth}, ${x.floatMonths >= 0 ? `${x.floatMonths} months' float` : `${-x.floatMonths} months late`}`}`).join('; ');
+    flags.push(flag('permit-outlook', worry ? 'minor' : 'info', 'Permitting', `Permitting outlook: ${txt}.${permitSuffix}`, { items: sz.permitOutlook.length }));
+  }
   if (sz.windMW > 0 && v.C11 === 'fit') flags.push(flag('permit-wind', 'major', 'Permitting', `Wind turbines on site (${sz.windTurbines} × tip height ${TECH.wind.p.tipHeightM} m): planning and aviation.${permitSuffix}`, { permitting: true }));
   const stacks = [];
   if (sz.prime && TECH[sz.prime.tech].p.stackM) stacks.push(TECH[sz.prime.tech].p.stackM);

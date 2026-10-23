@@ -55,6 +55,29 @@ export function AdequacySummary({ a }) {
   );
 }
 
+// Permitting outlook (OPEN-QUESTIONS 46, 2026-10-22): plant held by the IED or Seveso, its outlook (judgement by
+// technology, indicative — unverified), and whether it is ready when first needed.
+export function PermitOutlook({ items, start }) {
+  return (
+    <div className="detail-permit">
+      <h4>Permitting outlook</h4>
+      <table className="mini">
+        <thead><tr><th scope="col">Plant</th><th scope="col">Outlook</th><th scope="col">Ready / needed</th></tr></thead>
+        <tbody>
+          {items.map((x) => (
+            <tr key={`${x.role}-${x.tech}`}>
+              <th scope="row">{x.name}<div className="sub">{x.role === 'bridge' ? 'bridging' : x.role} · {x.regimes.join(', ')}</div></th>
+              <td><span className={`badge badge-${x.outlook === 'likely' ? 'ok' : x.outlook === 'uncertain' ? 'warn' : 'bad'}`}>{x.outlook}</span><div className="sub">{x.reason}</div></td>
+              <td>{monthLabel(start, x.readyMonth)}{x.neededMonth != null ? <> / {monthLabel(start, x.neededMonth)}<div className={`sub ${x.floatMonths < 0 ? 'flag-text' : ''}`}>{x.floatMonths >= 0 ? `${x.floatMonths} months' float` : `${-x.floatMonths} months late`}</div></> : null}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="note">Screening judgement, indicative — unverified; not a permitting determination. The same outlook in every country until country differences are researched.</p>
+    </div>
+  );
+}
+
 // PPA hedge (owner decision 2026-10-18): settlement on contracted PPA volume that is not delivered physically,
 // reported next to the economics but never in the ledger, LCOE, NPV or score (evaluate.js economics).
 export function PpaHedgeRow({ h }) {
@@ -153,6 +176,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
             </tbody>
           </table>
           {onShowDispatch ? <button type="button" className="link-btn" onClick={() => onShowDispatch(o.id)}>Show this option's phasing and hourly dispatch on the Dispatch tab</button> : null}
+          {o.sizing.permitOutlook && o.sizing.permitOutlook.length ? <PermitOutlook items={o.sizing.permitOutlook} start={start} /> : null}
           <h4>Resilience: {o.resilience.status}</h4>
           <ul className="plain small">{o.resilience.items.map((i) => <li key={i.item}>{i.ok ? '✓' : '✗'} <strong>{i.item}:</strong> {i.text}</li>)}</ul>
           <h4>{o.deliv.includesSiteFit ? 'Deliverability (incl. site fit)' : 'Deliverability'} {sig(o.deliv.score, 2)}</h4>

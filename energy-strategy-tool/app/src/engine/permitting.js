@@ -9,7 +9,7 @@
 //
 // One rule for the sizing (availability months) and the permitting flags (evaluate.js). Pure: no UI, no browser APIs.
 
-import { TECH } from './defaults.js';
+import { TECH, PERMIT_OUTLOOK, PERMIT_OUTLOOK_COUNTRY } from './defaults.js';
 
 // Combustion plant of an option, as the IED aggregation counts it: prime, bridging and backup units.
 export function combustionPlant(sz, v) {
@@ -51,4 +51,18 @@ export function permitRegimes(plant, trig) {
   if (trig.ied && t.combustion) r.push('IED');
   if ((trig.sevesoFuel && (t.fuel === 'diesel' || t.fuel === 'hvo')) || (trig.sevesoH2 && t.fuel === 'hydrogen')) r.push('Seveso');
   return r;
+}
+
+// Permitting outlook for each plant held by significant environmental permitting (OPEN-QUESTIONS 46): the outlook and
+// reason (by technology, country overrides when researched), when the plant is ready, when it is first needed, and the
+// float between them. `need` = the first month the plant is needed (sizing.js).
+export function permitOutlookItem(plant, country, need) {
+  if (!plant || !plant.permitRegimes || !plant.permitRegimes.length) return null;
+  const byCountry = (PERMIT_OUTLOOK_COUNTRY[country] || {})[plant.tech];
+  const base = byCountry || PERMIT_OUTLOOK[plant.tech] || (TECH[plant.tech].role === 'backup' ? PERMIT_OUTLOOK.backup : null) || { outlook: 'uncertain', reason: 'No outlook recorded for this technology' };
+  return {
+    role: plant.role, tech: plant.tech, name: TECH[plant.tech].name, regimes: plant.permitRegimes.slice(),
+    outlook: base.outlook, reason: base.reason, readyMonth: plant.availMonth, neededMonth: need,
+    floatMonths: need == null ? null : need - plant.availMonth,
+  };
 }

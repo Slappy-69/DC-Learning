@@ -107,7 +107,9 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Plant ordered from day one; 6-month permitting allowance only under the IED or Seveso (work package 3b) | Built (23 Oct 2026) | 8, 35 |
 | Firm generation sized two ways: average load (baseload) and permanent shortfall (top-up), choice C4s (work package 3b) | Built (23 Oct 2026) | 20, 34, 35 |
 | Bridging plant split when the grid arrives: shortfall share kept as prime, rest as backup (C3, work package 3b) | Built (23 Oct 2026) | 20, 34, 35 |
-| Power adequacy, rest of 3b: bridging and batteries sized to the shortfall (rent or buy), permitting outlook, backup rules, grid-matched phasing option | Agreed, not built yet | — |
+| Permitting outlook: likely / uncertain / unlikely by technology, with ready and needed months (work package 3b; country differences still to research) | Built (23 Oct 2026) | 8, 23, 42 |
+| IT the grid supports by grid period; grid-matched phasing reference in the run summary (work package 3b) | Built (23 Oct 2026) | 21 |
+| Power adequacy, rest of 3b: shortfall-sized batteries, backup rules, grid-matched phasing option | Agreed, not built yet | — |
 | IT load estimated from area | Agreed | 16 |
 | Load shapes, AI profiles | Agreed | 16 |
 | Flexibility with triggers; battery response | Agreed | 16 |

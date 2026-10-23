@@ -245,7 +245,17 @@ Onshore wind, ground-mounted solar and small modular reactors need a consent of 
 | Onshore wind | 54 (24 planning + 18 + 12) | — | Commercial |
 | Small modular reactor | 120 (36 planning + 36 + 48), and not before 2035 | — | Nascent |
 
-The permitting outlook for held plant (likely, uncertain, unlikely) is agreed but not built yet.
+**Permitting outlook** (built 23 October 2026, OPEN-QUESTIONS 46). Every held plant, the standby gensets included, gets an outlook with its reason, to advise the client whether it can be consented and installed in time. The outlook is a judgement by technology, labelled indicative — unverified, and the same in every country until country differences are researched:
+
+| Plant | Outlook | Reason (short) |
+|---|---|---|
+| Gas engines, gas turbines, CHP | uncertain | IED permit with NOx limits and an air-quality assessment; site-specific |
+| Rented temporary generation | uncertain | counts towards the installation; long-running temporary plant is scrutinised |
+| HVO-diesel prime gensets | unlikely | diesel running as prime power rarely consented under air-quality rules |
+| Hydrogen | uncertain | Seveso regime and separation distances; few precedents |
+| Standby gensets | likely | routinely permitted at data centres |
+
+The outlook also compares the month the plant is ready with the month it is first needed: bridging plant at the first month of shortfall, a baseload prime and the standby gensets at the first month of load, a top-up plant at the first month of permanent shortfall. In T1 the standby gensets are ready at month 24 (6 + 12 + 6) but the first building is energised at month 18, so they are 6 months late in every option.
 
 ## The grid
 

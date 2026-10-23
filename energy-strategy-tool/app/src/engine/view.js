@@ -35,6 +35,7 @@ export const FLAG_FILTERS = [
   ['res-backed', 'Backed load not met'],
   ['res-autonomy', 'Autonomy not met'],
   ['permit-ied', 'IED threshold'],
+  ['permit-outlook', 'Permitting outlook'],
   ['fuel-gas-unknown', 'Gas connection unconfirmed'],
   ['tech-nascent', 'Nascent technology'],
   ['target-ttp', 'Time-to-power target missed'],

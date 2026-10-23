@@ -2344,6 +2344,83 @@
   "briefRef": "§6"
  },
  {
+  "path": "permitting.outlook.gasRecip",
+  "value": "uncertain",
+  "unit": "likely / uncertain / unlikely",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Gas engines running in normal operation need an IED permit with NOx limits and an air-quality assessment; consentable on many sites but site-specific",
+  "briefRef": "§9.8"
+ },
+ {
+  "path": "permitting.outlook.gasTurbine",
+  "value": "uncertain",
+  "unit": "likely / uncertain / unlikely",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Gas turbines running in normal operation need an IED permit with NOx limits and an air-quality assessment; consentable on many sites but site-specific",
+  "briefRef": "§9.8"
+ },
+ {
+  "path": "permitting.outlook.chp",
+  "value": "uncertain",
+  "unit": "likely / uncertain / unlikely",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Gas CHP needs an IED permit with NOx limits and an air-quality assessment; the use of the heat helps the case",
+  "briefRef": "§9.8"
+ },
+ {
+  "path": "permitting.outlook.rented",
+  "value": "uncertain",
+  "unit": "likely / uncertain / unlikely",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Temporary gas generation running for months counts towards the installation and its permit; regulators increasingly scrutinise long-running temporary plant",
+  "briefRef": "§9.8"
+ },
+ {
+  "path": "permitting.outlook.dieselPrime",
+  "value": "unlikely",
+  "unit": "likely / uncertain / unlikely",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Diesel or HVO engines running as prime power in normal operation are unlikely to be consented under air-quality rules in most of Europe",
+  "briefRef": "§9.8"
+ },
+ {
+  "path": "permitting.outlook.hydrogen",
+  "value": "uncertain",
+  "unit": "likely / uncertain / unlikely",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Hydrogen storage above the Seveso threshold adds a major-accident regime and separation distances; few precedents at data centres",
+  "briefRef": "§9.8"
+ },
+ {
+  "path": "permitting.outlook.backup",
+  "value": "likely",
+  "unit": "likely / uncertain / unlikely",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Standby gensets tested a few hours a year are routinely permitted at data centres, although they bring the site under the IED",
+  "briefRef": "§9.8"
+ },
+ {
   "path": "spatial.building.lw",
   "value": 1.5,
   "unit": "length : width",

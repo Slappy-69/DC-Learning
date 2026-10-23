@@ -1531,3 +1531,30 @@ What changed:
 Interpretations (reversible): rented bridging plant can also be split (the kept share keeps being rented, as "Retain as backup" keeps renting today); the bridging plant is enlarged to its kept share when that is larger.
 
 T1 effect: 59,764 combinations (rule h removes 3,888, rule g 12,672). 931 adequate. 127 split options in the sample (64 adequate, best rank 23: rented bridge 7 × 2 MW, 6 kept for the 9.0 MW permanent shortfall of evaporative cooling, LCOE €167.5/MWh). Leader: Grid + rented temporary generation bridge → retain for grid services · Diesel N+1 · Immersion · PV 3.3 MWp · PPA hybrid 50 % (score 91.26).
+
+## Slice: permitting outlook (work package 3b, part 5; 2026-10-23)
+
+Branch `feature/adequacy-first`. The owner's decision OPEN-QUESTIONS 46 (2026-10-22). Built while the owner asked for work to continue without their input; the outlook values are judgement for the owner to review.
+
+What changed:
+- **Records** `permitting.outlook.<id>` (judgement, indicative — unverified, each with its reason): gas engines, gas turbines, CHP, rented generation and hydrogen "uncertain"; HVO-diesel prime "unlikely"; standby gensets "likely". `PERMIT_OUTLOOK_COUNTRY` holds country overrides and is empty: country differences are a research item (work package 0).
+- **Outlook items** (`permitting.js` `permitOutlookItem`, computed in sizing as `sz.permitOutlook`): every plant held by the IED or Seveso (prime, bridging, and the standby gensets) with its regimes, outlook, reason, ready month, the month it is first needed and the float. Needed: bridging plant at the first month of shortfall (islanded: of load); a baseload prime and the standby gensets at the first month of load; a top-up plant at the first month of permanent shortfall from the full grid date.
+- **Standby gensets** now have a ready month in the outlook only: the same programme rule (allowance if held + procurement + construction). The engine still gives backup no availability month elsewhere (resilience and dispatch unchanged).
+- **Flag** `permit-outlook` (Permitting): minor when an item is "unlikely" or late, info otherwise. Not marked as a permitting flag for deliverability, so it changes no score. Offered in the flag filters.
+- **Option detail:** a "Permitting outlook" table (plant, outlook with reason, ready / needed with float or months late).
+
+Interpretations (reversible): the outlook does not change scores or adequacy; the same outlook in every country until researched; standby gensets are included because they are held by the same IED test.
+
+Finding for the owner: in T1 the standby gensets are ready at month 24 (6 permitting + 12 procurement + 6 construction) and the first building is energised at month 18, so they are 6 months late in every option. CHP is ready at month 27 against a first need at 18 (baseload) or 59–62 (top-up). Lead-time defaults are unresearched.
+
+## Slice: IT the grid supports by period, grid-matched phasing (work package 3b, part 6; 2026-10-23)
+
+OPEN-QUESTIONS 38, step 3 ("report the IT load the grid can support and a grid-matched phasing reference option").
+
+- `shortfallAnalysis` adds, per cooling type, `periods` (each run of months at one grid capacity, with the IT it carries at the design-day PUE plus ancillary load) and `gridMatched` (each phase energised no earlier than planned and only once the grid alone carries the cumulative IT at design load; month and delay, or "not within the timeline").
+- The run summary's shortfall section shows both tables.
+- Interpretation (reversible): the grid-matched phasing is a **reference shown in the run summary, not a ranked option**, because it serves a later and possibly smaller load than every option, so its scores would not be comparable. It uses each phase's full design load (no ramp), which is conservative.
+
+T1: grid 20 MW to June 2029, 120 MW from July 2029. Air: 14.6 / 87.8 MW IT; phase 1 waits 12 months, phases 2 and 3 on time, phase 4 never. DLC: 17.7 / 106.1 MW IT; phase 1 waits 12 months, the rest on time.
+
+Test 22 (`tests/gridref-tests.mjs`): periods cover the timeline at one capacity each; IT supported; grid-matched months by hand.
