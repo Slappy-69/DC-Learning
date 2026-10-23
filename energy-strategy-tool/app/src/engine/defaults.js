@@ -693,6 +693,12 @@ export function buildDefaultInputs(opts = {}) {
       priceAdder: rec('grid.priceAdder', 'by country', '€/MWh', { basis: 'source', derived: true, verify: 'National regulators (network charges, levies)', ref: '§5.4' }),
       priceMultiplier: rec('grid.priceMultiplier', 1, '× country profile', { low: 0.7, high: 1.5, basis: 'judgement', ref: '§5.4' }),
       carbonMultiplier: rec('grid.carbonMultiplier', 1, '× country profile', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§5.4' }),
+      // Work package 3 (walkthrough 2026-10-21; OPEN-QUESTIONS 19, 20, 50 answered 2026-10-23 with Claude's
+      // recommendation, accepted in advance by the owner): contracted capacity per grid strategy, set before the run.
+      contractWaitMW: rec('grid.contractWaitMW', null, 'MW contracted (blank = the full offer in each period)', { basis: 'judgement', ref: '§5.4, §9.2', note: 'OPEN-QUESTIONS 19: the contracted grid capacity of every C1 = "Wait for grid" option; the import limit is the lower of this and the offer in each period. Blank = the full offer (as built before).' }),
+      contractBridgeMW: rec('grid.contractBridgeMW', null, 'MW contracted (blank = the full offer in each period)', { basis: 'judgement', ref: '§5.4, §9.2', note: 'OPEN-QUESTIONS 19: the contracted grid capacity of every C1 = "Bridge until grid" option, for example 80 MW of a 120 MW offer. Blank = the full offer.' }),
+      contractExportMW: rec('grid.contractExportMW', null, 'MW contracted import (blank = the full offer in each period)', { basis: 'judgement', ref: '§5.4, §9.2', note: 'OPEN-QUESTIONS 19: the contracted import capacity of C1 = "Grid + export" options. Blank = the full offer.' }),
+      connectionCharge: rec('grid.connectionCharge', 0, '€ (lump sum, the same for every grid-connected option)', { basis: 'judgement', ref: '§5.4, §9.5', note: 'Walkthrough 2026-10-21: default 0, the same for every option; OPEN-QUESTIONS 20: a lump sum, not paid by islanded options (0 MW contracted); OPEN-QUESTIONS 50: the expected cost (standard rate per MW × contracted MW) is shown next to the field. Every option relying on the default 0 is flagged "assumed".' }),
       dateUncertainty: rec('grid.dateUncertainty', [-6, 24], 'months', { basis: 'judgement', note: 'Feeds Monte Carlo (not in this slice).', ref: '§5.4' }),
     },
     utilities: {

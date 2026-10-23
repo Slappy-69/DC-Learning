@@ -93,6 +93,10 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **grid.priceAdder**: by country (€/MWh); src; check against National regulators (network charges, levies).
 - **grid.priceMultiplier**: 1 × country profile; range 0.7–1.5; judg.
 - **grid.carbonMultiplier**: 1 × country profile; range 0.8–1.2; judg.
+- **grid.contractWaitMW**: none (MW contracted (blank = the full offer in each period)); judg. OPEN-QUESTIONS 19: the contracted grid capacity of every C1 = "Wait for grid" option; the import limit is the lower of this and the offer in each period. Blank = the full offer (as built before).
+- **grid.contractBridgeMW**: none (MW contracted (blank = the full offer in each period)); judg. OPEN-QUESTIONS 19: the contracted grid capacity of every C1 = "Bridge until grid" option, for example 80 MW of a 120 MW offer. Blank = the full offer.
+- **grid.contractExportMW**: none (MW contracted import (blank = the full offer in each period)); judg. OPEN-QUESTIONS 19: the contracted import capacity of C1 = "Grid + export" options. Blank = the full offer.
+- **grid.connectionCharge**: 0 € (lump sum, the same for every grid-connected option); judg. Walkthrough 2026-10-21: default 0, the same for every option; OPEN-QUESTIONS 20: a lump sum, not paid by islanded options (0 MW contracted); OPEN-QUESTIONS 50: the expected cost (standard rate per MW × contracted MW) is shown next to the field. Every option relying on the default 0 is flagged "assumed".
 - **grid.dateUncertainty**: -6 / 24 months; judg. Feeds Monte Carlo (not in this slice).
 
 ## Utilities

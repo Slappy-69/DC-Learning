@@ -866,18 +866,19 @@ export async function siteFitTests(test, ctxRuns) {
     const m2 = buildSiteModel({ ...inp, site: { ...inp.site, poc: at(0, -hb - 1200), gasMain: at(0, 0) } });
     near(m2.routes.pocM, 1210, 0.5, 'POC 1,200 m south of the boundary'); assert.equal(m2.routes.gasMainM, 0, 'gas main inside the envelope');
     out.push(`site model: default POC ${m1.routes.pocM} m (the setback), POC 1,200 m out → ${m2.routes.pocM.toFixed(1)} m, gas main inside → 0 m, none → not costed`);
-    // (b) T1 economics: every option's grid connection line = offered MW × €/MW (110–150 kV) + €/km × 0.010 km; no gas pipe.
+    // (b) T1 economics: every grid-connected option's cable route line = €/km × 0.010 km and its connection charge is the
+    // entered lump sum (default 0, work package 3); islanded options pay neither; no gas pipe.
     const burnsGas = (o) => [o.sizing.prime, o.sizing.bridge].some((p) => p && TECH[p.tech].fuel === 'gas') || !!(o.sizing.backup.tech && TECH[o.sizing.backup.tech].fuel === 'gas');
-    const gridLine = (o) => o.eco.capexLines.filter((l) => l.item === 'Grid connection and reinforcement').reduce((a, l) => a + l.amount, 0);
+    const gridLine = (o) => o.eco.capexLines.filter((l) => /^Grid (connection charge|cable route)/.test(l.item)).reduce((a, l) => a + l.amount, 0);
     const gasLine = (o) => o.eco.capexLines.filter((l) => l.item === 'Gas connection pipe').reduce((a, l) => a + l.amount, 0);
-    const expGrid = runT1.inputs.grid.fullMW * sp.connCapexPerMW_hv + sp.cablePerKm * 0.010;
+    const expGrid = (Number(runT1.inputs.grid.connectionCharge) || 0) + sp.cablePerKm * 0.010;
     for (const o of runT1.options) {
-      near(gridLine(o), expGrid, 1e-3, `${o.id}: grid connection capex`);
+      near(gridLine(o), o.v.C1 === 'islanded' ? 0 : expGrid, 1e-3, `${o.id}: grid connection capex`);
       near(o.sizing.grid.cableKm, 0.010, 1e-12, `${o.id}: cable route`);
       assert.equal(gasLine(o), 0, `${o.id}: gas pipe without a gas main`);
       if (burnsGas(o)) assert.ok(o.sizing.sentences.some((t) => t.startsWith('Gas connection: no gas main location given')), `${o.id}: no "not costed" sentence`);
     }
-    out.push(`T1: grid connection €${Math.round(expGrid).toLocaleString('en-GB')} on all ${runT1.options.length} options (cable €${Math.round(sp.cablePerKm * 0.01).toLocaleString('en-GB')} for 10 m), no gas pipe (no gas main), gas-burning options say so`);
+    out.push(`T1: grid connection charge 0 (default) + cable €${Math.round(expGrid).toLocaleString('en-GB')} on every grid-connected option of ${runT1.options.length}, none on islanded ones (cable €${Math.round(sp.cablePerKm * 0.01).toLocaleString('en-GB')} for 10 m), no gas pipe (no gas main), gas-burning options say so`);
     // (c) T1 + constraints: the gas main on the north edge is 10 m from the envelope; each gas-burning option pays
     // 0.010 km × €/km, and no other option pays anything.
     const mc = buildSiteModel(runTC.inputs);

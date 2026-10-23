@@ -511,7 +511,10 @@ export async function sensitivityTests(test, shared) {
     const capexR = moved(lead, 'capex', (s) => s.lcoe, 'LCOE');
     assert.ok(capexR.high.lcoe > capexR.low.lcoe, 'higher capex should raise LCOE');
     moved(lead, 'pue', (s) => s.lcoe, 'LCOE');
-    moved(lead, 'grid-capex', (s) => s.lcoe, 'LCOE');
+    // Grid connection capex scales the connection charge and the cable route (work package 3): with the default charge
+    // of 0 and no cable route it moves nothing (test 31 checks it with a charge entered).
+    if (lead.eco.capexLines.some((l) => /^Grid (connection charge|cable route)/.test(l.item) && l.amount > 0)) moved(lead, 'grid-capex', (s) => s.lcoe, 'LCOE');
+    else { const g = tornado(run, lead.id, { site: run.ctx.site, drivers: by('grid-capex') }).rows[0]; assert.equal(g.low.lcoe, g.high.lcoe, 'grid capex moved LCOE with nothing to scale'); out.push('grid-capex: no charge or cable route, no swing'); }
     moved(lead, 'period', (s) => s.npvCost, 'NPV');
     moved(lead, 'escalation', (s) => s.lcoe, 'LCOE');
     moved(pick((o) => o.sizing.solarMWp > 0 || o.sizing.windMW > 0, 'with on-site solar or wind'), 'capacity-factors', (s) => s.lcoe, 'LCOE');

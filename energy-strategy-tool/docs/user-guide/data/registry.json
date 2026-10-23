@@ -5097,6 +5097,50 @@
   "briefRef": "§5.4"
  },
  {
+  "path": "grid.contractWaitMW",
+  "value": null,
+  "unit": "MW contracted (blank = the full offer in each period)",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "OPEN-QUESTIONS 19: the contracted grid capacity of every C1 = \"Wait for grid\" option; the import limit is the lower of this and the offer in each period. Blank = the full offer (as built before).",
+  "briefRef": "§5.4, §9.2"
+ },
+ {
+  "path": "grid.contractBridgeMW",
+  "value": null,
+  "unit": "MW contracted (blank = the full offer in each period)",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "OPEN-QUESTIONS 19: the contracted grid capacity of every C1 = \"Bridge until grid\" option, for example 80 MW of a 120 MW offer. Blank = the full offer.",
+  "briefRef": "§5.4, §9.2"
+ },
+ {
+  "path": "grid.contractExportMW",
+  "value": null,
+  "unit": "MW contracted import (blank = the full offer in each period)",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "OPEN-QUESTIONS 19: the contracted import capacity of C1 = \"Grid + export\" options. Blank = the full offer.",
+  "briefRef": "§5.4, §9.2"
+ },
+ {
+  "path": "grid.connectionCharge",
+  "value": 0,
+  "unit": "€ (lump sum, the same for every grid-connected option)",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Walkthrough 2026-10-21: default 0, the same for every option; OPEN-QUESTIONS 20: a lump sum, not paid by islanded options (0 MW contracted); OPEN-QUESTIONS 50: the expected cost (standard rate per MW × contracted MW) is shown next to the field. Every option relying on the default 0 is flagged \"assumed\".",
+  "briefRef": "§5.4, §9.5"
+ },
+ {
   "path": "grid.dateUncertainty",
   "value": [
    -6,

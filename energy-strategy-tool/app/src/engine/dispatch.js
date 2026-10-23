@@ -22,7 +22,7 @@
 // So: supply (generation + imports + discharge) = demand + charge + curtailment + export − unmet.
 
 import { H } from './profiles.js';
-import { demandYear } from './context.js';
+import { demandYear, contractLimit } from './context.js';
 import { TECH, FUEL, PPA } from './defaults.js';
 import { techAvailMonth } from './sizing.js';
 import { triggerMask } from './triggers.js';
@@ -122,6 +122,7 @@ export function dispatchConfig(ctx, v, sz) {
     ppaType: sz.ppa ? sz.ppa.type : null, ppaCoverage: sz.ppa ? sz.ppa.coverage : 0,
     flex: v.C16 === 'on',
     reYield: inputs.utilities.reYieldFactor ?? 1, // tornado driver "capacity factors" (work package 9)
+    gridLimit: v.C1 === 'islanded' ? Infinity : contractLimit(inputs, v.C1), // contracted capacity (work package 3)
     plants,
   };
   return cfg;
@@ -130,7 +131,7 @@ export function dispatchConfig(ctx, v, sz) {
 export function dispatchKey(cfg) {
   return JSON.stringify([cfg.coolingId, cfg.islanded, cfg.exportMW, cfg.exceedance, cfg.respectRunHours, cfg.maxRunHours,
     +cfg.solarMWp.toFixed(6), cfg.solarAvailM, +cfg.windMW.toFixed(6), cfg.windAvailM, +cfg.bessMW.toFixed(6), +cfg.bessMWh.toFixed(6), cfg.bessAvailM, cfg.bessRole,
-    cfg.ppaType, cfg.ppaCoverage, cfg.flex, cfg.reYield,
+    cfg.ppaType, cfg.ppaCoverage, cfg.flex, cfg.reYield, cfg.gridLimit < Infinity ? cfg.gridLimit : null,
     cfg.plants.map((p) => [p.role, p.tech, +p.mw.toFixed(6), Array.from(p.mode).join(''), p.hourMask ? p.hourMask.count : 0])]);
 }
 
@@ -196,6 +197,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
   let inEvent = false, evLen = 0, recoverLeft = 0;
   let flexEvents = 0, flexTrigHours = 0, flexTrigMWh = 0, flexShortMWh = 0, flexShortHours = 0, battRespMWh = 0;
   const gridCap = ctx.gridCap;
+  const gridLimit = cfg.gridLimit ?? Infinity;
   // Hoisted locals for the hot loop
   const islanded = cfg.islanded;
   const exceedance = cfg.exceedance;
@@ -237,7 +239,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     const hm = h < 8030 ? (h / 730) | 0 : 11;
     const m = y12 + hm;
     const D0 = D[h];
-    const offered = gridCap[m];
+    const offered = Math.min(gridCap[m], gridLimit); // the option's contracted capacity (work package 3)
     const capPhys = islanded ? 0 : offered; // physical connection: exceedance accounting and grid charging
     const capLoad = islanded ? 0 : (exceedance ? Infinity : offered);
     const gp = pPrice[h] * priceMult + adder;

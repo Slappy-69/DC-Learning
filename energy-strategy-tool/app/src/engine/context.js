@@ -37,6 +37,24 @@ export function gridCapByMonth(inputs, nMonths) {
   return arr;
 }
 
+// Contracted grid capacity of a grid strategy (work package 3, OPEN-QUESTIONS 19): the lower of the offer in each
+// month and the engineer's contracted MW for that C1 value (blank = the full offer). Islanded options keep the offer
+// here: they use the connection only as backup (C1), and every islanded rule tests C1 directly. Cached on the context.
+export const CONTRACT_KEY = { wait: 'contractWaitMW', bridge: 'contractBridgeMW', export: 'contractExportMW' };
+export function contractLimit(inputs, C1) {
+  const k = CONTRACT_KEY[C1];
+  const x = k ? inputs.grid[k] : null;
+  return x == null || x === '' || !Number.isFinite(Number(x)) ? Infinity : Math.max(0, Number(x));
+}
+export function contractedCap(ctx, C1) {
+  const lim = contractLimit(ctx.inputs, C1);
+  if (!(lim < Infinity)) return ctx.gridCap;
+  if (!ctx.contractCache) ctx.contractCache = new Map();
+  let a = ctx.contractCache.get(lim);
+  if (!a) { a = ctx.gridCap.map((x) => Math.min(x, lim)); ctx.contractCache.set(lim, a); }
+  return a;
+}
+
 // Installed IT per month from the phasing table and the ramp rule (§5.3).
 export function itInstalledByMonth(inputs, nMonths) {
   const arr = new Float64Array(nMonths);

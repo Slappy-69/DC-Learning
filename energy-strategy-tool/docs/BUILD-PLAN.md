@@ -48,6 +48,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Ask the owner:** OPEN-QUESTIONS 19 (how the capacity is set for generated options), 20 (how the charge is entered; islanded options at 0 MW).
 - **Code today:** grid connection in `app/src/engine/sizing.js`; the import limit in `dispatch.js` (shared offered profile); the connection capex in `evaluate.js` line 99 (`KNOWN-ISSUES.md` item 7).
 - **Guide:** chapters 9, 17, 19, 35, 37, 39.
+- **Progress:** built 2026-10-23 on `feature/grid-contract` (from `feature/results-cards`), not merged: OPEN-QUESTIONS 19 and 20 answered with Claude's recommendations (accepted in advance by the owner), 50 built; KNOWN-ISSUES item 7 resolved. AC 14 and AC 18 tested. Not built: editing one option's contracted capacity after the run.
 
 ### 3b. Power adequacy (added by the owner, 2026-10-22)
 

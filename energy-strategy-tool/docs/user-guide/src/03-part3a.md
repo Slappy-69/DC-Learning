@@ -233,16 +233,15 @@ Several economic defaults have no field on screen in the current version: capex 
 - **Carbon price**: the latest EU ETS market price with its date (for example €82.40/t on 5 October 2026).
 - **Gas price**: the latest published wholesale price with its date (for example the TTF front month, €75.75/MWh on 5 October 2026), from a free monthly source; overridable.
 - **Escalation**: a published forecast per commodity, overridable.
-- **Grid connection capex**: default 0, flagged as assumed on every option, with the country's typical value shown for reference.
-- **Grid connection charge**: fixed, the same for every option.
-- **Contracted grid capacity**: one value per option, set by the engineer.
+- **Grid connection capex and charge** (built 23 October 2026, in the grid section; chapter 9): one lump sum, default 0, flagged as assumed, with the expected figure shown.
+- **Contracted grid capacity** (built 23 October 2026, in the grid section): one value per grid strategy, set before the run.
 - **Revenue options** (battery arbitrage or grid services, waste-heat reuse): off by default.
 :::
 
 ![MOCK-UP of the agreed economics section, including contracted grid capacity per option. Prices shown are the published values found on the dates given.](img/m05-economics.png)
 
-::: {.callout .open}
-**Open.** How the engineer sets a contracted capacity for options that do not exist until the run has generated them (for example a rule per grid strategy, or editing after the run) is not yet specified. Also open: whether an islanded option that contracts 0 MW still pays the fixed connection charge (the agreed rule says the charge is the same for every option).
+::: {.callout .built}
+**Answered 23 October 2026** (OPEN-QUESTIONS 19 and 20, Claude's recommendations accepted in advance by the owner): contracted capacity is a rule per grid strategy set before the run (blank = the full offer); islanded options contract 0 MW and do not pay the connection charge.
 :::
 
 # 20. Inputs: the design choices C1–C20 {#ch20}

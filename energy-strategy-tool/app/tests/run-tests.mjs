@@ -76,6 +76,7 @@ import { package4Tests } from './package4-tests.mjs';
 import { ppaRuleTests } from './ppa-tests.mjs';
 import { cardsTests } from './cards-tests.mjs';
 import { reportTests } from './report-tests.mjs';
+import { gridContractTests } from './grid-contract-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1212,6 +1213,7 @@ await ppaRuleTests(test, siteRuns);
 // 29. Work package 6: top-five cards, trade-off defaults, weight-change description (tests/cards-tests.mjs)
 await cardsTests(test, siteRuns);
 await reportTests(test, siteRuns);
+await gridContractTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

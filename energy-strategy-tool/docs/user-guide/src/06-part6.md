@@ -53,7 +53,7 @@ These were found while checking the guide against the code and the T1 run. None 
 4. **Archetypes take the first open value of every unspecified choice.** With the defaults that makes every archetype air-cooled with roof heat rejection, which in T1 puts most of them out of reach of full load (chapter 47).
 5. **Identical options.** Options that differ only in choices that change no number appear as separate rows with identical results (T1 ranks 10 and 11).
 6. **Two density rules disagree.** The agreed IT estimate from area (5.5 kW/m² of floor) and the building massing (0.7–1.8 kW/m² of floor) differ by a factor of three to eight (chapter 16).
-7. **Grid connection cost on islanded options.** Every option pays for the full offered connection, including islanded options that never use it. The agreed contracted capacity and fixed charge change this, but how islanded options are treated is open.
+7. **Grid connection cost on islanded options.** Every option pays for the full offered connection, including islanded options that never use it. Resolved on 23 October 2026: the charge is one lump sum, default 0, and islanded options do not pay it.
 8. **"Opex year 1"** in the option detail is the first year of the analysis (2027 for T1), which has no load, so it shows €0.
 9. **"First power"** can be month 0, before any phase exists, because it measures when the supply could energise phase 1.
 10. **The status file's run time** (9–10 s) is out of date; the owner's figure is 15–20 s.
@@ -119,9 +119,9 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Battery split: reserve and economic | Agreed | 18 |
 | Gensets 6 h tests, separate test load, primary hours | Agreed | 18 |
 | Grid "not known" with country defaults | Agreed | 17 |
-| Contracted grid capacity per option | Agreed | 9, 19 |
-| Fixed grid connection charge | Agreed | 9, 19 |
-| Grid connection capex default 0 with reference | Agreed | 9, 19 |
+| Contracted grid capacity (rule per grid strategy) | Built (23 Oct 2026) | 9, 19 |
+| Fixed grid connection charge (not paid by islanded options) | Built (23 Oct 2026) | 9, 19 |
+| Grid connection capex default 0 with the expected figure | Built (23 Oct 2026) | 9, 19 |
 | Several evaluation periods | Agreed | 11, 19 |
 | Latest carbon and gas prices with dates; escalation forecasts | Agreed | 19 |
 | Revenue options (off) | Agreed | 19 |
@@ -151,10 +151,10 @@ Every number in the worked examples comes from a run of the T1 example exported 
 
 Collected from the chapters:
 
-- How contracted capacities are set per option; whether islanded options at 0 MW pay the fixed charge (19, 48).
+- (Answered 23 October 2026) contracted capacity is a rule per grid strategy; islanded options do not pay the charge (9, 19).
 - Which evaluation period sets the score (48).
 - Representative-day method and the number of verified options (10, 48).
-- Whether the top five show distinct strategies, and whether pros and cons compare against the whole run or the five shown (22).
+- (Answered 23 October 2026) the top five show distinct strategies; pros and cons compare against the whole run (22).
 - The land budget for wind with the Site tab hidden (15); solar was settled on 22 October 2026 (OPEN-QUESTIONS 53).
 - Which density rule to keep (16).
 - Project save and reopen (4).

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTag } from './Field.jsx';
-import { COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, nearestCountry, effectiveWeights } from '../engine/index.js';
+import { COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, nearestCountry, effectiveWeights, expectedConnectionCharge } from '../engine/index.js';
 
 const YM = '^\\d{4}-(0[1-9]|1[0-2])$';
 
@@ -141,6 +141,27 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
         <TextField label="Full-connection date (YYYY-MM)" value={inputs.grid.fullDate} onCommit={set('grid.fullDate')} pattern={YM} required />
         <NumberField label="Grid export capacity" unit="MW" value={inputs.grid.exportMW} onCommit={set('grid.exportMW')} path="grid.exportMW" inputs={inputs} min={0}
           hint="Used only by C1 = Grid + export (not open by default)." />
+        <fieldset className="subgroup">
+          <legend>Contracted grid capacity <span className="legend-note">(per grid strategy; blank = the full offer)</span></legend>
+          <div className="row2">
+            <NumberField label="Wait for grid (C1)" unit="MW" value={inputs.grid.contractWaitMW} onCommit={set('grid.contractWaitMW')} path="grid.contractWaitMW" inputs={inputs} nullable min={0} placeholder="full offer" />
+            <NumberField label="Bridge until grid (C1)" unit="MW" value={inputs.grid.contractBridgeMW} onCommit={set('grid.contractBridgeMW')} path="grid.contractBridgeMW" inputs={inputs} nullable min={0} placeholder="full offer" />
+          </div>
+          <p className="note">Each option imports no more than its strategy's contracted capacity in any hour, and never more than the offer of that period (OPEN-QUESTIONS 19). Islanded options contract 0 MW and keep the connection as backup only. Grid + export: {inputs.grid.contractExportMW == null ? 'the full offer' : `${inputs.grid.contractExportMW} MW`}.</p>
+        </fieldset>
+        {(() => {
+          const ex = expectedConnectionCharge(normalizeInputs(inputs), 'wait');
+          const exM = (ex.amount / 1e6).toFixed(1);
+          return (
+            <>
+              <NumberField label="Grid connection charge" unit="€ m" scale={1e-6} value={inputs.grid.connectionCharge} onCommit={set('grid.connectionCharge')} path="grid.connectionCharge" inputs={inputs} min={0}
+                hint={`One lump sum, the same for every grid-connected option; islanded options do not pay it (OPEN-QUESTIONS 20). Expected about €${exM} m: the standard rate of €${Math.round(ex.rate / 1000)}k per MW (${ex.band.toUpperCase()}, indicative — unverified) × ${Math.round(ex.mw)} MW contracted. Left at 0, every grid-connected option is flagged "assumed".`} />
+              {ex.amount > 0 && Math.abs((Number(inputs.grid.connectionCharge) || 0) - ex.amount) > 1 ? (
+                <button type="button" className="chip-btn" id="use-expected-charge" onClick={() => update('grid.connectionCharge', ex.amount)}>Use the expected figure (€{exM} m)</button>
+              ) : null}
+            </>
+          );
+        })()}
         <div className="row2">
           <NumberField label="Grid price multiplier" unit="×" value={inputs.grid.priceMultiplier} onCommit={set('grid.priceMultiplier')} path="grid.priceMultiplier" inputs={inputs} min={0} />
           <NumberField label="Grid carbon multiplier" unit="×" value={inputs.grid.carbonMultiplier} onCommit={set('grid.carbonMultiplier')} path="grid.carbonMultiplier" inputs={inputs} min={0} />

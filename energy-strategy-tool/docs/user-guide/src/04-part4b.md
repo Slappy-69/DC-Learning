@@ -10,7 +10,8 @@ Each line is booked in the year its plant can first supply power (or, for per-ph
 
 | Line | Amount | Year booked | Life |
 |---|---|---|---|
-| Grid connection and reinforcement | full capacity × €/MW for the band + cable km × €1.5 m | first month with grid capacity | 40 |
+| Grid connection charge (built 23 October 2026) | the lump sum entered (default 0); not on islanded options | first month with grid capacity | 40 |
+| Grid cable route | cable km × €1.5 m; not on islanded options | same | 40 |
 | Substation | full capacity × €/MW for the band (× 1.4 for GIS) | same | 40 |
 | Solar (roof, ground) | MWp × €/kWp × 1,000 | availability | 25, 30 |
 | Wind | MW × €/kW × 1,000 | availability | 25 |
@@ -470,9 +471,8 @@ This chapter lists every walkthrough decision that changes what the engine calcu
 
 ## Grid and economics
 
-- **Contracted grid capacity per option**, set by the engineer: the dispatch import limit and the connection size become per-option values instead of the shared offer.
-- **Fixed grid connection charge**, the same for every option.
-- **Grid connection capex default 0**, with the country value shown for reference; flagged as assumed.
+- **Contracted grid capacity**, built 23 October 2026 as a rule per grid strategy (chapter 9).
+- **Fixed grid connection charge**, default 0 and flagged as assumed, not paid by islanded options: built 23 October 2026.
 - **Several evaluation periods** at once.
 - **Carbon price** from the latest EU ETS market price with its date; **gas price** from the latest published wholesale price with its date (free monthly source); **escalation** from published forecasts per commodity.
 - **Revenue options** (battery arbitrage and grid services, waste-heat reuse) available but off by default.
@@ -494,7 +494,7 @@ This chapter lists every walkthrough decision that changes what the engine calcu
 ::: {.callout .open}
 **Open.** The walkthrough fixed the decisions above but not every detail of how to build them. Among the details still to decide:
 
-- how contracted capacities are set for options that only exist after generation (a rule per grid strategy, or editing after the run), and whether an islanded option at 0 MW pays the fixed charge;
+- (answered 23 October 2026) contracted capacity is a rule per grid strategy; islanded options do not pay the charge;
 - which evaluation period sets the score when several are shown;
 - how the representative days are chosen and how many options are verified at full resolution;
 - whether the top five should show five distinct strategies;

@@ -339,14 +339,19 @@ A grid operator offers a connection with an **import capacity** (how many MW the
 - optional **steps** (MW from a date);
 - **grid import at full connection** (MW) and its **date**.
 
-In the current version every option uses the full offered capacity, which is never resized; if the design load exceeds it in some months, the shortfall is reported.
+::: {.callout .built}
+**Built (23 October 2026, work package 3; OPEN-QUESTIONS 19, 20, 50).**
+
+- **Contracted grid capacity, per grid strategy.** Under "Contracted grid capacity" you enter one MW value for the options that wait for the grid and one for those that bridge until it (and one for Grid + export). Blank means the full offer of each period. An option never imports more than the lower of its strategy's contracted capacity and the offer of that period, so a bridging option can contract 80 MW of a 120 MW offer. Sizing, time-to-power and the timeline use the same value. Islanded options contract 0 MW and keep the connection as backup only. The rule is set before the run; changing the capacity of one option after the run is not built.
+- **Grid connection charge**: one lump sum in € m, the same for every grid-connected option, **default 0**. Islanded options do not pay it. Next to the field the tool shows the expected figure, the standard rate per MW for the voltage band (indicative — unverified) times the contracted MW, with a **Use the expected figure** button. Left at 0, every grid-connected option carries the info flag "Grid connection charge assumed €0", which also gives the expected figure. The cable route from the POC is costed separately (chapter 45).
+- Before this package every option, islanded ones included, paid the offered MW × the standard rate per MW (KNOWN-ISSUES item 7).
+:::
+
+For reference, a published country value: the 2026 construction-cost contribution of the German transmission operator 50Hertz, €96.91 per kW at extra-high voltage (chapter 50).
 
 ::: {.callout .agreed}
 **Agreed, not built yet.**
 
-- **Each option has its own contracted grid capacity, set by the engineer.** An option can contract less than the full offer (for example a bridging option that contracts 80 MW of a 120 MW offer).
-- **The grid connection charge is a fixed amount, the same for every option**, whatever capacity it contracts.
-- **Grid connection capex and reinforcement default to 0**, with the country's typical value shown for reference (for example the 2026 construction-cost contribution of the German transmission operator 50Hertz, €96.91 per kW at extra-high voltage), and can be overridden. Every option that uses the default is flagged "assumed".
 - **If the grid capacity or connection time is not known**, the tool uses a country default, labelled indicative, and flags it on every option (research pending; chapter 52).
 :::
 

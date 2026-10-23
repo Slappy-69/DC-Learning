@@ -554,6 +554,24 @@ await check('B32. PDF report (work package 10, AC 26): "Save PDF report" downloa
   return `${name}: ${pages} pages, ${(buf.length / 1024).toFixed(0)} kB; status "${status.match(/PDF report made[^.]*\./)[0]}".`;
 });
 
+await check('B33. Grid connection charge (work package 3, OPEN-QUESTIONS 50): the field shows the expected figure; "Use the expected figure" copies it into the field and re-runs; the contracted-capacity fields start blank (the full offer)', async () => {
+  const { page, errors } = main;
+  const wait = page.getByLabel(/^Wait for grid \(C1\)/);
+  ok((await wait.inputValue()) === '', 'contracted capacity not blank by default');
+  const btn = page.locator('#use-expected-charge');
+  ok(await btn.isVisible(), 'no "Use the expected figure" button');
+  const label = await btn.innerText();
+  const exp = Number(label.match(/€([\d.]+) m/)[1]);
+  await btn.click();
+  await page.waitForFunction(() => { const st = document.querySelector('.status'); const t = st ? st.textContent : ''; return /Last run/.test(t) && !/Screening options/.test(t); }, null, { timeout: 180000, polling: 250 });
+  const field = page.getByLabel(/^Grid connection charge/);
+  const v = Number(await field.inputValue());
+  ok(Math.abs(v - exp) < 0.05, `charge field ${v} vs expected ${exp}`);
+  ok(await btn.count() === 0, 'button still shown after use');
+  ok(errors.length === 0, errors.join(' | '));
+  return `expected €${exp} m copied into the field (${v}); re-run done; contracted fields blank by default.`;
+});
+
 await main.ctx.close();
 await check('B10. No console errors or page errors on the main page', async () => {
   ok(main.errors.length === 0, main.errors.join(' | '));

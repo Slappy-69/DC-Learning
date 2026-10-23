@@ -1680,3 +1680,20 @@ What changed:
 Interpretations (reversible): no executive summary (§14 is not built); dispatch is shown as energy balances, not hourly charts; the trade-off chart is fixed at LCOE against location-based carbon; the report is not a tagged (accessible) PDF.
 
 Tests: 30 (structure, section order, inputs, cards, compare, tornado, no Site content, deterministic bytes, offline imports), browser B32 (download, file name, header, pages, status) and B28 (no PDF in the hosted page).
+
+## Work package 3: contracted grid capacity and the grid connection charge (2026-10-23)
+
+Branch `feature/grid-contract` (from `feature/results-cards`). OPEN-QUESTIONS 19 and 20 answered with Claude's recommendations, accepted in advance by the owner (2026-10-23); OPEN-QUESTIONS 50 built; KNOWN-ISSUES item 7 resolved by the answer to 20.
+
+What changed:
+- **Contracted capacity, a rule per grid strategy** (OPEN-QUESTIONS 19): new records `grid.contractWaitMW`, `grid.contractBridgeMW`, `grid.contractExportMW` (blank = the full offer). `contractedCap(ctx, C1)` in `context.js` gives min(offer, contracted) per month. Sizing (`grid.byMonth`, top-up sizing), time-to-power, the timeline (`inspect.js`) and dispatch (`cfg.gridLimit`, part of the dispatch key; it limits load import and grid charging) use it. Islanded options are unchanged: they already use the connection as backup only.
+- **Grid connection charge** (OPEN-QUESTIONS 20): new record `grid.connectionCharge` (€, default 0), booked as "Grid connection charge" in the year of the first grid capacity on grid-connected options only. The cable route from the POC is now its own line, "Grid cable route (POC to site)", also only on grid-connected options. The tornado's grid connection capex driver scales both. Before: "Grid connection and reinforcement" = offered MW × the standard rate per MW + cable, on every option.
+- **Expected figure** (OPEN-QUESTIONS 50): `expectedConnectionCharge(inputs, C1)` = the standard rate per MW for the voltage band (substation records, indicative — unverified) × the contracted MW at full connection; shown under the field with a "Use the expected figure" button.
+- **Flag** `grid-charge-assumed` (info, Grid) on every grid-connected option while the charge is 0, with the expected figure.
+- **Inputs panel:** "Contracted grid capacity" group (wait, bridge; export shown as a note) and the charge field (€ m).
+
+T1 effect: the €18 m connection line (120 MW × €150k/MW) leaves every option, so LCOEs fall by about €3/MWh; the leader is unchanged (Grid + rented temporary generation bridge → remove · HVO N+1 · DLC · PPA hybrid 100 %, score 92.70, LCOE €153.05/MWh). Islanded options also lose the cable route.
+
+Interpretations (reversible): the substation stays on every option (it serves on-site plant too); editing one option's capacity after the run is not built; the export strategy's contract has no field of its own yet (record only).
+
+Tests: 31 (80 MW of 120 MW never exceeded in any hour; sizing and time-to-power follow; blank = offer; charge default 0 and flagged; one amount on grid options, none on islanded; expected figure; tornado driver with a charge), 9 updated (cable route line), 13d (grid capex moves only when there is something to scale), browser B33.

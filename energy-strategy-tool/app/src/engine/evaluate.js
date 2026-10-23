@@ -2,7 +2,7 @@
 // resilience check (§9.7), flags (§15) and deliverability (§9.9).
 
 import { TECH, FUEL, PPA, COOLING, COUNTRIES, choiceLabel } from './defaults.js';
-import { decarbFactor } from './context.js';
+import { decarbFactor, contractedCap, contractLimit } from './context.js';
 import { fuelPrice, fuelEF } from './dispatch.js';
 import { bridgeActive, techAvailMonth } from './sizing.js';
 import { permittingTriggers } from './permitting.js';
@@ -22,8 +22,9 @@ export function flag(id, severity, category, message, extra = {}) {
 export function timeToPower(ctx, v, sz) {
   const n = ctx.nMonthsTimeline;
   const supply = new Float64Array(n);
+  const cc = contractedCap(ctx, v.C1);
   for (let m = 0; m < n; m++) {
-    let s = v.C1 === 'islanded' ? 0 : ctx.gridCap[m];
+    let s = v.C1 === 'islanded' ? 0 : cc[m];
     s += sz.firmByMonth[m];
     // Bridging battery counts from its supply-available month (BRIEF §9.8), like every other source; the same
     // month sizing records (sz.bridgeBess.availMonth) and dispatch uses (port of e1161ce).
@@ -79,7 +80,7 @@ export function economics(ctx, v, sz, disp, ttp) {
   // Sensitivity multipliers (work package 9; 1 = as entered).
   const capF = inputs.economics.capexFactor ?? 1, bessF = inputs.economics.bessCapexFactor ?? 1, gridF = inputs.economics.gridCapexFactor ?? 1;
   const addCapex = (item, year, amount, life, opts = {}) => {
-    amount *= capF * (/^BESS|battery/i.test(item) ? bessF : 1) * (item === 'Grid connection and reinforcement' ? gridF : 1);
+    amount *= capF * (/^BESS|battery/i.test(item) ? bessF : 1) * (/^Grid (connection charge|cable route)/.test(item) ? gridF : 1);
     if (!(amount > 0) || year > N - 1) return;
     capexLines.push({ item, year, amount });
     ledger[year].capex += amount;
@@ -104,8 +105,14 @@ export function economics(ctx, v, sz, disp, ttp) {
   while (firstGridM < ctx.gridCap.length && ctx.gridCap[firstGridM] <= 0) firstGridM++;
   const gridYear = fullMW > 0 ? yearOfMonth(Math.min(firstGridM, ctx.fullGridM)) : 0;
   if (fullMW > 0) {
-    // Cable route from the POC (§5.4): route length from the site model (sizing.js, sz.grid.cableKm).
-    addCapex('Grid connection and reinforcement', gridYear, fullMW * sp[`connCapexPerMW_${band}`] + sp.cablePerKm * (sz.grid.cableKm || 0), 40);
+    // Work package 3 (OPEN-QUESTIONS 20, 2026-10-23): the grid connection charge is one lump sum entered by the
+    // engineer (default 0), the same for every grid-connected option; islanded options contract 0 MW and pay neither
+    // it nor the cable route. Before: every option paid the offered MW × the standard rate per MW (KNOWN-ISSUES 7).
+    if (v.C1 !== 'islanded') {
+      addCapex('Grid connection charge', gridYear, Number(inputs.grid.connectionCharge) || 0, 40);
+      // Cable route from the POC (§5.4): route length from the site model (sizing.js, sz.grid.cableKm).
+      addCapex('Grid cable route (POC to site)', gridYear, sp.cablePerKm * (sz.grid.cableKm || 0), 40);
+    }
     addCapex(`Substation (${band.toUpperCase()}, ${v.C17})`, gridYear, fullMW * sp[`subCapexPerMW_${band}`] * (v.C17 === 'GIS' ? sp.gisMultiplier : 1), 40);
   }
   // Renewables
@@ -446,6 +453,17 @@ export function resilience(ctx, v, sz) {
 // ---------------------------------------------------------------------------
 // Flags (§15) and deliverability (§9.9)
 // ---------------------------------------------------------------------------
+// Expected grid connection charge (OPEN-QUESTIONS 50): the standard rate per MW for the voltage band × the contracted
+// capacity at full connection. Shown next to the input for reference; never used unless the engineer enters it.
+export function expectedConnectionCharge(inputs, C1 = 'wait', band = null) {
+  const g = inputs.grid;
+  const mw = Math.min(Number(g.fullMW) || 0, contractLimit(inputs, C1));
+  const sp = TECH.substation.p;
+  const b = band || (mw < sp.bandMvMaxMW ? 'mv' : mw <= sp.bandHvMaxMW ? 'hv' : 'ehv');
+  const rate = sp[`connCapexPerMW_${b}`];
+  return { mw, band: b, rate, amount: mw * rate };
+}
+
 export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   const inputs = ctx.inputs;
   const req = inputs.requirements;
@@ -501,6 +519,11 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   if (sz.shortfallBess && !sz.shortfallBess.rechargeOK) flags.push(flag('bess-recharge', 'minor', 'Grid', `Battery for the shortfall cannot recharge from the grid headroom on the design day from month ${sz.shortfallBess.failMonth}: it does not count as firm supply against the design load`));
   if (sz.storage.role === 'peakShave' && sz.storage.mw > 0 && disp.years.some((y) => y.designDayShortfall)) {
     flags.push(flag('grid-bess-peakshave', 'minor', 'Grid', 'BESS peak-shave cannot hold import within grid capacity on the design day'));
+  }
+  // Grid connection charge left at its default 0 (work package 3, AC 18): flagged "assumed" on every grid-connected option.
+  if (v.C1 !== 'islanded' && inputs.grid.fullMW > 0 && !(Number(inputs.grid.connectionCharge) > 0)) {
+    const ex = expectedConnectionCharge(inputs, v.C1, sz.grid.band);
+    flags.push(flag('grid-charge-assumed', 'info', 'Grid', `Grid connection charge assumed €0 (the default, indicative — unverified); at the standard rate of €${Math.round(ex.rate / 1000)}k per MW (${ex.band.toUpperCase()}) the ${Math.round(ex.mw)} MW contracted would cost about €${(ex.amount / 1e6).toFixed(1)} m`, { value: ex.amount }));
   }
   for (const s of sz.grid.shortfalls) flags.push(flag('grid-shortfall', 'info', 'Grid', `Grid shortfall at design load: up to ${s.mw.toFixed(1)} MW in months ${s.from}–${s.to}`));
   if (v.C1 === 'export' && inputs.grid.exportMW > 0) {

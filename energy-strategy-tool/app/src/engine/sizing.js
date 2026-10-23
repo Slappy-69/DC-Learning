@@ -3,7 +3,7 @@
 // The grid connection is the offered capacity per period and is never resized.
 
 import { TECH, COOLING, SPATIAL, choiceLabel } from './defaults.js';
-import { designDemandByMonth, demandYear, designDayPUE } from './context.js';
+import { designDemandByMonth, demandYear, designDayPUE, contractedCap } from './context.js';
 import { NA } from './generator.js';
 import { permittingTriggers, permitRegimes, permitOutlookItem } from './permitting.js';
 import { triggerSet } from './triggers.js';
@@ -95,7 +95,8 @@ export function sizeOption(ctx, v) {
   if (v.C5 === 'none') sentences.push('Backup: none (flagged).');
 
   // --- Grid connection: offered capacity per period, never resized (§9.2) ---
-  const gridByMonth = ctx.gridCap; // shared array: identical for every option
+  // The option's contracted capacity (work package 3): the offer, capped by the engineer's contracted MW for its C1.
+  const gridByMonth = contractedCap(ctx, v.C1);
   const fullMW = inputs.grid.fullMW;
   const band = voltageBand(ctx, fullMW);
 
@@ -111,7 +112,7 @@ export function sizeOption(ctx, v) {
       const T0 = ctx.fullGridM;
       let S = 0, sM = -1;
       for (let m = v.C1 === 'islanded' ? 0 : Math.max(0, T0); m < ctx.nMonthsTimeline; m++) {
-        const s = designByMonth[m] - (v.C1 === 'islanded' ? 0 : ctx.gridCap[m]);
+        const s = designByMonth[m] - (v.C1 === 'islanded' ? 0 : gridByMonth[m]);
         if (s > S) { S = s; sM = m; }
       }
       const n = Math.max(1, Math.ceil(S / t.p.unitMW - 1e-9));

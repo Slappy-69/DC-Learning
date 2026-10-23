@@ -6,7 +6,7 @@
 // The run keeps no hourly arrays or monthly series (they are dropped before the worker transfer), which is
 // why this recomputes. Pure: no UI, no browser APIs.
 
-import { buildContext } from './context.js';
+import { buildContext, contractedCap } from './context.js';
 import { normalizeInputs } from './defaults.js';
 import { siteKey } from './site.js';
 import { bridgeActive, bridgeMWAt } from './sizing.js';
@@ -122,7 +122,7 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
   }));
   const tl = { months: n, design: new Float64Array(n), grid: new Float64Array(n), firm: new Float64Array(n), bess: new Float64Array(n), supply: new Float64Array(n), gap: new Float64Array(n), plants: plantsTl };
   for (let m = 0; m < n; m++) {
-    const grid = islanded ? 0 : ctx.gridCap[m];
+    const grid = islanded ? 0 : contractedCap(ctx, v.C1)[m];
     for (const p of plantsTl) {
       const on = m >= p.availMonth && m >= p.fuelMonth;
       p.values[m] = !on ? 0 : p.role === 'prime' ? p.mw : bridgeMWAt(v, m, sz.T, p.plant);

@@ -320,7 +320,7 @@ Gas gensets: no storage, unlimited autonomy while the gas network stays up (flag
 
 The grid connection is the offered capacity per month, the same for every option and never resized. The band (MV below 20 MW, HV up to 150 MW, EHV above) follows the full capacity.
 
-*Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).*
+*Grid connection: offered import capacity per period (20.0 MW → 120 MW), the same for every option and never resized. Connection capex on 120 MW at full connection (HV band, AIS).* (Sentence as before work package 3. Since 23 October 2026 the connection is the strategy's contracted capacity, blank = the offer, and the connection charge is the lump sum entered, default 0.)
 
 For each period where the design load exceeds the firm on-site plant plus the grid, a shortfall sentence and an information flag are written:
 
@@ -328,7 +328,7 @@ For each period where the design load exceeds the firm on-site plant plus the gr
 
 The cable route is the straight line from the POC to the buildable envelope (on the default plan, the POC is the access point at the middle of the longest edge, so the route is about 10 m) at €1.5 m per km.
 
-*Grid cable route: 10 m from the POC (default …) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex).*
+*Grid cable route: 10 m from the POC (default …) to the buildable envelope, straight line, × €1.50 m/km = €15,000 (in the grid connection capex).* (Since 23 October 2026 the cable route is its own capex line, "Grid cable route".)
 
 ## Firm prime plant (C4)
 
