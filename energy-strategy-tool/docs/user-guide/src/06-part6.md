@@ -126,7 +126,7 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Revenue options (off) | Agreed | 19 |
 | Cooling chosen by the engineer | Agreed | 6 |
 | No PPA income without delivery | Built | 39 |
-| O1, O2, O3 PPA and carbon rules | Agreed | 12, 42 |
+| O1, O2, O3 PPA and carbon rules; PPA off unless ticked, then with and without (work package 5) | Built (23 Oct 2026) | 12, 42 |
 | 8,760-hour dispatch for every option | Built | 37 |
 | Representative-day screening and verification | Agreed | 10 |
 | Options table, option detail, trade-offs | Built | 22–24 |
@@ -152,7 +152,6 @@ Collected from the chapters:
 
 - How contracted capacities are set per option; whether islanded options at 0 MW pay the fixed charge (19, 48).
 - Which evaluation period sets the score (48).
-- How "prefer the no-PPA option" (O1) works in the ranking (48).
 - Representative-day method and the number of verified options (10, 48).
 - Whether the top five show distinct strategies, and whether pros and cons compare against the whole run or the five shown (22).
 - The land budget for wind with the Site tab hidden (15); solar was settled on 22 October 2026 (OPEN-QUESTIONS 53).

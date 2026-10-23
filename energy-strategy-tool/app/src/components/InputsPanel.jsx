@@ -152,6 +152,14 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           placeholder={`${COUNTRIES[countryNow].gas} (country default)`} hint={`Empty = the ${COUNTRIES[countryNow].name} default, ${COUNTRIES[countryNow].gas} €/MWh_th; the gas transport adder is added either way.`} />
         <SelectField label="Hydrogen availability" value={inputs.utilities.hydrogenAvailable} onCommit={set('utilities.hydrogenAvailable')} path="utilities.hydrogenAvailable" inputs={inputs}
           options={[['No', 'No'], ['Yes', 'Yes']]} />
+        <ToggleField label="Include an offsite PPA" checked={inputs.utilities.ppaInclude} onCommit={(v) => { update('utilities.ppaInclude', v); update('choices.C13', null); update('choices.C14', null); }} path="utilities.ppaInclude" inputs={inputs}
+          hint="Off by default: options use the national grid's standard price and carbon. On: each strategy is generated with this PPA and without one (OPEN-QUESTIONS 49, 62)." />
+        {inputs.utilities.ppaInclude ? <div className="row2">
+          <SelectField label="PPA type" value={inputs.utilities.ppaType} onCommit={(v) => { update('utilities.ppaType', v); update('choices.C13', null); }} path="utilities.ppaType" inputs={inputs}
+            options={[['solar', 'Annual-matched solar'], ['wind', 'Annual-matched wind'], ['hybrid', 'Hybrid'], ['baseload', 'Baseload-shaped'], ['cfe247', '24/7-matched']]} />
+          <SelectField label="PPA coverage" value={String(inputs.utilities.ppaCoverage)} onCommit={(v) => { update('utilities.ppaCoverage', Number(v)); update('choices.C14', null); }} path="utilities.ppaCoverage" inputs={inputs}
+            options={[['25', '25 %'], ['50', '50 %'], ['75', '75 %'], ['80', '80 %'], ['100', '100 %']]} />
+        </div> : null}
         <SelectField label="District heating offtake nearby" value={inputs.utilities.districtHeating} onCommit={(v) => { update('utilities.districtHeating', v); update('choices.C15', null); }} path="utilities.districtHeating" inputs={inputs}
           options={[['No', 'No'], ['Yes', 'Yes']]} hint="Heat reuse is not costed in this slice." />
       </Section>

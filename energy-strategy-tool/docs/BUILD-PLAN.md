@@ -72,6 +72,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Decisions:** O1, a PPA that cannot be delivered (no grid, islanded) is flagged and the equivalent no-PPA option is preferred; O2, hourly CFE counts PPA energy only against grid energy used in that hour; O3, two `grid-ppa` flags (import-limited, and other undelivered volume above the load), each with its share of the undelivered volume.
 - **Ask the owner:** OPEN-QUESTIONS 22 (how O1 works in the ranking).
 - **Code today:** the `grid-ppa` flag in `evaluate.js` `optionFlags()`; CFE in `dispatch.js` (`cfeMWh`) and `evaluate.js` `carbon()`; ranking in `scoring.js`. Background: `../verification/port/OPUS-review.md` section 7.
+- **Progress:** built 2026-10-23 on `feature/ppa-rules` (from `feature/flex-batteries`), not merged: O1 as rule (k) (OPEN-QUESTIONS 22), O2, O3, and the PPA tick (49, 62); known issue 13 fixed with the owner's approval.
 - **Guide:** chapters 12, 40, 42, 44.
 
 ### 6. Results cards and the trade-off chart

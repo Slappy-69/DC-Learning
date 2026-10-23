@@ -71,7 +71,7 @@ The **capex** reported with each option is the initial capex: the sum of the cap
 
 ## The PPA rule and the hedge
 
-**No PPA income without physical delivery** (owner decision, 18 October 2026). The ledger books the PPA price only on PPA energy delivered to the load over the grid connection. For the contracted volume that is not delivered, the settlement (its wholesale value less the PPA price) is reported as the **PPA hedge (not counted)**: shown in the option detail and the `grid-ppa` flag, discounted like opex, but never added to the ledger, LCOE, NPV, the capex/opex split or the score.
+**No PPA income without physical delivery** (owner decision, 18 October 2026). The ledger books the PPA price only on PPA energy delivered to the load over the grid connection. For the contracted volume that is not delivered, the settlement (its wholesale value less the PPA price) is reported as the **PPA hedge (not counted)**: shown in the option detail and the PPA flags (`ppa-import-limited`, `ppa-above-load`), discounted like opex, but never added to the ledger, LCOE, NPV, the capex/opex split or the score.
 
 Before the decision, the ledger booked the PPA price on the whole contract and credited the undelivered volume at the hourly grid price including the network adder. On the no-grid T3 example that made grid-dependent options look profitable, which is why the rule changed.
 
@@ -124,11 +124,11 @@ Grid MWh here includes grid energy used to charge the battery. The hourly grid c
 where, in each hour:
 
 ::: formula
-| carbon-free MWh = min(net demand, renewables used + min(PPA contract volume, demand − renewables used)
+| carbon-free MWh = min(net demand, renewables used + min(PPA contract volume, PPA delivered + grid import for the load)
 |   + firm output × share of firm capacity that is SMR or hydrogen)
 :::
 
-Note that the current CFE count uses the PPA's **contracted** hourly volume (up to the remaining demand), whether or not it was delivered over the import capacity. Decision O2 changes this (chapter 48).
+Since 23 October 2026 (decision O2) the PPA counts only against grid energy actually used for the load in that hour, so contracted volume that could not come over a full connection no longer counts.
 
 ## Water
 
@@ -198,7 +198,8 @@ Flags are how the tool reports problems without enforcing them. Each has an iden
 | adequacy-short | major | the option is not adequate: unmet load, import above the grid capacity, or firm supply below the design load in a month (chapter 44). Shows MWh, hours, peak MW and the longest event |
 | grid-binding | major | unmet load in any simulated year ("Show unmet load") |
 | grid-exceed | major | import above the offered capacity ("Show exceedance") |
-| grid-ppa | minor or info | contracted PPA volume not delivered (minor if any of it was limited by import capacity); reports the PPA hedge |
+| ppa-import-limited | minor | contracted PPA volume not delivered because the grid connection was full, with its share of the undelivered volume; reports the PPA hedge (built 23 October 2026, O3) |
+| ppa-above-load | info | contracted PPA volume above the load still to serve in its hour, with its share; the two shares add to 100 % (built 23 October 2026, O3) |
 | grid-bess-peakshave | minor | a peak-shave battery cannot hold the import within capacity on the design day |
 | bess-recharge | minor | a battery sized to the permanent shortfall cannot recharge from the grid headroom on the design day, so it does not count as firm supply (built 23 October 2026) |
 | grid-shortfall | info | design load exceeds grid plus firm plant in some months |
@@ -263,10 +264,12 @@ Flags are how the tool reports problems without enforcing them. Each has an iden
 
 Information flags for the whole run: compatibility-rule counts (gen-rules), values not generated (gen-values), sampling active (gen-sampling), wind not generated on a small site (tech-wind-default), AI training transients not modelled (load-ai), the utilisation assumption (load-util), and how many options are adequate (adequacy-count; or adequacy-none, major, when no option is adequate).
 
-::: {.callout .agreed}
-**Agreed, not built yet (decision O3).** The single `grid-ppa` flag becomes **two flags**: one for PPA volume limited by the grid import capacity and one for other undelivered volume (above the load in the hour). **Each shows its calculated share of the undelivered PPA volume.** Today the flag headline says "PPA limited by import capacity" whenever any volume is import-limited: on 753 options of the T1 run, where only 0.002 to 0.5 % of the undelivered volume was. For the T1 leader the split is 140 MWh (0.003 %) limited by import capacity and 4,475,228 MWh (99.997 %) above the load.
+::: {.callout .built}
+**Built 23 October 2026 (decision O3).** The single `grid-ppa` flag is now **two flags**, `ppa-import-limited` and `ppa-above-load`, each with its share of the undelivered PPA volume.
+:::
 
-Also agreed: an "assumed default" flag on every option for each default it uses that the engineer did not enter, with its source.
+::: {.callout .agreed}
+**Agreed, not built yet:** an "assumed default" flag on every option for each default it uses that the engineer did not enter, with its source.
 :::
 
 # 43. Deliverability {#ch43}
@@ -471,9 +474,7 @@ This chapter lists every walkthrough decision that changes what the engine calcu
 
 ## PPA and carbon rules
 
-- **O1**: a PPA that cannot be delivered (no grid, islanded) is flagged and the equivalent no-PPA option is preferred.
-- **O2**: hourly CFE counts PPA energy only against grid energy used in that hour.
-- **O3**: two `grid-ppa` flags (import-limited and other), each with its share of the undelivered volume.
+- O1, O2 and O3 were built on 23 October 2026 (chapters 12 and 42).
 - No PPA income without physical delivery (already built).
 
 ## Model tiers and results
@@ -489,7 +490,6 @@ This chapter lists every walkthrough decision that changes what the engine calcu
 
 - how contracted capacities are set for options that only exist after generation (a rule per grid strategy, or editing after the run), and whether an islanded option at 0 MW pays the fixed charge;
 - which evaluation period sets the score when several are shown;
-- whether "prefer the no-PPA option" (O1) is a tie-break, a demotion or a hide-by-default;
 - how the representative days are chosen and how many options are verified at full resolution;
 - whether the top five should show five distinct strategies;
 - how the land budget for ground solar and wind is set with the Site tab hidden;

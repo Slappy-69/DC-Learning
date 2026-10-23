@@ -480,14 +480,20 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
     const above = Math.max(0, hd.undeliveredMWh - lim);
     const mwh = (x) => `${Math.round(x).toLocaleString('en-GB')} MWh`;
     const eur = (x) => `€${Number((Math.abs(x) / 1e6).toPrecision(3)).toLocaleString('en-GB')} m`;
-    const parts = [lim > 1e-6 ? `${mwh(lim)} limited by import capacity` : null, above > 1e-6 ? `${mwh(above)} above the load in the hour` : null].filter(Boolean).join(', ');
     // The total and its present value can have opposite signs (early income, later small costs): the present value
     // then names its own sign (Opus review 2026-10-18; it was printed as an absolute value after the total's word).
     const word = (x) => (x >= 0 ? 'income' : 'cost');
     const pvText = word(hd.pv) === word(hd.total) ? `present value ${eur(hd.pv)}` : `present value a net ${word(hd.pv)} of ${eur(hd.pv)}`;
-    flags.push(flag('grid-ppa', lim > 1e-6 ? 'minor' : 'info', 'Grid',
-      `${lim > 1e-6 ? 'PPA limited by import capacity' : 'PPA volume not delivered'}: ${mwh(hd.undeliveredMWh)} of contracted PPA volume over the ${inputs.economics.periodYears}-year evaluation period is not delivered physically (${parts}). Its settlement, a net ${word(hd.total)} of ${eur(hd.total)} (${pvText}), is reported as "PPA hedge (not counted)": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection.`,
-      { value: hd.undeliveredMWh, hedge: hd.total }));
+    // O3 (walkthrough 2026-10-21): two flags, each with its share of the undelivered volume (the shares add to 100 %).
+    const share = (x) => (hd.undeliveredMWh > 0 ? (x / hd.undeliveredMWh) * 100 : 0);
+    const pctTxt = (x) => `${share(x) < 0.01 && x > 0 ? share(x).toFixed(3) : share(x) < 1 ? share(x).toFixed(2) : share(x).toFixed(1)} %`;
+    const hedgeTxt = `Its settlement, a net ${word(hd.total)} of ${eur(hd.total)} (${pvText}), is reported as "PPA hedge (not counted)": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection.`;
+    if (lim > 1e-6) flags.push(flag('ppa-import-limited', 'minor', 'Grid',
+      `PPA limited by import capacity: ${mwh(lim)} (${pctTxt(lim)} of the ${mwh(hd.undeliveredMWh)} undelivered) of contracted PPA volume over the ${inputs.economics.periodYears}-year evaluation period could not be delivered because the grid connection was full. ${hedgeTxt}`,
+      { value: lim, share: share(lim), hedge: hd.total }));
+    if (above > 1e-6) flags.push(flag('ppa-above-load', 'info', 'Grid',
+      `PPA volume above the load: ${mwh(above)} (${pctTxt(above)} of the ${mwh(hd.undeliveredMWh)} undelivered) of contracted PPA volume over the ${inputs.economics.periodYears}-year evaluation period exceeded the load still to serve in its hour. ${hedgeTxt}`,
+      { value: above, share: share(above), hedge: hd.total }));
   }
   if (sz.shortfallBess && !sz.shortfallBess.rechargeOK) flags.push(flag('bess-recharge', 'minor', 'Grid', `Battery for the shortfall cannot recharge from the grid headroom on the design day from month ${sz.shortfallBess.failMonth}: it does not count as firm supply against the design load`));
   if (sz.storage.role === 'peakShave' && sz.storage.mw > 0 && disp.years.some((y) => y.designDayShortfall)) {

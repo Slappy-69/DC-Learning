@@ -1614,3 +1614,16 @@ Interpretations (reversible): primary-power hours are the most expensive grid-pr
 Finding: the synthetic price profiles peak near €215/MWh (UK, adder included), so the default €250/MWh trigger never occurs; trigger flexibility needs the real price data of work package 1. With a €190/MWh trigger, T1 has 343 trigger hours, 135 events and 248 event hours a year; a 10 MW / 42.6 MWh trigger battery serves about 1,900 MWh and leaves about 20 MWh to curtail, against about 750 MWh curtailed without it.
 
 Test run (work package 4, 2026-10-23): `npm test` 57/57 (new tests 25–27, `tests/package4-tests.mjs`); `npm run build`; `npm run test:browser` 30/30 (weight-change repaint median 203 ms on this sandbox, within the 300 ms bound; it was about 100 ms earlier today, so watch it).
+
+## Work package 5: the O1–O3 PPA and carbon rules (2026-10-23)
+
+Branch `feature/ppa-rules` (from `feature/flex-batteries`). Decisions: walkthrough O1–O3 (2026-10-21), OPEN-QUESTIONS 22 (O1: do not generate undeliverable PPAs), 49 and 62 (PPA off unless ticked; then each strategy with and without, one coverage). AC 21–23.
+
+What changed:
+- **PPA tick** (new records `utilities.ppaInclude` false, `utilities.ppaType` hybrid, `utilities.ppaCoverage` 100 %; inputs in the utilities section): C13 is locked to None unless ticked; ticked, C13 = None and the entered type, C14 locked to the entered coverage. C14 offers 25, 50, 75, 80 and 100 %. Archetypes with a PPA (A2, A7, A9) use the entered type and coverage when one is ticked, and keep their own definition otherwise (they are references, always generated). The **T1 example ticks a hybrid PPA at 100 %**, so the PPA rules stay exercised (T3 inherits it, and rule k removes it).
+- **O1, rule (k):** a PPA is not generated when islanded or when there is no grid capacity at any time; archetypes drop their PPA in those cases.
+- **O2:** hourly CFE counts PPA volume only up to the grid energy used for the load in the hour (PPA delivered + grid import), not up to the residual load.
+- **O3:** the `grid-ppa` flag is replaced by `ppa-import-limited` (minor) and `ppa-above-load` (info), each with its share of the undelivered volume (the shares add to 100 %); the hedge explanation is in each.
+- **Known issue 13, fixed with the owner's approval:** an economic plant whose remaining demand was below its minimum stable load was skipped even when the grid connection was full, leaving that demand unmet. It is now "needed" when the remaining demand exceeds the remaining grid capacity. It surfaced because a PPA fills the import capacity: before the fix every T1 PPA option was "not adequate" (0.2 MW unmet in about 15 hours).
+
+T1 effect: 55,060 combinations (rule k removes 5,400; T3 41,880); 2,000 sampled; 818 with the hybrid PPA (636 adequate after the fix) and 1,182 without. Before the fix the leader had no PPA and the best PPA option ranked 931 (every PPA option not adequate). After it: 1,566 of 2,000 adequate (930 without a PPA, 636 with); leader Grid + rented temporary generation bridge → remove · HVO N+1 · DLC · PPA hybrid 100 % (score 92.69, CFE 66.6 %; undelivered PPA volume 0.015 % import-limited and 99.985 % above the load).

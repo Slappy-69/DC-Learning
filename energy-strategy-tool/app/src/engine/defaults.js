@@ -165,7 +165,7 @@ export const CHOICES = [
   { id: 'C12r', name: 'BESS role', values: [['peakShave', 'Peak-shave against grid cap'], ['shifting', 'Shifting'], ['bridgingSupport', 'Bridging support'], ['gridServices', 'Grid services']] },
   { id: 'C13', name: 'Offsite PPA', values: [
     ['none', 'None'], ['solar', 'Annual-matched solar'], ['wind', 'Annual-matched wind'], ['hybrid', 'Hybrid'], ['baseload', 'Baseload-shaped'], ['cfe247', '24/7-matched']] },
-  { id: 'C14', name: 'PPA coverage', values: [['50', '50 %'], ['80', '80 %'], ['100', '100 %']] },
+  { id: 'C14', name: 'PPA coverage', values: [['25', '25 %'], ['50', '50 %'], ['75', '75 %'], ['80', '80 %'], ['100', '100 %']] },
   { id: 'C15', name: 'Heat reuse', values: [['none', 'None'], ['offtake', 'Heat offtake (direct)'], ['heatPump', 'Heat pump boost']] },
   { id: 'C16', name: 'Demand flexibility', values: [['off', 'Off'], ['on', 'On']] },
   { id: 'C17', name: 'Substation type', values: [['AIS', 'AIS'], ['GIS', 'GIS']] },
@@ -208,8 +208,10 @@ export function defaultChoiceState(id, inputs) {
     case 'C12': return { state: 'open', values: ['none', '2h25', '4h50', 'shortfall', 'trigger'] };
     case 'C4s': return { state: 'open', values: ['average', 'shortfall'] };
     case 'C12r': return { state: 'locked', values: ['peakShave'] };
-    case 'C13': return { state: 'open', values: ['none', 'hybrid'] };
-    case 'C14': return { state: 'open', values: ['50', '80', '100'] };
+    // OPEN-QUESTIONS 49 and 62 (2026-10-22/23): no PPA unless the engineer ticks one; then each strategy is generated with
+    // the entered PPA and without one, at the one coverage entered.
+    case 'C13': return inputs && inputs.utilities.ppaInclude ? { state: 'open', values: ['none', inputs.utilities.ppaType] } : { state: 'locked', values: ['none'] };
+    case 'C14': return { state: 'locked', values: [String(inputs ? inputs.utilities.ppaCoverage : 100)] };
     case 'C15': return inputs && inputs.utilities.districtHeating === 'Yes'
       ? { state: 'open', values: ['none', 'offtake', 'heatPump'] } : { state: 'locked', values: ['none'] };
     case 'C16': return { state: 'locked', values: ['off'] };
@@ -228,6 +230,8 @@ for (const c of CHOICES) {
       c.id === 'C10' ? 'Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).' :
       c.id === 'C12r' ? 'Default role "peak-shave against grid cap" (§8 C12).' :
       c.id === 'C5a' ? 'Both arrangements generated (OPEN-QUESTIONS 47, 48, 2026-10-22): per building is the rule; pooled is studied alongside and carries a client-perceived risk item in deliverability.' :
+      c.id === 'C13' ? 'No PPA unless the engineer ticks one (utilities.ppaInclude); then None and the entered type (OPEN-QUESTIONS 49, 62).' :
+      c.id === 'C14' ? 'The one coverage the engineer enters (utilities.ppaCoverage).' :
       c.id === 'C4s' ? 'Both sizings generated (OPEN-QUESTIONS 58, 2026-10-23); "Permanent shortfall" only for cooling types with a permanent shortfall (rule g).' : '',
   });
 }
@@ -694,6 +698,10 @@ export function buildDefaultInputs(opts = {}) {
       hydrogenAvailable: rec('utilities.hydrogenAvailable', 'No', '', { basis: 'judgement', ref: '§5.4' }),
       waterAvailable: rec('utilities.waterAvailable', 'Unknown', 'm³/day', { basis: 'judgement', ref: '§5.4' }),
       districtHeating: rec('utilities.districtHeating', 'No', '', { basis: 'judgement', ref: '§5.4' }),
+      // Offsite PPA (OPEN-QUESTIONS 49, 62): off unless ticked; one type and one coverage, each strategy with and without.
+      ppaInclude: rec('utilities.ppaInclude', false, 'toggle', { basis: 'judgement', ref: '§8 C13', note: "Owner, 2026-10-22: off unless the engineer ticks it. Options without a PPA use the national grid's standard price and carbon." }),
+      ppaType: rec('utilities.ppaType', 'hybrid', 'solar / wind / hybrid / baseload / cfe247', { basis: 'judgement', ref: '§8 C13' }),
+      ppaCoverage: rec('utilities.ppaCoverage', 100, '% of each year\'s facility consumption', { low: 25, high: 100, basis: 'judgement', ref: '§8 C14', note: 'One coverage, set by the engineer (OPEN-QUESTIONS 49).' }),
     },
     requirements: {
       backedPct: rec('requirements.backedPct', 1.0, 'fraction of IT + essential mechanical', { low: 0.5, high: 1, basis: 'judgement', ref: '§5.5' }),
@@ -820,6 +828,10 @@ export function referenceT1(opts = {}) {
   inputs.project.name = 'T1 reference (example)';
   inputs.utilities.gasAvailable = 'Yes';
   inputs.load.phases = [18, 30, 42, 54].map((m) => ({ itMW: 25, date: addMonths(s, m) }));
+  // The T1 example ticks a hybrid PPA at 100 % (OPEN-QUESTIONS 49), so the PPA rules stay exercised.
+  inputs.utilities.ppaInclude = true;
+  inputs.utilities.ppaType = 'hybrid';
+  inputs.utilities.ppaCoverage = 100;
   return inputs;
 }
 

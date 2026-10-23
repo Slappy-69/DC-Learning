@@ -518,13 +518,14 @@ In the current version, the market-based figure counts the whole annual PPA cont
 
 ## Hourly carbon-free energy (CFE)
 
-**24/7 carbon-free energy** asks a harder question: in each hour, what share of the demand was met by carbon-free supply? The tool counts, hour by hour, on-site renewables used, PPA volume up to the remaining load, and SMR or hydrogen output, and divides the total by the demand. For the T1 leader the result is **67 %**: the hybrid PPA covers the whole year's consumption on paper, but in many hours it produces less than the site uses.
+**24/7 carbon-free energy** asks a harder question: in each hour, what share of the demand was met by carbon-free supply? The tool counts, hour by hour, on-site renewables used, PPA volume up to the grid energy the site actually used in that hour (decision O2, built 23 October 2026), and SMR or hydrogen output, and divides the total by the demand. For the T1 leader the result is **67 %**: the hybrid PPA covers the whole year's consumption on paper, but in many hours it produces less than the site uses.
 
-::: {.callout .agreed}
-**Agreed, not built yet (decisions O1 and O2).**
+::: {.callout .built}
+**Built 23 October 2026 (decisions O1 and O2; OPEN-QUESTIONS 22, 49, 62).**
 
-- **O2.** The carbon-free energy score uses **hourly matching**: PPA energy counts only against grid energy actually used in that hour.
-- **O1.** A PPA that can never be delivered (no grid, or an islanded site) is flagged, and the equivalent option without the PPA is preferred.
+- **No PPA unless ticked.** Options use the national grid's standard price and carbon unless the engineer ticks "Include an offsite PPA" and enters its type and one coverage; then each strategy is generated with that PPA and without it, so the ranking shows whether it pays.
+- **O2.** The carbon-free energy score uses **hourly matching**: PPA energy counts only against grid energy actually used for the load in that hour.
+- **O1.** A PPA that can never be delivered (an islanded option, or no grid capacity at any time) is **not generated** (rule k): it would have exactly the same cost, carbon and score as its no-PPA twin.
 :::
 
 ## Carbon cost and decarbonisation

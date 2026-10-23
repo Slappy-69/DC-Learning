@@ -512,7 +512,7 @@ The merit order is shown as an editable ordered list in the advanced settings.
 - **Location-based** annual average gCO₂e/kWh delivered (scored by default).
 - **Market-based** gCO₂e/kWh (PPA certificates applied annually).
 - **Hourly CFE %** (24/7 matching of on-site renewables + PPA against hourly load). O2 (walkthrough, 2026-10-21): PPA energy counts only against grid energy actually used in that hour.
-- **O1** (walkthrough, 2026-10-21): a PPA that cannot be delivered (no grid, islanded) is flagged, and the equivalent option without the PPA is preferred (§11; how: OPEN-QUESTIONS 22).
+- **O1** (walkthrough, 2026-10-21): a PPA that cannot be delivered (no grid, islanded) is flagged, and the equivalent option without the PPA is preferred (§11; how: OPEN-QUESTIONS 22). *As built (2026-10-23, OPEN-QUESTIONS 22): such a PPA is not generated (rule k); O2 and O3 built the same day; PPA off unless ticked, then with and without (OPEN-QUESTIONS 49, 62).*
 - Scope 1 (on-site combustion) and Scope 2 split, in tCO₂e/yr and cumulative over the period, with the grid decarbonisation trajectory applied.
 - Carbon trajectory chart per option (tCO₂e/yr over the evaluation period).
 - Embodied carbon of energy plant: optional, off by default, using indicative kgCO₂e/kW factors marked indicative — unverified.

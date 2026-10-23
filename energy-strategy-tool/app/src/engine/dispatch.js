@@ -333,7 +333,9 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
       let P;
       let needed;
       if (md === 2) { P = R; needed = true; }
-      else if (pMC[i] < gp) { P = R; needed = false; }
+      // Economic: serves all the remaining demand. It is also needed when the grid cannot take what is left (known issue
+      // 13, fixed 2026-10-23 with the owner's approval): then it runs at least at its minimum stable load.
+      else if (pMC[i] < gp) { P = R; needed = capRem !== Infinity && R > capRem + 1e-12; }
       else { P = capRem === Infinity ? 0 : R - capRem; needed = true; }
       if (P <= 1e-12) continue;
       let credit = 0;
@@ -439,9 +441,10 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     chpCreditMWh += chpCredit;
     flexMWh += flexed;
     itMWh += IT[h];
-    // Hourly CFE (24/7 matching): on-site renewables used + hourly PPA volume up to residual load + carbon-free firm output.
-    const resid = D0 - reUse;
-    const clean = reUse + (ppaV < resid ? ppaV : resid) + firm * cleanRatio;
+    // Hourly CFE (24/7 matching): on-site renewables used + PPA volume counted only against grid energy actually used
+    // for load in that hour (O2, walkthrough 2026-10-21) + carbon-free firm output.
+    const gridUsed = ppaUse + g;
+    const clean = reUse + (ppaV < gridUsed ? ppaV : gridUsed) + firm * cleanRatio;
     cfeMWh += clean < netDemand ? clean : netDemand;
 
     if (rec) {

@@ -26,6 +26,12 @@ function triggerHours(inputs) {
   return TRIG.get(inputs);
 }
 
+// No grid capacity at any time (rule k, O1).
+export function noGridEver(inputs) {
+  const g = inputs.grid;
+  return !(g.nowMW > 0) && !(g.fullMW > 0) && !(g.steps || []).some((s) => Number(s.mw) > 0);
+}
+
 // Cooling types with a permanent shortfall, once per inputs object (rule g).
 const PERM = new WeakMap();
 function permSet(inputs) {
@@ -80,6 +86,9 @@ export const RULES = [
   { id: 'j', name: '(j) A trigger-hours battery requires flexibility and trigger hours',
     detail: 'C12 = Sized to the trigger hours is generated only with C16 = On, and (unless the battery size is held fixed) only when the profile has trigger hours at the trigger level (OPEN-QUESTIONS 33, 2026-10-23).',
     fails: (v, inputs) => v.C12 === 'trigger' && (v.C16 !== 'on' || (inputs.load.flexBatteryFixed !== 'size' && triggerHours(inputs) <= 0)) },
+  { id: 'k', name: '(k) A PPA requires a grid to deliver it',
+    detail: 'C13 ≠ None is not generated when islanded, or when there is no grid capacity at any time: the PPA could never be delivered, and the option would repeat its no-PPA twin (O1; OPEN-QUESTIONS 22, 2026-10-23).',
+    fails: (v, inputs) => v.C13 !== 'none' && v.C13 !== NA && (v.C1 === 'islanded' || noGridEver(inputs)) },
 ];
 export const RULE_D = { id: 'd', name: '(d) Choices that are n/a collapse to "n/a" rather than multiplying options',
   detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, the backup arrangement when there are no gensets, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets.' };
@@ -230,6 +239,10 @@ function archetypeVector(a, inputs) {
   }
   // Solar archetypes take "Roof + ground" only when a ground area for PV is entered; otherwise Roof only (rule f).
   if (v.C10 === 'roofGround' && !(inputs.site.pvGroundHa > 0)) v.C10 = 'roof';
+  // Archetypes with a PPA use the engineer's PPA when one is ticked (OPEN-QUESTIONS 49), and drop it where it could
+  // never be delivered (rule k).
+  if (v.C13 !== 'none' && inputs.utilities.ppaInclude) { v.C13 = inputs.utilities.ppaType; v.C14 = String(inputs.utilities.ppaCoverage); }
+  if (v.C13 !== 'none' && (v.C1 === 'islanded' || noGridEver(inputs))) v.C13 = 'none';
   // Firm-plant archetypes take the top-up sizing only where there is a permanent shortfall (rule g).
   if (v.C4s === 'shortfall' && v.C1 !== 'islanded' && !permSet(inputs).has(v.C8)) v.C4s = 'average';
   return canonical(v);

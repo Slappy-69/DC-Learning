@@ -102,6 +102,9 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **utilities.hydrogenAvailable**: No; judg.
 - **utilities.waterAvailable**: Unknown (m³/day); judg.
 - **utilities.districtHeating**: No; judg.
+- **utilities.ppaInclude**: off; judg. Owner, 2026-10-22: off unless the engineer ticks it. Options without a PPA use the national grid's standard price and carbon.
+- **utilities.ppaType**: hybrid (solar / wind / hybrid / baseload / cfe247); judg.
+- **utilities.ppaCoverage**: 100 % of each year's facility consumption; range 25–100; judg. One coverage, set by the engineer (OPEN-QUESTIONS 49).
 
 ## Requirements
 
@@ -202,8 +205,8 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **choices.C11**: open: none; judg. Default "None" when site area ≤ 20 ha and no off-site land; otherwise open.
 - **choices.C12**: open: none, 2h25, 4h50, shortfall, trigger; judg.
 - **choices.C12r**: locked: peakShave; judg. Default role "peak-shave against grid cap" (§8 C12).
-- **choices.C13**: open: none, hybrid; judg.
-- **choices.C14**: open: 50, 80, 100; judg.
+- **choices.C13**: locked: none; judg. No PPA unless the engineer ticks one (utilities.ppaInclude); then None and the entered type (OPEN-QUESTIONS 49, 62).
+- **choices.C14**: locked: 100; judg. The one coverage the engineer enters (utilities.ppaCoverage).
 - **choices.C15**: locked: none; judg.
 - **choices.C16**: locked: off; judg.
 - **choices.C17**: open: AIS; judg.

@@ -73,6 +73,7 @@ import { gridRefTests } from './gridref-tests.mjs';
 import { backupTests } from './backup-tests.mjs';
 import { bessShortfallTests } from './bess-shortfall-tests.mjs';
 import { package4Tests } from './package4-tests.mjs';
+import { ppaRuleTests } from './ppa-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1198,6 +1199,9 @@ await bessShortfallTests(test, siteRuns);
 
 // 25–27. Work package 4: gensets, load shapes, flexibility and batteries (AC 19, AC 20) (tests/package4-tests.mjs)
 await package4Tests(test, siteRuns);
+
+// 28. Work package 5: PPA rules O1–O3 and the PPA tick (AC 21–23) (tests/ppa-tests.mjs)
+await ppaRuleTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

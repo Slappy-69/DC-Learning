@@ -111,7 +111,7 @@ export async function ppaTests(test, { runT1, runT3 }) {
         if (!o.sizing.ppa) {
           assert.equal(o.eco.ppaHedge, null, `${label} ${o.id}: hedge without a PPA`);
           assert.ok(o.eco.ledger.every((L) => L.ppa === 0), `${label} ${o.id}: PPA cost without a PPA`);
-          assert.ok(!o.flags.some((f) => f.id === 'grid-ppa'), `${label} ${o.id}: grid-ppa flag without a PPA`);
+          assert.ok(!o.flags.some((f) => f.id === 'ppa-import-limited' || f.id === 'ppa-above-load'), `${label} ${o.id}: PPA flag without a PPA`);
           if (Number.isFinite(o.eco.lcoe) && o.eco.lcoe < 0) oldNeg++; // unchanged by the decision
           if (!Number.isFinite(o.eco.lcoe)) oldNonFinite++;
           continue;
@@ -137,14 +137,19 @@ export async function ppaTests(test, { runT1, runT3 }) {
         const pvE = o.eco.reconciliation.pvEnergy;
         const oldLcoe = pvE > 0 ? (o.eco.npvCost + pvOldExtra) / pvE : Infinity;
         if (!Number.isFinite(oldLcoe)) oldNonFinite++; else if (oldLcoe < 0) oldNeg++;
-        const f = o.flags.find((x) => x.id === 'grid-ppa');
+        // O3 (2026-10-23): two flags, import-limited (minor) and above the load (info), shares adding to 100 %.
+        const fl = o.flags.find((x) => x.id === 'ppa-import-limited');
+        const fa = o.flags.find((x) => x.id === 'ppa-above-load');
+        const f = fl || fa;
         if (h.undeliveredMWh > 1e-6) {
           withHedge++;
           if (h.total >= 0) hedgeIncome++; else hedgeCost++;
-          assert.ok(f, `${label} ${o.id}: hedge of ${h.undeliveredMWh} MWh undelivered without the grid-ppa flag`);
+          assert.ok(f, `${label} ${o.id}: hedge of ${h.undeliveredMWh} MWh undelivered without a PPA flag`);
           assert.ok(f.message.includes('"PPA hedge (not counted)"') && f.message.includes('not in the cost ledger, LCOE, NPV or score'), `${label} ${o.id}: flag does not explain the hedge`);
-          assert.equal(f.severity, h.limitedMWh > 1e-6 ? 'minor' : 'info', `${label} ${o.id}: flag severity`);
-          if (f.severity === 'minor') minor++; else info++;
+          assert.equal(!!fl, h.limitedMWh > 1e-6, `${label} ${o.id}: import-limited flag`);
+          assert.ok(!fl || fl.severity === 'minor'); assert.ok(!fa || fa.severity === 'info');
+          assert.ok(Math.abs((fl ? fl.share : 0) + (fa ? fa.share : 0) - 100) < 1e-6, `${label} ${o.id}: O3 shares do not add to 100 %`);
+          if (fl) minor++; else info++;
           // Opus review: a present value of the opposite sign to the total names its own sign in the flag.
           const word = (x) => (x >= 0 ? 'income' : 'cost');
           assert.ok(f.message.includes(`a net ${word(h.total)} of`), `${label} ${o.id}: flag names the wrong sign for the hedge total`);
@@ -152,13 +157,13 @@ export async function ppaTests(test, { runT1, runT3 }) {
             mixedSign++;
             assert.ok(f.message.includes(`present value a net ${word(h.pv)} of`), `${label} ${o.id}: hedge total ${h.total} and present value ${h.pv} differ in sign but the flag does not say so`);
           }
-        } else assert.ok(!f, `${label} ${o.id}: grid-ppa flag with every PPA MWh delivered`);
+        } else assert.ok(!f, `${label} ${o.id}: PPA flag with every PPA MWh delivered`);
       }
       const neg = run.options.filter((o) => Number.isFinite(o.eco.lcoe) && o.eco.lcoe < 0);
       const nonFinite = run.options.filter((o) => !Number.isFinite(o.eco.lcoe)).length;
       assert.equal(neg.length, 0, `${label}: ${neg.length} options with a negative LCOE (e.g. ${neg[0] && neg[0].id} ${neg[0] && neg[0].eco.lcoe})`);
       const sp = costAxisSpread(run);
-      out.push(`${label}: ${withPPA} options with a PPA, ${withHedge} with undelivered volume (hedge income ${hedgeIncome}, cost ${hedgeCost}; ${mixedSign} with a present value of the other sign, named in the flag; flag grid-ppa minor ${minor}, info ${info}); PPA ledger line = delivered × price in every year; LCOE negative ${oldNeg} under the old rule (reconstructed) → ${neg.length}, non-finite ${oldNonFinite} → ${nonFinite}; cost axis ${sp.range.lo.toFixed(1)}–${sp.range.hi.toExponential(3)} €/MWh, ${sp.normal} options with LCOE 0–1,000 €/MWh span ${sp.spread.toFixed(3)} cost points (${sp.lo.toFixed(3)}–${sp.hi.toFixed(3)})`);
+      out.push(`${label}: ${withPPA} options with a PPA, ${withHedge} with undelivered volume (hedge income ${hedgeIncome}, cost ${hedgeCost}; ${mixedSign} with a present value of the other sign, named in the flag; flags: import-limited ${minor}, above the load only ${info}); PPA ledger line = delivered × price in every year; LCOE negative ${oldNeg} under the old rule (reconstructed) → ${neg.length}, non-finite ${oldNonFinite} → ${nonFinite}; cost axis ${sp.range.lo.toFixed(1)}–${sp.range.hi.toExponential(3)} €/MWh, ${sp.normal} options with LCOE 0–1,000 €/MWh span ${sp.spread.toFixed(3)} cost points (${sp.lo.toFixed(3)}–${sp.hi.toFixed(3)})`);
     }
     // Option detail (rendered): the hedge row names the present value's own sign when it differs from the total's.
     const word = (x) => (x >= 0 ? 'income' : 'cost');
