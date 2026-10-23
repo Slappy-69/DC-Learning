@@ -1612,3 +1612,5 @@ What changed:
 Interpretations (reversible): primary-power hours are the most expensive grid-price hours; the reserve battery costs battery energy only (UPS electronics are fit-out); weather and grid stress is a temperature proxy; notice is not modelled; "hours covered" sets the trigger level for the whole run; the trigger battery's role in other hours is C12r (peak-shave by default).
 
 Finding: the synthetic price profiles peak near €215/MWh (UK, adder included), so the default €250/MWh trigger never occurs; trigger flexibility needs the real price data of work package 1. With a €190/MWh trigger, T1 has 343 trigger hours, 135 events and 248 event hours a year; a 10 MW / 42.6 MWh trigger battery serves about 1,900 MWh and leaves about 20 MWh to curtail, against about 750 MWh curtailed without it.
+
+Test run (work package 4, 2026-10-23): `npm test` 57/57 (new tests 25–27, `tests/package4-tests.mjs`); `npm run build`; `npm run test:browser` 30/30 (weight-change repaint median 203 ms on this sandbox, within the 300 ms bound; it was about 100 ms earlier today, so watch it).
