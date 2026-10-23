@@ -70,6 +70,7 @@ import { topupTests } from './topup-tests.mjs';
 import { splitTests } from './split-tests.mjs';
 import { outlookTests } from './outlook-tests.mjs';
 import { gridRefTests } from './gridref-tests.mjs';
+import { backupTests } from './backup-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1186,6 +1187,9 @@ await outlookTests(test, siteRuns);
 
 // 22. Grid periods and grid-matched phasing (OPEN-QUESTIONS 38; build plan 3b) (tests/gridref-tests.mjs)
 await gridRefTests(test, siteRuns);
+
+// 23. Backup per building or pooled (OPEN-QUESTIONS 47, 48; build plan 3b) (tests/backup-tests.mjs)
+await backupTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

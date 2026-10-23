@@ -262,6 +262,7 @@ The table lists every choice, its values, and the values included by default (ma
 | C4 Primary firm on-site generation | **None**, **Gas CHP-trigen**, Gas recips, **Fuel cells**, SMR, Hydrogen |
 | C4s Firm generation sizing | **Average load (baseload)**, **Permanent shortfall (top-up)**; the top-up only for cooling types with a permanent shortfall, or islanded (built 23 October 2026) |
 | C5 Backup power technology | **Diesel gensets**, **HVO gensets**, Gas gensets, BESS-augmented UPS + reduced gensets, **Retained bridging plant**, None |
+| C5a Backup arrangement | **Per building**, **Pooled across the campus** (built 23 October 2026; not applicable with no backup or retained-plant backup) |
 | C6 Backup topology | locked to the required topology (**N+1**); N, 2N, catcher available |
 | C7 Autonomy / fuel storage | locked to the required autonomy (**48 h**); 12, 24, 72 h |
 | C8 Cooling approach | **all four** open, unless the cooling approach input fixes one |
@@ -286,7 +287,7 @@ The table lists every choice, its values, and the values included by default (ma
 - **C3 "Retain for grid services"** behaves like "Retain as backup", and **C12r "Grid services"** like "Shifting": no grid-services income is modelled.
 - **C17** (substation type) and **C18** (genset arrangement) change footprints and, for C17, the substation cost; C18 changes only the footprint.
 
-**Not applicable values.** Some choices only matter when others take certain values: C2 and C3 only with bridging; C4s only with a firm plant; C14 only with a PPA; the BESS role only with a BESS; C6, C7 and C18 only with gensets. Otherwise they are set to "n/a" rather than multiplying the options (chapter 34).
+**Not applicable values.** Some choices only matter when others take certain values: C2 and C3 only with bridging; C4s only with a firm plant; C5a only with gensets; C14 only with a PPA; the BESS role only with a BESS; C6, C7 and C18 only with gensets. Otherwise they are set to "n/a" rather than multiplying the options (chapter 34).
 
 ::: {.callout .agreed}
 **Agreed, not built yet.** The cooling approach is always chosen by the engineer (chapter 6). The flexibility and battery choices are replaced by the parameters described in chapters 16 and 18.

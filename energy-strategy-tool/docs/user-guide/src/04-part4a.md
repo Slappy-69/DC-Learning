@@ -204,7 +204,7 @@ Going through the choices in order, a choice that does not apply is set to "n/a"
 |---|---|
 | C2 bridging supply | C1 is neither "Bridge until grid" nor "Islanded" |
 | C3 plant after grid arrives | C1 is not "Bridge until grid" |
-| C6 topology, C7 autonomy, C18 genset arrangement | C5 is "None" or "Retained bridging plant" |
+| C5a backup arrangement, C6 topology, C7 autonomy, C18 genset arrangement | C5 is "None" or "Retained bridging plant" |
 | C4s firm generation sizing | C4 is "None" |
 | C12r BESS role | C12 is "None" |
 | C14 PPA coverage | C13 is "None" |
@@ -297,10 +297,17 @@ The "design cooling fraction" is the fans plus mechanical cooling at the design 
 
 **Retained bridging plant as backup:** the bridging plant is enlarged if needed to meet the same backup rule on the critical load and required topology; with HVO-diesel bridging, fuel storage is sized for the required autonomy.
 
+**Per building or pooled** (built 23 October 2026, choice C5a, OPEN-QUESTIONS 47 and 48). The rule above sizes the gensets for the whole campus as one pool. Since 23 October 2026 two arrangements are generated:
+
+- **Per building** (the rule): one backup technology per building, each building sized on its own critical load with its own redundancy. Bridging plant retired into backup when the grid arrives (C3 "Retain as backup", "Retain for grid services", or the share not kept as prime) backs up whole buildings, in phase order, if it can meet a building's critical load at the required topology; gensets back up the rest. In T1 with DLC each 25 MW building needs 10 + 1 diesel units, 44 in all against 43 pooled; with air cooling 12 + 2, 56 against 52. The T1 bridging plant is too small to back up a whole building.
+- **Pooled across the campus:** the gensets are sized as above, on the campus critical load less the retired bridging plant (its redundant units removed). Pooling saves units, so the option carries a **client-perceived risk** item in deliverability: by default the penalty of a minor permitting flag (3 points), raisable to that of a major one (8 points) with the input "Client-perceived risk of pooled backup".
+
+Fuel storage is sized for the critical load the gensets back up, and genset capex is booked by building.
+
 ## Fuel storage
 
 ::: formula
-| bulk fuel (m³) = critical load (kW) × autonomy hours × 0.26 L/kWh ÷ 1,000
+| bulk fuel (m³) = critical load the gensets back up (kW) × autonomy hours × 0.26 L/kWh ÷ 1,000
 | fuel mass (t) = volume × 0.84 t/m³
 :::
 

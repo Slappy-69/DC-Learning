@@ -161,6 +161,23 @@
   "briefRef": "§8"
  },
  {
+  "path": "choices.C5a",
+  "value": {
+   "state": "open",
+   "values": [
+    "perBuilding",
+    "pooled"
+   ]
+  },
+  "unit": "choice state",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Both arrangements generated (OPEN-QUESTIONS 47, 48, 2026-10-22): per building is the rule; pooled is studied alongside and carries a client-perceived risk item in deliverability.",
+  "briefRef": "§8"
+ },
+ {
   "path": "choices.C6",
   "value": {
    "state": "locked",
@@ -5312,6 +5329,17 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
+  "briefRef": "§9.9"
+ },
+ {
+  "path": "deliverability.pooledBackupRisk",
+  "value": "minor",
+  "unit": "minor / major",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Client-perceived risk of backup pooled across the campus (OPEN-QUESTIONS 48, 2026-10-22): by default the same penalty as a minor permitting flag; the engineer can raise it to major for a project.",
   "briefRef": "§9.9"
  },
  {

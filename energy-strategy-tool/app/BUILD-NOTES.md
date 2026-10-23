@@ -1558,3 +1558,21 @@ OPEN-QUESTIONS 38, step 3 ("report the IT load the grid can support and a grid-m
 T1: grid 20 MW to June 2029, 120 MW from July 2029. Air: 14.6 / 87.8 MW IT; phase 1 waits 12 months, phases 2 and 3 on time, phase 4 never. DLC: 17.7 / 106.1 MW IT; phase 1 waits 12 months, the rest on time.
 
 Test 22 (`tests/gridref-tests.mjs`): periods cover the timeline at one capacity each; IT supported; grid-matched months by hand.
+
+## Slice: backup per building or pooled (work package 3b, part 7; 2026-10-23)
+
+The owner's decisions OPEN-QUESTIONS 47 and 48 (2026-10-22). Built while the owner asked for work to continue without their input.
+
+What changed:
+- **New choice C5a "Backup arrangement"** (after C5): Per building / Pooled across the campus; default open, both; n/a when C5 = None or Retained bridging plant (rule d).
+- **Sizing** (`sizing.js`; the genset block now runs after the bridging plant is sized, so it knows the retired plant):
+  - Per building: each phase is a building; its critical load = backed share × its IT × (1 + design cooling fraction); its own N and redundancy (C6) on blocks of 10. Bridging plant retired into backup (C1 = Bridge with C3 = Retain as backup, Retain for grid services, or the share not kept as prime under the split) backs up whole buildings in phase order when its units meet the building's critical load at the required topology; gensets back up the rest. `backup.unitsByPhase`, `backup.coveredByRetired`.
+  - Pooled: the retired plant's units less one per block of 10 count against the campus critical load; the gensets are sized to the rest, with campus-wide redundancy (as before when there is no retired plant).
+  - Fuel storage is sized for the critical load the gensets back up (`backup.genCriticalMW`).
+- **Capex:** per building, the genset capex is booked by each building's units; pooled by IT share, as before.
+- **Deliverability:** pooled options carry "Client-perceived risk: backup pooled across the campus", the minor permitting-flag penalty by default; record `deliverability.pooledBackupRisk` (minor / major, judgement) and an input to raise it.
+- **Names:** pooled backup is named "… N+1 pooled".
+
+Interpretations (reversible): each phase is one building; the retired plant must cover a whole building's critical load at the required topology or it backs up none of it (never shared with gensets in a building); pooled counts the retired plant with its redundant units removed; per building is the first value, so archetypes use it; genset fixed O&M stays by IT share.
+
+T1 effect: 102,676 combinations (C5a doubles the genset options). Per building, each 25 MW building needs 10 + 1 diesel units with DLC (44 in all, against 43 pooled) and 12 + 2 with air cooling (56 against 52); before this change every option was pooled. The T1 bridging plant (a few engines) never backs up a whole building, so per building it does not reduce the gensets; with no grid before the full connection (test 23) it backs up building 1. 940 options adequate; the leader is Grid + rented temporary generation bridge → retain as backup · retained-plant backup · Immersion · PV 2.0 MWp · BESS 2 h · PPA hybrid 50 % (90.62).

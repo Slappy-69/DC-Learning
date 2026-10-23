@@ -136,6 +136,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **deliverability.hydrogenPenalty**: 10 points; judg.
 - **deliverability.leadTimePenalty**: 5 points per technology; judg.
 - **deliverability.leadTimeThresholdM**: 24 months procurement; judg.
+- **deliverability.pooledBackupRisk**: minor (minor / major); judg. Client-perceived risk of backup pooled across the campus (OPEN-QUESTIONS 48, 2026-10-22): by default the same penalty as a minor permitting flag; the engineer can raise it to major for a project.
 - **deliverability.siteFitPenalty**: off; judg. Off by default: the site-fit status has no effect on the deliverability or weighted score. On: the axis is labelled "Deliverability (incl. site fit)".
 - **deliverability.siteFitFlagsPenalty**: 10 points for "Fits with flags"; judg. Applies only when the site-fit penalty is on.
 - **deliverability.siteFitNoFitPenalty**: 25 points for "Does not fit"; judg. Applies only when the site-fit penalty is on.
@@ -168,6 +169,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **choices.C4**: open: none, chp, fuelCell; judg.
 - **choices.C4s**: open: average, shortfall; judg. Both sizings generated (OPEN-QUESTIONS 58, 2026-10-23); "Permanent shortfall" only for cooling types with a permanent shortfall (rule g).
 - **choices.C5**: open: hvo, diesel, retained; judg.
+- **choices.C5a**: open: perBuilding, pooled; judg. Both arrangements generated (OPEN-QUESTIONS 47, 48, 2026-10-22): per building is the rule; pooled is studied alongside and carries a client-perceived risk item in deliverability.
 - **choices.C6**: locked: N+1; judg.
 - **choices.C7**: locked: 48; judg.
 - **choices.C8**: open: air, evap, dlc, immersion; judg.

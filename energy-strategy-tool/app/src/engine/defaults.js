@@ -147,6 +147,8 @@ export const CHOICES = [
   { id: 'C5', name: 'Backup power technology', values: [
     ['diesel', 'Diesel gensets'], ['hvo', 'HVO gensets'], ['gas', 'Gas gensets'], ['bessUps', 'BESS-augmented UPS + reduced gensets'],
     ['retained', 'Retained bridging plant'], ['none', 'None']] },
+  // OPEN-QUESTIONS 47 and 48 (2026-10-22): one backup technology per building, or backup pooled across the campus.
+  { id: 'C5a', name: 'Backup arrangement', values: [['perBuilding', 'Per building'], ['pooled', 'Pooled across the campus']] },
   { id: 'C6', name: 'Backup topology', values: [['N', 'N'], ['N+1', 'N+1'], ['2N', '2N'], ['catcher', 'Distributed-redundant (catcher)']] },
   { id: 'C7', name: 'Autonomy / fuel storage', values: [['12', '12 h'], ['24', '24 h'], ['48', '48 h'], ['72', '72 h']] },
   { id: 'C8', name: 'Cooling approach', values: [['air', 'Air (CHW + free cooling)'], ['evap', 'Evaporative-adiabatic'], ['dlc', 'DLC + dry coolers'], ['immersion', 'Immersion']] },
@@ -182,6 +184,7 @@ export function defaultChoiceState(id, inputs) {
     case 'C3': return { state: 'open', values: ['remove', 'backup', 'prime', 'gridServices', 'split'] };
     case 'C4': return { state: 'open', values: ['none', 'chp', 'fuelCell'] };
     case 'C5': return { state: 'open', values: ['hvo', 'diesel', 'retained'] };
+    case 'C5a': return { state: 'open', values: ['perBuilding', 'pooled'] };
     case 'C6': return { state: 'locked', values: [inputs ? inputs.requirements.topology : 'N+1'] };
     case 'C7': return { state: 'locked', values: [inputs ? String(inputs.requirements.autonomyH) : '48'] };
     case 'C8': {
@@ -220,6 +223,7 @@ for (const c of CHOICES) {
     note: c.id === 'C11' ? 'Default "None" when site area ≤ 20 ha and no off-site land; otherwise open.' :
       c.id === 'C10' ? 'Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).' :
       c.id === 'C12r' ? 'Default role "peak-shave against grid cap" (§8 C12).' :
+      c.id === 'C5a' ? 'Both arrangements generated (OPEN-QUESTIONS 47, 48, 2026-10-22): per building is the rule; pooled is studied alongside and carries a client-perceived risk item in deliverability.' :
       c.id === 'C4s' ? 'Both sizings generated (OPEN-QUESTIONS 58, 2026-10-23); "Permanent shortfall" only for cooling types with a permanent shortfall (rule g).' : '',
   });
 }
@@ -708,6 +712,7 @@ export function buildDefaultInputs(opts = {}) {
       hydrogenPenalty: rec('deliverability.hydrogenPenalty', 10, 'points', { basis: 'judgement', ref: '§9.9' }),
       leadTimePenalty: rec('deliverability.leadTimePenalty', 5, 'points per technology', { basis: 'judgement', ref: '§9.9' }),
       leadTimeThresholdM: rec('deliverability.leadTimeThresholdM', 24, 'months procurement', { basis: 'judgement', ref: '§9.9' }),
+      pooledBackupRisk: rec('deliverability.pooledBackupRisk', 'minor', 'minor / major', { basis: 'judgement', ref: '§9.9', note: "Client-perceived risk of backup pooled across the campus (OPEN-QUESTIONS 48, 2026-10-22): by default the same penalty as a minor permitting flag; the engineer can raise it to major for a project." }),
       siteFitPenalty: rec('deliverability.siteFitPenalty', false, 'toggle', { basis: 'judgement', ref: '§9.9', note: 'Off by default: the site-fit status has no effect on the deliverability or weighted score. On: the axis is labelled "Deliverability (incl. site fit)".' }),
       siteFitFlagsPenalty: rec('deliverability.siteFitFlagsPenalty', 10, 'points for "Fits with flags"', { basis: 'judgement', ref: '§9.9', note: 'Applies only when the site-fit penalty is on.' }),
       siteFitNoFitPenalty: rec('deliverability.siteFitNoFitPenalty', 25, 'points for "Does not fit"', { basis: 'judgement', ref: '§9.9', note: 'Applies only when the site-fit penalty is on.' }),

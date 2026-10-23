@@ -84,8 +84,9 @@ export function economics(ctx, v, sz, disp, ttp) {
   // Phase shares for per-phase plant (C19 = per phase)
   const phaseShares = ctx.phases.map((p) => ({ year: yearOfMonth(p.m), share: p.it / Math.max(1e-9, sz.itMW) }));
   const perPhase = v.C19 !== 'phase1';
-  const bookPhased = (item, total, life) => {
-    if (perPhase) for (const ps of phaseShares) addCapex(item, ps.year, total * ps.share, life);
+  const bookPhased = (item, total, life, shares = null) => {
+    // shares: per-phase fractions of `total` (backup gensets per building, OPEN-QUESTIONS 47); otherwise IT shares.
+    if (perPhase) phaseShares.forEach((ps, i) => addCapex(item, ps.year, total * (shares ? shares[i] : ps.share), life));
     else addCapex(item, phaseShares.length ? phaseShares[0].year : 0, total, life);
   };
 
@@ -138,7 +139,10 @@ export function economics(ctx, v, sz, disp, ttp) {
   // Backup gensets, BESS-augmented UPS BESS, fuel storage (per phase)
   if (sz.backup.tech) {
     const t = TECH[sz.backup.tech];
-    bookPhased(`${choiceLabel('C5', v.C5)} (${v.C6})`, sz.backup.mw * 1000 * t.p.capexPerKW, t.p.life);
+    const ub = sz.backup.unitsByPhase;
+    const ubTot = ub ? ub.reduce((a, b) => a + b, 0) : 0;
+    const unitShares = ub && ubTot > 0 && ub.length === phaseShares.length ? ub.map((u) => u / ubTot) : null;
+    bookPhased(`${choiceLabel('C5', v.C5)} (${v.C6}${v.C5a === 'pooled' ? ', pooled' : ''})`, sz.backup.mw * 1000 * t.p.capexPerKW, t.p.life, unitShares);
     if (sz.backup.bessMW > 0) bookPhased('BESS for UPS augmentation', bessCapex(sz.backup.bessMW, sz.backup.bessMWh), bp.life);
   }
   if (sz.backup.fuelM3 > 0) bookPhased('Bulk fuel storage', sz.backup.fuelM3 * TECH.fuelStorage.p.capexPerM3, 30);
@@ -600,6 +604,12 @@ export function deliverability(ctx, v, sz, disp, flags, siteFit = null) {
   if (longLead.length) items.push({ item: `Procurement lead time > ${P.leadTimeThresholdM} months: ${longLead.map((id) => TECH[id].name).join(', ')}`, value: longLead.length, points: -P.leadTimePenalty * longLead.length });
   // Optional site-fit penalty (§9.9), off by default: only then does site fit enter the score, and the axis is
   // labelled "Deliverability (incl. site fit)". Site-fit flags never count as permitting flags above.
+  // Backup pooled across the campus (OPEN-QUESTIONS 48): a client-perceived risk item, by default the penalty of a
+  // minor permitting flag; the engineer can raise it to major (deliverability.pooledBackupRisk).
+  if (v.C5a === 'pooled') {
+    const major = P.pooledBackupRisk === 'major';
+    items.push({ item: `Client-perceived risk: backup pooled across the campus (${major ? 'major' : 'minor'})`, value: 1, points: -(major ? P.majorFlagPenalty : P.minorFlagPenalty) });
+  }
   const penaltyOn = !!P.siteFitPenalty;
   if (penaltyOn && siteFit && siteFit.status !== 'Fits') {
     const pts = siteFit.status === 'Does not fit' ? P.siteFitNoFitPenalty : P.siteFitFlagsPenalty;

@@ -149,6 +149,9 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           options={[['location', 'Location-based'], ['market', 'Market-based'], ['cfe', '1 − hourly CFE %']]} />
         <ToggleField label="Rank requirement-compliant options first" checked={inputs.settings.rankCompliantFirst} onCommit={set('settings.rankCompliantFirst')} path="settings.rankCompliantFirst" inputs={inputs}
           hint={'Off by default. On: options whose resilience is "Does not meet" rank after the others; no score changes. Site fit does not count (Site tab is Beta).'} />
+        <SelectField label="Client-perceived risk of pooled backup" value={inputs.deliverability.pooledBackupRisk} onCommit={set('deliverability.pooledBackupRisk')} path="deliverability.pooledBackupRisk" inputs={inputs}
+          options={[['minor', 'Minor (default)'], ['major', 'Major']]}
+          hint={`Options whose backup is pooled across the campus lose ${inputs.deliverability.minorFlagPenalty} deliverability points (minor) or ${inputs.deliverability.majorFlagPenalty} (major). Per-building backup is the rule (OPEN-QUESTIONS 47, 48).`} />
         {siteBeta ? <ToggleField label="Include site-fit penalty in deliverability (Site tab, Beta)" checked={inputs.deliverability.siteFitPenalty} onCommit={set('deliverability.siteFitPenalty')} path="deliverability.siteFitPenalty" inputs={inputs}
           hint={`Off by default: site fit is a status, not a weight. On: −${inputs.deliverability.siteFitFlagsPenalty} for "Fits with flags", −${inputs.deliverability.siteFitNoFitPenalty} for "Does not fit", and the axis reads "Deliverability (incl. site fit)". It is switched off whenever the Site tab is turned off.`} /> : null}
         <NumberField label="Generation cap" unit="options" value={inputs.settings.generationCap} onCommit={(v) => update('settings.generationCap', Math.round(v))} path="settings.generationCap" inputs={inputs} min={20} step={1} />

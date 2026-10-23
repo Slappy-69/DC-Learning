@@ -33,7 +33,7 @@ export function isNA(id, v) {
   switch (id) {
     case 'C2': return !(v.C1 === 'bridge' || v.C1 === 'islanded');
     case 'C3': return v.C1 !== 'bridge';
-    case 'C6': case 'C7': return v.C5 === 'none' || v.C5 === 'retained';
+    case 'C5a': case 'C6': case 'C7': return v.C5 === 'none' || v.C5 === 'retained';
     case 'C4s': return v.C4 === 'none';
     case 'C12r': return v.C12 === 'none';
     case 'C14': return v.C13 === 'none';
@@ -67,7 +67,7 @@ export const RULES = [
     fails: (v, inputs) => v.C3 === 'split' && (v.C2 === 'bessSolar' || !permSet(inputs).has(v.C8)) },
 ];
 export const RULE_D = { id: 'd', name: '(d) Choices that are n/a collapse to "n/a" rather than multiplying options',
-  detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets.' };
+  detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, the backup arrangement when there are no gensets, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets.' };
 
 // Archetype baselines (BRIEF §7.3). Values not listed take the first open value of the choice.
 export const ARCHETYPES = [
@@ -314,7 +314,7 @@ export function optionName(v, s) {
   else if (v.C1 === 'islanded') parts.push(`Islanded ${choiceLabel('C2', v.C2).toLowerCase()}`);
   else if (v.C1 === 'export') parts.push('Grid + export');
   if (v.C4 !== 'none') parts.push(`${choiceLabel('C4', v.C4)}${v.C4s === 'shortfall' ? ' top-up' : ''}`);
-  const backup = v.C5 === 'none' ? 'no backup' : v.C5 === 'retained' ? 'retained-plant backup' : `${choiceLabel('C5', v.C5).replace(' gensets', '')} ${v.C6}`;
+  const backup = v.C5 === 'none' ? 'no backup' : v.C5 === 'retained' ? 'retained-plant backup' : `${choiceLabel('C5', v.C5).replace(' gensets', '')} ${v.C6}${v.C5a === 'pooled' ? ' pooled' : ''}`;
   parts.push(backup);
   parts.push(choiceLabel('C8', v.C8).split(' ')[0]);
   if (s && s.solarMWp > 0) parts.push(`PV ${s.solarMWp.toFixed(s.solarMWp < 10 ? 1 : 0)} MWp`);

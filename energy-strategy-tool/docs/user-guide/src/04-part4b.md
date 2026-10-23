@@ -287,6 +287,8 @@ Deliverability is a score out of 100 for how hard an option will be to deliver: 
 
 **Permitting flags** counted are those marked as permitting (IED, MCP, Seveso fuel, hydrogen, wind, stack, run-hours). The noise proxy and site-fit flags are never counted.
 
+**Pooled backup** (built 23 October 2026, OPEN-QUESTIONS 48). An option whose backup is pooled across the campus loses the penalty of a minor permitting flag (3 points) for client-perceived risk, or of a major one (8 points) if the engineer raises it.
+
 **Long lead times.** In the current defaults only the SMR (36 months of procurement) exceeds 24 months. Published data suggests large diesel gensets now take 18 to 24 months (chapter 50).
 
 **Worked example: the T1 leader.** No emerging or nascent technology; one major permitting flag (IED: 43 × 2.75 MW ÷ 0.38 = 311 MWth of gensets) and one minor (MCP: each 2.75 MW genset is 7.2 MWth): 100 − 8 − 3 = **89**. In T1 the scores range from 65.7 (the hydrogen archetype) to 97.1.

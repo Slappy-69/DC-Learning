@@ -91,41 +91,7 @@ export function sizeOption(ctx, v) {
   const criticalMW = req.backedPct * itMW * (1 + cp.coolPeak);
   sentences.push(`Critical load for backup: ${(req.backedPct * 100).toFixed(0)} % × (${r1(itMW)} MW IT + ${r1(itMW * cp.coolPeak)} MW mechanical at design) = ${r1(criticalMW)} MW.`);
   const backup = { tech: null, units: 0, unitMW: 0, mw: 0, nUnits: 0, fuelM3: 0, autonomyH: 0, bessMW: 0, bessMWh: 0, topology: v.C6 };
-  if (v.C5 !== 'none' && v.C5 !== 'retained') {
-    const t = TECH[BACKUP_TECH[v.C5]];
-    backup.tech = t.id;
-    backup.unitMW = t.p.unitMW;
-    const n = Math.ceil(criticalMW / t.p.unitMW - 1e-9);
-    backup.nUnits = n;
-    if (v.C5 === 'bessUps') {
-      backup.units = n;
-      backup.mw = n * t.p.unitMW;
-      const red = unitsWithRedundancy(n, v.C6, req.blockSize, req.catcherN);
-      backup.bessMW = red.extra * t.p.unitMW;
-      backup.bessMWh = backup.bessMW * TECH.bessUps.p.durationH;
-      sentences.push(`BESS-augmented UPS: ${r1(criticalMW)} MW ÷ ${t.p.unitMW} MW = ${n} HVO units (N, no redundant units); the ${v.C6} redundancy (${red.extra} units) is provided by ${r1(backup.bessMW)} MW / ${r1(backup.bessMWh)} MWh BESS.`);
-    } else {
-      const red = unitsWithRedundancy(n, v.C6, req.blockSize, req.catcherN);
-      backup.units = red.total;
-      backup.mw = red.total * t.p.unitMW;
-      sentences.push(`${t.name}: ${r1(criticalMW)} MW ÷ ${t.p.unitMW} MW per unit = ${(criticalMW / t.p.unitMW).toFixed(1)} → ${n} units; ${n} units form ${red.blocks} block${red.blocks === 1 ? '' : 's'} (block size ${req.blockSize}); ${v.C6} adds ${red.extra}; total ${red.total} units (${r1(backup.mw)} MW).`);
-    }
-    // Fuel storage (§9.2): liquid fuel only. Gas gensets rely on the network.
-    if (t.fuel === 'diesel' || t.fuel === 'hvo') {
-      const fs = TECH.fuelStorage.p;
-      // Autonomy in hours only: "belly tanks only" was removed as a choice (OPEN-QUESTIONS 52, 2026-10-22).
-      const hours = Number(v.C7);
-      backup.autonomyH = hours;
-      const m3 = Math.max(0, (criticalMW * 1000 * hours * fs.dieselLPerKWh) / 1000 - fs.bellyTankM3);
-      backup.fuelM3 = m3;
-      sentences.push(`Fuel storage: ${r1(criticalMW)} MW × ${hours} h × ${fs.dieselLPerKWh} L/kWh = ${Math.round(m3).toLocaleString('en-GB')} m³ (${Math.round(m3 * fs.densityTPerM3).toLocaleString('en-GB')} t).`);
-    } else {
-      backup.autonomyH = Infinity;
-      sentences.push('Fuel storage: none; gas gensets depend on the gas network during a grid outage.');
-    }
-  } else if (v.C5 === 'none') {
-    sentences.push('Backup: none (flagged).');
-  }
+  if (v.C5 === 'none') sentences.push('Backup: none (flagged).');
 
   // --- Grid connection: offered capacity per period, never resized (§9.2) ---
   const gridByMonth = ctx.gridCap; // shared array: identical for every option
@@ -245,6 +211,76 @@ export function sizeOption(ctx, v) {
       bridge.primeMW = keep * t.p.unitMW;
       bridge.permanentShortfallMW = SP;
       sentences.push(`From the full grid date (month ${T}): permanent shortfall ${r1(SP)} MW${spM >= 0 ? ` (month ${spM})` : ''} ÷ ${t.p.unitMW} MW = ${nP} units + N+1 per block of ${req.blockSize} = ${keep} units (${r1(bridge.primeMW)} MW) keep running as prime; ${bridge.units - keep > 0 ? `the other ${bridge.units - keep} unit${bridge.units - keep === 1 ? '' : 's'} (${r1(bridge.mw - bridge.primeMW)} MW) ${bridge.units - keep === 1 ? 'is' : 'are'} retired into backup` : 'no units are left to retire into backup'}.`);
+    }
+  }
+
+  // --- Backup gensets (C5): per building or pooled across the campus (OPEN-QUESTIONS 47, 48, 2026-10-22) ---
+  // Per building: one backup technology per building (phase), never mixed within a building. Bridging plant retired
+  // into backup after the grid arrives (C3 = Retain as backup / for grid services / the share not kept as prime)
+  // backs up whole buildings, in phase order, at the required topology; gensets back up the rest, each building with
+  // its own redundancy. Pooled: the retired plant (redundant units removed) and the gensets together make up the
+  // campus critical load; the gensets are sized to what is left, with campus-wide redundancy.
+  if (v.C5 !== 'none' && v.C5 !== 'retained') {
+    const t = TECH[BACKUP_TECH[v.C5]];
+    backup.tech = t.id;
+    backup.unitMW = t.p.unitMW;
+    backup.arrangement = v.C5a;
+    const critOf = (it) => req.backedPct * it * (1 + cp.coolPeak);
+    const buildings = ctx.phases.length ? ctx.phases.map((ph, k) => ({ k, it: ph.it, crit: critOf(ph.it) })) : [{ k: 0, it: itMW, crit: criticalMW }];
+    const retired = v.C1 === 'bridge' && bridge && bridge.units > 0 && ['backup', 'gridServices', 'split'].includes(v.C3) && bridge.fuelMonth !== Infinity
+      ? { units: bridge.units - (bridge.primeUnits || 0), unitMW: bridge.unitMW, name: TECH[bridge.tech].name } : null;
+    let critGen = 0, genN = 0, genUnits = 0, bessExtra = 0;
+    const unitsByPhase = [];
+    const coveredByRetired = [];
+    if (v.C5a === 'pooled') {
+      const retiredFirm = retired ? Math.max(0, retired.units - Math.ceil(retired.units / req.blockSize)) * retired.unitMW : 0;
+      critGen = Math.max(0, criticalMW - retiredFirm);
+      const n = Math.ceil(critGen / t.p.unitMW - 1e-9);
+      const red = unitsWithRedundancy(n, v.C6, req.blockSize, req.catcherN);
+      genN = n;
+      if (v.C5 === 'bessUps') { genUnits = n; bessExtra = red.extra; } else genUnits = red.total;
+      sentences.push(`${t.name}, pooled across the campus: ${r1(criticalMW)} MW critical load${retiredFirm > 0 ? ` less ${r1(retiredFirm)} MW of retired ${retired.name} (redundant units removed) = ${r1(critGen)} MW` : ''} ÷ ${t.p.unitMW} MW = ${n} units; ${v.C5 === 'bessUps' ? `the ${v.C6} redundancy (${red.extra} units) is provided by BESS` : `${v.C6} adds ${red.extra}; total ${red.total} units (${r1(red.total * t.p.unitMW)} MW)`}.`);
+    } else {
+      let retLeft = retired ? retired.units : 0;
+      const parts = [];
+      for (const b of buildings) {
+        if (retired) {
+          const nb = Math.ceil(b.crit / retired.unitMW - 1e-9);
+          const rb = unitsWithRedundancy(nb, req.topology, req.blockSize, req.catcherN).total;
+          if (rb <= retLeft) { retLeft -= rb; coveredByRetired.push(b.k + 1); unitsByPhase.push(0); continue; }
+        }
+        const n = Math.ceil(b.crit / t.p.unitMW - 1e-9);
+        const red = unitsWithRedundancy(n, v.C6, req.blockSize, req.catcherN);
+        critGen += b.crit;
+        genN += n;
+        if (v.C5 === 'bessUps') { genUnits += n; bessExtra += red.extra; unitsByPhase.push(n); } else { genUnits += red.total; unitsByPhase.push(red.total); }
+        parts.push(`building ${b.k + 1}: ${r1(b.crit)} MW → ${n} + ${red.extra}`);
+      }
+      sentences.push(`${t.name}, per building (one backup technology per building)${coveredByRetired.length ? `; building${coveredByRetired.length === 1 ? '' : 's'} ${coveredByRetired.join(', ')} backed up by retired ${retired.name}` : ''}: ${parts.length ? `${parts.join('; ')} (${v.C6}${v.C5 === 'bessUps' ? ', redundancy by BESS' : ''}) = ${genUnits} units (${r1(genUnits * t.p.unitMW)} MW)` : 'no gensets needed'}.`);
+    }
+    backup.nUnits = genN;
+    backup.units = genUnits;
+    backup.mw = genUnits * t.p.unitMW;
+    backup.unitsByPhase = v.C5a === 'pooled' ? null : unitsByPhase;
+    backup.coveredByRetired = coveredByRetired;
+    backup.genCriticalMW = critGen;
+    if (v.C5 === 'bessUps') {
+      backup.bessMW = bessExtra * t.p.unitMW;
+      backup.bessMWh = backup.bessMW * TECH.bessUps.p.durationH;
+      sentences.push(`BESS-augmented UPS: ${r1(backup.bessMW)} MW / ${r1(backup.bessMWh)} MWh BESS in place of the ${bessExtra} redundant units.`);
+    }
+    // Fuel storage (§9.2): liquid fuel only, for the critical load the gensets back up. Gas gensets rely on the network.
+    if (t.fuel === 'diesel' || t.fuel === 'hvo') {
+      const fs = TECH.fuelStorage.p;
+      // Autonomy in hours only: "belly tanks only" was removed as a choice (OPEN-QUESTIONS 52, 2026-10-22).
+      const hours = Number(v.C7);
+      backup.autonomyH = hours;
+      const m3 = Math.max(0, (critGen * 1000 * hours * fs.dieselLPerKWh) / 1000 - fs.bellyTankM3);
+      backup.fuelM3 = m3;
+      sentences.push(`Fuel storage: ${r1(critGen)} MW × ${hours} h × ${fs.dieselLPerKWh} L/kWh = ${Math.round(m3).toLocaleString('en-GB')} m³ (${Math.round(m3 * fs.densityTPerM3).toLocaleString('en-GB')} t).`);
+    } else {
+      backup.autonomyH = Infinity;
+      sentences.push('Fuel storage: none; gas gensets depend on the gas network during a grid outage.');
     }
   }
 

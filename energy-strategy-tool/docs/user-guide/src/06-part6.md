@@ -109,6 +109,7 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Bridging plant split when the grid arrives: shortfall share kept as prime, rest as backup (C3, work package 3b) | Built (23 Oct 2026) | 20, 34, 35 |
 | Permitting outlook: likely / uncertain / unlikely by technology, with ready and needed months (work package 3b; country differences still to research) | Built (23 Oct 2026) | 8, 23, 42 |
 | IT the grid supports by grid period; grid-matched phasing reference in the run summary (work package 3b) | Built (23 Oct 2026) | 21 |
+| Backup per building or pooled (C5a); retired bridging plant backs up whole buildings; pooled carries a client-perceived risk item (work package 3b) | Built (23 Oct 2026) | 20, 35, 43 |
 | Power adequacy, rest of 3b: shortfall-sized batteries, backup rules, grid-matched phasing option | Agreed, not built yet | — |
 | IT load estimated from area | Agreed | 16 |
 | Load shapes, AI profiles | Agreed | 16 |
