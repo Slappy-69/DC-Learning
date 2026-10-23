@@ -66,6 +66,7 @@ import { betaTests } from './beta-tests.mjs';
 import { solarTests } from './solar-tests.mjs';
 import { adequacyTests } from './adequacy-tests.mjs';
 import { programmeTests } from './programme-tests.mjs';
+import { topupTests } from './topup-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -291,13 +292,16 @@ await test('3. No option is hidden by default', () => {
   const dom = runT1.options.filter((o) => o.dominatedBy);
   assert.ok(dom.every((o) => Number.isInteger(o.rank)));
   // T3: every grid-dependent option stays in the list with unmet load and flags (AC 8/14)
-  const gridDep = runT3.options.filter((o) => o.v.C1 === 'wait');
+  // (A top-up firm plant, C4 sizing "Permanent shortfall" since 2026-10-23, OPEN-QUESTIONS 58, is sized to close the
+  // shortfall, so those options are not grid-dependent; they are counted separately.)
+  const gridDep = runT3.options.filter((o) => o.v.C1 === 'wait' && o.v.C4s !== 'shortfall');
+  const topWait = runT3.options.filter((o) => o.v.C1 === 'wait' && o.v.C4s === 'shortfall');
   assert.ok(gridDep.length > 0);
   assert.ok(gridDep.every((o) => o.unmet.mwh > 0 && o.flags.some((f) => f.id === 'grid-binding') && o.flags.some((f) => f.id === 'target-ttp')));
   const h2 = runT1.options.find((o) => o.archetype === 'A10b');
   assert.ok(h2.flags.some((f) => f.id === 'fuel-h2-unavailable'), 'hydrogen variant flag missing');
   const failShown = applyView(runFail.options, DEFAULT_VIEW).list.filter((o) => o.resilience.status === 'Does not meet');
-  return `Resilience Meets/Meets with flags/Does not meet in the default view: T1 ${statusCounts[0]}, T3 ${statusCounts[1]}, T1 + C5 None ${statusCounts[2]}; ${failShown.length} "Does not meet" options shown and ranked (best rank ${Math.min(...failShown.map((o) => o.rank))} of ${runFail.options.length}), incl. ${runFail.options.filter((o) => o.v.C5 === 'none' && o.v.C1 === 'wait').length} grid-only C5 = None at 0 MW backed failing "Backed load"; failing items on the ${runFail.options.filter((o) => o.v.C5 === 'none').length} C5 = None options: ${[...new Set(runFail.options.filter((o) => o.v.C5 === 'none').map((o) => o.resilience.failing.join(' + ')))].join(' | ')}. T1: ${runT1.options.length}/${runT1.options.length} shown by default (${dom.length} dominated, all shown and ranked); T3: ${runT3.options.length}/${runT3.options.length} shown; ${gridDep.length} T3 grid-dependent options listed with unmet load + "Grid capacity binding" + time-to-power flags; archetypes present: ${[...new Set(runT1.options.map((o) => o.archetype).filter(Boolean))].join(', ')}.`;
+  return `Resilience Meets/Meets with flags/Does not meet in the default view: T1 ${statusCounts[0]}, T3 ${statusCounts[1]}, T1 + C5 None ${statusCounts[2]}; ${failShown.length} "Does not meet" options shown and ranked (best rank ${Math.min(...failShown.map((o) => o.rank))} of ${runFail.options.length}), incl. ${runFail.options.filter((o) => o.v.C5 === 'none' && o.v.C1 === 'wait').length} grid-only C5 = None at 0 MW backed failing "Backed load"; failing items on the ${runFail.options.filter((o) => o.v.C5 === 'none').length} C5 = None options: ${[...new Set(runFail.options.filter((o) => o.v.C5 === 'none').map((o) => o.resilience.failing.join(' + ')))].join(' | ')}. T1: ${runT1.options.length}/${runT1.options.length} shown by default (${dom.length} dominated, all shown and ranked); T3: ${runT3.options.length}/${runT3.options.length} shown; ${gridDep.length} T3 grid-dependent options listed with unmet load + "Grid capacity binding" + time-to-power flags (${topWait.length} "wait" options with a top-up firm plant, ${topWait.filter((o) => o.unmet.mwh > 0).length} of them with unmet load); archetypes present: ${[...new Set(runT1.options.map((o) => o.archetype).filter(Boolean))].join(', ')}.`;
 });
 
 // ---------------------------------------------------------------------------
@@ -1167,6 +1171,9 @@ await adequacyTests(test, siteRuns);
 
 // 18. Ordering from day one and the permitting allowance (OPEN-QUESTIONS 44, 45, 56; build plan 3b) (tests/programme-tests.mjs)
 await programmeTests(test, siteRuns);
+
+// 19. Firm generation sized two ways (OPEN-QUESTIONS 58; build plan 3b) (tests/topup-tests.mjs)
+await topupTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

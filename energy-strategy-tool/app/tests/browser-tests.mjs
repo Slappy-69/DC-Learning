@@ -488,24 +488,31 @@ await check(`B9. A weight preset moves the pick without a re-run; repaint assert
       setTimeout(() => resolve(-1), 5000);
     });
   }, label);
-  // "Speed to market" since 2026-10-22: with the UK ETS price approved that day the T1 Balanced leader is also the
-  // Lowest cost pick, so that preset no longer moves the pick (work package 0, batch 1).
-  const samples = [await timeClick('Speed to market')];
+  // The first preset that moves the pick away from the Balanced leader. Which one does depends on the option sample
+  // (it was "Lowest cost" until 2026-10-22 and "Speed to market" until the C4 sizing choice of 2026-10-23), so the
+  // check tries them in turn; a preset that leaves the pick in place keeps it equal to the Balanced pick.
+  let preset = null;
+  let first = -1;
+  for (const lbl of ['Speed to market', 'Lowest carbon', 'Lowest cost', 'Lowest risk']) {
+    first = await timeClick(lbl);
+    if (first >= 0) { preset = lbl; break; }
+  }
+  const samples = [first];
   const after = await page.locator('.pick-line strong').first().innerText();
   const leaderAfter = await page.locator('.header-strip .hs-item').nth(1).innerText();
   const status = await page.locator('.status').innerText();
-  ok(samples[0] >= 0 && after !== before, 'the pick did not change with the "Speed to market" preset');
+  ok(preset && after !== before, 'no weight preset changed the pick');
   ok(leaderAfter.includes(after.replace(/^#\d+ /, '')), `header leader "${leaderAfter}" is not the pick "${after}"`);
   ok(!/Screening options/.test(status), 'a weight change started a re-run');
   samples.push(await timeClick('Balanced'));
-  samples.push(await timeClick('Speed to market'));
+  samples.push(await timeClick(preset));
   ok(samples.every((x) => x >= 0), `a preset change did not move the pick within 5 s (${samples.join(', ')})`);
   ok(!/Screening options/.test(await page.locator('.status').innerText()), 'a weight change started a re-run');
   const med = samples.slice().sort((a, b) => a - b)[1];
   report.weightMs = med;
   await page.locator('.preset-row button', { hasText: 'Balanced' }).click();
   ok(med <= B9_BOUND_MS, `median repaint ${med.toFixed(0)} ms is above the ${B9_BOUND_MS} ms regression bound (samples ${samples.map((x) => x.toFixed(0)).join(', ')} ms)`);
-  return `pick "${before.slice(0, 40)}…" → "${after.slice(0, 40)}…"; click to repaint of the pick line ${samples.map((x) => x.toFixed(0)).join(', ')} ms, median ${med.toFixed(0)} ms ≤ ${B9_BOUND_MS} ms (asserted); §17 target ≤ 100 ms on the 4-core reference machine: ${med <= 100 ? 'also met on this sandbox' : `not met on this 2-core sandbox (median ${(med - 100).toFixed(0)} ms over; open performance item)`}; no re-run; header leader = pick before (${leaderBefore.includes(before.replace(/^#\d+ /, '')) ? 'yes' : 'no'}) and after (yes).`;
+  return `"${preset}": pick "${before.slice(0, 40)}…" → "${after.slice(0, 40)}…"; click to repaint of the pick line ${samples.map((x) => x.toFixed(0)).join(', ')} ms, median ${med.toFixed(0)} ms ≤ ${B9_BOUND_MS} ms (asserted); §17 target ≤ 100 ms on the 4-core reference machine: ${med <= 100 ? 'also met on this sandbox' : `not met on this 2-core sandbox (median ${(med - 100).toFixed(0)} ms over; open performance item)`}; no re-run; header leader = pick before (${leaderBefore.includes(before.replace(/^#\d+ /, '')) ? 'yes' : 'no'}) and after (yes).`;
 });
 await main.ctx.close();
 await check('B10. No console errors or page errors on the main page', async () => {

@@ -139,6 +139,9 @@ export const CHOICES = [
     ['remove', 'Remove'], ['backup', 'Retain as backup'], ['prime', 'Retain as prime'], ['gridServices', 'Retain for grid services']] },
   { id: 'C4', name: 'Primary firm on-site generation', values: [
     ['none', 'None'], ['chp', 'Gas CHP-trigen'], ['gasRecip', 'Gas recips'], ['fuelCell', 'Fuel cells'], ['smr', 'SMR'], ['hydrogen', 'Hydrogen']] },
+  // OPEN-QUESTIONS 58 (2026-10-23): each C4 technology sized two ways, so the ranking compares a baseload plant with
+  // a top-up plant that closes the permanent shortfall.
+  { id: 'C4s', name: 'Firm generation sizing', values: [['average', 'Average load (baseload)'], ['shortfall', 'Permanent shortfall (top-up)']] },
   { id: 'C5', name: 'Backup power technology', values: [
     ['diesel', 'Diesel gensets'], ['hvo', 'HVO gensets'], ['gas', 'Gas gensets'], ['bessUps', 'BESS-augmented UPS + reduced gensets'],
     ['retained', 'Retained bridging plant'], ['none', 'None']] },
@@ -194,6 +197,7 @@ export function defaultChoiceState(id, inputs) {
       return small ? { state: 'open', values: ['none'], windDefault: true } : { state: 'open', values: ['none', 'fit', 'offsite'] };
     }
     case 'C12': return { state: 'open', values: ['none', '2h25', '4h50'] };
+    case 'C4s': return { state: 'open', values: ['average', 'shortfall'] };
     case 'C12r': return { state: 'locked', values: ['peakShave'] };
     case 'C13': return { state: 'open', values: ['none', 'hybrid'] };
     case 'C14': return { state: 'open', values: ['50', '80', '100'] };
@@ -213,7 +217,8 @@ for (const c of CHOICES) {
     basis: 'judgement', ref: '§8', derived: ['C6', 'C7', 'C8', 'C10', 'C11', 'C15'].includes(c.id),
     note: c.id === 'C11' ? 'Default "None" when site area ≤ 20 ha and no off-site land; otherwise open.' :
       c.id === 'C10' ? 'Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).' :
-      c.id === 'C12r' ? 'Default role "peak-shave against grid cap" (§8 C12).' : '',
+      c.id === 'C12r' ? 'Default role "peak-shave against grid cap" (§8 C12).' :
+      c.id === 'C4s' ? 'Both sizings generated (OPEN-QUESTIONS 58, 2026-10-23); "Permanent shortfall" only for cooling types with a permanent shortfall (rule g).' : '',
   });
 }
 

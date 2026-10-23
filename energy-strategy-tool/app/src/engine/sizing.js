@@ -136,14 +136,30 @@ export function sizeOption(ctx, v) {
   let prime = null;
   if (v.C4 !== 'none') {
     const t = TECH[PRIME_TECH[v.C4]];
-    const frac = v.C4 === 'chp' ? t.p.sizeFraction : 1.0;
-    const target = frac * avgMW;
-    const units = Math.max(1, Math.round(target / t.p.unitMW));
-    const mw = units * t.p.unitMW;
     const avail = techAvailMonth(ctx, t);
     const fuelM = fuelAvailMonth(ctx, t.fuel);
-    prime = { role: 'prime', tech: t.id, mw, units, unitMW: t.p.unitMW, availMonth: avail, fuelMonth: fuelM };
-    sentences.push(`${t.name} (firm prime): ${(frac * 100).toFixed(0)} % of steady-state average facility load ${r1(avgMW)} MW = ${r1(target)} MW → ${units} × ${t.p.unitMW} MW = ${r1(mw)} MW.`);
+    if (v.C4s === 'shortfall') {
+      // Top-up plant (OPEN-QUESTIONS 58, 2026-10-23): the permanent shortfall, design load less the full grid capacity
+      // from the full grid date on (islanded: the whole design load), plus N+1 per block, as bridging plant.
+      const T0 = ctx.fullGridM;
+      let S = 0, sM = -1;
+      for (let m = v.C1 === 'islanded' ? 0 : Math.max(0, T0); m < ctx.nMonthsTimeline; m++) {
+        const s = designByMonth[m] - (v.C1 === 'islanded' ? 0 : ctx.gridCap[m]);
+        if (s > S) { S = s; sM = m; }
+      }
+      const n = Math.max(1, Math.ceil(S / t.p.unitMW - 1e-9));
+      const extra = Math.ceil(n / req.blockSize);
+      const units = n + extra;
+      prime = { role: 'prime', tech: t.id, mw: units * t.p.unitMW, units, nUnits: n, unitMW: t.p.unitMW, availMonth: avail, fuelMonth: fuelM, sizing: 'shortfall', shortfallMW: S, shortfallMonth: sM };
+      sentences.push(`${t.name} (firm top-up): ${v.C1 === 'islanded' ? `design load ${r1(S)} MW (islanded)` : `permanent shortfall (design load − full grid capacity, from month ${T0}) ${r1(S)} MW${sM >= 0 ? ` in month ${sM}` : ''}`} ÷ ${t.p.unitMW} MW = ${n} units + N+1 per block of ${req.blockSize} (+${extra}) = ${units} units (${r1(prime.mw)} MW).`);
+    } else {
+      const frac = v.C4 === 'chp' ? t.p.sizeFraction : 1.0;
+      const target = frac * avgMW;
+      const units = Math.max(1, Math.round(target / t.p.unitMW));
+      const mw = units * t.p.unitMW;
+      prime = { role: 'prime', tech: t.id, mw, units, unitMW: t.p.unitMW, availMonth: avail, fuelMonth: fuelM, sizing: 'average' };
+      sentences.push(`${t.name} (firm prime): ${(frac * 100).toFixed(0)} % of steady-state average facility load ${r1(avgMW)} MW = ${r1(target)} MW → ${units} × ${t.p.unitMW} MW = ${r1(mw)} MW.`);
+    }
   }
 
   // --- Bridging (C1/C2) ---
@@ -236,7 +252,7 @@ export function sizeOption(ctx, v) {
       ? `${t.p.planM} planning and consent + ${t.p.procM} procurement + ${t.p.buildM} construction`
       : `${p.permitM ? `${p.permitM} permitting allowance (${p.permitRegimes.join(', ')}) + ` : 'ordered from day one: '}${t.p.procM} procurement + ${t.p.buildM} construction`;
     const early = t.p.earliestYear && p.availMonth > programmeMonths(t, p.permitM) ? `, not before ${t.p.earliestYear}` : '';
-    sentences.push(`${t.name} (${p.role === 'prime' ? 'firm prime' : 'bridging'}) available from month ${p.availMonth}: ${steps} months${early}${p.fuelMonth === Infinity ? '; fuel not available at current inputs, so it does not run' : p.fuelMonth > p.availMonth ? ` (fuel from month ${p.fuelMonth})` : ''}.`);
+    sentences.push(`${t.name} (${p.role === 'prime' ? (p.sizing === 'shortfall' ? 'firm top-up' : 'firm prime') : 'bridging'}) available from month ${p.availMonth}: ${steps} months${early}${p.fuelMonth === Infinity ? '; fuel not available at current inputs, so it does not run' : p.fuelMonth > p.availMonth ? ` (fuel from month ${p.fuelMonth})` : ''}.`);
   }
 
   // --- Area budget (site areas, land take). Ground solar is sized from the ground area for PV the engineer

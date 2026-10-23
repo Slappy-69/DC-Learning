@@ -205,6 +205,7 @@ Going through the choices in order, a choice that does not apply is set to "n/a"
 | C2 bridging supply | C1 is neither "Bridge until grid" nor "Islanded" |
 | C3 plant after grid arrives | C1 is not "Bridge until grid" |
 | C6 topology, C7 autonomy, C18 genset arrangement | C5 is "None" or "Retained bridging plant" |
+| C4s firm generation sizing | C4 is "None" |
 | C12r BESS role | C12 is "None" |
 | C14 PPA coverage | C13 is "None" |
 
@@ -218,7 +219,8 @@ Only logically impossible combinations are removed, each by a named rule:
 - **(b)** Heat offtake needs district heating: C15 other than "None" not generated when district heating is "No".
 - **(c)** A battery in the "bridging support" role needs a battery: not generated with C12 "None".
 - **(e)** "Retained bridging plant" as backup needs bridging plant that stays on site (C1 "Islanded", or "Bridge until grid" with C3 not "Remove"). This rule was added by the builder.
-
+- **(f)** "Roof + ground" solar needs a ground area for PV above 0; otherwise it would repeat "Roof only" (built 22 October 2026).
+- **(g)** A top-up firm plant (C4 sizing "Permanent shortfall") needs a permanent shortfall for the option's cooling type: the design load above the full grid capacity after the full grid date. Islanded options always have one. Otherwise it would repeat C4 "None" (built 23 October 2026).
 T1: rule (e) removes 5,184; the others none. **57,024** valid combinations remain.
 
 ## Step 4. Archetypes
@@ -321,10 +323,23 @@ The cable route is the straight line from the POC to the buildable envelope (on 
 
 ## Firm prime plant (C4)
 
+Since 23 October 2026 each C4 technology is generated sized two ways (choice C4s, OPEN-QUESTIONS 58), so the ranking compares a baseload plant with a top-up plant.
+
+**Average load (baseload)**, as before:
+
 ::: formula
 | target = size fraction × steady-state average facility load (size fraction 1.0)
 | units = max(1, round(target ÷ unit size));  installed MW = units × unit size
 :::
+
+**Permanent shortfall (top-up)**: just enough to keep the option adequate once the full grid is connected, with the same redundancy as bridging plant:
+
+::: formula
+| S = largest (design load − full grid capacity) in any month from the full grid date on (islanded: the design load)
+| n = ⌈S ÷ unit size⌉;  units = n + ⌈n ÷ block size⌉ (N+1 per block of 10);  installed MW = units × unit size
+:::
+
+In T1 with evaporative cooling, for example, S is 9.0 MW, so a top-up CHP has 3 units plus 1 for N+1: 4 × 4.5 MW = 18 MW. A baseload CHP for the same cooling is sized to the average facility load of 91.8 MW: 20 × 4.5 MW = 90 MW.
 
 Available from its programme month (or its earliest year, or the gas date, whichever is later). The programme month (built 23 October 2026) is counted from day one:
 

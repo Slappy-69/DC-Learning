@@ -1496,3 +1496,20 @@ Months now (held / not held): rented generation 10 / 4; fuel cells 9; rooftop so
 T1 effect: in the 2,000 screened options, gas-engine bridges are available from month 21 (was 24), CHP from 27 (was 33), fuel cells from 9 (was 15; gas still arrives at month 18), rented generation from 10 (was 6). 953 options are still adequate and the leader is unchanged (OPIAR4Q, score 90.10, was 89.83; the scores move with the shorter lead times of the other options).
 
 Test run (ordering from day one, 2026-10-23): `npm test` 48/48 (new test 18, `tests/programme-tests.mjs`: records, the rule for every technology, the owner's 24-month gas turbine example, every T1 and T3 plant's month and regimes against the permitting flags, allowance 0 moves only held plant); `npm run build`; `npm run test:browser` 30/30.
+
+## Slice: firm generation sized two ways (work package 3b, part 3; 2026-10-23)
+
+Branch `feature/adequacy-first`. The owner's decision OPEN-QUESTIONS 58 (2026-10-23): size permanent on-site generation both ways, as two choices.
+
+What changed:
+- **New choice C4s "Firm generation sizing"** (after C4): Average load (baseload), as before; Permanent shortfall (top-up). Default open, both. Not applicable when C4 = None (rule d). Record `choices.C4s` (judgement).
+- **Top-up sizing** (`sizing.js`): S = the largest (design load − grid capacity) in any month from the full grid date to the end of the timeline (islanded: the design load); n = ⌈S ÷ unit size⌉; units = n + ⌈n ÷ block size⌉ (N+1 per block, as bridging plant). Sentence "… (firm top-up): permanent shortfall … = N units (X MW)". The programme sentence names "firm top-up".
+- **Rule (g)** (`generator.js`): the top-up sizing is not generated for a cooling type with no permanent shortfall, unless the option is islanded; it would repeat C4 = None. The cooling types with a permanent shortfall come from `adequacy.js` `permanentShortfallCoolings(inputs)` (a context without the site model, about 20 ms), so the inputs panel's projected count applies the rule too.
+- **Names:** a top-up plant is named "… top-up" (e.g. "Gas CHP-trigen top-up"). Baseload names are unchanged.
+- **Archetypes** keep the baseload sizing (the first open value), so A4, A8, A10a and A10b are unchanged.
+
+Interpretations (reversible): rule (g) rather than duplicates of C4 = None; the top-up redundancy is N+1 per block, as for bridging plant; the top-up covers the whole permanent shortfall on its own, even where retained bridging plant ("Retain as prime") also covers it.
+
+T1 effect: 53,284 combinations (rule g removes 10,080); the 2,000-option sample is drawn from a different space, so most options are new. 929 adequate. Leader O1AN3BKP (Grid + rented temporary generation bridge → retain for grid services · retained-plant backup · DLC · PV 2.5 MWp · PPA hybrid 50 %, score 91.53). 528 top-up options (289 adequate, best rank 33: a CHP top-up of 18 MW on evaporative cooling, LCOE €181/MWh, capex €56 m, 152 g/kWh) against 817 baseload options (418 adequate, best rank 136: CHP of 90 MW, LCOE €184/MWh, capex €270 m, 249 g/kWh).
+
+Test 3: the T3 "grid-dependent" check now excludes "wait" options with a top-up plant, which is sized to close the shortfall; they are counted separately.

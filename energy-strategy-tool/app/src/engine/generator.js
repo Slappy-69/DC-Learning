@@ -15,6 +15,15 @@
 
 import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel } from './defaults.js';
 import { mulberry32, subSeed, shuffle, hashString } from './prng.js';
+import { permanentShortfallCoolings } from './adequacy.js';
+
+// Cooling types with a permanent shortfall, once per inputs object (rule g).
+const PERM = new WeakMap();
+function permSet(inputs) {
+  let s = PERM.get(inputs);
+  if (!s) { s = permanentShortfallCoolings(inputs); PERM.set(inputs, s); }
+  return s;
+}
 
 export const NA = 'n/a';
 const IDS = CHOICES.map((c) => c.id);
@@ -25,6 +34,7 @@ export function isNA(id, v) {
     case 'C2': return !(v.C1 === 'bridge' || v.C1 === 'islanded');
     case 'C3': return v.C1 !== 'bridge';
     case 'C6': case 'C7': return v.C5 === 'none' || v.C5 === 'retained';
+    case 'C4s': return v.C4 === 'none';
     case 'C12r': return v.C12 === 'none';
     case 'C14': return v.C13 === 'none';
     case 'C18': return v.C5 === 'none' || v.C5 === 'retained';
@@ -49,9 +59,12 @@ export const RULES = [
   { id: 'f', name: '(f) "Roof + ground" solar requires a ground area for PV',
     detail: 'C10 = Roof + ground is not generated while the ground area for PV is 0 (OPEN-QUESTIONS 54, 2026-10-22); it would repeat Roof only.',
     fails: (v, inputs) => v.C10 === 'roofGround' && !(inputs.site.pvGroundHa > 0) },
+  { id: 'g', name: '(g) A top-up firm plant requires a permanent shortfall',
+    detail: 'C4 sizing = Permanent shortfall is not generated for a cooling type whose design load the full grid covers (OPEN-QUESTIONS 58, 2026-10-23); it would repeat C4 = None. Islanded options always have one.',
+    fails: (v, inputs) => v.C4s === 'shortfall' && v.C1 !== 'islanded' && !permSet(inputs).has(v.C8) },
 ];
 export const RULE_D = { id: 'd', name: '(d) Choices that are n/a collapse to "n/a" rather than multiplying options',
-  detail: 'C2 and C3 when there is no bridging, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets.' };
+  detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets.' };
 
 // Archetype baselines (BRIEF §7.3). Values not listed take the first open value of the choice.
 export const ARCHETYPES = [
@@ -199,6 +212,8 @@ function archetypeVector(a, inputs) {
   }
   // Solar archetypes take "Roof + ground" only when a ground area for PV is entered; otherwise Roof only (rule f).
   if (v.C10 === 'roofGround' && !(inputs.site.pvGroundHa > 0)) v.C10 = 'roof';
+  // Firm-plant archetypes take the top-up sizing only where there is a permanent shortfall (rule g).
+  if (v.C4s === 'shortfall' && v.C1 !== 'islanded' && !permSet(inputs).has(v.C8)) v.C4s = 'average';
   return canonical(v);
 }
 
@@ -295,7 +310,7 @@ export function optionName(v, s) {
   else if (v.C1 === 'bridge') parts.push(`Grid + ${choiceLabel('C2', v.C2).toLowerCase()} bridge → ${choiceLabel('C3', v.C3).toLowerCase()}`);
   else if (v.C1 === 'islanded') parts.push(`Islanded ${choiceLabel('C2', v.C2).toLowerCase()}`);
   else if (v.C1 === 'export') parts.push('Grid + export');
-  if (v.C4 !== 'none') parts.push(choiceLabel('C4', v.C4));
+  if (v.C4 !== 'none') parts.push(`${choiceLabel('C4', v.C4)}${v.C4s === 'shortfall' ? ' top-up' : ''}`);
   const backup = v.C5 === 'none' ? 'no backup' : v.C5 === 'retained' ? 'retained-plant backup' : `${choiceLabel('C5', v.C5).replace(' gensets', '')} ${v.C6}`;
   parts.push(backup);
   parts.push(choiceLabel('C8', v.C8).split(' ')[0]);

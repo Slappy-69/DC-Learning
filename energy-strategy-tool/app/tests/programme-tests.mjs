@@ -47,7 +47,7 @@ export async function programmeTests(test, ctxRuns) {
           if (!t.combustion && !(trig.sevesoH2 && t.fuel === 'hydrogen')) assert.ok(!regimes.includes('IED'), `${label} ${o.id}: non-combustion plant held for the IED`);
           assert.equal(p.permitM, regimes.length ? req.permitAllowanceM : 0);
           assert.equal(p.availMonth, techAvailMonth(ctx, t, p.permitM), `${label} ${o.id} ${p.role}: month`);
-          assert.ok(o.sizing.sentences.some((s) => s.startsWith(`${t.name} (${p.role === 'prime' ? 'firm prime' : 'bridging'}) available from month ${p.availMonth}:`)), `${label} ${o.id}: programme sentence`);
+          assert.ok(o.sizing.sentences.some((s) => s.startsWith(`${t.name} (${p.role === 'prime' ? (p.sizing === 'shortfall' ? 'firm top-up' : 'firm prime') : 'bridging'}) available from month ${p.availMonth}:`)), `${label} ${o.id}: programme sentence`);
           const k = `${p.tech} ${regimes.join('+') || 'day one'} → month ${p.availMonth}`; seen[k] = (seen[k] || 0) + 1;
         }
       }

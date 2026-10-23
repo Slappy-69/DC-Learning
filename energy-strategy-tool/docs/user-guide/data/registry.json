@@ -125,6 +125,23 @@
   "briefRef": "§8"
  },
  {
+  "path": "choices.C4s",
+  "value": {
+   "state": "open",
+   "values": [
+    "average",
+    "shortfall"
+   ]
+  },
+  "unit": "choice state",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Both sizings generated (OPEN-QUESTIONS 58, 2026-10-23); \"Permanent shortfall\" only for cooling types with a permanent shortfall (rule g).",
+  "briefRef": "§8"
+ },
+ {
   "path": "choices.C5",
   "value": {
    "state": "open",

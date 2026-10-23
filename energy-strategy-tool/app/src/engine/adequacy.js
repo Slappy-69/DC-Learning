@@ -10,7 +10,8 @@
 //
 // Pure: no UI, no browser APIs.
 
-import { designDemandByMonth } from './context.js';
+import { designDemandByMonth, buildContext } from './context.js';
+import { COOLING } from './defaults.js';
 
 export const ADEQUATE = 'Adequate';
 export const NOT_ADEQUATE = 'Not adequate';
@@ -73,4 +74,12 @@ export function shortfallAnalysis(ctx, coolingIds) {
     });
   }
   return { fullGridMonth: ctx.fullGridM, byCooling: out };
+}
+
+// Cooling types whose design load exceeds the full grid capacity after the full grid date (a permanent shortfall),
+// from the inputs alone (no site model). Used by compatibility rule (g): a top-up C4 plant is generated only where
+// there is a permanent shortfall to close (OPEN-QUESTIONS 58, 2026-10-23).
+export function permanentShortfallCoolings(inputs) {
+  const ctx = buildContext(inputs, { site: { noSiteModel: true } });
+  return new Set(shortfallAnalysis(ctx, Object.keys(COOLING)).byCooling.filter((c) => c.permanent.months > 0).map((c) => c.cooling));
 }
