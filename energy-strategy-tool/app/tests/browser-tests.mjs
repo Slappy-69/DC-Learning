@@ -813,8 +813,14 @@ await check('B19. Phone width (375 px, touch): after the run, the tab bar and th
   const during = await page.evaluate(() => { const rp = document.querySelector('.run-progress'); const det = document.querySelector('details.run-details'); return { inDetails: !!(det && rp && det.contains(rp)), h: rp ? Math.round(rp.getBoundingClientRect().height) : 0 }; });
   ok(!during.inDetails && during.h > 30, `progress panel during the run: ${JSON.stringify(during)}`);
   await page.waitForFunction(() => { const t = document.querySelector('.status').textContent; return /Last run/.test(t) && !/Screening options/.test(t); }, null, { timeout: 180000, polling: 250 });
-  const after = await page.evaluate(() => { const rp = document.querySelector('.run-progress'); const det = document.querySelector('details.run-details'); return { inDetails: !!(det && det.contains(rp)), open: det ? det.open : null, tabsBottom: Math.round(document.querySelector('.tabs').getBoundingClientRect().bottom + scrollY) }; });
-  ok(after.inDetails && after.tabsBottom <= 1000, `after the second run: ${JSON.stringify(after)}`);
+  const afterOf = () => page.evaluate(() => { const rp = document.querySelector('.run-progress'); const det = document.querySelector('details.run-details'); return { inDetails: !!(det && det.contains(rp)), open: det ? det.open : null, tabsBottom: Math.round(document.querySelector('.tabs').getBoundingClientRect().bottom + scrollY) }; });
+  let after = await afterOf();
+  // §12: the run summary (and "Run details" on a phone) opens when the generation changed since the last run. Since
+  // work package 5 the T1 example ticks a PPA and the defaults do not, so "Reset to defaults" changes the rule counts
+  // and opens it; one tap closes it again.
+  const autoOpened = after.open === true;
+  if (autoOpened) { await page.locator('details.run-details > summary').tap(); await page.waitForTimeout(250); after = await afterOf(); }
+  ok(after.inDetails && !after.open && after.tabsBottom <= 1000, `after the second run: ${JSON.stringify({ ...after, autoOpened })}`);
   await ctx.close();
   ok(errors.length === 0, errors.join(' | '));
   report.phone = { tabsBottom: m.tabs.bottom, firstTop: m.first.top };
