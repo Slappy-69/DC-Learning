@@ -1494,3 +1494,5 @@ Interpretations (reversible):
 Months now (held / not held): rented generation 10 / 4; fuel cells 9; rooftop solar 10; HVO-diesel prime 18 / 12; BESS 15; gas engines 21 / 15; gas turbines 24 / 18 (the owner's example); CHP 27 / 21; hydrogen 33 / 27; ground solar 21, wind 54, SMR 120 and not before 2035 (unchanged).
 
 T1 effect: in the 2,000 screened options, gas-engine bridges are available from month 21 (was 24), CHP from 27 (was 33), fuel cells from 9 (was 15; gas still arrives at month 18), rented generation from 10 (was 6). 953 options are still adequate and the leader is unchanged (OPIAR4Q, score 90.10, was 89.83; the scores move with the shorter lead times of the other options).
+
+Test run (ordering from day one, 2026-10-23): `npm test` 48/48 (new test 18, `tests/programme-tests.mjs`: records, the rule for every technology, the owner's 24-month gas turbine example, every T1 and T3 plant's month and regimes against the permitting flags, allowance 0 moves only held plant); `npm run build`; `npm run test:browser` 30/30.
