@@ -1515,3 +1515,19 @@ T1 effect: 53,284 combinations (rule g removes 10,080); the 2,000-option sample 
 Test 3: the T3 "grid-dependent" check now excludes "wait" options with a top-up plant, which is sized to close the shortfall; they are counted separately.
 
 Test run (firm generation sized two ways, 2026-10-23): `npm test` 49/49 (new test 19, `tests/topup-tests.mjs`); `npm run build`; `npm run test:browser` 30/30 (B9 now uses the first preset that moves the pick: "Lowest carbon" on this sample).
+
+## Slice: bridging plant split when the grid arrives (work package 3b, part 4; 2026-10-23)
+
+Branch `feature/adequacy-first`. The owner's decision OPEN-QUESTIONS 59 (2026-10-23), the owner's alternative (b) of OPEN-QUESTIONS 42. Built while the owner asked for work to continue without their input.
+
+What changed:
+- **New C3 value "Keep shortfall share as prime, rest as backup"** (`split`), open by default.
+- **Sizing:** SP = the largest (design load − grid capacity) from the full grid date to the end of the timeline; kept units = ⌈SP ÷ unit size⌉ + ⌈n ÷ block size⌉ (N+1 per block). If the bridging plant is smaller than its kept share, it is enlarged to it (the plant is bought for both jobs). `bridge.primeUnits`, `bridge.primeMW`.
+- **Running plant:** `sizing.js` `bridgeMWAt`: the whole plant before the full grid date, the kept share after. The firm supply by month, time-to-power and the inspector's timeline read it.
+- **Dispatch:** a second plant record `bridgeKept` (the kept share, mode 1 from the full grid date) next to the bridge record (whole plant, before the grid date), so run hours and per-plant energy show the two periods. The Dispatch tab names it "bridging share kept as prime".
+- **Economics and resilience:** as "Retain as backup": the plant is kept (capex not removed, fixed O&M and rental continue) and counts as retained bridging plant in the resilience check.
+- **Rule (h):** the split is not generated with C2 = BESS + solar only (nothing to keep running), or for a cooling type with no permanent shortfall (it would repeat "Retain as backup").
+
+Interpretations (reversible): rented bridging plant can also be split (the kept share keeps being rented, as "Retain as backup" keeps renting today); the bridging plant is enlarged to its kept share when that is larger.
+
+T1 effect: 59,764 combinations (rule h removes 3,888, rule g 12,672). 931 adequate. 127 split options in the sample (64 adequate, best rank 23: rented bridge 7 × 2 MW, 6 kept for the 9.0 MW permanent shortfall of evaporative cooling, LCOE €167.5/MWh). Leader: Grid + rented temporary generation bridge → retain for grid services · Diesel N+1 · Immersion · PV 3.3 MWp · PPA hybrid 50 % (score 91.26).

@@ -17,7 +17,7 @@ const C = { solar: SRC('solar'), wind: SRC('wind'), bess: SRC('bess'), grid: SRC
 const SOURCE_NAME = { gas: 'Gas plant', fuelCell: 'Fuel cells', diesel: 'HVO-diesel plant', hydrogen: 'Hydrogen plant', nuclear: 'Nuclear (SMR)' };
 const MWh = (v) => `${Math.round(v).toLocaleString('en-GB')} MWh`;
 const pad2 = (n) => String(n).padStart(2, '0');
-const plantName = (p) => `${TECH[p.tech] ? TECH[p.tech].name : p.tech} (${p.role === 'bridge' ? 'bridging' : 'prime'})`;
+const plantName = (p) => `${TECH[p.tech] ? TECH[p.tech].name : p.tech} (${p.role === 'bridge' ? 'bridging' : p.role === 'bridgeKept' ? 'bridging share kept as prime' : 'prime'})`;
 
 // Inspections by run and option (weights never change dispatch, so re-scoring keeps them); small LRU.
 const inspCache = new Map();

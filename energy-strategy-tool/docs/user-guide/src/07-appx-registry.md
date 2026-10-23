@@ -164,7 +164,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 
 - **choices.C1**: open: wait, bridge, islanded; judg.
 - **choices.C2**: open: gasRecip, fuelCell, rented; judg.
-- **choices.C3**: open: remove, backup, prime, gridServices; judg.
+- **choices.C3**: open: remove, backup, prime, gridServices, split; judg.
 - **choices.C4**: open: none, chp, fuelCell; judg.
 - **choices.C4s**: open: average, shortfall; judg. Both sizings generated (OPEN-QUESTIONS 58, 2026-10-23); "Permanent shortfall" only for cooling types with a permanent shortfall (rule g).
 - **choices.C5**: open: hvo, diesel, retained; judg.

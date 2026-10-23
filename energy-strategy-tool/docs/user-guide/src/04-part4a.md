@@ -221,6 +221,7 @@ Only logically impossible combinations are removed, each by a named rule:
 - **(e)** "Retained bridging plant" as backup needs bridging plant that stays on site (C1 "Islanded", or "Bridge until grid" with C3 not "Remove"). This rule was added by the builder.
 - **(f)** "Roof + ground" solar needs a ground area for PV above 0; otherwise it would repeat "Roof only" (built 22 October 2026).
 - **(g)** A top-up firm plant (C4 sizing "Permanent shortfall") needs a permanent shortfall for the option's cooling type: the design load above the full grid capacity after the full grid date. Islanded options always have one. Otherwise it would repeat C4 "None" (built 23 October 2026).
+- **(h)** Splitting bridging plant (C3 "Keep shortfall share as prime, rest as backup") needs generating plant and a permanent shortfall for the option's cooling type (built 23 October 2026).
 T1: rule (e) removes 5,184; the others none. **57,024** valid combinations remain.
 
 ## Step 4. Archetypes
@@ -359,7 +360,15 @@ The engine finds the **largest shortfall** S between the design load and the off
 | units = ceiling(S ÷ unit size) + ceiling(units ÷ 10)    (N+1 per block, always)
 :::
 
-With "BESS + solar only" bridging, the battery is S MW for 24 hours. After the full connection, bridging plant follows C3: removed (sold), retained as backup, retained as prime (keeps running economically), or retained for grid services (treated as backup).
+With "BESS + solar only" bridging, the battery is S MW for 24 hours. After the full connection, bridging plant follows C3: removed (sold), retained as backup, retained as prime (keeps running economically), retained for grid services (treated as backup), or split (built 23 October 2026, OPEN-QUESTIONS 59):
+
+::: formula
+| SP = largest (design load − full grid capacity) from the full grid date on
+| kept units = ⌈SP ÷ unit size⌉ + N+1 per block;  bridging units = max(bridging units, kept units)
+| before the grid date: all units run;  from it: the kept units run as prime, the rest are backup
+:::
+
+In T1, for example, a rented bridge of 7 × 2 MW keeps 6 units (12 MW) for the 9.0 MW permanent shortfall of evaporative cooling and retires 1 into backup. Rule (h) generates the split only with generating plant (not "BESS + solar only") and where there is a permanent shortfall; otherwise it would repeat "Retain as backup".
 
 ## Battery (C12)
 

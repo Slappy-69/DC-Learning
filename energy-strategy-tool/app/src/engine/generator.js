@@ -62,6 +62,9 @@ export const RULES = [
   { id: 'g', name: '(g) A top-up firm plant requires a permanent shortfall',
     detail: 'C4 sizing = Permanent shortfall is not generated for a cooling type whose design load the full grid covers (OPEN-QUESTIONS 58, 2026-10-23); it would repeat C4 = None. Islanded options always have one.',
     fails: (v, inputs) => v.C4s === 'shortfall' && v.C1 !== 'islanded' && !permSet(inputs).has(v.C8) },
+  { id: 'h', name: '(h) Splitting bridging plant requires generating plant and a permanent shortfall',
+    detail: 'C3 = Keep shortfall share as prime, rest as backup is not generated with C2 = BESS + solar only (no generating plant to keep running), or for a cooling type whose design load the full grid covers (it would repeat Retain as backup) (OPEN-QUESTIONS 59, 2026-10-23).',
+    fails: (v, inputs) => v.C3 === 'split' && (v.C2 === 'bessSolar' || !permSet(inputs).has(v.C8)) },
 ];
 export const RULE_D = { id: 'd', name: '(d) Choices that are n/a collapse to "n/a" rather than multiplying options',
   detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets.' };

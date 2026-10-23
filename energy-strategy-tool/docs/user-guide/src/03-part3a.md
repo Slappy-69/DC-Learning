@@ -258,7 +258,7 @@ The table lists every choice, its values, and the values included by default (ma
 |---|---|
 | C1 Grid strategy | **Wait for grid**, **Bridge until grid**, **Islanded**, Grid + export |
 | C2 Bridging supply | **Gas recips**, Gas turbines, **Fuel cells**, HVO-diesel prime, BESS + solar only, **Rented temporary generation** |
-| C3 Bridging plant after grid arrives | **Remove**, **Retain as backup**, **Retain as prime**, **Retain for grid services** |
+| C3 Bridging plant after grid arrives | **Remove**, **Retain as backup**, **Retain as prime**, **Retain for grid services**, **Keep shortfall share as prime, rest as backup** (built 23 October 2026; only with generating plant and a permanent shortfall) |
 | C4 Primary firm on-site generation | **None**, **Gas CHP-trigen**, Gas recips, **Fuel cells**, SMR, Hydrogen |
 | C4s Firm generation sizing | **Average load (baseload)**, **Permanent shortfall (top-up)**; the top-up only for cooling types with a permanent shortfall, or islanded (built 23 October 2026) |
 | C5 Backup power technology | **Diesel gensets**, **HVO gensets**, Gas gensets, BESS-augmented UPS + reduced gensets, **Retained bridging plant**, None |

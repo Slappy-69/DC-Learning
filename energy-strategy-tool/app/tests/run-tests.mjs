@@ -67,6 +67,7 @@ import { solarTests } from './solar-tests.mjs';
 import { adequacyTests } from './adequacy-tests.mjs';
 import { programmeTests } from './programme-tests.mjs';
 import { topupTests } from './topup-tests.mjs';
+import { splitTests } from './split-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1174,6 +1175,9 @@ await programmeTests(test, siteRuns);
 
 // 19. Firm generation sized two ways (OPEN-QUESTIONS 58; build plan 3b) (tests/topup-tests.mjs)
 await topupTests(test, siteRuns);
+
+// 20. Split bridging plant (OPEN-QUESTIONS 59; build plan 3b) (tests/split-tests.mjs)
+await splitTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

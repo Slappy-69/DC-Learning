@@ -106,6 +106,7 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Power adequacy first: adequacy status, ranking, flag, option detail, header count, grid shortfall analysis (work package 3b, first part) | Built (23 Oct 2026) | 21, 22, 23, 42, 44, 45 |
 | Plant ordered from day one; 6-month permitting allowance only under the IED or Seveso (work package 3b) | Built (23 Oct 2026) | 8, 35 |
 | Firm generation sized two ways: average load (baseload) and permanent shortfall (top-up), choice C4s (work package 3b) | Built (23 Oct 2026) | 20, 34, 35 |
+| Bridging plant split when the grid arrives: shortfall share kept as prime, rest as backup (C3, work package 3b) | Built (23 Oct 2026) | 20, 34, 35 |
 | Power adequacy, rest of 3b: bridging and batteries sized to the shortfall (rent or buy), permitting outlook, backup rules, grid-matched phasing option | Agreed, not built yet | — |
 | IT load estimated from area | Agreed | 16 |
 | Load shapes, AI profiles | Agreed | 16 |

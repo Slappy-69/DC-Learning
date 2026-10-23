@@ -136,7 +136,9 @@ export const CHOICES = [
     ['gasRecip', 'Gas recips'], ['gasTurbine', 'Gas turbines'], ['fuelCell', 'Fuel cells'], ['dieselPrime', 'HVO-diesel prime'],
     ['bessSolar', 'BESS + solar only'], ['rented', 'Rented temporary generation']] },
   { id: 'C3', name: 'Bridging plant after grid arrives', values: [
-    ['remove', 'Remove'], ['backup', 'Retain as backup'], ['prime', 'Retain as prime'], ['gridServices', 'Retain for grid services']] },
+    ['remove', 'Remove'], ['backup', 'Retain as backup'], ['prime', 'Retain as prime'], ['gridServices', 'Retain for grid services'],
+    // OPEN-QUESTIONS 59 (2026-10-23): the owner's alternative (b) of OPEN-QUESTIONS 42.
+    ['split', 'Keep shortfall share as prime, rest as backup']] },
   { id: 'C4', name: 'Primary firm on-site generation', values: [
     ['none', 'None'], ['chp', 'Gas CHP-trigen'], ['gasRecip', 'Gas recips'], ['fuelCell', 'Fuel cells'], ['smr', 'SMR'], ['hydrogen', 'Hydrogen']] },
   // OPEN-QUESTIONS 58 (2026-10-23): each C4 technology sized two ways, so the ranking compares a baseload plant with
@@ -177,7 +179,7 @@ export function defaultChoiceState(id, inputs) {
   switch (id) {
     case 'C1': return { state: 'open', values: ['wait', 'bridge', 'islanded'] };
     case 'C2': return { state: 'open', values: ['gasRecip', 'fuelCell', 'rented'] };
-    case 'C3': return { state: 'open', values: ['remove', 'backup', 'prime', 'gridServices'] };
+    case 'C3': return { state: 'open', values: ['remove', 'backup', 'prime', 'gridServices', 'split'] };
     case 'C4': return { state: 'open', values: ['none', 'chp', 'fuelCell'] };
     case 'C5': return { state: 'open', values: ['hvo', 'diesel', 'retained'] };
     case 'C6': return { state: 'locked', values: [inputs ? inputs.requirements.topology : 'N+1'] };

@@ -95,7 +95,8 @@
     "remove",
     "backup",
     "prime",
-    "gridServices"
+    "gridServices",
+    "split"
    ]
   },
   "unit": "choice state",

@@ -227,6 +227,25 @@ export function sizeOption(ctx, v) {
         }
       }
     }
+    // C3 = Keep shortfall share as prime, rest as backup (OPEN-QUESTIONS 59, 2026-10-23): from the full grid date the
+    // units that cover the permanent shortfall (N+1 per block) keep running as prime; the rest are retired into
+    // backup. The plant is bought large enough for both its bridging and its kept share.
+    if (v.C1 === 'bridge' && v.C3 === 'split' && v.C2 !== 'bessSolar') {
+      const t = TECH[BRIDGE_TECH[v.C2]];
+      let SP = 0, spM = -1;
+      for (let m = Math.max(0, T); m < ctx.nMonthsTimeline; m++) { const s = designByMonth[m] - gridByMonth[m]; if (s > SP) { SP = s; spM = m; } }
+      const nP = Math.ceil(SP / t.p.unitMW - 1e-9);
+      const keep = nP + Math.ceil(nP / req.blockSize);
+      if (!bridge) bridge = { role: 'bridge', tech: t.id, mw: 0, units: 0, nUnits: 0, unitMW: t.p.unitMW, availMonth: techAvailMonth(ctx, t), fuelMonth: fuelAvailMonth(ctx, t.fuel), shortfallMW: 0, shortfallMonth: -1 };
+      if (keep > bridge.units) {
+        sentences.push(`Bridging ${t.name} enlarged to its kept share: ${keep} units (${r1(keep * t.p.unitMW)} MW) cover the permanent shortfall, more than the ${bridge.units} units sized for bridging.`);
+        bridge.units = keep; bridge.nUnits = Math.max(bridge.nUnits, nP); bridge.mw = keep * t.p.unitMW;
+      }
+      bridge.primeUnits = keep;
+      bridge.primeMW = keep * t.p.unitMW;
+      bridge.permanentShortfallMW = SP;
+      sentences.push(`From the full grid date (month ${T}): permanent shortfall ${r1(SP)} MW${spM >= 0 ? ` (month ${spM})` : ''} ÷ ${t.p.unitMW} MW = ${nP} units + N+1 per block of ${req.blockSize} = ${keep} units (${r1(bridge.primeMW)} MW) keep running as prime; ${bridge.units - keep > 0 ? `the other ${bridge.units - keep} unit${bridge.units - keep === 1 ? '' : 's'} (${r1(bridge.mw - bridge.primeMW)} MW) ${bridge.units - keep === 1 ? 'is' : 'are'} retired into backup` : 'no units are left to retire into backup'}.`);
+    }
   }
 
   // --- BESS (C12) ---
@@ -349,7 +368,7 @@ export function sizeOption(ctx, v) {
   for (let m = 0; m < ctx.nMonths; m++) {
     let f = 0;
     if (prime && m >= prime.availMonth && m >= prime.fuelMonth) f += prime.mw;
-    if (bridge && m >= bridge.availMonth && m >= bridge.fuelMonth && bridgeActive(v, m, T)) f += bridge.mw;
+    if (bridge && m >= bridge.availMonth && m >= bridge.fuelMonth) f += bridgeMWAt(v, m, T, bridge);
     firmByMonth[m] = f;
   }
   const periods = [];
@@ -399,6 +418,9 @@ export function sizeOption(ctx, v) {
   const plants = [];
   if (prime) plants.push(makePlant(ctx, prime, v, 'prime', T));
   if (bridge) plants.push(makePlant(ctx, bridge, v, 'bridge', T));
+  // Split bridging plant: its kept share runs as a second plant record from the full grid date (the whole plant runs
+  // before it), so dispatch, run hours and the per-plant figures show the two periods separately.
+  if (bridge && bridge.primeMW > 0) plants.push(makePlant(ctx, { ...bridge, mw: bridge.primeMW }, v, 'bridgeKept', T));
 
   return {
     coolingId, peakPUE, designMW, avgMW, criticalMW, itMW,
@@ -416,6 +438,14 @@ export function sizeOption(ctx, v) {
   };
 }
 
+// Bridging plant MW running in month m (before availability and fuel checks): the whole plant while bridgeActive; the
+// kept share after the full grid date for C3 = Keep shortfall share as prime (OPEN-QUESTIONS 59).
+export function bridgeMWAt(v, m, T, bridge) {
+  if (bridgeActive(v, m, T)) return bridge.mw;
+  if (v.C1 === 'bridge' && v.C3 === 'split' && m >= T) return bridge.primeMW || 0;
+  return 0;
+}
+
 export function bridgeActive(v, m, T) {
   if (v.C1 === 'islanded') return true;
   if (v.C1 !== 'bridge') return false;
@@ -431,6 +461,7 @@ function makePlant(ctx, s, v, role, T) {
     if (m < s.availMonth || m < s.fuelMonth) continue;
     if (role === 'prime') mode[m] = v.C1 === 'islanded' ? 2 : 1;
     else if (v.C1 === 'islanded') mode[m] = 2;
+    else if (role === 'bridgeKept') { if (m >= T) mode[m] = 1; }
     else if (bridgeActive(v, m, T)) mode[m] = 1;
   }
   return {

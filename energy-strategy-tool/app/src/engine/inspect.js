@@ -9,7 +9,7 @@
 import { buildContext } from './context.js';
 import { normalizeInputs } from './defaults.js';
 import { siteKey } from './site.js';
-import { bridgeActive } from './sizing.js';
+import { bridgeActive, bridgeMWAt } from './sizing.js';
 import { SOURCE_OF_TECH } from './blocks.js';
 import { evaluateOption } from './option.js';
 import { H } from './profiles.js';
@@ -118,14 +118,14 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
   const n = ctx.nMonthsTimeline;
   const islanded = v.C1 === 'islanded';
   const plantsTl = [sz.prime, sz.bridge].filter(Boolean).map((p) => ({
-    role: p.role, tech: p.tech, source: plantSource(p.tech), mw: p.mw, availMonth: p.availMonth, fuelMonth: p.fuelMonth, values: new Float64Array(n),
+    role: p.role, tech: p.tech, source: plantSource(p.tech), mw: p.mw, availMonth: p.availMonth, fuelMonth: p.fuelMonth, plant: p, values: new Float64Array(n),
   }));
   const tl = { months: n, design: new Float64Array(n), grid: new Float64Array(n), firm: new Float64Array(n), bess: new Float64Array(n), supply: new Float64Array(n), gap: new Float64Array(n), plants: plantsTl };
   for (let m = 0; m < n; m++) {
     const grid = islanded ? 0 : ctx.gridCap[m];
     for (const p of plantsTl) {
-      const on = m >= p.availMonth && m >= p.fuelMonth && (p.role === 'prime' || bridgeActive(v, m, sz.T));
-      p.values[m] = on ? p.mw : 0;
+      const on = m >= p.availMonth && m >= p.fuelMonth;
+      p.values[m] = !on ? 0 : p.role === 'prime' ? p.mw : bridgeMWAt(v, m, sz.T, p.plant);
     }
     const firm = sz.firmByMonth[m];
     const bess = v.C2 === 'bessSolar' && bridgeActive(v, m, sz.T) && m >= sz.bridgeBess.availMonth ? sz.bridgeBess.mw : 0;
@@ -137,6 +137,7 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
     const g = tl.design[m] - tl.supply[m];
     tl.gap[m] = g > 1e-9 ? g : 0;
   }
+  for (const p of plantsTl) delete p.plant;
 
   const years = disp.years.map((yr, y) => ({
     index: y,
