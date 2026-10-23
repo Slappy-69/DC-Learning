@@ -28,6 +28,9 @@ export function timeToPower(ctx, v, sz) {
     // Bridging battery counts from its supply-available month (BRIEF §9.8), like every other source; the same
     // month sizing records (sz.bridgeBess.availMonth) and dispatch uses (port of e1161ce).
     if (v.C2 === 'bessSolar' && bridgeActive(v, m, sz.T) && m >= sz.bridgeBess.availMonth) s += sz.bridgeBess.mw;
+    // A battery sized to the permanent shortfall counts as firm supply from the full grid date, once available, when
+    // it can recharge on the design day (OPEN-QUESTIONS 60).
+    if (sz.shortfallBess && sz.shortfallBess.rechargeOK && m >= sz.T && m >= sz.shortfallBess.availMonth) s += sz.shortfallBess.mw;
     supply[m] = s;
   }
   const ph1 = ctx.phases[0];
@@ -480,6 +483,7 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
       `${lim > 1e-6 ? 'PPA limited by import capacity' : 'PPA volume not delivered'}: ${mwh(hd.undeliveredMWh)} of contracted PPA volume over the ${inputs.economics.periodYears}-year evaluation period is not delivered physically (${parts}). Its settlement, a net ${word(hd.total)} of ${eur(hd.total)} (${pvText}), is reported as "PPA hedge (not counted)": it is not in the cost ledger, LCOE, NPV or score, because PPA settlement counts only on energy delivered over the grid connection.`,
       { value: hd.undeliveredMWh, hedge: hd.total }));
   }
+  if (sz.shortfallBess && !sz.shortfallBess.rechargeOK) flags.push(flag('bess-recharge', 'minor', 'Grid', `Battery for the shortfall cannot recharge from the grid headroom on the design day from month ${sz.shortfallBess.failMonth}: it does not count as firm supply against the design load`));
   if (sz.storage.role === 'peakShave' && sz.storage.mw > 0 && disp.years.some((y) => y.designDayShortfall)) {
     flags.push(flag('grid-bess-peakshave', 'minor', 'Grid', 'BESS peak-shave cannot hold import within grid capacity on the design day'));
   }

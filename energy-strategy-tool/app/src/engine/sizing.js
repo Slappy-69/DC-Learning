@@ -3,7 +3,7 @@
 // The grid connection is the offered capacity per period and is never resized.
 
 import { TECH, COOLING, SPATIAL, choiceLabel } from './defaults.js';
-import { designDemandByMonth, demandYear } from './context.js';
+import { designDemandByMonth, demandYear, designDayPUE } from './context.js';
 import { NA } from './generator.js';
 import { permittingTriggers, permitRegimes, permitOutlookItem } from './permitting.js';
 
@@ -286,7 +286,37 @@ export function sizeOption(ctx, v) {
 
   // --- BESS (C12) ---
   let bess = { mw: 0, mwh: 0, role: v.C12r === NA ? null : v.C12r };
-  if (v.C12 !== 'none') {
+  let shortfallBess = null;
+  if (v.C12 === 'shortfall') {
+    // Battery sized to the permanent shortfall on the design day (OPEN-QUESTIONS 60, 2026-10-23): for each month from the
+    // full grid date, the design-day hourly load (installed IT × (hourly PUE + ancillary)) against the grid capacity.
+    // MW = the largest hourly shortfall; usable energy = the largest daily shortfall; recharge check: the same day's
+    // headroom below the grid capacity, at up to the battery MW, × round-trip efficiency covers that energy.
+    const pue = designDayPUE(ctx, coolingId);
+    const anc = L.ancillaryFrac;
+    const rte = TECH.bess.p.rte;
+    let MW = 0, Emax = 0, worstM = -1;
+    const days = [];
+    for (let m = Math.max(0, T); m < ctx.nMonthsTimeline; m++) {
+      let e = 0;
+      const s = new Float64Array(24);
+      for (let k = 0; k < 24; k++) { s[k] = ctx.itInst[m] * (pue[k] + anc) - gridByMonth[m]; if (s[k] > MW) MW = s[k]; if (s[k] > 0) e += s[k]; }
+      if (e > 0) days.push({ m, e, s });
+      if (e > Emax) { Emax = e; worstM = m; }
+    }
+    let rechargeOK = true, failM = -1;
+    for (const d of days) {
+      let head = 0;
+      for (let k = 0; k < 24; k++) if (d.s[k] < 0) head += Math.min(MW, -d.s[k]);
+      if (head * rte + 1e-9 < d.e) { rechargeOK = false; if (failM < 0) failM = d.m; }
+    }
+    const eta = Math.sqrt(rte);
+    bess.mw = MW;
+    bess.mwh = Emax / eta;
+    bess.role = 'shortfall';
+    shortfallBess = { mw: MW, mwh: bess.mwh, usableMWh: Emax, rechargeOK, worstMonth: worstM, failMonth: failM, availMonth: techAvailMonth(ctx, TECH.bess) };
+    sentences.push(`BESS for the permanent shortfall (design day, from month ${T}): largest hourly shortfall ${r1(MW)} MW; largest daily shortfall ${r1(Emax)} MWh${worstM >= 0 ? ` (month ${worstM})` : ''} → ${r1(MW)} MW / ${r1(bess.mwh)} MWh (÷ √${rte} discharge efficiency); recharge from the same day's grid headroom: ${rechargeOK ? 'enough in every month, so it counts as firm supply against the design load' : `not enough from month ${failM}, so it does not count as firm supply`}.`);
+  } else if (v.C12 !== 'none') {
     const h = Number(v.C12[0]);
     const pct = Number(v.C12.slice(2)) / 100;
     bess.mw = pct * designMW;
@@ -487,7 +517,7 @@ export function sizeOption(ctx, v) {
   return {
     coolingId, peakPUE, designMW, avgMW, criticalMW, itMW,
     building: { whitespaceM2: whitespace, gfaM2: gfa, footprintM2: footprint, heightM },
-    backup, prime, bridge, bridgeBess, bess, storage, permitOutlook,
+    backup, prime, bridge, bridgeBess, bess, storage, permitOutlook, shortfallBess,
     solarMWp, solarRoofMWp, solarGroundMWp, roofPvOverFreeM2, windMW, windTurbines, ppa,
     grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })), cableKm },
     gasConnection,

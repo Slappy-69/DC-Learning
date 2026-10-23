@@ -71,6 +71,7 @@ import { splitTests } from './split-tests.mjs';
 import { outlookTests } from './outlook-tests.mjs';
 import { gridRefTests } from './gridref-tests.mjs';
 import { backupTests } from './backup-tests.mjs';
+import { bessShortfallTests } from './bess-shortfall-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1190,6 +1191,9 @@ await gridRefTests(test, siteRuns);
 
 // 23. Backup per building or pooled (OPEN-QUESTIONS 47, 48; build plan 3b) (tests/backup-tests.mjs)
 await backupTests(test, siteRuns);
+
+// 24. Shortfall battery as firm supply (OPEN-QUESTIONS 60; build plan 3b) (tests/bess-shortfall-tests.mjs)
+await bessShortfallTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

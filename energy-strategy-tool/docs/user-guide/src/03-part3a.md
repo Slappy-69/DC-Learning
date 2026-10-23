@@ -269,7 +269,7 @@ The table lists every choice, its values, and the values included by default (ma
 | C9 Heat rejection location | **Roof**, **Ground**, **Split** |
 | C10 On-site solar | **None**, **Roof only**; **Roof + ground** when the ground area for PV is above 0 |
 | C11 On-site wind | **None** on sites ≤ 20 ha; otherwise **None**, **Fit as many as separations allow**, **Off-site land** |
-| C12 BESS size | **None**, 1 h at 25 %, 1 h at 50 %, **2 h at 25 %**, 2 h at 50 %, 4 h at 25 %, **4 h at 50 %** |
+| C12 BESS size | **None**, 1 h at 25 %, 1 h at 50 %, **2 h at 25 %**, 2 h at 50 %, 4 h at 25 %, **4 h at 50 %**, **Sized to the permanent shortfall** (built 23 October 2026; only with a grid, a permanent shortfall and the peak-shave role) |
 | C12r BESS role | locked to **Peak-shave**; Shifting, Bridging support, Grid services available |
 | C13 Offsite PPA | **None**, Annual-matched solar, Annual-matched wind, **Hybrid**, Baseload-shaped, 24/7-matched |
 | C14 PPA coverage | **50 %**, **80 %**, **100 %** |

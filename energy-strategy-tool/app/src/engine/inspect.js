@@ -128,7 +128,8 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
       p.values[m] = !on ? 0 : p.role === 'prime' ? p.mw : bridgeMWAt(v, m, sz.T, p.plant);
     }
     const firm = sz.firmByMonth[m];
-    const bess = v.C2 === 'bessSolar' && bridgeActive(v, m, sz.T) && m >= sz.bridgeBess.availMonth ? sz.bridgeBess.mw : 0;
+    const bess = (v.C2 === 'bessSolar' && bridgeActive(v, m, sz.T) && m >= sz.bridgeBess.availMonth ? sz.bridgeBess.mw : 0)
+      + (sz.shortfallBess && sz.shortfallBess.rechargeOK && m >= sz.T && m >= sz.shortfallBess.availMonth ? sz.shortfallBess.mw : 0);
     tl.grid[m] = grid;
     tl.firm[m] = firm;
     tl.bess[m] = bess;

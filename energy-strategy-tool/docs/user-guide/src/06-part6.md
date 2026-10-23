@@ -110,7 +110,7 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Permitting outlook: likely / uncertain / unlikely by technology, with ready and needed months (work package 3b; country differences still to research) | Built (23 Oct 2026) | 8, 23, 42 |
 | IT the grid supports by grid period; grid-matched phasing reference in the run summary (work package 3b) | Built (23 Oct 2026) | 21 |
 | Backup per building or pooled (C5a); retired bridging plant backs up whole buildings; pooled carries a client-perceived risk item (work package 3b) | Built (23 Oct 2026) | 20, 35, 43 |
-| Batteries sized to the shortfall, with a recharge check (work package 3b) | Open: whether a battery counts as firm supply against the design load | — |
+| Battery sized to the permanent shortfall on the design day, with a recharge check, counted as firm supply (C12, work package 3b) | Built (23 Oct 2026) | 20, 34, 35, 42 |
 | IT load estimated from area | Agreed | 16 |
 | Load shapes, AI profiles | Agreed | 16 |
 | Flexibility with triggers; battery response | Agreed | 16 |

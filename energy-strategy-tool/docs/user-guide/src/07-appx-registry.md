@@ -176,7 +176,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **choices.C9**: open: roof, ground, split; judg.
 - **choices.C10**: open: none, roof; judg. Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).
 - **choices.C11**: open: none; judg. Default "None" when site area ≤ 20 ha and no off-site land; otherwise open.
-- **choices.C12**: open: none, 2h25, 4h50; judg.
+- **choices.C12**: open: none, 2h25, 4h50, shortfall; judg.
 - **choices.C12r**: locked: peakShave; judg. Default role "peak-shave against grid cap" (§8 C12).
 - **choices.C13**: open: none, hybrid; judg.
 - **choices.C14**: open: 50, 80, 100; judg.

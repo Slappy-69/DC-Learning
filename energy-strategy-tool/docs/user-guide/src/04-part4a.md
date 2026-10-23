@@ -222,6 +222,7 @@ Only logically impossible combinations are removed, each by a named rule:
 - **(f)** "Roof + ground" solar needs a ground area for PV above 0; otherwise it would repeat "Roof only" (built 22 October 2026).
 - **(g)** A top-up firm plant (C4 sizing "Permanent shortfall") needs a permanent shortfall for the option's cooling type: the design load above the full grid capacity after the full grid date. Islanded options always have one. Otherwise it would repeat C4 "None" (built 23 October 2026).
 - **(h)** Splitting bridging plant (C3 "Keep shortfall share as prime, rest as backup") needs generating plant and a permanent shortfall for the option's cooling type (built 23 October 2026).
+- **(i)** A battery sized to the permanent shortfall (C12) needs a grid to recharge from (not islanded), a permanent shortfall for the cooling type and the peak-shave role (built 23 October 2026).
 T1: rule (e) removes 5,184; the others none. **57,024** valid combinations remain.
 
 ## Step 4. Archetypes
@@ -384,6 +385,18 @@ In T1, for example, a rented bridge of 7 × 2 MW keeps 6 units (12 MW) for the 9
 :::
 
 For example "4 h at 50 %" on a 113 MW design load gives 56.5 MW and 226 MWh. The role comes from C12r. A bridging battery is added to the same store.
+
+**Sized to the permanent shortfall** (built 23 October 2026, OPEN-QUESTIONS 60). A battery that counts as firm supply against the design load. It is sized on the **design day**: the year's hottest day, shifted so its hottest hour is at the design temperature, with the PUE worked out hour by hour by the same cooling model (so its peak hour is the design load).
+
+::: formula
+| shortfall(h) = installed IT × (design-day PUE(h) + ancillary) − grid capacity, for each month from the full grid date
+| battery MW = largest shortfall(h);  usable MWh = largest daily Σ shortfall(h) > 0;  stored MWh = usable ÷ √(round-trip efficiency)
+| recharge check, each month: Σ min(battery MW, headroom(h)) × round-trip efficiency ≥ that day's shortfall energy
+:::
+
+When the check passes in every month, the battery counts as firm supply from the full grid date (once available), so it can close the power gap and make an option adequate. When it fails, the battery is still built and dispatched but does not count, and the minor flag `bess-recharge` says from which month. In dispatch it is a security battery: it covers only the grid shortfall, takes no arbitrage and recharges from the grid in any hour. Rule (i) generates it only with a grid, a permanent shortfall and the peak-shave role.
+
+In T1 the permanent shortfall lasts most of the design day (air cooling: 16.7 MW at the peak, 291 MWh in the day), so the battery cannot recharge and never counts. On a site short only at the peak hours it does: T1 with a 125 MW grid and evaporative cooling (design-day PUE 1.27 at the peak, 1.12 at night) needs a 4.0 MW / 21.9 MWh battery, which recharges every day and closes the permanent power gap (250 → 31 MW-months; what remains is before the full grid date).
 
 ## Area budget and solar
 

@@ -157,7 +157,9 @@ export const CHOICES = [
     ['none', 'None'], ['roof', 'Roof only'], ['roofGround', 'Roof + ground']] },
   { id: 'C11', name: 'On-site wind', values: [['none', 'None'], ['fit', 'Fit as many as separations allow'], ['offsite', 'Off-site land']] },
   { id: 'C12', name: 'BESS size', values: [
-    ['none', 'None'], ['1h25', '1 h at 25 %'], ['1h50', '1 h at 50 %'], ['2h25', '2 h at 25 %'], ['2h50', '2 h at 50 %'], ['4h25', '4 h at 25 %'], ['4h50', '4 h at 50 %']] },
+    ['none', 'None'], ['1h25', '1 h at 25 %'], ['1h50', '1 h at 50 %'], ['2h25', '2 h at 25 %'], ['2h50', '2 h at 50 %'], ['4h25', '4 h at 25 %'], ['4h50', '4 h at 50 %'],
+    // OPEN-QUESTIONS 60 (2026-10-23): a battery sized to the permanent shortfall on the design day counts as firm supply.
+    ['shortfall', 'Sized to the permanent shortfall']] },
   { id: 'C12r', name: 'BESS role', values: [['peakShave', 'Peak-shave against grid cap'], ['shifting', 'Shifting'], ['bridgingSupport', 'Bridging support'], ['gridServices', 'Grid services']] },
   { id: 'C13', name: 'Offsite PPA', values: [
     ['none', 'None'], ['solar', 'Annual-matched solar'], ['wind', 'Annual-matched wind'], ['hybrid', 'Hybrid'], ['baseload', 'Baseload-shaped'], ['cfe247', '24/7-matched']] },
@@ -201,7 +203,7 @@ export function defaultChoiceState(id, inputs) {
       const small = inputs ? inputs.site.areaHa <= inputs.settings.windSiteThresholdHa && !(inputs.site.offsiteLandHa > 0) : true;
       return small ? { state: 'open', values: ['none'], windDefault: true } : { state: 'open', values: ['none', 'fit', 'offsite'] };
     }
-    case 'C12': return { state: 'open', values: ['none', '2h25', '4h50'] };
+    case 'C12': return { state: 'open', values: ['none', '2h25', '4h50', 'shortfall'] };
     case 'C4s': return { state: 'open', values: ['average', 'shortfall'] };
     case 'C12r': return { state: 'locked', values: ['peakShave'] };
     case 'C13': return { state: 'open', values: ['none', 'hybrid'] };

@@ -181,7 +181,9 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
   const pIsSmr = plants.map((pl) => pl.tech === 'smr');
   const copArr = ctx.cooling[cfg.coolingId].cop;
   const cleanRatio = cleanFirm(cfg, 1);
-  const roleShort = role === 'peakShave' || role === 'bridgingSupport';
+  // 'shortfall' (C12 = Sized to the permanent shortfall, OPEN-QUESTIONS 60): a security battery that covers only the
+  // grid shortfall, takes no arbitrage and recharges from grid headroom in any hour.
+  const roleShort = role === 'peakShave' || role === 'bridgingSupport' || role === 'shortfall';
   const roleArb = role === 'peakShave' || role === 'shifting' || role === 'gridServices';
   const reserveE = role === 'peakShave' ? 0.5 * E : 0;
   const y12 = y * 12;
@@ -325,7 +327,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
       ch = sur < Pb ? sur : Pb;
       if (ch > room) ch = room;
       sur -= ch;
-      if (!islanded && cheap[h]) {
+      if (!islanded && (cheap[h] || role === 'shortfall')) {
         let head = capPhys - ppaUse - g;
         if (head > Pb - ch) head = Pb - ch;
         if (head > room - ch) head = room - ch;

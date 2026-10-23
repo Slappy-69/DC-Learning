@@ -154,6 +154,33 @@ export function demandYear(ctx, coolingId, y) {
 }
 
 // Design facility load per month (peak PUE, 100 % IT installed) for a cooling approach.
+// Design-day PUE hour by hour (OPEN-QUESTIONS 60, 2026-10-23): the year's hottest day of the cooling type's
+// temperature basis, shifted so that its hottest hour is at the design temperature; PUE from the same cooling model as
+// the peak PUE, so the peak hour equals the design load. Used to size and check a battery against the design day.
+export function designDayPUE(ctx, coolingId) {
+  if (!ctx.designDayCache) ctx.designDayCache = new Map();
+  if (ctx.designDayCache.has(coolingId)) return ctx.designDayCache.get(coolingId);
+  const p = COOLING[coolingId].p;
+  const cp = ctx.cooling[coolingId];
+  const prof = ctx.prof;
+  const t = p.tempBasis === 'wetbulb' ? prof.wetbulb : prof.temp;
+  const designT = p.tempBasis === 'wetbulb' ? prof.designWetbulb : prof.designTemp;
+  let hMax = 0;
+  for (let h = 1; h < t.length; h++) if (t[h] > t[hMax]) hMax = h;
+  const d0 = Math.min(Math.floor(hMax / 24) * 24, t.length - 24);
+  let dayMax = -Infinity;
+  for (let k = 0; k < 24; k++) dayMax = Math.max(dayMax, t[d0 + k]);
+  const out = new Float64Array(24);
+  for (let k = 0; k < 24; k++) {
+    const T = t[d0 + k] + (designT - dayMax);
+    const c = Math.max(1.5, p.copRef - p.copSlope * (T - p.tRef));
+    const part = T <= p.fcThreshold ? 0 : T >= p.fcThreshold + p.band ? 1 : (T - p.fcThreshold) / p.band;
+    out[k] = 1 + p.fanFrac + part / c + cp.lossFrac;
+  }
+  ctx.designDayCache.set(coolingId, out);
+  return out;
+}
+
 export function designDemandByMonth(ctx, coolingId) {
   const cp = ctx.cooling[coolingId];
   const peakPUE = 1 + cp.coolPeak + cp.lossFrac;

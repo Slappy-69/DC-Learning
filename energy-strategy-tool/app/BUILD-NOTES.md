@@ -1578,3 +1578,20 @@ Interpretations (reversible): each phase is one building; the retired plant must
 T1 effect: 102,676 combinations (C5a doubles the genset options). Per building, each 25 MW building needs 10 + 1 diesel units with DLC (44 in all, against 43 pooled) and 12 + 2 with air cooling (56 against 52); before this change every option was pooled. The T1 bridging plant (a few engines) never backs up a whole building, so per building it does not reduce the gensets; with no grid before the full connection (test 23) it backs up building 1. 940 options adequate; the leader is Grid + rented temporary generation bridge → retain as backup · retained-plant backup · Immersion · PV 2.0 MWp · BESS 2 h · PPA hybrid 50 % (90.62).
 
 Test runs (3b parts 4–7, 2026-10-23): part 4 `npm test` 50/50, browser 30/30; parts 5–6 `npm test` 52/52, browser 30/30; part 7 `npm test` 53/53 (new tests 20–23: `split-tests.mjs`, `outlook-tests.mjs`, `gridref-tests.mjs`, `backup-tests.mjs`), `npm run build`, browser 30/30.
+
+## Slice: battery sized to the permanent shortfall, counted as firm supply (work package 3b, part 8; 2026-10-23)
+
+The owner's decision OPEN-QUESTIONS 60 (2026-10-23): a battery whose MW covers the shortfall and whose energy covers the design day's shortfall hours, with a daily recharge check, counts towards adequacy.
+
+What changed:
+- **New C12 value "Sized to the permanent shortfall"** (`shortfall`), in the default subset. Rule (i): not generated when islanded, for a cooling type with no permanent shortfall, or with a role other than peak-shave.
+- **Design day** (`context.js` `designDayPUE`): the year's hottest day of the cooling type's temperature basis, shifted so its hottest hour is at the design temperature; hourly PUE from the same cooling model, so the peak hour equals the design load.
+- **Sizing** (`sizing.js`): for each month from the full grid date, shortfall(h) = installed IT × (PUE(h) + ancillary) − grid capacity; MW = the largest; usable energy = the largest daily sum; stored MWh = usable ÷ √RTE. Recharge check per month: Σ min(MW, headroom(h)) × RTE ≥ the day's shortfall energy. `sz.shortfallBess`.
+- **Firm supply:** when the check passes, the battery's MW counts in the time-to-power supply from the full grid date (once available), so it closes the power gap and can make an option adequate; the inspector's timeline shows it with the batteries. When it fails, the battery is built and dispatched but not counted, with the minor flag `bess-recharge`.
+- **Dispatch:** role `shortfall`: discharges only to cover the grid shortfall, no arbitrage, recharges from grid headroom in any hour.
+
+Interpretations (reversible): the design day is the hottest day shifted to the design temperature; the battery covers the permanent shortfall only (bridging covers the temporary one); recharge within the same day, from the grid only.
+
+T1 effect: 120,916 combinations (rule i removes 15,984). The T1 permanent shortfall lasts most of the design day (air: 16.7 MW peak, 291 MWh), so no T1 battery recharges and none counts. Test 24 shows the case where it does: a 125 MW grid with evaporative cooling needs 4.0 MW / 21.9 MWh, which closes the permanent gap (power gap 250 → 31 MW-months, the rest before the full grid date).
+
+Test run (3b part 8, 2026-10-23): `npm test` 54/54 (new test 24, `tests/bess-shortfall-tests.mjs`); `npm run build`; `npm run test:browser` 30/30.

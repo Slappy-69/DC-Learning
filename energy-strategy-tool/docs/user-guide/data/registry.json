@@ -288,7 +288,8 @@
    "values": [
     "none",
     "2h25",
-    "4h50"
+    "4h50",
+    "shortfall"
    ]
   },
   "unit": "choice state",

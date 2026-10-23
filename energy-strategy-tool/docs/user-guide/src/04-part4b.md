@@ -200,6 +200,7 @@ Flags are how the tool reports problems without enforcing them. Each has an iden
 | grid-exceed | major | import above the offered capacity ("Show exceedance") |
 | grid-ppa | minor or info | contracted PPA volume not delivered (minor if any of it was limited by import capacity); reports the PPA hedge |
 | grid-bess-peakshave | minor | a peak-shave battery cannot hold the import within capacity on the design day |
+| bess-recharge | minor | a battery sized to the permanent shortfall cannot recharge from the grid headroom on the design day, so it does not count as firm supply (built 23 October 2026) |
 | grid-shortfall | info | design load exceeds grid plus firm plant in some months |
 | grid-export | info | surplus above the export capacity is curtailed |
 

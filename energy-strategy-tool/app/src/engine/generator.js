@@ -65,6 +65,9 @@ export const RULES = [
   { id: 'h', name: '(h) Splitting bridging plant requires generating plant and a permanent shortfall',
     detail: 'C3 = Keep shortfall share as prime, rest as backup is not generated with C2 = BESS + solar only (no generating plant to keep running), or for a cooling type whose design load the full grid covers (it would repeat Retain as backup) (OPEN-QUESTIONS 59, 2026-10-23).',
     fails: (v, inputs) => v.C3 === 'split' && (v.C2 === 'bessSolar' || !permSet(inputs).has(v.C8)) },
+  { id: 'i', name: '(i) A shortfall battery requires a permanent shortfall and a grid to recharge from',
+    detail: 'C12 = Sized to the permanent shortfall is not generated when islanded, for a cooling type whose design load the full grid covers, or with a BESS role other than peak-shave (OPEN-QUESTIONS 60, 2026-10-23).',
+    fails: (v, inputs) => v.C12 === 'shortfall' && (v.C1 === 'islanded' || !permSet(inputs).has(v.C8) || v.C12r !== 'peakShave') },
 ];
 export const RULE_D = { id: 'd', name: '(d) Choices that are n/a collapse to "n/a" rather than multiplying options',
   detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, the backup arrangement when there are no gensets, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets.' };
@@ -319,7 +322,8 @@ export function optionName(v, s) {
   parts.push(choiceLabel('C8', v.C8).split(' ')[0]);
   if (s && s.solarMWp > 0) parts.push(`PV ${s.solarMWp.toFixed(s.solarMWp < 10 ? 1 : 0)} MWp`);
   if (s && s.windMW > 0) parts.push(`Wind ${s.windMW.toFixed(0)} MW`);
-  if (v.C12 !== 'none') parts.push(`BESS ${v.C12.slice(0, 2).replace('h', ' h')}`);
+  if (v.C12 === 'shortfall') parts.push('BESS for the shortfall');
+  else if (v.C12 !== 'none') parts.push(`BESS ${v.C12.slice(0, 2).replace('h', ' h')}`);
   if (v.C13 !== 'none') parts.push(`PPA ${choiceLabel('C13', v.C13).toLowerCase()} ${v.C14} %`);
   return parts.join(' · ');
 }
