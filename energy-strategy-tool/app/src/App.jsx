@@ -154,6 +154,7 @@ export default function App() {
   const start = run ? run.meta.analysisStart : inputs.project.analysisStart;
   const viewFilterCount = activeFilterCount(view);
   const dominated = run ? run.options.filter((o) => o.dominatedBy).length : 0;
+  const adequate = run ? run.options.filter((o) => !o.adequacy || o.adequacy.adequate).length : 0;
   const shown = useMemo(() => (run ? applyView(run.options, view).list.length : 0), [run, view]);
   const skipToChart = (e) => { e.preventDefault(); setTab('tradeoffs'); setFocusChart(true); };
   const skipToPlan = (e) => { e.preventDefault(); setTab('site'); setFocusPlan(true); };
@@ -224,6 +225,7 @@ export default function App() {
         <main id="results" className="main" tabIndex={-1}>
           <div className="header-strip" role="region" aria-label="Results header">
             <div className="hs-item"><span className="hs-k">Options</span><span className="hs-v">{run ? `${shown.toLocaleString('en-GB')} shown / ${run.options.length.toLocaleString('en-GB')} screened / ${run.generation.totalCombinations.toLocaleString('en-GB')} combinations · ${dominated.toLocaleString('en-GB')} dominated` : '—'}</span></div>
+            <div className="hs-item"><span className="hs-k">Power adequacy</span><span className="hs-v">{run ? <>✓ {adequate.toLocaleString('en-GB')} adequate · ✗ {(run.options.length - adequate).toLocaleString('en-GB')} not adequate</> : '—'}</span><span className="hs-sub">Adequate options rank first; none is hidden.</span></div>
             <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">Rank probability not available in this slice (no Monte Carlo)</span></div>
             {siteBeta ? <div className="hs-item"><span className="hs-k">Site fit (Beta)</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit.' : 'Status only: it changes no score or rank.'} Site inputs set the POC and gas-main route costs.</span></div> : null}
             <div className="hs-item"><span className="hs-k">Model</span><span className="hs-v">Full-year hourly (8760 h)</span><span className="hs-sub">Synthetic profiles · {run ? COUNTRIES[run.country].name : ''}</span></div>

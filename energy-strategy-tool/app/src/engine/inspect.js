@@ -164,6 +164,7 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
     delivScore: e.deliv.score,
     siteFitStatus: e.siteFit.status,
     flagIds: e.flags.map((f) => f.id),
+    adequacy: e.adequacy,
     timeline: tl,
     years,
     nExplicit: disp.nExplicit,

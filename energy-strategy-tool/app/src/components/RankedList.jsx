@@ -65,6 +65,16 @@ function sevCounts(flags) {
   return c;
 }
 
+// Power adequacy (OPEN-QUESTIONS 38, 2026-10-22): adequate options rank above every option that is not.
+export function AdequacyBadge({ a }) {
+  if (!a) return <span className="badge badge-arch">not assessed</span>;
+  return a.adequate
+    ? <span className="badge badge-ok"><span aria-hidden="true">✓</span> Adequate</span>
+    : <span className="badge badge-bad"><span aria-hidden="true">✗</span> Not adequate</span>;
+}
+const ADQ_REASON = { unmet: 'unmet load', exceed: 'above grid capacity', gap: 'power gap' };
+export const adequacyReasons = (a) => (a && !a.adequate ? a.reasons.map((r) => ADQ_REASON[r]).join(', ') : '');
+
 function ResBadge({ s }) {
   const cls = s === 'Meets' ? 'ok' : s === 'Meets with flags' ? 'warn' : 'bad';
   const icon = s === 'Meets' ? '✓' : s === 'Meets with flags' ? '!' : '✗';
@@ -83,6 +93,11 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
   const p = Math.min(page, pages - 1);
   const rows = list.slice(p * PAGE, p * PAGE + PAGE);
   const nameById = useMemo(() => new Map(run.options.map((o) => [o.id, o])), [run]);
+  const adequateCount = useMemo(() => run.options.filter((o) => !o.adequacy || o.adequacy.adequate).length, [run]);
+  // In rank order, a divider row marks where the options that do not serve every hour begin.
+  const rankOrder = view.sortKey === 'rank' && view.sortDir === 1;
+  const firstShortIdx = rankOrder ? list.findIndex((o) => o.adequacy && !o.adequacy.adequate) : -1;
+  const cols = siteBeta ? 16 : 14;
 
   const sortBy = (k) => setView({ ...view, sortKey: k, sortDir: view.sortKey === k ? -view.sortDir : 1 });
   const th = (k, label, cls = '') => (
@@ -145,6 +160,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
       </div>
       <FilterChips view={view} setView={setView} hiddenDominated={hiddenDominated} onChange={() => setPage(0)} clearAll />
       <p className="note">Showing {list.length.toLocaleString('en-GB')} of {run.options.length.toLocaleString('en-GB')} screened options ({dominatedCount.toLocaleString('en-GB')} dominated, all shown unless hidden). Scores are relative to the scoring set (all screened options); filters change only what is shown.</p>
+      <p className="note">Power adequacy first: {adequateCount.toLocaleString('en-GB')} of {run.options.length.toLocaleString('en-GB')} options serve their load in every hour and rank above the {(run.options.length - adequateCount).toLocaleString('en-GB')} that do not. Within each group the order is by weighted score. Options that are not adequate stay in the list.</p>
 
       <div className="table-wrap" role="region" aria-label="Ranked options" tabIndex={0}>
         <table className="rank-table">
@@ -160,6 +176,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
               {th('cfe', 'CFE', 'num')}
               <th scope="col">First power</th>
               <th scope="col">Full load</th>
+              <th scope="col">Adequacy</th>
               {th('unmet', 'Unmet MWh', 'num')}
               {siteBeta ? th('landTake', 'Land take ha', 'num') : null}
               {siteBeta ? th('siteFit', 'Site fit (Beta)') : null}
@@ -168,11 +185,14 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
             </tr>
           </thead>
           <tbody>
-            {rows.map((o) => {
+            {rows.map((o, i) => {
               const c = sevCounts(visibleFlags(o, siteBeta));
               const open = openId === o.id;
               return (
                 <React.Fragment key={o.id}>
+                  {p * PAGE + i === firstShortIdx ? (
+                    <tr className="adequacy-divider"><th scope="rowgroup" colSpan={cols}><span className="adequacy-divider-text">Not adequate: these options do not serve their load in every hour, or their firm supply falls short of the design load in some months. They rank below every adequate option.</span></th></tr>
+                  ) : null}
                   <tr className={open ? 'row-open' : ''}>
                     <td className="num">{o.rank}</td>
                     <td className="name-cell">
@@ -196,6 +216,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
                     <td className="num">{pct(o.carbon.cfePct)}</td>
                     <td>{monthLabel(start, o.ttp.firstPowerM)}</td>
                     <td>{monthLabel(start, o.ttp.fullLoadM)}</td>
+                    <td><AdequacyBadge a={o.adequacy} />{o.adequacy && !o.adequacy.adequate ? <div className="sub">{adequacyReasons(o.adequacy)}</div> : null}</td>
                     <td className={`num ${o.unmet.mwh > 0 ? 'flag-text' : ''}`}>{o.unmet.mwh > 0 ? sig(o.unmet.mwh, 2) : '0'}{o.unmet.hours ? <div className="sub">{o.unmet.hours.toLocaleString('en-GB')} h</div> : null}</td>
                     {siteBeta ? <td className="num">{o.siteFit ? sig(o.siteFit.landTakeHa, 3) : '—'}{o.siteFit && o.siteFit.offsiteHa > 0 ? <div className="sub">+{sig(o.siteFit.offsiteHa, 2)} off site</div> : null}</td> : null}
                     {siteBeta ? <td><SiteFitBadge s={o.siteFit ? o.siteFit.status : null} />{o.siteFit && o.siteFit.status === 'Does not fit' ? <div className="sub">{o.siteFit.unplacedM2.toLocaleString('en-GB')} m² short</div> : null}</td> : null}
@@ -203,7 +224,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
                     <td className="num"><span className="flag-counts" title={`${c.major} major, ${c.minor} minor, ${c.info} info`}>{c.major ? <span className="fc fc-major">{c.major}</span> : null}{c.minor ? <span className="fc fc-minor">{c.minor}</span> : null}<span className="fc fc-info">{c.info}</span></span></td>
                   </tr>
                   {open ? (
-                    <tr className="detail-row"><td colSpan={siteBeta ? 15 : 13}><OptionDetail o={o} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} /></td></tr>
+                    <tr className="detail-row"><td colSpan={cols}><OptionDetail o={o} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} /></td></tr>
                   ) : null}
                 </React.Fragment>
               );

@@ -248,11 +248,12 @@ export async function inspectorTests(test, shared) {
         assert.deepEqual(I.flagIds, o.flags.map((f) => f.id), `${label} ${o.id}: flags`);
         assert.equal(I.solarGroundMWp, o.sizing.solarGroundMWp, `${label} ${o.id}: ground PV`);
         assert.deepEqual(I.eco.ppaHedge, o.eco.ppaHedge, `${label} ${o.id}: PPA hedge`);
+        assert.deepEqual(I.adequacy, o.adequacy, `${label} ${o.id}: power adequacy`);
         cases.push({ label, run, o, I, why });
       }
       notes.push(`${label}: ${picks.length} options (${picks.map((p) => p.why).join(', ')})`);
     }
-    return `${cases.length} inspections equal the run in every dispatched year (all annual fields and per-plant figures), time-to-power, LCOE, NPV, PPA hedge, solar size, deliverability, site fit and flags; ${notes.join('; ')}.`;
+    return `${cases.length} inspections equal the run in every dispatched year (all annual fields and per-plant figures), time-to-power, LCOE, NPV, PPA hedge, power adequacy, solar size, deliverability, site fit and flags; ${notes.join('; ')}.`;
   });
 
   await test('12b. Hourly records sum to the engine\'s annual totals, and the energy balance closes in every hour of every inspected year', () => {

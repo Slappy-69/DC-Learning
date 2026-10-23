@@ -11,6 +11,7 @@ import { runLayout } from './layout.js';
 import { layoutFacts, siteFitOf } from './sitefit.js';
 import { dispatchConfig, dispatchAll } from './dispatch.js';
 import { timeToPower, economics, carbon, resilience, deliverability, allOptionFlags, unmetSummary } from './evaluate.js';
+import { adequacyOf } from './adequacy.js';
 
 // ctx: a run context (context.js buildContext, with its site model); v: the option's choice vector.
 // recordYears: model years whose hourly arrays are kept (null = none, as in the run).
@@ -29,5 +30,6 @@ export function evaluateOption(ctx, v, { recordYears = null } = {}) {
   const flags = allOptionFlags(ctx, v, sz, disp, ttp, eco, carb, res, siteFit);
   const deliv = deliverability(ctx, v, sz, disp, flags, siteFit);
   const unmet = unmetSummary(disp);
-  return { v, sz, bs, layout, facts, siteFit, cfg, disp, ttp, eco, carb, res, flags, deliv, unmet };
+  const adequacy = adequacyOf(disp, ttp, unmet);
+  return { v, sz, bs, layout, facts, siteFit, cfg, disp, ttp, eco, carb, res, flags, deliv, unmet, adequacy };
 }

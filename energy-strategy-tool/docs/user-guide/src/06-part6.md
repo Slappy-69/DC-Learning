@@ -103,6 +103,8 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Site tab as Beta (switch, label, kept out of the ranking) | Built (22 Oct 2026) | 28, 30 |
 | Site area as one number (land for wind without the layout) | Agreed; open question | 15, 28 |
 | Solar from roof and ground areas for PV; carport solar and belly tanks removed | Built (22 Oct 2026) | 8, 15, 35 |
+| Power adequacy first: adequacy status, ranking, flag, option detail, header count, grid shortfall analysis (work package 3b, first part) | Built (23 Oct 2026) | 21, 22, 23, 42, 44, 45 |
+| Power adequacy, rest of 3b: generation sized to close the shortfall, ordering and permitting, backup rules, grid-matched phasing option | Agreed, not built yet | — |
 | IT load estimated from area | Agreed | 16 |
 | Load shapes, AI profiles | Agreed | 16 |
 | Flexibility with triggers; battery response | Agreed | 16 |

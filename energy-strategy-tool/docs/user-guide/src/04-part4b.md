@@ -195,6 +195,7 @@ Flags are how the tool reports problems without enforcing them. Each has an iden
 
 | Flag | Severity | Raised when |
 |---|---|---|
+| adequacy-short | major | the option is not adequate: unmet load, import above the grid capacity, or firm supply below the design load in a month (chapter 44). Shows MWh, hours, peak MW and the longest event |
 | grid-binding | major | unmet load in any simulated year ("Show unmet load") |
 | grid-exceed | major | import above the offered capacity ("Show exceedance") |
 | grid-ppa | minor or info | contracted PPA volume not delivered (minor if any of it was limited by import capacity); reports the PPA hedge |
@@ -255,7 +256,7 @@ Flags are how the tool reports problems without enforcing them. Each has an iden
 
 ## Run flags
 
-Information flags for the whole run: compatibility-rule counts (gen-rules), values not generated (gen-values), sampling active (gen-sampling), wind not generated on a small site (tech-wind-default), AI training transients not modelled (load-ai), and the utilisation assumption (load-util).
+Information flags for the whole run: compatibility-rule counts (gen-rules), values not generated (gen-values), sampling active (gen-sampling), wind not generated on a small site (tech-wind-default), AI training transients not modelled (load-ai), the utilisation assumption (load-util), and how many options are adequate (adequacy-count; or adequacy-none, major, when no option is adequate).
 
 ::: {.callout .agreed}
 **Agreed, not built yet (decision O3).** The single `grid-ppa` flag becomes **two flags**: one for PPA volume limited by the grid import capacity and one for other undelivered volume (above the load in the hour). **Each shows its calculated share of the undelivered PPA volume.** Today the flag headline says "PPA limited by import capacity" whenever any volume is import-limited: on 753 options of the T1 run, where only 0.002 to 0.5 % of the undelivered volume was. For the T1 leader the split is 140 MWh (0.003 %) limited by import capacity and 4,475,228 MWh (99.997 %) above the load.
@@ -328,11 +329,15 @@ Note that the leader is not the cheapest option: a gas-bridging option has the l
 
 ## Dominance
 
-Option j dominates option i when j is no worse on all four metrics, strictly better on at least one, and its resilience and site-fit statuses are at least as good as i's. A small tolerance (one part in a billion) avoids marking options that differ only by rounding. The mark names the first dominating option found. **Dominance never changes a score or a rank.**
+Option j dominates option i when j is no worse on all four metrics, strictly better on at least one, and its power adequacy, resilience and site-fit statuses are at least as good as i's (an option that is not adequate never dominates one that is). A small tolerance (one part in a billion) avoids marking options that differ only by rounding. The mark names the first dominating option found. **Dominance never changes a score or a rank.**
 
 ## Ranking
 
-Options are sorted by weighted score, highest first; equal scores go to the lower identifier. With "rank requirement-compliant options first" on, options whose resilience is "Does not meet" or whose site fit is "Does not fit" are placed after all the others, each group still in score order. The **leader** (also called the weighted pick) is rank 1.
+**Power adequacy first** (built 23 October 2026; the owner's decision of 2026-10-22, OPEN-QUESTIONS 38–41). An option is **adequate** only when all three hold: no unmet load in any hour of any simulated year; no import above the offered grid capacity ("Show exceedance" mode); and no power gap, meaning its firm supply reaches the design load (the full contracted IT at the design-day PUE plus ancillary load) in every month. There is no tolerance: one unmet hour makes an option not adequate. Every adequate option ranks above every option that is not. Options that are not adequate stay in the list, with the major flag `adequacy-short`, and keep their scores: adequacy changes the order, never a score. This is the owner's deliberate exception to "flag, don't enforce".
+
+Within each group, options are sorted by weighted score, highest first; equal scores go to the lower identifier. With "rank requirement-compliant options first" on, options whose resilience is "Does not meet" (or, with the Site tab on, whose site fit is "Does not fit") are placed after the others within each adequacy group, each part still in score order. The **leader** (also called the weighted pick) is rank 1.
+
+In the T1 run 953 of the 2,000 screened options are adequate. The options with the highest scores (92.7 and just below) are not: each leaves some 300 to 1,000 MWh of load unmet over 500 to 1,000 hours before the full grid connection, and has a power gap (the highest scorer: 608 MWh over 830 hours, longest event 581 hours, 15 MW-months of power gap). The leader is now the best adequate option, OPIAR4Q (score 89.8).
 
 # 45. The trade-off view {#ch45}
 
@@ -342,7 +347,7 @@ Options are sorted by weighted score, highest first; equal scores go to the lowe
 
 **Size** is scaled between the smallest and largest capex of the run (€26 m to €960 m in T1).
 
-**The weighted pick** is always rank 1, the header's leader. If "rank requirement-compliant options first" puts a different option at rank 1 than the highest score, the chart marks the highest-scoring option separately and says why.
+**The weighted pick** is always rank 1, the header's leader. When the highest-scoring option is not rank 1, the chart marks it separately and says why: because it is not adequate (power adequacy first), or because "rank requirement-compliant options first" placed it lower.
 
 # 46. The tornado {#ch46}
 

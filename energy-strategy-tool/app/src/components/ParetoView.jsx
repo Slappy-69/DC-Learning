@@ -73,7 +73,9 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
   const hiddenReason = model.pickHiddenBy === 'hide-dominated'
     ? ` Not on the chart: "Hide dominated options" hides it${model.pickDominatedBy ? ` (dominated by #${model.pickDominatedBy.rank} ${model.pickDominatedBy.name}, which ties or nearly ties on weighted score)` : ''}; use "show" to see it.`
     : ' Not on the chart: hidden by the current view filters; remove them to see it.';
-  const topReason = model.topScoreReason === 'compliant-first'
+  const topReason = model.topScoreReason === 'adequacy'
+    ? `ranked #${model.topScoreRank}, below the pick, because it does not serve its load in every hour (power adequacy first).`
+    : model.topScoreReason === 'compliant-first'
     ? `ranked #${model.topScoreRank}, below the pick, because "Rank requirement-compliant options first" is on and ${(model.topScoreFailing && model.topScoreFailing.length ? model.topScoreFailing : [`its resilience status is "${model.topScoreStatus}"`]).join(' and ')}.`
     : `ranked #${model.topScoreRank} under the current ranking settings.`;
 

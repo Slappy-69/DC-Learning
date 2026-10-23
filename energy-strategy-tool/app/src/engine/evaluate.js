@@ -6,6 +6,7 @@ import { decarbFactor } from './context.js';
 import { fuelPrice, fuelEF } from './dispatch.js';
 import { bridgeActive, programmeMonths, techAvailMonth } from './sizing.js';
 import { NA } from './generator.js';
+import { adequacyOf, adequacyText } from './adequacy.js';
 
 const PERMIT_NOTE = 'Screening flag, not a permitting determination.';
 const PROXY_NOTE = 'EU threshold used as a proxy; national equivalent not checked by this tool.';
@@ -438,6 +439,11 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   // Roof area for PV larger than the free roof (OPEN-QUESTIONS 53): flagged, never reduced (principle 5).
   if (sz.roofPvOverFreeM2 > 0) flags.push(flag('solar-roof-area', 'minor', 'Technology', `Roof area for PV (${Math.round(inputs.site.pvRoofM2).toLocaleString('en-GB')} m²) is ${Math.round(sz.roofPvOverFreeM2).toLocaleString('en-GB')} m² more than the free roof after roof plant; rooftop PV is sized on the entered area`, { value: sz.roofPvOverFreeM2 }));
 
+  // Power adequacy first (OPEN-QUESTIONS 38–40): one flag that says why an option is not adequate. It ranks the
+  // option below every adequate one (scoring.js); the grid flags below give the detail.
+  const adq = adequacyOf(disp, ttp, unmetSummary(disp));
+  if (!adq.adequate) flags.push(flag('adequacy-short', 'major', 'Adequacy', adequacyText(adq), { value: adq.unmetMWh }));
+
   // Grid
   const unmetMWh = disp.years.reduce((s, y) => s + y.unmetMWh, 0);
   const unmetH = disp.years.reduce((s, y) => s + y.unmetHours, 0);
@@ -551,6 +557,7 @@ export function unmetSummary(disp) {
     mwh: disp.years.reduce((a, y) => a + y.unmetMWh, 0),
     hours: disp.years.reduce((a, y) => a + y.unmetHours, 0),
     peakMW: disp.years.reduce((a, y) => Math.max(a, y.unmetPeakMW), 0),
+    longestH: disp.years.reduce((a, y) => Math.max(a, y.unmetLongestH || 0), 0),
     byYear: disp.years.map((y) => y.unmetMWh),
   };
 }

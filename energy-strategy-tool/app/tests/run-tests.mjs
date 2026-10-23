@@ -55,7 +55,7 @@ import {
   highestWeightedScore, defaultView, activeFilterChips, activeFilterCount, paretoTtpClasses, defaultParetoAxes,
   tablePageSize, buildDefaultInputs, isRequirementCompliant,
 } from '../src/engine/index.js';
-import { scoreOptions } from '../src/engine/scoring.js';
+import { scoreOptions, isAdequate } from '../src/engine/scoring.js';
 import { dispatchAll } from '../src/engine/dispatch.js';
 import { createProgressTracker } from '../src/engine/runlog.js';
 import { Worker } from 'node:worker_threads';
@@ -64,6 +64,7 @@ import { geometryTests, siteModelTests, blockTests, layoutTests, siteFitTests } 
 import { batteryTimingTests, ppaTests, inspectorTests, sensitivityTests, hostedPageTests } from './port-tests.mjs';
 import { betaTests } from './beta-tests.mjs';
 import { solarTests } from './solar-tests.mjs';
+import { adequacyTests } from './adequacy-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -540,8 +541,11 @@ await test('6c. Worker pool: each worker returns its own events; merged log comp
   // Deterministic across two pool runs (timestamps excluded)
   assert.equal(strip(p1.run.log), strip(p2.run.log), 'pool log content differs between identical runs');
   // Results identical to the single-thread run
-  const snap = (r) => r.options.map((o) => `${o.id}:${o.score}:${o.rank}:${o.resilience.status}`).join('|');
+  const snap = (r) => r.options.map((o) => `${o.id}:${o.score}:${o.rank}:${o.resilience.status}:${o.adequacy.status}`).join('|');
   assert.equal(snap(p1.run), snap(runT1), 'pool results differ from single-thread results');
+  // Adequacy run flag and shortfall analysis cover the whole set, not one worker's slice
+  assert.deepEqual(p1.run.runFlags.find((f) => f.category === 'Adequacy'), runT1.runFlags.find((f) => f.category === 'Adequacy'), 'pool adequacy run flag');
+  assert.deepEqual(p1.run.shortfall, runT1.shortfall, 'pool shortfall analysis');
   const perWorker = p1.parts.map((p) => { const d = p.log.find((e) => e.stage === 'dispatch' && e.event === 'end').detail; return `${p.options.length} options ${d.cacheMisses} miss/${d.cacheHits} hit`; });
   return `${N} workers (real src/worker.js in worker_threads): merged ${log.length} events, seq contiguous, sources ${v.sources.join(', ')}; per worker ${perWorker.join('; ')}; ${merge.detail.distinctConfigurations} distinct configurations, ${merge.detail.duplicatedAcrossWorkers} simulated in more than one worker; streamed events = returned events; second pool run identical excluding timestamps; ${runT1.options.length} scores and ranks equal the single-thread run.`;
 });
@@ -734,18 +738,23 @@ await test('8b. Weighted pick is the highest weighted score and moves with the w
     const model = HOOKS.paretoView(r, { x: 'lcoe', y: 'location' });
     // Independent check: weighted score recomputed by hand from the axis scores and effective weights.
     const { w } = effectiveWeights(wts);
-    let best = null, bestS = -Infinity;
+    // Power adequacy first (OPEN-QUESTIONS 38): the pick is the highest weighted score among the options that serve
+    // every hour; the highest score overall is marked separately when it is not adequate.
+    let best = null, bestS = -Infinity, top = null, topS = -Infinity;
     for (const o of r.options) {
       const s = w.cost * o.axisScores.cost + w.carbon * o.axisScores.carbon + w.ttp * o.axisScores.ttp + w.deliverability * o.axisScores.deliverability;
       assert.ok(Math.abs(s - o.score) < 1e-9, 'weighted score mismatch');
+      if (s > topS + 1e-12 || (Math.abs(s - topS) <= 1e-12 && o.id < top.id)) { topS = s; top = o; }
+      if (!isAdequate(o)) continue;
       if (s > bestS + 1e-12 || (Math.abs(s - bestS) <= 1e-12 && o.id < best.id)) { bestS = s; best = o; }
     }
-    assert.equal(model.pickId, best.id, `${name}: pick is not the highest weighted score`);
+    assert.equal(model.pickId, best.id, `${name}: pick is not the highest weighted score among adequate options`);
     assert.equal(weightedPick(r.options).id, best.id);
     const rank1 = r.options.find((o) => o.rank === 1);
     assert.equal(model.pickId, rank1.id, `${name}: pick is not the rank-1 leader`);
-    assert.equal(highestWeightedScore(r.options).id, best.id, `${name}: highest weighted score`);
-    assert.equal(model.topScoreId, null, `${name}: a separate highest-score mark with compliant-first off`);
+    assert.equal(highestWeightedScore(r.options).id, top.id, `${name}: highest weighted score`);
+    if (top.id === best.id) assert.equal(model.topScoreId, null, `${name}: a separate highest-score mark with compliant-first off`);
+    else { assert.equal(model.topScoreId, top.id); assert.equal(model.topScoreReason, 'adequacy', `${name}: top scorer not adequate`); }
     assert.equal(model.points.filter((p) => p.isPick).length, 1, 'exactly one highlighted point');
     // Dispatch untouched: the same result objects, shared by reference.
     for (let i = 0; i < r.options.length; i++) {
@@ -1053,8 +1062,9 @@ await test('8g. AC5: the highlighted pick is the weighted leader (rank 1, the he
           divergent++;
           divergentCases.push(`${sampleLabel}, ${presetName}: top scorer rank ${top.rank} (${top.resilience.status}${top.siteFit ? `, ${top.siteFit.status}` : ''})`);
           // Review D9: compliant means resilience not "Does not meet" and site fit not "Does not fit".
-          assert.ok(cf && !isRequirementCompliant(top), 'top scorer differs from rank 1 without the compliant-first toggle');
-          assert.equal(m.topScoreId, top.id); assert.equal(m.topScoreReason, 'compliant-first');
+          // Power adequacy first (OPEN-QUESTIONS 38), then compliant-first when on.
+          assert.ok(!isAdequate(top) || (cf && !isRequirementCompliant(top)), 'top scorer differs from rank 1 for no ranking reason');
+          assert.equal(m.topScoreId, top.id); assert.equal(m.topScoreReason, !isAdequate(top) ? 'adequacy' : 'compliant-first');
           assert.deepEqual(m.points.filter((q) => q.isTopScore).map((q) => q.id), [top.id]);
         } else assert.equal(m.topScoreId, null);
         combos++;
@@ -1150,6 +1160,9 @@ await betaTests(test, siteRuns);
 
 // 16. Solar areas and removed choices (OPEN-QUESTIONS 52–54, 2026-10-22) (tests/solar-tests.mjs)
 await solarTests(test, siteRuns);
+
+// 17. Power adequacy first (OPEN-QUESTIONS 37–41, 2026-10-22; build plan 3b) (tests/adequacy-tests.mjs)
+await adequacyTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

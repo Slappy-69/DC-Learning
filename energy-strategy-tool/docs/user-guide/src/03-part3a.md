@@ -304,6 +304,7 @@ The **Run progress** panel lists the 13 stages of the run (chapter 31), each wit
 - **Generation**: the open-choice product, the count after the n/a collapse, the valid count after the compatibility rules, the archetypes, the total, and how many were screened. When sampling applies, the summary says so, with a **Screen all** link (switches sampling off) and a reminder that locking a choice narrows the space.
 - **Compatibility rules**: each rule, what it removes, and how many combinations it removed.
 - **Scoring set**: every screened option. View filters never change any score or rank.
+- **Grid shortfall against the design load** (built 23 October 2026; OPEN-QUESTIONS 38): for each cooling type the run generates, the design load (the full contracted IT at the design-day PUE plus ancillary load), the **temporary** shortfall against the offered grid before the full connection date and the **permanent** shortfall from it on (peak MW, its month, and how many months), and the IT load the full grid connection supports on its own. In T1 (120 MW grid from 2029-07) air cooling needs 137 MW, so 16.7 MW stays short from 2031-12 and the full grid supports 87.8 MW of IT; DLC needs 113 MW, has only a temporary shortfall (peak 6.5 MW in 2029-06) and the grid supports 106 MW of IT. On-site generation must close both shortfalls for an option to be adequate.
 
 ## Values not generated
 

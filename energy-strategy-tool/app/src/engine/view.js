@@ -30,6 +30,7 @@ export function tablePageSize() {
 
 // Flags offered in the view-filter selects (§11 "any flag"; the full flag list is in each option).
 export const FLAG_FILTERS = [
+  ['adequacy-short', 'Not adequate (power)'],
   ['grid-binding', 'Grid capacity binding'],
   ['res-backed', 'Backed load not met'],
   ['res-autonomy', 'Autonomy not met'],

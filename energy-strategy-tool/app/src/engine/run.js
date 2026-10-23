@@ -21,6 +21,7 @@ import { buildBlocks, blockSetKey } from './blocks.js';
 import { layoutManySteps } from './layout.js';
 import { layoutFacts, siteFitOf } from './sitefit.js';
 import { layoutForOption } from './siteapi.js';
+import { adequacyOf, shortfallAnalysis } from './adequacy.js';
 
 export const ENGINE_VERSION = '0.2.0-site';
 
@@ -248,9 +249,10 @@ export function* runModelSteps(rawInputs, opts = {}) {
     const { g, sz, disp, ttp, eco, carb, res, flags } = r;
     const deliv = deliverability(ctx, g.v, sz, disp, flags, r.siteFit);
     const unmet = unmetSummary(disp);
+    const adequacy = adequacyOf(disp, ttp, unmet);
     options.push({
       id: r.id, key: g.key, v: g.v, archetype: g.archetype, archetypeName: g.archetypeName, custom: false, pinned: false,
-      name: optionName(g.v, sz), sizing: sz, dispatchKey: r.cfgKey, dispatch: disp, ttp, eco, carbon: carb, resilience: res, flags, deliv, unmet,
+      name: optionName(g.v, sz), sizing: sz, dispatchKey: r.cfgKey, dispatch: disp, ttp, eco, carbon: carb, resilience: res, flags, deliv, unmet, adequacy,
       siteFit: r.siteFit, layoutKey: r.layoutKey,
       model: 'Full-year hourly (8760 h)',
     });
@@ -270,6 +272,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
   const windNote = s.valuesNotGenerated.find((x) => x.id === 'C11' && x.note);
   if (windNote) runFlags.push(flag('tech-wind-default', 'info', 'Technology', windNote.note));
   if (inputs.load.workload === 'ai-training') runFlags.push(flag('load-ai', 'info', 'Load', 'AI training transient load not modelled'));
+  runFlags.push(adequacyRunFlag(options));
   runFlags.push(flag('load-util', 'info', 'Load', `IT utilisation assumption ${(inputs.load.utilisation * 100).toFixed(0)} % of installed IT (energy); sizing uses 100 %`));
 
   return {
@@ -283,6 +286,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
     rules: [...RULES.map((r) => ({ id: r.id, name: r.name, detail: r.detail, removed: s.removedByRule[r.id] })), { ...RULE_D, removed: s.removedByRule.d }],
     scoring,
     runFlags,
+    shortfall: shortfallAnalysis(ctx, [...new Set(options.map((o) => o.v.C8))].sort()),
     meritOrder: MERIT_ORDER,
     dispatchHandling: { grid: inputs.settings.gridHandling, runHours: inputs.settings.runHourHandling },
     profileLabel: PROFILE_LABEL,
@@ -294,6 +298,15 @@ export function* runModelSteps(rawInputs, opts = {}) {
     dispatchKeys: [...dispCache.keys()],
     timing: { totalMs: t4 - t0, evaluateMs: t3 - t0, scoreMs: t4 - t3, dispatchRuns: misses, dispatchCacheHits: hits, dispatchYearsTotal: yearsSimulated },
   };
+}
+
+// Power adequacy first (OPEN-QUESTIONS 38): how many options serve every hour; options that do not are ranked last.
+// Recomputed over the merged set in a pooled run.
+function adequacyRunFlag(options) {
+  const nAdequate = options.filter((o) => o.adequacy.adequate).length;
+  return flag(nAdequate ? 'adequacy-count' : 'adequacy-none', nAdequate ? 'info' : 'major', 'Adequacy', nAdequate
+    ? `${nAdequate.toLocaleString('en-GB')} of ${options.length.toLocaleString('en-GB')} options serve their load in every hour; the other ${(options.length - nAdequate).toLocaleString('en-GB')} rank below them (power adequacy first)`
+    : `No option serves its load in every hour: all ${options.length.toLocaleString('en-GB')} are ranked by score, and none is adequate. See the shortfall analysis in the run summary`);
 }
 
 // Synchronous run (tests, worker): drains the generator.
@@ -351,6 +364,13 @@ export function mergeRuns(parts, inputs, opts = {}) {
   if (parts.every((p) => p.layoutSummary)) {
     const sum = (k) => parts.reduce((a, p) => a + p.layoutSummary[k], 0);
     merged.layoutSummary = { ...base.layoutSummary, cacheHits: sum('cacheHits'), cacheMisses: sum('cacheMisses'), distinctLayouts: new Set(options.map((o) => o.layoutKey)).size, placements: sum('placements'), searches: sum('searches'), maskBuilds: sum('maskBuilds'), solarFills: sum('solarFills'), unplacedBlocks: sum('unplacedBlocks'), relaxedRules: sum('relaxedRules'), workers: parts.length };
+  }
+  // Adequacy count and shortfall analysis over the whole set (each worker saw only its slice's cooling types).
+  merged.runFlags = base.runFlags.map((f) => (f.category === 'Adequacy' ? adequacyRunFlag(options) : f));
+  if (parts.every((p) => p.shortfall)) {
+    const byId = new Map();
+    for (const p of parts) for (const c of p.shortfall.byCooling) if (!byId.has(c.cooling)) byId.set(c.cooling, c);
+    merged.shortfall = { ...base.shortfall, byCooling: [...byId.keys()].sort().map((k) => byId.get(k)) };
   }
   merged.log = mergeLogs([log.events, ...parts.map((p) => p.log || [])]);
   merged.dispatchKeys = undefined;

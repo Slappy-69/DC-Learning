@@ -1,5 +1,6 @@
 import React from 'react';
-import { LABEL } from '../engine/defaults.js';
+import { LABEL, CHOICE_BY_ID } from '../engine/defaults.js';
+import { monthLabel, sig } from '../format.js';
 
 // What site fit does and does not change (§5.7, §9.9, §10.4, §11), in words. The status is never a weight:
 // it enters a score only through the optional site-fit penalty and the order only through "Rank
@@ -16,6 +17,36 @@ export function siteFitEffect(inputs) {
     ? 'No option is hidden for not fitting; "Rank requirement-compliant options first" is on, so options that do not fit rank after those that do.'
     : 'No option is hidden or demoted for not fitting.';
   return `${status} ${order} The layout never resizes an option: ground solar comes from the ground area for PV. The POC and gas-main positions set the cable and gas-pipe route costs.`;
+}
+
+// Grid shortfall analysis (OPEN-QUESTIONS 38, step 1, 2026-10-22): the phased design load (contracted IT at the
+// design-day PUE plus ancillary) against the offered grid capacity, month by month, for each cooling type the run
+// generates. Temporary = before the full grid connection date; permanent = from it on.
+const coolingName = (id) => { const v = CHOICE_BY_ID.C8 && CHOICE_BY_ID.C8.values.find((x) => x[0] === id); return v ? v[1] : id; };
+function ShortfallSection({ sf, start }) {
+  const part = (x) => (x.months
+    ? <>peak {sig(x.peakMW, 3)} MW in {monthLabel(start, x.peakMonth)}; {x.months} month{x.months === 1 ? '' : 's'} from {monthLabel(start, x.firstMonth)}</>
+    : 'none');
+  return (
+    <section aria-labelledby="rs-shortfall" className="rs-wide">
+      <h3 id="rs-shortfall">Grid shortfall against the design load</h3>
+      <p className="small">Design load: the full contracted IT, phased, at the design-day PUE plus ancillary load, against the offered grid capacity. Temporary shortfall is before the full grid connection ({monthLabel(start, sf.fullGridMonth)}); permanent shortfall is from it on. On-site generation must close both for an option to be adequate.</p>
+      <table className="mini">
+        <thead><tr><th scope="col">Cooling</th><th scope="col" className="num">Design load</th><th scope="col">Temporary shortfall</th><th scope="col">Permanent shortfall</th><th scope="col" className="num">IT the full grid supports</th></tr></thead>
+        <tbody>
+          {sf.byCooling.map((c) => (
+            <tr key={c.cooling}>
+              <th scope="row">{coolingName(c.cooling)}<div className="sub">design-day PUE {c.peakPUE.toFixed(2)}</div></th>
+              <td className="num">{sig(c.designMW, 3)} MW</td>
+              <td>{part(c.temporary)}</td>
+              <td>{part(c.permanent)}</td>
+              <td className="num">{sig(c.itSupportedMW, 3)} MW IT<div className="sub">on {sig(c.fullGridMW, 3)} MW grid</div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
 }
 
 // Run summary (BRIEF §12): total combinations, compatibility rules with counts, "values not
@@ -79,6 +110,7 @@ export default function RunSummary({ run, onInclude, onSamplingOff, open, onTogg
               ))}
             </ul>
           </section>
+          {run.shortfall ? <ShortfallSection sf={run.shortfall} start={run.meta ? run.meta.analysisStart : run.inputs.project.analysisStart} /> : null}
           <section aria-labelledby="rs-site">
             <h3 id="rs-site">Site layout</h3>
             {run.site ? (

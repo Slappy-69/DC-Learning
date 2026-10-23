@@ -186,6 +186,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
   let ppaNetworkCost = 0, ppaLimitedMWh = 0, ppaLimitedHours = 0, ppaDeliveredMWh = 0, ppaUndeliveredMWh = 0, ppaUndeliveredSpotValue = 0, exportRevenue = 0;
   let exceedMWh = 0, exceedHours = 0, exceedPeakMW = 0, grossDemandMWh = 0, netDemandMWh = 0, servedMWh = 0;
   let unmetMWh = 0, unmetHours = 0, unmetPeakMW = 0, designDayShortfall = false, gridMWh = 0, gridChargeMWh = 0;
+  let unmetRunH = 0, unmetLongestH = 0; // longest run of consecutive unmet hours in the year (power adequacy, OPEN-QUESTIONS 38)
   let gridCost = 0, gridCarbonT = 0, ppaCarbonT = 0, reGenMWh = 0, solarMWh = 0, windMWh = 0, reUsedMWh = 0;
   let curtailMWh = 0, exportMWh = 0, bessChargeMWh = 0, bessDischargeMWh = 0, firmMWh = 0, chpCreditMWh = 0;
   let flexMWh = 0, itMWh = 0, cfeMWh = 0, maxBalanceError = 0;
@@ -351,7 +352,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     grossDemandMWh += D0;
     netDemandMWh += netDemand;
     servedMWh += netDemand - unmet;
-    if (unmet > 0) { unmetMWh += unmet; unmetHours++; if (unmet > unmetPeakMW) unmetPeakMW = unmet; if (isDesignDay) designDayShortfall = true; }
+    if (unmet > 0) { unmetMWh += unmet; unmetHours++; if (unmet > unmetPeakMW) unmetPeakMW = unmet; if (isDesignDay) designDayShortfall = true; unmetRunH++; if (unmetRunH > unmetLongestH) unmetLongestH = unmetRunH; } else unmetRunH = 0;
     gridMWh += gridTotal;
     gridChargeMWh += gridCh;
     gridCost += gridTotal * gp;
@@ -385,7 +386,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
 
   Object.assign(out, {
     ppaNetworkCost, ppaLimitedMWh, ppaLimitedHours, ppaDeliveredMWh, ppaUndeliveredMWh, ppaUndeliveredSpotValue, exportRevenue, exceedMWh, exceedHours, exceedPeakMW,
-    grossDemandMWh, netDemandMWh, servedMWh, unmetMWh, unmetHours, unmetPeakMW, designDayShortfall, gridMWh, gridChargeMWh,
+    grossDemandMWh, netDemandMWh, servedMWh, unmetMWh, unmetHours, unmetPeakMW, unmetLongestH, designDayShortfall, gridMWh, gridChargeMWh,
     gridCost, gridCarbonT, ppaCarbonT, reGenMWh, solarMWh, windMWh, reUsedMWh, curtailMWh, exportMWh, bessChargeMWh,
     bessDischargeMWh, firmMWh, chpCreditMWh, flexMWh, itMWh, cfeMWh, maxBalanceError,
   });

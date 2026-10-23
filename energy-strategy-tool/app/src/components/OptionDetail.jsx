@@ -3,6 +3,7 @@ import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
 import { sig, money, monthLabel, pct } from '../format.js';
 import { visibleFlags } from '../engine/view.js';
+import { adequacyText } from '../engine/adequacy.js';
 
 function FitBadge({ s }) {
   const cls = s === 'Fits' ? 'ok' : s === 'Fits with flags' ? 'warn' : 'bad';
@@ -31,6 +32,25 @@ function SiteFitSummary({ o, onShowSite }) {
         </tbody>
       </table>
       {onShowSite ? <button type="button" className="link-btn" onClick={() => onShowSite(o.id)}>Show this option's layout on the Site tab</button> : null}
+    </div>
+  );
+}
+
+// Power adequacy (OPEN-QUESTIONS 37–41, 2026-10-22): serves the load in every hour, no import above the grid
+// capacity, and firm supply at or above the design load (full contracted IT at design-day PUE plus ancillary) in
+// every month. No tolerance. Not adequate ranks below every adequate option; it is never hidden.
+export function AdequacySummary({ a }) {
+  return (
+    <div className={`detail-adequacy ${a.adequate ? 'ok' : 'bad'}`}>
+      <h4>Power adequacy: {a.status}</h4>
+      <p className="small">{adequacyText(a)}{a.adequate ? '' : ' It ranks below every adequate option, by its weighted score among the options that are not adequate.'}</p>
+      <table className="mini">
+        <tbody>
+          <tr><th scope="row">Unmet load (all dispatched years)</th><td className="num">{sig(a.unmetMWh)} MWh · {a.unmetHours.toLocaleString('en-GB')} h · peak {sig(a.unmetPeakMW)} MW · longest event {a.longestH.toLocaleString('en-GB')} h</td></tr>
+          <tr><th scope="row">Import above the grid capacity</th><td className="num">{sig(a.exceedMWh)} MWh · {a.exceedHours.toLocaleString('en-GB')} h</td></tr>
+          <tr><th scope="row">Power gap against the design load</th><td className="num">{sig(a.gapMWm)} MW-months · {a.gapMonths} month{a.gapMonths === 1 ? '' : 's'}</td></tr>
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -70,6 +90,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
           ? <>Dominated by #{dominator ? dominator.rank : '?'} {dominator ? dominator.name : o.dominatedBy}: equal or better on cost, carbon, time-to-power and deliverability, and better on at least one, with no worse resilience status. Still ranked and shown.</>
           : 'Not dominated on cost, carbon, time-to-power and deliverability.'}
       </p>
+      {o.adequacy ? <AdequacySummary a={o.adequacy} /> : null}
       <div className="detail-grid">
         <div>
           <h4>Scores</h4>

@@ -28,7 +28,7 @@ The **Options** tab lists every screened option in rank order. Columns:
 
 | Column | Meaning |
 |---|---|
-| Rank | Position by weighted score (1 = best) |
+| Rank | Position: adequate options first, then by weighted score (1 = best; chapter 44) |
 | Option | Name built from the main choices and sizes; select to open the detail |
 | Score | Weighted score, 0–100 |
 | Cost · Carbon · TTP · Deliv. | The four axis scores as small bars |
@@ -37,6 +37,7 @@ The **Options** tab lists every screened option in rank order. Columns:
 | Carbon | g/kWh by the scoring carbon metric |
 | CFE | Hourly carbon-free energy share |
 | First power, Full load | Months when the supply can first energise phase 1, and carry the full design load |
+| Adequacy | Adequate, or Not adequate with the reasons (unmet load, above grid capacity, power gap). Built 23 October 2026 |
 | Unmet MWh | Unmet load over all simulated years |
 | Land take ha | Land used on site |
 | Site fit, Resilience | Status of the two requirement checks |
@@ -59,11 +60,15 @@ Active filters appear as chips that can be cleared one by one. Click a column he
 
 A dominated option carries a dashed label "Dominated by #k …" naming the option that beats it on every axis.
 
+**Power adequacy first** (built 23 October 2026). A note above the table says how many options are adequate. In rank order, a red divider row marks where the options that are not adequate begin: they do not serve their load in every hour, or their firm supply falls short of the design load in some months, and they rank below every adequate option (chapter 44). They are never hidden; to hide them, choose "Hide options with flag: Not adequate (power)". The header strip also counts adequate and not-adequate options.
+
 # 23. Option detail {#ch23}
 
 Selecting an option's name opens its detail. It is the most useful single view in the tool: everything the engine worked out about that option.
 
 ![Current version: the top of the option detail for the T1 leader: scores, site fit, economics, carbon and energy, time-to-power, resilience and deliverability.](img/s14-detail-a.png)
+
+**Power adequacy** (built 23 October 2026). Above the scores: Adequate or Not adequate, in words, then the unmet load over all simulated years (MWh, hours, peak MW and the longest unbroken run of unmet hours), import above the grid capacity (MWh and hours), and the power gap against the design load (MW-months and months).
 
 **Scores.** The weighted score and the four axis scores (rounded).
 

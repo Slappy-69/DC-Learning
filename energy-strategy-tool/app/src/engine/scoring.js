@@ -67,8 +67,13 @@ function statusRank(o) {
   const r = o.resilience.status === 'Meets' ? 2 : o.resilience.status === 'Meets with flags' ? 1 : 0;
   return r;
 }
+// Power adequacy (OPEN-QUESTIONS 38): 1 = serves every hour, 0 = not. Options without an adequacy record (custom
+// rows built outside the run) count as adequate, so nothing is demoted for a missing field.
+const adequacyRank = (o) => (o.adequacy && o.adequacy.adequate === false ? 0 : 1);
+export const isAdequate = (o) => adequacyRank(o) === 1;
 // Pareto-dominated on (cost, carbon, ttp, deliverability) AND no better resilience status (§7.2 step 6):
-// j dominates i only if j's resilience status is at least as good. Dominance is a mark, not a score: it never
+// j dominates i only if j's resilience status is at least as good, and j is at least as adequate (an option
+// that does not serve every hour never dominates one that does; OPEN-QUESTIONS 38). Dominance is a mark, not a score: it never
 // changes a score or rank. Site fit is no longer part of it: the Site tab is a Beta feature kept out of the main
 // flow and the ranking (walkthrough, 2026-10-21; BRIEF §2 principle 3, §11, AC 27), so no main-flow result may
 // depend on it (interpretation recorded in BUILD-NOTES, "Slice: Site tab as Beta").
@@ -76,6 +81,7 @@ export function markDominance(options) {
   const n = options.length;
   const m = options.map((o) => [o.metrics.cost, o.metrics.carbon, o.metrics.ttp, -o.metrics.deliverability]);
   const sr = options.map(statusRank);
+  const ar = options.map(adequacyRank);
   const eps = 1e-9;
   for (let i = 0; i < n; i++) {
     options[i].dominatedBy = null;
@@ -84,7 +90,7 @@ export function markDominance(options) {
     for (let j = 0; j < n; j++) {
       if (i === j) continue;
       const b = m[j];
-      if (sr[j] < si) continue;
+      if (sr[j] < si || ar[j] < ar[i]) continue;
       let allLE = true, anyLT = false;
       for (let k = 0; k < 4; k++) {
         // Tolerance on a finite scale: with an infinite metric (LCOE with no delivered energy) the
@@ -105,8 +111,13 @@ export function isRequirementCompliant(o) {
   return !(o.resilience && o.resilience.status === 'Does not meet');
 }
 
+// Ranking: power adequacy first, always (owner's decision of 2026-10-22, OPEN-QUESTIONS 38; an exception to
+// principle 5): every option that serves its load in every hour ranks above every option that does not. Within each
+// group, "Rank requirement-compliant options first" (if on) and then the weighted score. Scores never change.
 export function rankOptions(options, compliantFirst) {
   const sorted = options.slice().sort((a, b) => {
+    const aa = adequacyRank(a), ab = adequacyRank(b);
+    if (aa !== ab) return ab - aa;
     if (compliantFirst) {
       const ca = isRequirementCompliant(a) ? 0 : 1;
       const cb = isRequirementCompliant(b) ? 0 : 1;
