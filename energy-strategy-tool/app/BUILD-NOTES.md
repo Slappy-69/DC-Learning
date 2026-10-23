@@ -1513,3 +1513,5 @@ Interpretations (reversible): rule (g) rather than duplicates of C4 = None; the 
 T1 effect: 53,284 combinations (rule g removes 10,080); the 2,000-option sample is drawn from a different space, so most options are new. 929 adequate. Leader O1AN3BKP (Grid + rented temporary generation bridge → retain for grid services · retained-plant backup · DLC · PV 2.5 MWp · PPA hybrid 50 %, score 91.53). 528 top-up options (289 adequate, best rank 33: a CHP top-up of 18 MW on evaporative cooling, LCOE €181/MWh, capex €56 m, 152 g/kWh) against 817 baseload options (418 adequate, best rank 136: CHP of 90 MW, LCOE €184/MWh, capex €270 m, 249 g/kWh).
 
 Test 3: the T3 "grid-dependent" check now excludes "wait" options with a top-up plant, which is sized to close the shortfall; they are counted separately.
+
+Test run (firm generation sized two ways, 2026-10-23): `npm test` 49/49 (new test 19, `tests/topup-tests.mjs`); `npm run build`; `npm run test:browser` 30/30 (B9 now uses the first preset that moves the pick: "Lowest carbon" on this sample).
