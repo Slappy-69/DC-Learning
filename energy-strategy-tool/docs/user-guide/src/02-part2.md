@@ -57,18 +57,18 @@ The ancillary load is **2 % of installed IT** by default and is added on top of 
 
 Within each day, IT demand varies a little. The current version gives each workload type a gentle daily wave around the utilisation, peaking in the afternoon: ±1 % for AI training, ±4 % for mixed cloud and AI inference, ±8 % for enterprise, plus a small random wobble. The wave is scaled so that its average is exactly the utilisation.
 
-::: {.callout .agreed}
-**Agreed, not built yet.** The load shape becomes fully customisable: a flat percentage of IT, daily fluctuation profiles, and AI training and AI inference profiles with editable defaults shown when AI is selected. Because the model works in whole hours, swings shorter than an hour (for example AI training steps and checkpoints lasting seconds) cannot be shown; the tool says so when an AI profile is selected (chapter 16).
+::: {.callout .built}
+**Built 23 October 2026.** The load shape is a choice: **flat** (the utilisation every hour), **daily fluctuation** (the wave above, the default; its swing can be entered), **AI training** (90 % average, with a checkpoint dip to 55 % for 1 hour every 6 hours) and **AI inference** (70 % average, a night trough at 60 % of the afternoon peak at 15:00, weekends at 90 %). The AI values are the mock-up's illustrative ones, labelled indicative — unverified, to research. Because the model works in whole hours, swings shorter than an hour (training steps and checkpoints lasting seconds) cannot be shown; the inputs say so when an AI profile is chosen. The shape changes energy, not sizing (sizing uses 100 % of IT).
 :::
 
 ## Demand flexibility
 
 Some data centres can reduce their load for short periods: deferring batch work, shifting load to another site, or running on their own batteries. This is **demand flexibility**. It can help where the grid connection is tight or prices spike.
 
-In the current version flexibility is a design choice (C16, off by default). When on, it can shed up to **10 % of IT** for up to **100 hours a year**, but only in hours when there is otherwise unmet load.
+Flexibility is a design choice (C16, off by default). When on, it can shed up to **10 % of IT** for up to **100 hours a year**.
 
-::: {.callout .agreed}
-**Agreed, not built yet.** Flexibility stays off by default, but gets a full set of parameters: maximum curtailable share, maximum hours a year, trigger (price, carbon, or weather and grid stress), trigger level, duration per event, notice time, recovery period and cost of curtailment. Batteries can run the site through trigger hours instead of curtailing (chapters 16 and 18).
+::: {.callout .built}
+**Built 23 October 2026 (OPEN-QUESTIONS 33, 34, 61).** Flexibility acts in two ways within the same limits: in **trigger hours** (grid price, grid carbon, or weather and grid stress at or above the trigger level; events of at most 4 hours with 12 hours' recovery between them) and as the **last step against a shortfall**. Every curtailed MWh costs €500 (the cost of curtailment, in the ledger). With **battery response** on, the economic battery runs the site through trigger hours before any curtailment. IT shed against a shortfall still counts as unmet for power adequacy, because the customer loses it. Notice time is recorded but not modelled (prices and carbon are known a day ahead). The run summary shows how often the trigger occurs in the profile. The synthetic price profiles peak near €215/MWh, so the default €250/MWh trigger never occurs until real price data arrives with the country set-up.
 :::
 
 # 6. Cooling and its effect on power and water {#ch6}
@@ -198,15 +198,18 @@ Resilience is a **requirement check, not a score**. Each option gets one of thre
 
 An option that does not meet the requirement is still scored and ranked (flag, don't enforce). You can choose to rank requirement-compliant options first (chapter 19).
 
-The default requirement is **100 % of IT plus essential mechanical backed, N+1, 48 hours of autonomy** (indicative, judgement). The current version also records a 5-minute UPS requirement, but does not use it in any calculation.
+The default requirement is **100 % of IT plus essential mechanical backed, N+1, 48 hours of autonomy** (indicative, judgement). The 5-minute UPS requirement is the resilience reserve battery (below).
+
+::: {.callout .built}
+**Built 23 October 2026 (work package 4).**
+
+- Backup gensets are tested **6 hours a year per generator** (replacing 12), at a **test load of 75 %**, a separate editable input. US practice (NFPA 110) requires monthly runs of at least 30 minutes, about 6 hours a year.
+- Gensets can run as **primary power** for a set number of hours a year (default 0): their N units run in the most expensive grid-price hours, and their fuel, carbon and run hours are costed.
+- Batteries are split into a **resilience reserve** (always kept and never dispatched; default 5 minutes of UPS at full IT load; its battery energy is costed per building at €500/kWh, indicative) and an **economic battery** (choice C12: fixed sizes, the shortfall size, or sized to the trigger hours). Longer battery autonomy is the reserve minutes input.
+:::
 
 ::: {.callout .agreed}
-**Agreed, not built yet.**
-
-- Default requirement: N+1, 100 % of IT load backed. Autonomy can come from on-site fuel and generation, from batteries, or a combination; the engineer chooses.
-- Backup gensets are included by default. **Test running is 6 hours a year per generator** (replacing the brief's 12), at a **test load of 75 %**, a separate editable input. US practice (NFPA 110) requires monthly runs of at least 30 minutes, about 6 hours a year.
-- Gensets can also run as primary power for a set number of hours a year, dispatched and costed.
-- Batteries are split into a **resilience reserve** (always kept; default 5 minutes of UPS at full IT load) and an **economic battery** (flexibility, arbitrage, carbon). Longer battery autonomy is available site-wide.
+**Agreed, not built yet.** Autonomy can come from on-site fuel and generation, from batteries, or a combination; the engineer chooses.
 :::
 
 # 8. The energy technologies in the tool {#ch8}

@@ -124,12 +124,12 @@ Site coverage 35 % and one storey are judgements. The density, 5.5 kW per m² of
 
 ![MOCK-UP of the agreed "enter what you know" pattern: grid capacity and IT load each "Known" or assumed, with the source and the per-option flags.](img/m02-knowledge-levels.png)
 
-::: {.callout .agreed}
-**Agreed, not built yet: load shape and flexibility.**
+::: {.callout .built}
+**Built 23 October 2026: load shape and flexibility.**
 
-- **Load shape** is fully customisable: flat percentage of IT, daily fluctuation, AI training or AI inference. When an AI profile is selected, its editable defaults are shown, with the caveat that swings shorter than an hour cannot be modelled.
-- **Demand flexibility** is off by default. When on, its parameters are: maximum curtailable share of IT, maximum hours a year, trigger (price, carbon, or weather and grid stress), trigger level, duration per event, notice time, recovery period, and cost of curtailment. The historical analysis covers both price and carbon triggers (data: ENTSO-E prices; weather source still to be researched).
-- **Battery response**: batteries can run the site during trigger hours instead of curtailing. By default the tool sizes the battery to cover the historical trigger hours; the engineer can change it. Battery size and trigger threshold trade off, so the engineer chooses which is held fixed (battery size, trigger threshold, or a target of hours covered). The battery capex flows into the economics.
+- **Load shape**: flat, daily fluctuation (default, with an optional swing), AI training (average, dip level, dip interval, dip length) or AI inference (average, night trough, peak hour, weekend level). The AI inputs appear when an AI profile is chosen, with the sub-hour caveat.
+- **Demand flexibility** (generated when choice C16 includes On): maximum curtailable share of IT, maximum hours a year, trigger (price, carbon, or weather and grid stress as temperature), trigger level, duration per event, notice (recorded, not modelled), recovery period, cost of curtailment.
+- **Battery response**: on by default; the economic battery runs the site in trigger hours before any curtailment. **Hold fixed** decides how the C12 battery "Sized to the trigger hours" is sized: *trigger threshold* (default: the battery is the flexible share of IT for the longest trigger event), *hours covered* (the trigger level is set so the events reach the target hours a year), or *battery size* (entered; the hours it covers are reported). The battery capex is in the ledger.
 :::
 
 ![MOCK-UP of the agreed load shape and flexibility section. The AI training values and the trigger values shown are illustrative, not agreed defaults; the 10 % and 100 hours are the current defaults.](img/m03-load-flexibility.png)
@@ -188,13 +188,12 @@ Two inputs exist in the engine but are not on screen in the current version: **g
 
 **Weights.** Drag the sliders or pick a preset (Balanced, Lowest cost, Lowest carbon, Speed to market, Lowest risk). The effective weight of each axis is its raw value divided by the sum of all four. If all four are zero, the tool uses 25 % each and warns. Changing weights re-scores instantly, without re-running the model.
 
-::: {.callout .agreed}
-**Agreed, not built yet.**
+::: {.callout .built}
+**Built 23 October 2026 (work package 4).** New inputs: **resilience reserve battery** (minutes of UPS at full IT, default 5), **genset test running** (6 h a year per unit), **genset test load** (75 %), **backup gensets as primary power** (h a year, default 0), and **client-perceived risk of pooled backup** (minor or major).
+:::
 
-- Resilience default N+1 with 100 % of IT backed. Autonomy from on-site fuel and generation, batteries, or a combination (the engineer chooses).
-- Backup gensets included by default, tested **6 hours a year** each at a **test load of 75 %** (two separate inputs), with an option to run them as primary power for a set number of hours a year, dispatched and costed.
-- Batteries in two allocations: a **resilience reserve** (always kept; default 5 minutes of UPS ride-through at full IT) and an **economic battery** (flexibility, arbitrage, carbon). Longer battery autonomy available site-wide.
-- Weights stay 35/25/25/15 (provisionally accepted). The impact of each weight change is described live. The target for repainting the screen after a weight change is relaxed from 100 ms.
+::: {.callout .agreed}
+**Agreed, not built yet.** Autonomy from on-site fuel and generation, batteries, or a combination (the engineer chooses). Weights stay 35/25/25/15 (provisionally accepted); the impact of each weight change is described live; the repaint target after a weight change is relaxed from 100 ms.
 :::
 
 ![MOCK-UP of the agreed resilience, backup and battery inputs.](img/m04-batteries-backup.png)

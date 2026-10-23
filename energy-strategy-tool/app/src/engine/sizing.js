@@ -6,6 +6,7 @@ import { TECH, COOLING, SPATIAL, choiceLabel } from './defaults.js';
 import { designDemandByMonth, demandYear, designDayPUE } from './context.js';
 import { NA } from './generator.js';
 import { permittingTriggers, permitRegimes, permitOutlookItem } from './permitting.js';
+import { triggerSet } from './triggers.js';
 
 const r1 = (x) => (Math.abs(x) >= 100 ? x.toFixed(0) : x.toFixed(1));
 
@@ -316,6 +317,18 @@ export function sizeOption(ctx, v) {
     bess.role = 'shortfall';
     shortfallBess = { mw: MW, mwh: bess.mwh, usableMWh: Emax, rechargeOK, worstMonth: worstM, failMonth: failM, availMonth: techAvailMonth(ctx, TECH.bess) };
     sentences.push(`BESS for the permanent shortfall (design day, from month ${T}): largest hourly shortfall ${r1(MW)} MW; largest daily shortfall ${r1(Emax)} MWh${worstM >= 0 ? ` (month ${worstM})` : ''} → ${r1(MW)} MW / ${r1(bess.mwh)} MWh (÷ √${rte} discharge efficiency); recharge from the same day's grid headroom: ${rechargeOK ? 'enough in every month, so it counts as firm supply against the design load' : `not enough from month ${failM}, so it does not count as firm supply`}.`);
+  } else if (v.C12 === 'trigger') {
+    // Economic battery sized to the trigger hours (OPEN-QUESTIONS 33, 2026-10-23; §5.3): power = the flexible share of
+    // full IT; energy = that power for the longest trigger event (at most the event length), ÷ √RTE. With the battery
+    // size held fixed, the entered MW / MWh are used instead.
+    const ts = triggerSet(ctx, L);
+    const eta = Math.sqrt(TECH.bess.p.rte);
+    const fixedSize = L.flexBatteryFixed === 'size' && L.flexBatteryMW != null && L.flexBatteryMWh != null;
+    bess.mw = fixedSize ? L.flexBatteryMW : L.flexMaxPct * itMW;
+    bess.mwh = fixedSize ? L.flexBatteryMWh : (bess.mw * ts.longestEventH) / eta;
+    sentences.push(fixedSize
+      ? `BESS for the trigger hours: size held fixed at ${r1(bess.mw)} MW / ${r1(bess.mwh)} MWh; it serves the flexible share in trigger hours before any curtailment.`
+      : `BESS for the trigger hours: ${(L.flexMaxPct * 100).toFixed(0)} % of ${r1(itMW)} MW IT = ${r1(bess.mw)} MW × longest trigger event ${ts.longestEventH} h ÷ √${TECH.bess.p.rte} = ${r1(bess.mwh)} MWh (${ts.events} events, ${ts.eventHours} event hours a year in the profile at the trigger level); it serves the flexible share in trigger hours before any curtailment.`);
   } else if (v.C12 !== 'none') {
     const h = Number(v.C12[0]);
     const pct = Number(v.C12.slice(2)) / 100;
@@ -324,6 +337,11 @@ export function sizeOption(ctx, v) {
     sentences.push(`BESS: ${(pct * 100).toFixed(0)} % of design facility load ${r1(designMW)} MW = ${r1(bess.mw)} MW × ${h} h = ${r1(bess.mwh)} MWh; role ${choiceLabel('C12r', v.C12r).toLowerCase()}; size kept as given.`);
   }
   const storage = { mw: bess.mw + bridgeBess.mw, mwh: bess.mwh + bridgeBess.mwh, role: bess.role || (bridgeBess.mw > 0 ? 'bridgingSupport' : null) };
+
+  // --- Resilience reserve battery (§5.5, walkthrough 2026-10-21): the UPS ride-through at full IT, always kept and never
+  // discharged for economic duties (it is not part of the dispatched storage); its capex is in the ledger. ---
+  const reserve = { mw: itMW, mwh: itMW * (req.upsMin || 0) / 60, minutes: req.upsMin || 0 };
+  sentences.push(`Resilience reserve battery (UPS ride-through): ${r1(itMW)} MW IT × ${reserve.minutes} min = ${r1(reserve.mwh)} MWh, always kept and never used for economic duties; booked per building.`);
 
   // --- Programme: ordered from day one; permitting allowance only under the IED or Seveso (OPEN-QUESTIONS 44, 45, 56) ---
   const permits = permittingTriggers({ prime, bridge, backup }, v, req);
@@ -513,11 +531,22 @@ export function sizeOption(ctx, v) {
   // Split bridging plant: its kept share runs as a second plant record from the full grid date (the whole plant runs
   // before it), so dispatch, run hours and the per-plant figures show the two periods separately.
   if (bridge && bridge.primeMW > 0) plants.push(makePlant(ctx, { ...bridge, mw: bridge.primeMW }, v, 'bridgeKept', T));
+  // Backup gensets as primary power for a set number of hours a year (§5.5, walkthrough 2026-10-21): the gensets'
+  // N units (redundant units held back), in the most expensive grid-price hours of each year, from the first month
+  // of load, serving the remaining load before grid import. Default 0 h: no plant record, no change.
+  const primeH = req.gensetPrimaryHours || 0;
+  if (primeH > 0 && backup.tech && backup.nUnits > 0) {
+    const bt = TECH[backup.tech];
+    let firstLoadM = 0;
+    while (firstLoadM < ctx.nMonths - 1 && designByMonth[firstLoadM] <= 1e-9) firstLoadM++;
+    plants.push(makePlant(ctx, { tech: bt.id, mw: backup.nUnits * bt.p.unitMW, unitMW: bt.p.unitMW, availMonth: firstLoadM, fuelMonth: fuelAvailMonth(ctx, bt.fuel) }, v, 'backupPrime', T));
+    sentences.push(`Backup gensets as primary power: ${backup.nUnits} × ${bt.p.unitMW} MW (redundant units held back) run in the ${primeH.toLocaleString('en-GB')} most expensive grid-price hours of each year, serving load before grid import; fuel, carbon and run hours are costed and counted.`);
+  }
 
   return {
     coolingId, peakPUE, designMW, avgMW, criticalMW, itMW,
     building: { whitespaceM2: whitespace, gfaM2: gfa, footprintM2: footprint, heightM },
-    backup, prime, bridge, bridgeBess, bess, storage, permitOutlook, shortfallBess,
+    backup, prime, bridge, bridgeBess, bess, storage, permitOutlook, shortfallBess, reserve,
     solarMWp, solarRoofMWp, solarGroundMWp, roofPvOverFreeM2, windMW, windTurbines, ppa,
     grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })), cableKm },
     gasConnection,
@@ -551,7 +580,8 @@ function makePlant(ctx, s, v, role, T) {
   const mode = new Int8Array(ctx.nMonths);
   for (let m = 0; m < ctx.nMonths; m++) {
     if (m < s.availMonth || m < s.fuelMonth) continue;
-    if (role === 'prime') mode[m] = v.C1 === 'islanded' ? 2 : 1;
+    if (role === 'backupPrime') mode[m] = 2; // must-run in its chosen hours only (dispatch.js hour mask)
+    else if (role === 'prime') mode[m] = v.C1 === 'islanded' ? 2 : 1;
     else if (v.C1 === 'islanded') mode[m] = 2;
     else if (role === 'bridgeKept') { if (m >= T) mode[m] = 1; }
     else if (bridgeActive(v, m, T)) mode[m] = 1;

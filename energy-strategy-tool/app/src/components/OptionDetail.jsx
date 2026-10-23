@@ -48,6 +48,7 @@ export function AdequacySummary({ a }) {
         <tbody>
           <tr><th scope="row">Unmet load (all dispatched years)</th><td className="num">{sig(a.unmetMWh)} MWh · {a.unmetHours.toLocaleString('en-GB')} h · peak {sig(a.unmetPeakMW)} MW · longest event {a.longestH.toLocaleString('en-GB')} h</td></tr>
           <tr><th scope="row">Import above the grid capacity</th><td className="num">{sig(a.exceedMWh)} MWh · {a.exceedHours.toLocaleString('en-GB')} h</td></tr>
+          {a.shedMWh > 0 ? <tr><th scope="row">IT shed by flexibility against a shortfall</th><td className="num">{sig(a.shedMWh)} MWh · {a.shedHours.toLocaleString('en-GB')} h</td></tr> : null}
           <tr><th scope="row">Power gap against the design load</th><td className="num">{sig(a.gapMWm)} MW-months · {a.gapMonths} month{a.gapMonths === 1 ? '' : 's'}</td></tr>
         </tbody>
       </table>
@@ -138,7 +139,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
               {o.eco.ppaHedge ? <PpaHedgeRow h={o.eco.ppaHedge} /> : null}
             </tbody>
           </table>
-          <p className="note">Capex scope: energy, backup, grid connection, substation and cooling delta only. Data hall shell and IT fit-out excluded.{o.eco.ppaHedge ? ' PPA settlement counts only on PPA energy delivered over the grid connection; the PPA hedge is reported outside the ledger, LCOE, NPV and score.' : ''}</p>
+          <p className="note">Capex scope: energy, backup (including the resilience reserve battery), grid connection, substation and cooling delta only. Data hall shell and IT fit-out excluded.{o.eco.ppaHedge ? ' PPA settlement counts only on PPA energy delivered over the grid connection; the PPA hedge is reported outside the ledger, LCOE, NPV and score.' : ''}</p>
         </div>
         <div>
           <h4>Carbon and energy</h4>

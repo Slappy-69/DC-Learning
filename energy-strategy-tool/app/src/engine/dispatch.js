@@ -25,6 +25,8 @@ import { H } from './profiles.js';
 import { demandYear } from './context.js';
 import { TECH, FUEL, PPA } from './defaults.js';
 import { techAvailMonth } from './sizing.js';
+import { triggerMask } from './triggers.js';
+export { triggerAnalysis } from './triggers.js';
 
 export const MERIT_ORDER = [
   'On-site renewables (solar, wind)',
@@ -48,6 +50,22 @@ export function fuelEF(fuel) {
   if (fuel === 'hvo') return FUEL.efHvo;
   return 0;
 }
+// The n most expensive hours of the year in the grid price profile (backup gensets as primary power), as a 0/1 mask.
+const TOP_CACHE = new WeakMap();
+export function topPriceHours(ctx, n) {
+  let byN = TOP_CACHE.get(ctx.prof);
+  if (!byN) { byN = new Map(); TOP_CACHE.set(ctx.prof, byN); }
+  if (byN.has(n)) return byN.get(n);
+  const price = ctx.prof.price;
+  const idx = Array.from({ length: H }, (_, h) => h).sort((a, b) => price[b] - price[a] || a - b);
+  const mask = new Uint8Array(H);
+  const k = Math.min(H, Math.max(0, Math.round(n)));
+  for (let i = 0; i < k; i++) mask[idx[i]] = 1;
+  mask.count = k;
+  byN.set(n, mask);
+  return mask;
+}
+
 export function plantMarginalCost(ctx, pl) {
   const t = TECH[pl.tech];
   if (pl.tech === 'smr') return t.p.fuelPerMWhE + t.p.vomPerMWh;
@@ -80,7 +98,9 @@ export function dispatchConfig(ctx, v, sz) {
   // Supply available month of each renewable source (sizing.js techAvailMonth: ordered from day one; wind and ground
   // solar keep their own consent months, OPEN-QUESTIONS 44, 56).
   const avail = (id) => techAvailMonth(ctx, TECH[id]);
+  const primeH = inputs.requirements.gensetPrimaryHours || 0;
   const plants = sz.plants.map((pl) => ({ ...pl, mc: plantMarginalCost(ctx, pl), units: Math.max(1, Math.round(pl.mw / pl.unitMW)),
+    hourMask: pl.role === 'backupPrime' ? topPriceHours(ctx, primeH) : null,
     chpK: pl.tech === 'chp' ? TECH.chp.p.heatToPower * TECH.chp.p.absorptionCOP : 0 }));
   const durationH = sz.storage.mw > 0 ? sz.storage.mwh / sz.storage.mw : 0;
   const cfg = {
@@ -110,7 +130,7 @@ export function dispatchKey(cfg) {
   return JSON.stringify([cfg.coolingId, cfg.islanded, cfg.exportMW, cfg.exceedance, cfg.respectRunHours, cfg.maxRunHours,
     +cfg.solarMWp.toFixed(6), cfg.solarAvailM, +cfg.windMW.toFixed(6), cfg.windAvailM, +cfg.bessMW.toFixed(6), +cfg.bessMWh.toFixed(6), cfg.bessAvailM, cfg.bessRole,
     cfg.ppaType, cfg.ppaCoverage, cfg.flex,
-    cfg.plants.map((p) => [p.role, p.tech, +p.mw.toFixed(6), Array.from(p.mode).join('')])]);
+    cfg.plants.map((p) => [p.role, p.tech, +p.mw.toFixed(6), Array.from(p.mode).join(''), p.hourMask ? p.hourMask.count : 0])]);
 }
 
 // Which model years must be dispatched explicitly? Years after the last change repeat (steady state).
@@ -166,6 +186,14 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
   const designDay = Math.floor(indexOfMax(p.temp) / 24);
   const flexMax = ctx.inputs.load.flexMaxPct;
   let flexHoursLeft = cfg.flex ? ctx.inputs.load.flexHours : 0;
+  // Flexibility with triggers (OPEN-QUESTIONS 34, 2026-10-23: both trigger hours and shortfalls, within the same
+  // limits). Events: consecutive trigger hours, at most flexEventH long, then flexRecoveryH hours before the next.
+  const LF = ctx.inputs.load;
+  const trig = cfg.flex ? triggerMask(ctx, LF) : null;
+  const evMax = Math.max(1, Math.round(LF.flexEventH || 1)), recH = Math.max(0, Math.round(LF.flexRecoveryH || 0));
+  const battResp = cfg.flex && LF.flexBatteryResponse !== false;
+  let inEvent = false, evLen = 0, recoverLeft = 0;
+  let flexEvents = 0, flexTrigHours = 0, flexTrigMWh = 0, flexShortMWh = 0, flexShortHours = 0, battRespMWh = 0;
   const gridCap = ctx.gridCap;
   // Hoisted locals for the hot loop
   const islanded = cfg.islanded;
@@ -179,6 +207,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
   const pMode = plants.map((pl) => pl.mode), pMW = plants.map((pl) => pl.mw), pMC = plants.map((pl) => pl.mc);
   const pChpK = plants.map((pl) => pl.chpK), pMsl = plants.map((pl) => pl.msl * pl.unitMW), pEff = plants.map((pl) => pl.eff);
   const pIsSmr = plants.map((pl) => pl.tech === 'smr');
+  const pHourMask = plants.map((pl) => pl.hourMask || null);
   const copArr = ctx.cooling[cfg.coolingId].cop;
   const cleanRatio = cleanFirm(cfg, 1);
   // 'shortfall' (C12 = Sized to the permanent shortfall, OPEN-QUESTIONS 60): a security battery that covers only the
@@ -198,7 +227,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
   let rec = null;
   if (record) {
     rec = {};
-    for (const k of ['demand', 'net', 're', 'solar', 'wind', 'ppa', 'ppaContract', 'dis', 'ch', 'firm', 'grid', 'gridCharge', 'unmet', 'curt', 'exp', 'soc', 'cap', 'chpCredit', 'flex']) rec[k] = new Float64Array(H);
+    for (const k of ['demand', 'net', 're', 'solar', 'wind', 'ppa', 'ppaContract', 'dis', 'ch', 'firm', 'grid', 'gridCharge', 'unmet', 'curt', 'exp', 'soc', 'cap', 'chpCredit', 'flex', 'flexTrig', 'resp', 'trig']) rec[k] = new Float64Array(H);
     rec.plant = cfg.plants.map(() => new Float64Array(H)); // firm output per plant (prime, bridging), sums to rec.firm
   }
 
@@ -219,6 +248,35 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     const reUse = re < D0 ? re : D0;
     let R = D0 - reUse;
     let sur = re - reUse;
+
+    // 1b. Trigger hours (flexibility on): the economic battery serves the flexible share first, then IT is curtailed
+    // within the limits (share of IT, hours a year).
+    let disResp = 0, curtTrig = 0;
+    if (trig) {
+      let on = false;
+      if (inEvent) {
+        if (trig[h] && evLen < evMax) { evLen++; on = true; } else { inEvent = false; recoverLeft = recH; }
+      }
+      if (!on && !inEvent) {
+        if (recoverLeft > 0) recoverLeft--;
+        else if (trig[h]) { inEvent = true; evLen = 1; on = true; flexEvents++; }
+      }
+      if (on) {
+        flexTrigHours++;
+        let A = flexMax * IT[h];
+        if (A > R) A = R;
+        if (battResp && Pb > 0 && m >= bessAvailM) {
+          const can = Pb < soc * eta ? Pb : soc * eta;
+          disResp = A < can ? A : can;
+          soc -= disResp / eta;
+          battRespMWh += disResp;
+        }
+        const rest = A - disResp;
+        if (rest > 1e-12 && flexHoursLeft > 0) { curtTrig = rest; flexHoursLeft--; }
+        R -= disResp + curtTrig;
+        flexTrigMWh += curtTrig;
+      }
+    }
 
     // 2. PPA over the grid connection (uses import capacity; never above the physical connection)
     let ppaUse = 0;
@@ -244,22 +302,24 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     for (let i = 0; i < nP; i++) if (pMode[i][m] > 0 && !(respectRH && plantHours[i] >= maxRH)) firmAvail += pMW[i];
 
     // 3. BESS discharge per role
-    let dis = 0;
+    let dis = disResp;
     const bessOn = Pb > 0 && m >= bessAvailM;
     if (bessOn && R > 0) {
-      const maxDis = Pb < soc * eta ? Pb : soc * eta;
+      const maxDis = (Pb - disResp) < soc * eta ? (Pb - disResp) : soc * eta;
+      let d2 = 0;
       if (roleShort && capRem !== Infinity) {
         const short = R - capRem - firmAvail;
-        if (short > 0) dis = short < maxDis ? short : maxDis;
+        if (short > 0) d2 = short < maxDis ? short : maxDis;
       }
       if (roleArb && dear[h]) {
-        let av = (soc - dis / eta - reserveE) * eta;
-        if (Pb - dis < av) av = Pb - dis;
-        if (av > 0) dis += (R - dis) < av ? (R - dis) : av;
+        let av = (soc - d2 / eta - reserveE) * eta;
+        if (Pb - disResp - d2 < av) av = Pb - disResp - d2;
+        if (av > 0) d2 += (R - d2) < av ? (R - d2) : av;
       }
-      if (dis < 0) dis = 0;
-      soc -= dis / eta;
-      R -= dis;
+      if (d2 < 0) d2 = 0;
+      soc -= d2 / eta;
+      R -= d2;
+      dis += d2;
     }
 
     // 4. Firm on-site generation: economic against grid marginal cost, or covering the grid shortfall; must-run when islanded
@@ -268,6 +328,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     for (let i = 0; i < nP; i++) {
       const md = pMode[i][m];
       if (md === 0 || R <= 1e-12) continue;
+      if (pHourMask[i] && !pHourMask[i][h]) continue;
       if (respectRH && plantHours[i] >= maxRH) continue;
       let P;
       let needed;
@@ -312,10 +373,16 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     }
 
     // 6. Demand flexibility (if on), then unmet load
-    let flexed = 0;
-    if (R > 1e-12 && flexHoursLeft > 0) {
-      flexed = R < flexMax * IT[h] ? R : flexMax * IT[h];
-      if (flexed > 0) { flexHoursLeft--; R -= flexed; }
+    // Against a shortfall: what the trigger step has not already curtailed this hour. Shed load here counts as
+    // unmet for power adequacy (OPEN-QUESTIONS 61).
+    let flexed = curtTrig;
+    if (R > 1e-12 && cfg.flex) {
+      const room = flexMax * IT[h] - curtTrig;
+      let fs = R < room ? R : room;
+      if (fs > 1e-12 && (curtTrig > 0 || flexHoursLeft > 0)) {
+        if (curtTrig === 0) flexHoursLeft--;
+        R -= fs; flexed += fs; flexShortMWh += fs; flexShortHours++;
+      }
     }
     const unmet = R > 1e-12 ? R : 0;
 
@@ -381,6 +448,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
       rec.demand[h] = D0; rec.net[h] = netDemand; rec.re[h] = re; rec.solar[h] = sol; rec.wind[h] = win; rec.ppa[h] = ppaUse; rec.ppaContract[h] = ppaV; rec.dis[h] = dis; rec.ch[h] = ch + gridCh;
       rec.firm[h] = firm; rec.grid[h] = g; rec.gridCharge[h] = gridCh; rec.unmet[h] = unmet; rec.curt[h] = curt; rec.exp[h] = exp; rec.soc[h] = soc;
       rec.cap[h] = capPhys; rec.chpCredit[h] = chpCredit; rec.flex[h] = flexed;
+      rec.flexTrig[h] = curtTrig; rec.resp[h] = disResp; rec.trig[h] = trig && (curtTrig > 0 || disResp > 0 || inEvent) ? 1 : 0;
     }
     // Per-hour energy balance: sources + unmet − (net demand + charge + curtailment + export)
     const err = re + ppaUse + dis + firm + gridTotal + unmet - (netDemand + ch + gridCh + curt + exp);
@@ -393,6 +461,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     grossDemandMWh, netDemandMWh, servedMWh, unmetMWh, unmetHours, unmetPeakMW, unmetLongestH, designDayShortfall, gridMWh, gridChargeMWh,
     gridCost, gridCarbonT, ppaCarbonT, reGenMWh, solarMWh, windMWh, reUsedMWh, curtailMWh, exportMWh, bessChargeMWh,
     bessDischargeMWh, firmMWh, chpCreditMWh, flexMWh, itMWh, cfeMWh, maxBalanceError,
+    flexEvents, flexTrigHours, flexTrigMWh, flexShortMWh, flexShortHours, battRespMWh,
   });
   out.demandMWh = out.netDemandMWh;
   out.socEnd = soc;

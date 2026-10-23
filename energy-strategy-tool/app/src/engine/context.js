@@ -63,17 +63,45 @@ export function decarbFactor(country, calYear, baseYear) {
 }
 
 // Hourly IT utilisation shape, mean = utilisation (seeded, synthetic).
-function itShape(inputs, seed) {
-  const u = inputs.load.utilisation;
+// Hourly IT utilisation (fraction of installed IT), by load shape (§5.3; work package 4, walkthrough 2026-10-21):
+// flat (the average utilisation every hour); daily fluctuation (as built: a daily sine around the average, swing by
+// workload unless entered, small seeded noise); AI training (high, near-flat with a checkpoint dip every few hours);
+// AI inference (a daily cycle peaking in the afternoon, a night trough and lower weekends). Each shape is scaled to
+// its average (the average utilisation input, or the AI profile's own) and capped at 100 %.
+export function itShape(inputs, seed) {
+  const L = inputs.load;
+  const shape = L.shape || 'daily';
   const rnd = mulberry32(subSeed(seed, 'itshape'));
   const a = new Float64Array(H);
-  const amp = inputs.load.workload === 'ai-training' ? 0.01 : inputs.load.workload === 'enterprise' ? 0.08 : 0.04;
-  let sum = 0;
-  for (let h = 0; h < H; h++) {
-    const hr = h % 24;
-    a[h] = 1 + amp * Math.sin((2 * Math.PI * (hr - 9)) / 24) + 0.01 * (rnd() - 0.5);
-    sum += a[h];
+  let u = L.utilisation;
+  if (shape === 'flat') {
+    a.fill(1);
+  } else if (shape === 'aiTraining') {
+    u = L.aiTrainUtil;
+    const every = Math.max(1, Math.round(L.aiTrainDipEveryH)), dur = Math.max(1, Math.round(L.aiTrainDipH));
+    // The dip is at its stated level; the other hours are set so that the average is u (the scaling below then
+    // changes nothing unless the 100 % cap binds).
+    const f = Math.min(dur, every) / every;
+    const d = Math.max(0, Math.min(1, L.aiTrainDip));
+    const hi = f < 1 ? Math.min(1, (u - f * d) / (1 - f)) : d;
+    for (let h = 0; h < H; h++) a[h] = (h % every) < dur ? d : hi;
+  } else if (shape === 'aiInference') {
+    u = L.aiInfUtil;
+    const tr = Math.max(0, Math.min(1, L.aiInfTrough));
+    for (let h = 0; h < H; h++) {
+      const hr = h % 24, day = Math.floor(h / 24) % 7;
+      const daily = tr + (1 - tr) * (0.5 + 0.5 * Math.cos((2 * Math.PI * (hr - L.aiInfPeakHour)) / 24));
+      a[h] = daily * (day >= 5 ? L.aiInfWeekend : 1);
+    }
+  } else {
+    const amp = L.dailySwing != null ? L.dailySwing : L.workload === 'ai-training' ? 0.01 : L.workload === 'enterprise' ? 0.08 : 0.04;
+    for (let h = 0; h < H; h++) {
+      const hr = h % 24;
+      a[h] = 1 + amp * Math.sin((2 * Math.PI * (hr - 9)) / 24) + 0.01 * (rnd() - 0.5);
+    }
   }
+  let sum = 0;
+  for (let h = 0; h < H; h++) sum += a[h];
   const k = (u * H) / sum;
   for (let h = 0; h < H; h++) a[h] = Math.min(1, a[h] * k);
   return a;

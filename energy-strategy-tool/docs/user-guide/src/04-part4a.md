@@ -398,6 +398,17 @@ When the check passes in every month, the battery counts as firm supply from the
 
 In T1 the permanent shortfall lasts most of the design day (air cooling: 16.7 MW at the peak, 291 MWh in the day), so the battery cannot recharge and never counts. On a site short only at the peak hours it does: T1 with a 125 MW grid and evaporative cooling (design-day PUE 1.27 at the peak, 1.12 at night) needs a 4.0 MW / 21.9 MWh battery, which recharges every day and closes the permanent power gap (250 → 31 MW-months; what remains is before the full grid date).
 
+**Sized to the trigger hours** (built 23 October 2026, OPEN-QUESTIONS 33; generated only when flexibility, C16, is on, rule j). The economic battery for battery response:
+
+::: formula
+| battery MW = maximum curtailable share × full IT  (10 % × 100 MW = 10 MW in T1)
+| battery MWh = battery MW × longest trigger event (at most the event length, 4 h) ÷ √(round-trip efficiency)
+:::
+
+With "hold fixed: hours covered", the trigger level is first set so that the events reach the target hours a year; with "battery size", the entered MW and MWh are used and the hours it covers are reported in dispatch.
+
+**Resilience reserve battery** (built 23 October 2026): full IT × the reserve minutes (100 MW × 5 min = 8.3 MWh in T1). It is never dispatched; its battery energy is costed at €500/kWh (indicative) per building, replaced every 10 years.
+
 ## Area budget and solar
 
 Before the layout, the engine estimates the land each block needs:
@@ -529,11 +540,14 @@ For each hour h, with demand D and the grid capacity of that month:
 
 The dearest hours are the day's 1, 2, 4 or 12 most expensive hours, matched to the battery's duration (under 1.5 h: 1; under 3 h: 2; under 8 h: 4; otherwise 12).
 
+**1b. Trigger hours** (flexibility on, built 23 October 2026, OPEN-QUESTIONS 34). In an hour of a trigger event (consecutive trigger hours, at most 4 per event, then 12 hours' recovery), the flexible share (10 % of IT) is taken off the grid: first by the economic battery, if battery response is on (up to its power and charge), then by curtailing IT, which uses one of the 100 hours a year and costs €500/MWh. The battery's other duties use only the power and charge left.
+
 **4. Firm on-site plant**, in order (prime, then bridging), each in its monthly mode:
 
 - **must-run** (islanded): serves all the remaining demand up to its capacity;
 - **economic**: serves all the remaining demand if its marginal cost is below the grid price this hour;
 - otherwise it serves only the part the grid cannot take (remaining demand − remaining grid capacity).
+- **backup gensets as primary power** (if hours are set, built 23 October 2026): must-run in the year's most expensive grid-price hours only, after the other plant.
 
 ::: formula
 | marginal cost = fuel price ÷ efficiency + variable O&M + carbon price × emission factor ÷ efficiency
@@ -544,7 +558,7 @@ A unit below its **minimum stable load** either does not run (if it was only eco
 
 **5. Grid import**: the remaining demand up to the remaining capacity ("Show unmet load"), or all of it ("Show exceedance").
 
-**6. Flexibility, then unmet load.** With flexibility on, up to 10 % of that hour's IT load is shed, for at most 100 hours a year. Anything still left is **unmet load**.
+**6. Flexibility, then unmet load.** With flexibility on, what the trigger step has not already shed this hour can be shed against the shortfall, up to 10 % of that hour's IT load, for at most 100 hours a year in all (shared with trigger hours). IT shed here counts as unmet for power adequacy (OPEN-QUESTIONS 61). Anything still left is **unmet load**.
 
 **After the hour.** In an hour with no discharge, the battery charges, first from surplus on-site generation, then, in the day's cheapest hours, from the grid within the spare import capacity, never beyond its rating or its free capacity (charging loses √(efficiency) on the way in). Remaining surplus is exported (C1 "Grid + export": up to the export capacity, paid at 90 % of the hourly wholesale price) or curtailed.
 

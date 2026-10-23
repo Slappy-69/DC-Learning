@@ -72,6 +72,7 @@ import { outlookTests } from './outlook-tests.mjs';
 import { gridRefTests } from './gridref-tests.mjs';
 import { backupTests } from './backup-tests.mjs';
 import { bessShortfallTests } from './bess-shortfall-tests.mjs';
+import { package4Tests } from './package4-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1194,6 +1195,9 @@ await backupTests(test, siteRuns);
 
 // 24. Shortfall battery as firm supply (OPEN-QUESTIONS 60; build plan 3b) (tests/bess-shortfall-tests.mjs)
 await bessShortfallTests(test, siteRuns);
+
+// 25–27. Work package 4: gensets, load shapes, flexibility and batteries (AC 19, AC 20) (tests/package4-tests.mjs)
+await package4Tests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

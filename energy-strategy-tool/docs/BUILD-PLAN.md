@@ -64,6 +64,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Decisions:** load shapes (flat, daily fluctuation, AI training, AI inference) with editable defaults and the sub-hour caveat; flexibility off by default with the full parameter set and a historical analysis of trigger hours; battery response sized by default to cover the trigger hours, with the engineer choosing which of battery size, trigger threshold or hours covered is held fixed; batteries split into a resilience reserve (5 minutes of UPS, always kept) and an economic battery; battery capex in the ledger; gensets tested 6 h a year at a separate 75 % test load; optional primary-power hours, dispatched and costed.
 - **Ask the owner:** OPEN-QUESTIONS 33 (C12 and the economic battery), 34 (flexibility in the merit order); the AI load-shape defaults found in research.
 - **Mock-ups:** `m03-load-flexibility`, `m04-batteries-backup`. **Guide:** chapters 5, 7, 16, 18, 35, 37.
+- **Progress:** built 2026-10-23 on `feature/flex-batteries` (from `feature/adequacy-first`), not merged: AC 19 and AC 20; OPEN-QUESTIONS 33, 34, 61 answered. Not built: autonomy from fuel, batteries or a combination (§5.5). The trigger defaults need real price data (package 1).
 
 ### 5. The O1–O3 PPA and carbon rules
 

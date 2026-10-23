@@ -72,7 +72,7 @@ export function AdequacyBadge({ a }) {
     ? <span className="badge badge-ok"><span aria-hidden="true">✓</span> Adequate</span>
     : <span className="badge badge-bad"><span aria-hidden="true">✗</span> Not adequate</span>;
 }
-const ADQ_REASON = { unmet: 'unmet load', exceed: 'above grid capacity', gap: 'power gap' };
+const ADQ_REASON = { unmet: 'unmet load', exceed: 'above grid capacity', gap: 'power gap', shed: 'IT shed for a shortfall' };
 export const adequacyReasons = (a) => (a && !a.adequate ? a.reasons.map((r) => ADQ_REASON[r]).join(', ') : '');
 
 function ResBadge({ s }) {

@@ -111,6 +111,7 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | IT the grid supports by grid period; grid-matched phasing reference in the run summary (work package 3b) | Built (23 Oct 2026) | 21 |
 | Backup per building or pooled (C5a); retired bridging plant backs up whole buildings; pooled carries a client-perceived risk item (work package 3b) | Built (23 Oct 2026) | 20, 35, 43 |
 | Battery sized to the permanent shortfall on the design day, with a recharge check, counted as firm supply (C12, work package 3b) | Built (23 Oct 2026) | 20, 34, 35, 42 |
+| Work package 4: load shapes; flexibility in trigger hours and against shortfalls, with battery response and cost of curtailment; economic battery sized to the trigger hours (three hold-fixed modes); resilience reserve battery; genset test running 6 h at 75 %; gensets as primary power | Built (23 Oct 2026) | 5, 7, 16, 18, 35, 37 |
 | IT load estimated from area | Agreed | 16 |
 | Load shapes, AI profiles | Agreed | 16 |
 | Flexibility with triggers; battery response | Agreed | 16 |

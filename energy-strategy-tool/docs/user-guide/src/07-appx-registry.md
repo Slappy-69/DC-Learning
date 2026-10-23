@@ -51,6 +51,16 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **load.rampMonths**: 12 months; range 6–24; judg.
 - **load.utilisation**: 0.8 fraction of installed IT; range 0.6–0.95; judg.
 - **load.workload**: cloud; judg. Mixed cloud.
+- **load.shape**: daily (flat / daily / aiTraining / aiInference); judg. Daily fluctuation is the shape built before work package 4.
+- **load.dailySwing**: none (fraction of average, ±); range 0–0.3; judg. Blank = by workload, as built: ±1 % AI training, ±8 % enterprise, ±4 % otherwise.
+- **load.aiTrainUtil**: 0.9 average fraction of installed IT; range 0.7–0.98; judg. Mock-up value (walkthrough 2026-10-21); to research.
+- **load.aiTrainDip**: 0.55 fraction of installed IT during a checkpoint dip; range 0.2–0.9; judg. Mock-up value; to research.
+- **load.aiTrainDipEveryH**: 6 h between checkpoint dips; range 1–48; judg. Mock-up value; to research.
+- **load.aiTrainDipH**: 1 h per dip; range 1–6; judg. Mock-up value; to research. The hourly model cannot show dips shorter than an hour.
+- **load.aiInfUtil**: 0.7 average fraction of installed IT; range 0.4–0.95; judg. No source; to research.
+- **load.aiInfTrough**: 0.6 night trough as a fraction of the daily peak; range 0.2–1; judg. No source; to research.
+- **load.aiInfPeakHour**: 15 hour of the daily peak (local); range 0–23; judg. No source; to research.
+- **load.aiInfWeekend**: 0.9 weekend level as a fraction of weekdays; range 0.5–1.1; judg. No source; to research.
 - **load.coolingApproach**: open; judg. Open choice (C8).
 - **load.grossUp**: 2.2 GFA / whitespace; range 1.8–2.6; judg.
 - **load.storeys**: 2 storeys; range 1–6; judg.
@@ -59,6 +69,19 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **load.ancillaryFrac**: 0.02 fraction of installed IT; range 0.01–0.04; judg.
 - **load.flexMaxPct**: 0.1 fraction of IT curtailable; range 0–0.3; judg.
 - **load.flexHours**: 100 h/yr; range 0–500; judg.
+- **load.flexTrigger**: price (price / carbon / stress); judg. Weather and grid stress is modelled as the ambient temperature at or above the trigger level (source to research).
+- **load.flexTriggerPrice**: 250 €/MWh grid price (wholesale × multiplier + adder); range 100–1,000; judg. Mock-up value; to research against ENTSO-E price history.
+- **load.flexTriggerCarbon**: 400 gCO₂e/kWh grid carbon intensity; range 100–800; judg. No source; to research.
+- **load.flexTriggerTemp**: 28 °C ambient dry-bulb (weather and grid stress); range 20–40; judg. No source; to research.
+- **load.flexEventH**: 4 h per event (maximum); range 1–12; judg. Mock-up value.
+- **load.flexNoticeH**: 1 h notice; range 0–24; judg. Mock-up value. Recorded, not modelled: the hourly model knows prices and carbon in advance (day-ahead), so notice does not change the hours.
+- **load.flexRecoveryH**: 12 h between events; range 0–48; judg. Mock-up value.
+- **load.flexCostPerMWh**: 500 €/MWh of IT load curtailed; range 0–5,000; judg. Mock-up value: the cost of curtailing customer IT; to research.
+- **load.flexBatteryFixed**: threshold (threshold / hours / size); judg. Walkthrough 2026-10-21: the engineer chooses which is held fixed. Threshold (default): the battery is sized to cover the trigger hours at the trigger level. Hours: the trigger level is set so the events reach the target hours, and the battery covers them. Size: the battery size is entered and the hours it covers are reported.
+- **load.flexBatteryHours**: 100 h/yr of trigger events covered (when hours are held fixed); range 0–2,000; judg.
+- **load.flexBatteryMW**: none (MW (when the battery size is held fixed)); judg. Blank = the trigger-hours size.
+- **load.flexBatteryMWh**: none (MWh (when the battery size is held fixed)); judg. Blank = the trigger-hours size.
+- **load.flexBatteryResponse**: on; judg. Walkthrough 2026-10-21: the economic battery runs the site in trigger hours before any curtailment.
 - **load.phases**: none (list of {itMW, date}); judg. null = 1 phase, 100 % of IT at the grid full-connection date.
 
 ## Grid
@@ -86,7 +109,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **requirements.topology**: N+1; judg.
 - **requirements.autonomyH**: 48 h; range 12–72; judg.
 - **requirements.islanding**: No; judg. Default not stated in brief; "No" chosen (judgement).
-- **requirements.upsMin**: 5 min at full IT; range 5–15; judg.
+- **requirements.upsMin**: 5 min at full IT; range 5–60; judg. The resilience reserve battery (walkthrough 2026-10-21): always kept, never used for economic duties; longer autonomy can be chosen site-wide.
 - **requirements.blockSize**: 10 units per block; range 4–20; judg.
 - **requirements.catcherN**: 4 blocks per catcher unit; range 2–6; judg.
 - **requirements.carbonTarget**: none (gCO2e/kWh (annual average cap)); judg. None.
@@ -98,8 +121,9 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **requirements.sevesoH2t**: 5 t hydrogen stored; src; check against Directive 2012/18/EU (Seveso III) Annex I lower tier.
 - **requirements.permitAllowanceM**: 6 months before ordering plant that needs significant environmental permitting (IED, Seveso); range 0–18; judg. Owner's decision 2026-10-22 (OPEN-QUESTIONS 44, 45): plant is ordered from day one; only plant under the IED or Seveso waits this allowance. Wind, ground solar and SMRs keep their own planning months (OPEN-QUESTIONS 56).
 - **requirements.sevesoFuelT**: 2,500 t diesel/HVO stored; src; check against Directive 2012/18/EU (Seveso III) Annex I lower tier.
-- **requirements.testRunHours**: 12 h/yr per unit; range 6–24; judg.
-- **requirements.testRunLoad**: 0.75 fraction of rating; range 0.5–1; judg.
+- **requirements.testRunHours**: 6 h/yr per unit; range 3–24; judg. Walkthrough 2026-10-21: 6 h a year per generator (replaces 12 h), about monthly 30-minute exercise runs; check against NFPA 110 (monthly exercise runs).
+- **requirements.gensetPrimaryHours**: 0 h/yr; range 0–500; judg. Walkthrough 2026-10-21: backup gensets can run as primary power for a set number of hours a year, dispatched and costed. Default 0: they never run in normal dispatch. Hours chosen: the most expensive grid-price hours of each year.
+- **requirements.testRunLoad**: 0.75 fraction of rating; range 0.5–1; judg. Walkthrough 2026-10-21: test load 75 %, a separate editable input.
 - **requirements.bessUpsGensetFraction**: 1 genset capacity as fraction of critical load at topology N; judg. BESS-augmented UPS replaces redundant genset units with BESS for its duration.
 - **requirements.landTakeCeilingHa**: none (ha on-site land take (null = net developable area)); judg. Flag only. At the default it coincides with the "Does not fit" status; a lower value raises the minor flag "land take above ceiling" without changing the site-fit status.
 - **requirements.noiseNightDbA**: 45 dB(A) at receptors, night; range 35–55; judg. No source; replace with the local planning or environmental noise criterion. Screening proxy, not an acoustic assessment.
@@ -176,7 +200,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **choices.C9**: open: roof, ground, split; judg.
 - **choices.C10**: open: none, roof; judg. Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).
 - **choices.C11**: open: none; judg. Default "None" when site area ≤ 20 ha and no off-site land; otherwise open.
-- **choices.C12**: open: none, 2h25, 4h50, shortfall; judg.
+- **choices.C12**: open: none, 2h25, 4h50, shortfall, trigger; judg.
 - **choices.C12r**: locked: peakShave; judg. Default role "peak-shave against grid cap" (§8 C12).
 - **choices.C13**: open: none, hybrid; judg.
 - **choices.C14**: open: 50, 80, 100; judg.
@@ -502,6 +526,14 @@ Check against: Manufacturer datasheets.
 - **stackM**: 10 m; range 8–12; src.
 - **procM**: 12 months; range 9–18; src.
 - **buildM**: 6 months; range 3–9; src.
+
+### upsReserve
+
+Check against: UPS battery cabinet vendor pricing.
+
+- **capexPerKWh**: 500 €/kWh; range 350–800; src.
+- **fomPct**: 0.01 fraction of capex/yr; range 0.005–0.02; src.
+- **life**: 10 yr; range 8–15; src.
 
 ### BESS-augmented UPS
 

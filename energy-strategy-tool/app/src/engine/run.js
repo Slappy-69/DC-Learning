@@ -22,6 +22,7 @@ import { layoutManySteps } from './layout.js';
 import { layoutFacts, siteFitOf } from './sitefit.js';
 import { layoutForOption } from './siteapi.js';
 import { adequacyOf, shortfallAnalysis } from './adequacy.js';
+import { triggerAnalysis } from './triggers.js';
 
 export const ENGINE_VERSION = '0.2.0-site';
 
@@ -287,6 +288,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
     scoring,
     runFlags,
     shortfall: shortfallAnalysis(ctx, [...new Set(options.map((o) => o.v.C8))].sort()),
+    flexAnalysis: triggerAnalysis(ctx),
     meritOrder: MERIT_ORDER,
     dispatchHandling: { grid: inputs.settings.gridHandling, runHours: inputs.settings.runHourHandling },
     profileLabel: PROFILE_LABEL,

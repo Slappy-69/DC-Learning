@@ -16,6 +16,15 @@
 import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel } from './defaults.js';
 import { mulberry32, subSeed, shuffle, hashString } from './prng.js';
 import { permanentShortfallCoolings } from './adequacy.js';
+import { buildContext } from './context.js';
+import { triggerSet } from './triggers.js';
+
+// Trigger event hours for the inputs (rule j), once per inputs object.
+const TRIG = new WeakMap();
+function triggerHours(inputs) {
+  if (!TRIG.has(inputs)) TRIG.set(inputs, triggerSet(buildContext(inputs, { site: { noSiteModel: true } }), inputs.load).eventHours);
+  return TRIG.get(inputs);
+}
 
 // Cooling types with a permanent shortfall, once per inputs object (rule g).
 const PERM = new WeakMap();
@@ -68,6 +77,9 @@ export const RULES = [
   { id: 'i', name: '(i) A shortfall battery requires a permanent shortfall and a grid to recharge from',
     detail: 'C12 = Sized to the permanent shortfall is not generated when islanded, for a cooling type whose design load the full grid covers, or with a BESS role other than peak-shave (OPEN-QUESTIONS 60, 2026-10-23).',
     fails: (v, inputs) => v.C12 === 'shortfall' && (v.C1 === 'islanded' || !permSet(inputs).has(v.C8) || v.C12r !== 'peakShave') },
+  { id: 'j', name: '(j) A trigger-hours battery requires flexibility and trigger hours',
+    detail: 'C12 = Sized to the trigger hours is generated only with C16 = On, and (unless the battery size is held fixed) only when the profile has trigger hours at the trigger level (OPEN-QUESTIONS 33, 2026-10-23).',
+    fails: (v, inputs) => v.C12 === 'trigger' && (v.C16 !== 'on' || (inputs.load.flexBatteryFixed !== 'size' && triggerHours(inputs) <= 0)) },
 ];
 export const RULE_D = { id: 'd', name: '(d) Choices that are n/a collapse to "n/a" rather than multiplying options',
   detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, the backup arrangement when there are no gensets, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets.' };
@@ -323,6 +335,7 @@ export function optionName(v, s) {
   if (s && s.solarMWp > 0) parts.push(`PV ${s.solarMWp.toFixed(s.solarMWp < 10 ? 1 : 0)} MWp`);
   if (s && s.windMW > 0) parts.push(`Wind ${s.windMW.toFixed(0)} MW`);
   if (v.C12 === 'shortfall') parts.push('BESS for the shortfall');
+  else if (v.C12 === 'trigger') parts.push('BESS for the trigger hours');
   else if (v.C12 !== 'none') parts.push(`BESS ${v.C12.slice(0, 2).replace('h', ' h')}`);
   if (v.C13 !== 'none') parts.push(`PPA ${choiceLabel('C13', v.C13).toLowerCase()} ${v.C14} %`);
   return parts.join(' · ');

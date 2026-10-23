@@ -289,7 +289,8 @@
     "none",
     "2h25",
     "4h50",
-    "shortfall"
+    "shortfall",
+    "trigger"
    ]
   },
   "unit": "choice state",
@@ -2094,6 +2095,39 @@
   "high": 9,
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
+  "note": "",
+  "briefRef": "§6"
+ },
+ {
+  "path": "tech.upsReserve.capexPerKWh",
+  "value": 500,
+  "unit": "€/kWh",
+  "low": 350,
+  "high": 800,
+  "basis": "source",
+  "sourceToVerify": "UPS battery cabinet vendor pricing",
+  "note": "",
+  "briefRef": "§6"
+ },
+ {
+  "path": "tech.upsReserve.fomPct",
+  "value": 0.01,
+  "unit": "fraction of capex/yr",
+  "low": 0.005,
+  "high": 0.02,
+  "basis": "source",
+  "sourceToVerify": "UPS battery cabinet vendor pricing",
+  "note": "",
+  "briefRef": "§6"
+ },
+ {
+  "path": "tech.upsReserve.life",
+  "value": 10,
+  "unit": "yr",
+  "low": 8,
+  "high": 15,
+  "basis": "source",
+  "sourceToVerify": "UPS battery cabinet vendor pricing",
   "note": "",
   "briefRef": "§6"
  },
@@ -4615,6 +4649,116 @@
   "briefRef": "§5.3"
  },
  {
+  "path": "load.shape",
+  "value": "daily",
+  "unit": "flat / daily / aiTraining / aiInference",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Daily fluctuation is the shape built before work package 4.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.dailySwing",
+  "value": null,
+  "unit": "fraction of average, ±",
+  "low": 0,
+  "high": 0.3,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Blank = by workload, as built: ±1 % AI training, ±8 % enterprise, ±4 % otherwise.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.aiTrainUtil",
+  "value": 0.9,
+  "unit": "average fraction of installed IT",
+  "low": 0.7,
+  "high": 0.98,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Mock-up value (walkthrough 2026-10-21); to research.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.aiTrainDip",
+  "value": 0.55,
+  "unit": "fraction of installed IT during a checkpoint dip",
+  "low": 0.2,
+  "high": 0.9,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Mock-up value; to research.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.aiTrainDipEveryH",
+  "value": 6,
+  "unit": "h between checkpoint dips",
+  "low": 1,
+  "high": 48,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Mock-up value; to research.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.aiTrainDipH",
+  "value": 1,
+  "unit": "h per dip",
+  "low": 1,
+  "high": 6,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Mock-up value; to research. The hourly model cannot show dips shorter than an hour.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.aiInfUtil",
+  "value": 0.7,
+  "unit": "average fraction of installed IT",
+  "low": 0.4,
+  "high": 0.95,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "No source; to research.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.aiInfTrough",
+  "value": 0.6,
+  "unit": "night trough as a fraction of the daily peak",
+  "low": 0.2,
+  "high": 1,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "No source; to research.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.aiInfPeakHour",
+  "value": 15,
+  "unit": "hour of the daily peak (local)",
+  "low": 0,
+  "high": 23,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "No source; to research.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.aiInfWeekend",
+  "value": 0.9,
+  "unit": "weekend level as a fraction of weekdays",
+  "low": 0.5,
+  "high": 1.1,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "No source; to research.",
+  "briefRef": "§5.3"
+ },
+ {
   "path": "load.coolingApproach",
   "value": "open",
   "unit": "",
@@ -4700,6 +4844,149 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexTrigger",
+  "value": "price",
+  "unit": "price / carbon / stress",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Weather and grid stress is modelled as the ambient temperature at or above the trigger level (source to research).",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexTriggerPrice",
+  "value": 250,
+  "unit": "€/MWh grid price (wholesale × multiplier + adder)",
+  "low": 100,
+  "high": 1000,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Mock-up value; to research against ENTSO-E price history.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexTriggerCarbon",
+  "value": 400,
+  "unit": "gCO₂e/kWh grid carbon intensity",
+  "low": 100,
+  "high": 800,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "No source; to research.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexTriggerTemp",
+  "value": 28,
+  "unit": "°C ambient dry-bulb (weather and grid stress)",
+  "low": 20,
+  "high": 40,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "No source; to research.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexEventH",
+  "value": 4,
+  "unit": "h per event (maximum)",
+  "low": 1,
+  "high": 12,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Mock-up value.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexNoticeH",
+  "value": 1,
+  "unit": "h notice",
+  "low": 0,
+  "high": 24,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Mock-up value. Recorded, not modelled: the hourly model knows prices and carbon in advance (day-ahead), so notice does not change the hours.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexRecoveryH",
+  "value": 12,
+  "unit": "h between events",
+  "low": 0,
+  "high": 48,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Mock-up value.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexCostPerMWh",
+  "value": 500,
+  "unit": "€/MWh of IT load curtailed",
+  "low": 0,
+  "high": 5000,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Mock-up value: the cost of curtailing customer IT; to research.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexBatteryFixed",
+  "value": "threshold",
+  "unit": "threshold / hours / size",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Walkthrough 2026-10-21: the engineer chooses which is held fixed. Threshold (default): the battery is sized to cover the trigger hours at the trigger level. Hours: the trigger level is set so the events reach the target hours, and the battery covers them. Size: the battery size is entered and the hours it covers are reported.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexBatteryHours",
+  "value": 100,
+  "unit": "h/yr of trigger events covered (when hours are held fixed)",
+  "low": 0,
+  "high": 2000,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexBatteryMW",
+  "value": null,
+  "unit": "MW (when the battery size is held fixed)",
+  "low": 0,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Blank = the trigger-hours size.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexBatteryMWh",
+  "value": null,
+  "unit": "MWh (when the battery size is held fixed)",
+  "low": 0,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Blank = the trigger-hours size.",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.flexBatteryResponse",
+  "value": true,
+  "unit": "toggle",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Walkthrough 2026-10-21: the economic battery runs the site in trigger hours before any curtailment.",
   "briefRef": "§5.3"
  },
  {
@@ -4897,10 +5184,10 @@
   "value": 5,
   "unit": "min at full IT",
   "low": 5,
-  "high": 15,
+  "high": 60,
   "basis": "judgement",
   "sourceToVerify": "",
-  "note": "",
+  "note": "The resilience reserve battery (walkthrough 2026-10-21): always kept, never used for economic duties; longer autonomy can be chosen site-wide.",
   "briefRef": "§5.5"
  },
  {
@@ -5026,14 +5313,25 @@
  },
  {
   "path": "requirements.testRunHours",
-  "value": 12,
+  "value": 6,
   "unit": "h/yr per unit",
-  "low": 6,
+  "low": 3,
   "high": 24,
   "basis": "judgement",
+  "sourceToVerify": "NFPA 110 (monthly exercise runs)",
+  "note": "Walkthrough 2026-10-21: 6 h a year per generator (replaces 12 h), about monthly 30-minute exercise runs.",
+  "briefRef": "§5.5, §9.4"
+ },
+ {
+  "path": "requirements.gensetPrimaryHours",
+  "value": 0,
+  "unit": "h/yr",
+  "low": 0,
+  "high": 500,
+  "basis": "judgement",
   "sourceToVerify": "",
-  "note": "",
-  "briefRef": "§9.4"
+  "note": "Walkthrough 2026-10-21: backup gensets can run as primary power for a set number of hours a year, dispatched and costed. Default 0: they never run in normal dispatch. Hours chosen: the most expensive grid-price hours of each year.",
+  "briefRef": "§5.5, §9.4"
  },
  {
   "path": "requirements.testRunLoad",
@@ -5043,8 +5341,8 @@
   "high": 1,
   "basis": "judgement",
   "sourceToVerify": "",
-  "note": "",
-  "briefRef": "§9.4"
+  "note": "Walkthrough 2026-10-21: test load 75 %, a separate editable input.",
+  "briefRef": "§5.5, §9.4"
  },
  {
   "path": "requirements.bessUpsGensetFraction",

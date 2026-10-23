@@ -161,6 +161,7 @@ export default function RunSummary({ run, onInclude, onSamplingOff, open, onTogg
               <li>Run-hour limit handling: <strong>{run.dispatchHandling.runHours === 'flag' ? 'Flag only' : 'Respect limit'}</strong> <span className="tag tag-unverified" title="judgement">{LABEL}</span></li>
               <li>Merit order: <ol>{run.meritOrder.map((m) => <li key={m}>{m}</li>)}</ol></li>
               <li>Profiles: {run.profileLabel} (country {run.country}).</li>
+              {run.flexAnalysis ? <li>Demand flexibility trigger ({run.flexAnalysis.trigger === 'carbon' ? 'grid carbon' : run.flexAnalysis.trigger === 'stress' ? 'weather and grid stress' : 'grid price'} ≥ {run.flexAnalysis.level}{run.flexAnalysis.fixed === 'hours' ? ', the level that gives the target hours' : ''}): {run.flexAnalysis.triggerHours.toLocaleString('en-GB')} h a year in the profile; {run.flexAnalysis.events.toLocaleString('en-GB')} events, {run.flexAnalysis.eventHours.toLocaleString('en-GB')} event hours with the event length and recovery period; {run.flexAnalysis.withinLimitHours.toLocaleString('en-GB')} h within the hours-a-year limit. {(run.inputs.choices && run.inputs.choices.C16 && run.inputs.choices.C16.values && run.inputs.choices.C16.values.includes('on')) ? 'Flexibility is generated (C16).' : 'Flexibility is off (C16); open C16 to generate it.'} Synthetic profiles have no price spikes; real price data comes with the country set-up. <span className="tag tag-unverified" title="judgement">{LABEL}</span></li> : null}
             </ul>
           </section>
         </div>

@@ -159,7 +159,9 @@ export const CHOICES = [
   { id: 'C12', name: 'BESS size', values: [
     ['none', 'None'], ['1h25', '1 h at 25 %'], ['1h50', '1 h at 50 %'], ['2h25', '2 h at 25 %'], ['2h50', '2 h at 50 %'], ['4h25', '4 h at 25 %'], ['4h50', '4 h at 50 %'],
     // OPEN-QUESTIONS 60 (2026-10-23): a battery sized to the permanent shortfall on the design day counts as firm supply.
-    ['shortfall', 'Sized to the permanent shortfall']] },
+    ['shortfall', 'Sized to the permanent shortfall'],
+    // OPEN-QUESTIONS 33 (2026-10-23): generated when flexibility is on (C16).
+    ['trigger', 'Sized to the trigger hours']] },
   { id: 'C12r', name: 'BESS role', values: [['peakShave', 'Peak-shave against grid cap'], ['shifting', 'Shifting'], ['bridgingSupport', 'Bridging support'], ['gridServices', 'Grid services']] },
   { id: 'C13', name: 'Offsite PPA', values: [
     ['none', 'None'], ['solar', 'Annual-matched solar'], ['wind', 'Annual-matched wind'], ['hybrid', 'Hybrid'], ['baseload', 'Baseload-shaped'], ['cfe247', '24/7-matched']] },
@@ -203,7 +205,7 @@ export function defaultChoiceState(id, inputs) {
       const small = inputs ? inputs.site.areaHa <= inputs.settings.windSiteThresholdHa && !(inputs.site.offsiteLandHa > 0) : true;
       return small ? { state: 'open', values: ['none'], windDefault: true } : { state: 'open', values: ['none', 'fit', 'offsite'] };
     }
-    case 'C12': return { state: 'open', values: ['none', '2h25', '4h50', 'shortfall'] };
+    case 'C12': return { state: 'open', values: ['none', '2h25', '4h50', 'shortfall', 'trigger'] };
     case 'C4s': return { state: 'open', values: ['average', 'shortfall'] };
     case 'C12r': return { state: 'locked', values: ['peakShave'] };
     case 'C13': return { state: 'open', values: ['none', 'hybrid'] };
@@ -310,6 +312,10 @@ tech('backupGas', { name: 'Gas standby gensets', role: 'backup', maturity: 'Comm
   capexPerKW: [550, '€/kW', 450, 700], fomPerKW: [9, '€/kW/yr', 6, 13], unitMW: [2.0, 'MW', 1.5, 2.5], eff: [0.40, 'electrical efficiency', 0.36, 0.43],
   life: [25, 'yr', 20, 30], m2PerUnit: [110, 'm² per unit incl. access', 80, 150], stackM: [10, 'm', 8, 12],
   procM: [12, 'months', 9, 18], buildM: [6, 'months', 3, 9] });
+// Resilience reserve battery (UPS ride-through, walkthrough 2026-10-21): the battery energy only; the UPS electronics are
+// part of the electrical fit-out, outside the capex scope.
+tech('upsReserve', { name: 'Resilience reserve battery (UPS)', role: 'backup', maturity: 'Commercial', verify: 'UPS battery cabinet vendor pricing' }, {
+  capexPerKWh: [500, '€/kWh', 350, 800], fomPct: [0.01, 'fraction of capex/yr', 0.005, 0.02], life: [10, 'yr', 8, 15] });
 tech('bessUps', { name: 'BESS-augmented UPS', role: 'backup', maturity: 'Emerging' }, {
   durationH: [2, 'h at redundancy capacity', 1, 4] });
 tech('fuelStorage', { name: 'Bulk fuel storage (bunded)', role: 'backup support', maturity: 'Commercial', verify: 'Fuel storage regulations by country; fire engineer' }, {
@@ -634,6 +640,18 @@ export function buildDefaultInputs(opts = {}) {
       rampMonths: rec('load.rampMonths', 12, 'months', { low: 6, high: 24, basis: 'judgement', ref: '§5.3' }),
       utilisation: rec('load.utilisation', 0.8, 'fraction of installed IT', { low: 0.6, high: 0.95, basis: 'judgement', ref: '§5.3' }),
       workload: rec('load.workload', 'cloud', '', { basis: 'judgement', note: 'Mixed cloud', ref: '§5.3' }),
+      // Load shape (walkthrough 2026-10-21; work package 4): flat, daily fluctuation, AI training or AI inference. The AI
+      // defaults are the mock-up's illustrative values, to research. The hourly model cannot show sub-hour swings.
+      shape: rec('load.shape', 'daily', 'flat / daily / aiTraining / aiInference', { basis: 'judgement', ref: '§5.3', note: 'Daily fluctuation is the shape built before work package 4.' }),
+      dailySwing: rec('load.dailySwing', null, 'fraction of average, ±', { low: 0, high: 0.3, basis: 'judgement', ref: '§5.3', note: 'Blank = by workload, as built: ±1 % AI training, ±8 % enterprise, ±4 % otherwise.' }),
+      aiTrainUtil: rec('load.aiTrainUtil', 0.9, 'average fraction of installed IT', { low: 0.7, high: 0.98, basis: 'judgement', ref: '§5.3', note: 'Mock-up value (walkthrough 2026-10-21); to research.' }),
+      aiTrainDip: rec('load.aiTrainDip', 0.55, 'fraction of installed IT during a checkpoint dip', { low: 0.2, high: 0.9, basis: 'judgement', ref: '§5.3', note: 'Mock-up value; to research.' }),
+      aiTrainDipEveryH: rec('load.aiTrainDipEveryH', 6, 'h between checkpoint dips', { low: 1, high: 48, basis: 'judgement', ref: '§5.3', note: 'Mock-up value; to research.' }),
+      aiTrainDipH: rec('load.aiTrainDipH', 1, 'h per dip', { low: 1, high: 6, basis: 'judgement', ref: '§5.3', note: 'Mock-up value; to research. The hourly model cannot show dips shorter than an hour.' }),
+      aiInfUtil: rec('load.aiInfUtil', 0.7, 'average fraction of installed IT', { low: 0.4, high: 0.95, basis: 'judgement', ref: '§5.3', note: 'No source; to research.' }),
+      aiInfTrough: rec('load.aiInfTrough', 0.6, 'night trough as a fraction of the daily peak', { low: 0.2, high: 1, basis: 'judgement', ref: '§5.3', note: 'No source; to research.' }),
+      aiInfPeakHour: rec('load.aiInfPeakHour', 15, 'hour of the daily peak (local)', { low: 0, high: 23, basis: 'judgement', ref: '§5.3', note: 'No source; to research.' }),
+      aiInfWeekend: rec('load.aiInfWeekend', 0.9, 'weekend level as a fraction of weekdays', { low: 0.5, high: 1.1, basis: 'judgement', ref: '§5.3', note: 'No source; to research.' }),
       coolingApproach: rec('load.coolingApproach', 'open', '', { basis: 'judgement', note: 'Open choice (C8)', ref: '§5.3' }),
       grossUp: rec('load.grossUp', 2.2, 'GFA / whitespace', { low: 1.8, high: 2.6, basis: 'judgement', ref: '§5.3' }),
       storeys: rec('load.storeys', 2, 'storeys', { low: 1, high: 6, basis: 'judgement', ref: '§5.3' }),
@@ -642,6 +660,20 @@ export function buildDefaultInputs(opts = {}) {
       ancillaryFrac: rec('load.ancillaryFrac', 0.02, 'fraction of installed IT', { low: 0.01, high: 0.04, basis: 'judgement', ref: '§5.3' }),
       flexMaxPct: rec('load.flexMaxPct', 0.1, 'fraction of IT curtailable', { low: 0, high: 0.3, basis: 'judgement', ref: '§5.3' }),
       flexHours: rec('load.flexHours', 100, 'h/yr', { low: 0, high: 500, basis: 'judgement', ref: '§5.3' }),
+      // Flexibility with triggers (walkthrough 2026-10-21; OPEN-QUESTIONS 34, 61): mock-up values, judgement, to research.
+      flexTrigger: rec('load.flexTrigger', 'price', 'price / carbon / stress', { basis: 'judgement', ref: '§5.3', note: 'Weather and grid stress is modelled as the ambient temperature at or above the trigger level (source to research).' }),
+      flexTriggerPrice: rec('load.flexTriggerPrice', 250, '€/MWh grid price (wholesale × multiplier + adder)', { low: 100, high: 1000, basis: 'judgement', ref: '§5.3', note: 'Mock-up value; to research against ENTSO-E price history.' }),
+      flexTriggerCarbon: rec('load.flexTriggerCarbon', 400, 'gCO₂e/kWh grid carbon intensity', { low: 100, high: 800, basis: 'judgement', ref: '§5.3', note: 'No source; to research.' }),
+      flexTriggerTemp: rec('load.flexTriggerTemp', 28, '°C ambient dry-bulb (weather and grid stress)', { low: 20, high: 40, basis: 'judgement', ref: '§5.3', note: 'No source; to research.' }),
+      flexEventH: rec('load.flexEventH', 4, 'h per event (maximum)', { low: 1, high: 12, basis: 'judgement', ref: '§5.3', note: 'Mock-up value.' }),
+      flexNoticeH: rec('load.flexNoticeH', 1, 'h notice', { low: 0, high: 24, basis: 'judgement', ref: '§5.3', note: 'Mock-up value. Recorded, not modelled: the hourly model knows prices and carbon in advance (day-ahead), so notice does not change the hours.' }),
+      flexRecoveryH: rec('load.flexRecoveryH', 12, 'h between events', { low: 0, high: 48, basis: 'judgement', ref: '§5.3', note: 'Mock-up value.' }),
+      flexCostPerMWh: rec('load.flexCostPerMWh', 500, '€/MWh of IT load curtailed', { low: 0, high: 5000, basis: 'judgement', ref: '§5.3', note: 'Mock-up value: the cost of curtailing customer IT; to research.' }),
+      flexBatteryFixed: rec('load.flexBatteryFixed', 'threshold', 'threshold / hours / size', { basis: 'judgement', ref: '§5.3', note: 'Walkthrough 2026-10-21: the engineer chooses which is held fixed. Threshold (default): the battery is sized to cover the trigger hours at the trigger level. Hours: the trigger level is set so the events reach the target hours, and the battery covers them. Size: the battery size is entered and the hours it covers are reported.' }),
+      flexBatteryHours: rec('load.flexBatteryHours', 100, 'h/yr of trigger events covered (when hours are held fixed)', { low: 0, high: 2000, basis: 'judgement', ref: '§5.3' }),
+      flexBatteryMW: rec('load.flexBatteryMW', null, 'MW (when the battery size is held fixed)', { low: 0, basis: 'judgement', ref: '§5.3', note: 'Blank = the trigger-hours size.' }),
+      flexBatteryMWh: rec('load.flexBatteryMWh', null, 'MWh (when the battery size is held fixed)', { low: 0, basis: 'judgement', ref: '§5.3', note: 'Blank = the trigger-hours size.' }),
+      flexBatteryResponse: rec('load.flexBatteryResponse', true, 'toggle', { basis: 'judgement', ref: '§5.3', note: 'Walkthrough 2026-10-21: the economic battery runs the site in trigger hours before any curtailment.' }),
     },
     grid: {
       nowMW: REQUIRED_EXAMPLE['grid.nowMW'],
@@ -668,7 +700,7 @@ export function buildDefaultInputs(opts = {}) {
       topology: rec('requirements.topology', 'N+1', '', { basis: 'judgement', ref: '§5.5' }),
       autonomyH: rec('requirements.autonomyH', 48, 'h', { low: 12, high: 72, basis: 'judgement', ref: '§5.5' }),
       islanding: rec('requirements.islanding', 'No', '', { basis: 'judgement', ref: '§5.5', note: 'Default not stated in brief; "No" chosen (judgement).' }),
-      upsMin: rec('requirements.upsMin', 5, 'min at full IT', { low: 5, high: 15, basis: 'judgement', ref: '§5.5' }),
+      upsMin: rec('requirements.upsMin', 5, 'min at full IT', { low: 5, high: 60, basis: 'judgement', ref: '§5.5', note: 'The resilience reserve battery (walkthrough 2026-10-21): always kept, never used for economic duties; longer autonomy can be chosen site-wide.' }),
       blockSize: rec('requirements.blockSize', 10, 'units per block', { low: 4, high: 20, basis: 'judgement', ref: '§9.2' }),
       catcherN: rec('requirements.catcherN', 4, 'blocks per catcher unit', { low: 2, high: 6, basis: 'judgement', ref: '§9.2' }),
       carbonTarget: rec('requirements.carbonTarget', null, 'gCO2e/kWh (annual average cap)', { basis: 'judgement', ref: '§5.5', note: 'None' }),
@@ -680,8 +712,9 @@ export function buildDefaultInputs(opts = {}) {
       sevesoH2t: rec('requirements.sevesoH2t', 5, 't hydrogen stored', { basis: 'source', verify: 'Directive 2012/18/EU (Seveso III) Annex I lower tier', ref: '§5.5' }),
       permitAllowanceM: rec('requirements.permitAllowanceM', 6, 'months before ordering plant that needs significant environmental permitting (IED, Seveso)', { low: 0, high: 18, basis: 'judgement', ref: '§9.8', note: "Owner's decision 2026-10-22 (OPEN-QUESTIONS 44, 45): plant is ordered from day one; only plant under the IED or Seveso waits this allowance. Wind, ground solar and SMRs keep their own planning months (OPEN-QUESTIONS 56)." }),
       sevesoFuelT: rec('requirements.sevesoFuelT', 2500, 't diesel/HVO stored', { basis: 'source', verify: 'Directive 2012/18/EU (Seveso III) Annex I lower tier', ref: '§5.5' }),
-      testRunHours: rec('requirements.testRunHours', 12, 'h/yr per unit', { low: 6, high: 24, basis: 'judgement', ref: '§9.4' }),
-      testRunLoad: rec('requirements.testRunLoad', 0.75, 'fraction of rating', { low: 0.5, high: 1, basis: 'judgement', ref: '§9.4' }),
+      testRunHours: rec('requirements.testRunHours', 6, 'h/yr per unit', { low: 3, high: 24, basis: 'judgement', ref: '§5.5, §9.4', verify: 'NFPA 110 (monthly exercise runs)', note: 'Walkthrough 2026-10-21: 6 h a year per generator (replaces 12 h), about monthly 30-minute exercise runs.' }),
+      gensetPrimaryHours: rec('requirements.gensetPrimaryHours', 0, 'h/yr', { low: 0, high: 500, basis: 'judgement', ref: '§5.5, §9.4', note: 'Walkthrough 2026-10-21: backup gensets can run as primary power for a set number of hours a year, dispatched and costed. Default 0: they never run in normal dispatch. Hours chosen: the most expensive grid-price hours of each year.' }),
+      testRunLoad: rec('requirements.testRunLoad', 0.75, 'fraction of rating', { low: 0.5, high: 1, basis: 'judgement', ref: '§5.5, §9.4', note: 'Walkthrough 2026-10-21: test load 75 %, a separate editable input.' }),
       bessUpsGensetFraction: rec('requirements.bessUpsGensetFraction', 1.0, 'genset capacity as fraction of critical load at topology N', { basis: 'judgement', ref: '§8 C5', note: 'BESS-augmented UPS replaces redundant genset units with BESS for its duration.' }),
       landTakeCeilingHa: rec('requirements.landTakeCeilingHa', null, 'ha on-site land take (null = net developable area)', { basis: 'judgement', derived: true, ref: '§5.5', note: 'Flag only. At the default it coincides with the "Does not fit" status; a lower value raises the minor flag "land take above ceiling" without changing the site-fit status.' }),
       noiseNightDbA: rec('requirements.noiseNightDbA', 45, 'dB(A) at receptors, night', { low: 35, high: 55, basis: 'judgement', ref: '§10.6', note: 'No source; replace with the local planning or environmental noise criterion. Screening proxy, not an acoustic assessment.' }),

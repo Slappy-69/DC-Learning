@@ -73,7 +73,7 @@ export function economics(ctx, v, sz, disp, ttp) {
   const cont = E.contingency;
   const capexLines = []; // { item, year, amount }
   const ledger = [];
-  for (let y = 0; y <= N; y++) ledger.push({ year: y, capex: 0, contingency: 0, replacement: 0, residual: 0, fom: 0, vom: 0, fuel: 0, grid: 0, ppa: 0, carbon: 0, rental: 0, testRun: 0, revenue: 0, deliveredMWh: 0, scope1T: 0, scope2LocT: 0, scope2MktT: 0, cfeMWh: 0, netDemandMWh: 0, unmetMWh: 0 });
+  for (let y = 0; y <= N; y++) ledger.push({ year: y, capex: 0, contingency: 0, replacement: 0, residual: 0, fom: 0, vom: 0, fuel: 0, grid: 0, ppa: 0, carbon: 0, rental: 0, testRun: 0, flex: 0, revenue: 0, deliveredMWh: 0, scope1T: 0, scope2LocT: 0, scope2MktT: 0, cfeMWh: 0, netDemandMWh: 0, unmetMWh: 0 });
 
   const assets = []; // for replacement and residual value
   const addCapex = (item, year, amount, life, opts = {}) => {
@@ -118,6 +118,9 @@ export function economics(ctx, v, sz, disp, ttp) {
   const bessCapex = (mw, mwh) => mwh * 1000 * bp.capexPerKWh + mw * 1000 * bp.capexPerKW;
   const bessYear = yearOfMonth(techAvailMonth(ctx, TECH.bess));
   addCapex('BESS', bessYear, bessCapex(sz.storage.mw, sz.storage.mwh), bp.life);
+  // Resilience reserve battery (UPS ride-through, §5.5): battery energy only, per building, replaced at its life.
+  const ur = TECH.upsReserve.p;
+  if (sz.reserve && sz.reserve.mwh > 0) bookPhased('Resilience reserve battery (UPS)', sz.reserve.mwh * 1000 * ur.capexPerKWh, ur.life);
   // Firm prime
   if (sz.prime) {
     const t = TECH[sz.prime.tech];
@@ -194,6 +197,7 @@ export function economics(ctx, v, sz, disp, ttp) {
     if (y >= avail('solarGround')) L.fom += sz.solarGroundMWp * 1000 * TECH.solarGround.p.fomPerKW;
     if (y >= avail('wind')) L.fom += sz.windMW * 1000 * TECH.wind.p.fomPerKW;
     if (y >= bessYear) L.fom += bessCapex(sz.storage.mw, sz.storage.mwh) * bp.fomPct;
+    if (sz.reserve && sz.reserve.mwh > 0) L.fom += itShareYear(y) * sz.reserve.mwh * 1000 * ur.capexPerKWh * ur.fomPct;
     if (sz.prime && y >= yearOfMonth(sz.prime.availMonth)) L.fom += sz.prime.mw * 1000 * TECH[sz.prime.tech].p.fomPerKW;
     if (sz.bridge && sz.bridge.tech !== 'rented' && y >= yearOfMonth(sz.bridge.availMonth) && (bridgeRemoveYear === null || y < bridgeRemoveYear)) L.fom += sz.bridge.mw * 1000 * TECH[sz.bridge.tech].p.fomPerKW;
     if (sz.backup.tech) {
@@ -246,6 +250,8 @@ export function economics(ctx, v, sz, disp, ttp) {
       else L.fuel += pr.fuelMWhTh * fuelPrice(ctx, t.fuel) * (t.fuel === 'gas' ? gasEsc : 1);
       scope1 += pr.fuelMWhTh * fuelEF(t.fuel);
     }
+    // Cost of curtailing customer IT (demand flexibility, §5.3), on all curtailed energy.
+    L.flex += (d.flexMWh || 0) * (inputs.load.flexCostPerMWh || 0);
     if (testRun && itShareYear(y) > 0) {
       const sh = itShareYear(y);
       L.testRun += sh * testRun.fuelMWhTh * fuelPrice(ctx, testRun.fuel);
@@ -281,7 +287,7 @@ export function economics(ctx, v, sz, disp, ttp) {
   for (let y = 0; y <= N; y++) {
     const L = ledger[y];
     L.capexTotal = L.capex + L.contingency + L.replacement + L.residual;
-    L.opex = L.fom + L.vom + L.fuel + L.grid + L.ppa + L.carbon + L.rental + L.testRun - L.revenue;
+    L.opex = L.fom + L.vom + L.fuel + L.grid + L.ppa + L.carbon + L.rental + L.testRun + L.flex - L.revenue;
     const dfC = Math.pow(1 + r, -y);
     const dfO = Math.pow(1 + r, -(y + 1));
     L.pvCapex = L.capexTotal * dfC;

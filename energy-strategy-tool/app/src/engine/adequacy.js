@@ -26,6 +26,10 @@ export function adequacyOf(disp, ttp, unmet) {
   if (unmet.mwh > EPS) reasons.push('unmet');
   if (exceedMWh > EPS) reasons.push('exceed');
   if (ttp.gapMWm > EPS) reasons.push('gap');
+  // IT load shed by flexibility against a shortfall counts like unmet load (OPEN-QUESTIONS 61, 2026-10-23).
+  const shedMWh = disp.years.reduce((a, y) => a + (y.flexShortMWh || 0), 0);
+  const shedHours = disp.years.reduce((a, y) => a + (y.flexShortHours || 0), 0);
+  if (shedMWh > EPS) reasons.push('shed');
   return {
     adequate: reasons.length === 0,
     status: reasons.length === 0 ? ADEQUATE : NOT_ADEQUATE,
@@ -33,6 +37,7 @@ export function adequacyOf(disp, ttp, unmet) {
     unmetMWh: unmet.mwh, unmetHours: unmet.hours, unmetPeakMW: unmet.peakMW, longestH: unmet.longestH || 0,
     exceedMWh, exceedHours,
     gapMWm: ttp.gapMWm, gapMonths: ttp.gapMonths,
+    shedMWh, shedHours,
   };
 }
 
@@ -42,6 +47,7 @@ export function adequacyText(a) {
   const parts = [];
   if (a.reasons.includes('unmet')) parts.push(`${Math.round(a.unmetMWh).toLocaleString('en-GB')} MWh unmet over ${a.unmetHours.toLocaleString('en-GB')} h (peak ${a.unmetPeakMW.toFixed(1)} MW, longest event ${a.longestH.toLocaleString('en-GB')} h)`);
   if (a.reasons.includes('exceed')) parts.push(`import above the grid capacity in ${a.exceedHours.toLocaleString('en-GB')} h (${Math.round(a.exceedMWh).toLocaleString('en-GB')} MWh)`);
+  if (a.reasons.includes('shed')) parts.push(`${Math.round(a.shedMWh).toLocaleString('en-GB')} MWh of IT shed by flexibility against a shortfall over ${a.shedHours.toLocaleString('en-GB')} h`);
   if (a.reasons.includes('gap')) parts.push(`firm supply below the design load: ${Math.round(a.gapMWm).toLocaleString('en-GB')} MW-months over ${a.gapMonths} month${a.gapMonths === 1 ? '' : 's'}`);
   return `Not adequate: ${parts.join('; ')}.`;
 }

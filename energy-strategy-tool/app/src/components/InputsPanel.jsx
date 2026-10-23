@@ -70,6 +70,60 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
         <NumberField label="Average IT utilisation" unit="%" scale={100} value={inputs.load.utilisation} onCommit={set('load.utilisation')} path="load.utilisation" inputs={inputs} min={0.05} max={1} />
         <SelectField label="Workload type" value={inputs.load.workload} onCommit={set('load.workload')} path="load.workload" inputs={inputs}
           options={[['cloud', 'Mixed cloud'], ['ai-training', 'AI training'], ['ai-inference', 'AI inference'], ['enterprise', 'Enterprise']]} />
+        <SelectField label="Load shape" value={inputs.load.shape} onCommit={set('load.shape')} path="load.shape" inputs={inputs}
+          options={[['flat', 'Flat % of IT'], ['daily', 'Daily fluctuation'], ['aiTraining', 'AI training'], ['aiInference', 'AI inference']]}
+          hint="Flat and daily fluctuation use the average IT utilisation below; the AI profiles use their own averages." />
+        {inputs.load.shape === 'daily' ? <NumberField label="Daily swing" unit="% ±" scale={100} value={inputs.load.dailySwing} onCommit={set('load.dailySwing')} path="load.dailySwing" inputs={inputs} nullable min={0} max={0.5} hint="Blank = by workload type (±1 % AI training, ±8 % enterprise, ±4 % otherwise)." /> : null}
+        {inputs.load.shape === 'aiTraining' ? <>
+          <div className="row2">
+            <NumberField label="Average utilisation (AI training)" unit="%" scale={100} value={inputs.load.aiTrainUtil} onCommit={set('load.aiTrainUtil')} path="load.aiTrainUtil" inputs={inputs} min={0} max={1} />
+            <NumberField label="Checkpoint dip to" unit="% of IT" scale={100} value={inputs.load.aiTrainDip} onCommit={set('load.aiTrainDip')} path="load.aiTrainDip" inputs={inputs} min={0} max={1} />
+          </div>
+          <div className="row2">
+            <NumberField label="Dip every" unit="h" value={inputs.load.aiTrainDipEveryH} onCommit={set('load.aiTrainDipEveryH')} path="load.aiTrainDipEveryH" inputs={inputs} min={1} />
+            <NumberField label="Dip length" unit="h" value={inputs.load.aiTrainDipH} onCommit={set('load.aiTrainDipH')} path="load.aiTrainDipH" inputs={inputs} min={1} />
+          </div>
+        </> : null}
+        {inputs.load.shape === 'aiInference' ? <>
+          <div className="row2">
+            <NumberField label="Average utilisation (AI inference)" unit="%" scale={100} value={inputs.load.aiInfUtil} onCommit={set('load.aiInfUtil')} path="load.aiInfUtil" inputs={inputs} min={0} max={1} />
+            <NumberField label="Night trough" unit="% of peak" scale={100} value={inputs.load.aiInfTrough} onCommit={set('load.aiInfTrough')} path="load.aiInfTrough" inputs={inputs} min={0} max={1} />
+          </div>
+          <div className="row2">
+            <NumberField label="Peak hour" unit="h" value={inputs.load.aiInfPeakHour} onCommit={set('load.aiInfPeakHour')} path="load.aiInfPeakHour" inputs={inputs} min={0} max={23} />
+            <NumberField label="Weekend level" unit="% of weekdays" scale={100} value={inputs.load.aiInfWeekend} onCommit={set('load.aiInfWeekend')} path="load.aiInfWeekend" inputs={inputs} min={0} max={1.5} />
+          </div>
+        </> : null}
+        {inputs.load.shape === 'aiTraining' || inputs.load.shape === 'aiInference' ? <p className="note">The model is hourly, so swings shorter than an hour (training steps, checkpoints of seconds) cannot be shown. They matter for UPS and battery sizing, which this concept tool does not model. The AI profile defaults are indicative — unverified, to research.</p> : null}
+        <fieldset className="subgroup">
+          <legend>Demand flexibility <span className="legend-note">(generated when choice C16 includes On)</span></legend>
+          <div className="row2">
+            <NumberField label="Max curtailable" unit="% of IT" scale={100} value={inputs.load.flexMaxPct} onCommit={set('load.flexMaxPct')} path="load.flexMaxPct" inputs={inputs} min={0} max={1} />
+            <NumberField label="Max hours a year" unit="h" value={inputs.load.flexHours} onCommit={set('load.flexHours')} path="load.flexHours" inputs={inputs} min={0} />
+          </div>
+          <SelectField label="Trigger" value={inputs.load.flexTrigger} onCommit={set('load.flexTrigger')} path="load.flexTrigger" inputs={inputs}
+            options={[['price', 'Grid price'], ['carbon', 'Grid carbon'], ['stress', 'Weather and grid stress (temperature)']]} />
+          {inputs.load.flexTrigger === 'carbon' ? <NumberField label="Trigger level" unit="gCO₂e/kWh" value={inputs.load.flexTriggerCarbon} onCommit={set('load.flexTriggerCarbon')} path="load.flexTriggerCarbon" inputs={inputs} min={0} />
+            : inputs.load.flexTrigger === 'stress' ? <NumberField label="Trigger level" unit="°C" value={inputs.load.flexTriggerTemp} onCommit={set('load.flexTriggerTemp')} path="load.flexTriggerTemp" inputs={inputs} />
+            : <NumberField label="Trigger level" unit="€/MWh" value={inputs.load.flexTriggerPrice} onCommit={set('load.flexTriggerPrice')} path="load.flexTriggerPrice" inputs={inputs} min={0} />}
+          <div className="row2">
+            <NumberField label="Duration per event" unit="h" value={inputs.load.flexEventH} onCommit={set('load.flexEventH')} path="load.flexEventH" inputs={inputs} min={1} />
+            <NumberField label="Notice" unit="h" value={inputs.load.flexNoticeH} onCommit={set('load.flexNoticeH')} path="load.flexNoticeH" inputs={inputs} min={0} hint="Recorded, not modelled: the hourly model knows prices and carbon a day ahead." />
+          </div>
+          <div className="row2">
+            <NumberField label="Recovery period" unit="h" value={inputs.load.flexRecoveryH} onCommit={set('load.flexRecoveryH')} path="load.flexRecoveryH" inputs={inputs} min={0} />
+            <NumberField label="Cost of curtailment" unit="€/MWh" value={inputs.load.flexCostPerMWh} onCommit={set('load.flexCostPerMWh')} path="load.flexCostPerMWh" inputs={inputs} min={0} />
+          </div>
+          <ToggleField label="Battery response: the battery runs the site in trigger hours instead of curtailing" checked={inputs.load.flexBatteryResponse} onCommit={set('load.flexBatteryResponse')} path="load.flexBatteryResponse" inputs={inputs} />
+          <SelectField label="Hold fixed (battery sized to the trigger hours, C12)" value={inputs.load.flexBatteryFixed} onCommit={set('load.flexBatteryFixed')} path="load.flexBatteryFixed" inputs={inputs}
+            options={[['threshold', 'Trigger threshold (size the battery)'], ['hours', 'Hours covered (set the threshold)'], ['size', 'Battery size (report hours)']]} />
+          {inputs.load.flexBatteryFixed === 'hours' ? <NumberField label="Hours covered" unit="h/yr" value={inputs.load.flexBatteryHours} onCommit={set('load.flexBatteryHours')} path="load.flexBatteryHours" inputs={inputs} min={0} /> : null}
+          {inputs.load.flexBatteryFixed === 'size' ? <div className="row2">
+            <NumberField label="Battery power" unit="MW" value={inputs.load.flexBatteryMW} onCommit={set('load.flexBatteryMW')} path="load.flexBatteryMW" inputs={inputs} nullable min={0} />
+            <NumberField label="Battery energy" unit="MWh" value={inputs.load.flexBatteryMWh} onCommit={set('load.flexBatteryMWh')} path="load.flexBatteryMWh" inputs={inputs} nullable min={0} />
+          </div> : null}
+          <p className="note">Flexibility acts in trigger hours and as the last step against a shortfall, within the same limits (OPEN-QUESTIONS 34). IT shed against a shortfall counts as unmet for power adequacy (OPEN-QUESTIONS 61). Values are indicative — unverified.</p>
+        </fieldset>
         <SelectField label="Cooling approach" value={inputs.load.coolingApproach} onCommit={(v) => { update('load.coolingApproach', v); update('choices.C8', null); }} path="load.coolingApproach" inputs={inputs}
           options={[['open', 'Open choice (C8)'], ['air', 'Air (CHW + free cooling)'], ['evap', 'Evaporative-adiabatic'], ['dlc', 'DLC + dry coolers'], ['immersion', 'Immersion']]} />
         <div className="row2">
@@ -116,6 +170,14 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
         <NumberField label="Capex ceiling" unit="€ m" scale={1e-6} value={inputs.requirements.capexCeiling} onCommit={set('requirements.capexCeiling')} path="requirements.capexCeiling" inputs={inputs} nullable min={0} />
         {siteBeta ? <NumberField label="Land-take ceiling (on site, Site tab Beta)" unit="ha" value={inputs.requirements.landTakeCeilingHa} onCommit={set('requirements.landTakeCeilingHa')} path="requirements.landTakeCeilingHa" inputs={inputs} nullable min={0}
           hint="Flag only, shown with the Site tab (Beta). Empty = the net developable area (where it coincides with &quot;Does not fit&quot;); a lower value raises a minor flag without changing the site-fit status." /> : null}
+        <NumberField label="Resilience reserve battery (UPS ride-through)" unit="min at full IT" value={inputs.requirements.upsMin} onCommit={set('requirements.upsMin')} path="requirements.upsMin" inputs={inputs} min={0}
+          hint="Always kept and never used for economic duties; its battery capex is in every option's ledger. Longer autonomy can be chosen site-wide." />
+        <div className="row2">
+          <NumberField label="Genset test running" unit="h/yr per unit" value={inputs.requirements.testRunHours} onCommit={set('requirements.testRunHours')} path="requirements.testRunHours" inputs={inputs} min={0} />
+          <NumberField label="Genset test load" unit="%" scale={100} value={inputs.requirements.testRunLoad} onCommit={set('requirements.testRunLoad')} path="requirements.testRunLoad" inputs={inputs} min={0} max={1} />
+        </div>
+        <NumberField label="Backup gensets as primary power" unit="h/yr" value={inputs.requirements.gensetPrimaryHours} onCommit={set('requirements.gensetPrimaryHours')} path="requirements.gensetPrimaryHours" inputs={inputs} min={0} max={8760}
+          hint="0 = gensets never run in normal dispatch. Above 0: they run in the most expensive grid-price hours of each year, and their fuel, carbon and run hours are costed." />
         <NumberField label="Max annual run-hours, on-site combustion" unit="h/yr" value={inputs.requirements.maxRunHours} onCommit={set('requirements.maxRunHours')} path="requirements.maxRunHours" inputs={inputs} nullable min={0} />
 
         <fieldset className="weights">
