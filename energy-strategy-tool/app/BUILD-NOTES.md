@@ -1486,7 +1486,7 @@ What changed:
 - **Sizing sentences:** the prime and bridging sentences no longer state availability; a new sentence per plant says the month and how it was reached, e.g. "Gas reciprocating engines (bridging) available from month 21: 6 permitting allowance (IED) + 9 procurement + 6 construction months."
 
 Interpretations (reversible):
-- The IED test is the option's aggregated thermal input, as the `permit-ied` flag already counts it, so backup gensets count. On a data centre campus they alone are usually above 50 MWth, so all combustion plant, rented temporary generation included, is normally held for 6 months.
+- The IED test is the option's aggregated thermal input, as the `permit-ied` flag already counts it, so backup gensets count. On a data centre campus they alone are usually above 50 MWth, so all combustion plant, rented temporary generation included, is normally held for 6 months. **Confirmed by the owner 2026-10-23 (OPEN-QUESTIONS 57).**
 - Fuel cells are not combustion plant, so they are never held by the IED. Batteries and rooftop solar are never held.
 - Backup gensets have no availability month in the engine (as before), so the allowance does not change them.
 - "Day one" is the analysis start.
