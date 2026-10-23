@@ -19,7 +19,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import {
   referenceT1, runModel, dispatchConfig, dispatchAll, techAvailMonth, bridgeActive, TECH, PPA,
   inspectOption, compareWithRun, weekRange, weekPresets, WEEKS_PER_YEAR, HOURS_PER_WEEK, H, normalizeInputs,
-  tornado, TORNADO_DRIVERS, scoreAgainstRun, axisScore, getRegistry, LABEL, buildContext, COUNTRIES, FUEL, evaluateOption,
+  tornado, TORNADO_DRIVERS, DEFAULT_DRIVER_IDS, TORNADO_MEASURES, sortRows, scoreAgainstRun, axisScore, getRegistry, LABEL, buildContext, COUNTRIES, FUEL, evaluateOption,
 } from '../src/engine/index.js';
 import { getViewBundle } from './view-bundle.mjs';
 
@@ -413,7 +413,10 @@ export async function sensitivityTests(test, shared) {
       const diff = Math.abs(t.base.score - lead.score);
       assert.ok(diff < 1e-9, `${label}: base re-run ${t.base.score} differs from the run score ${lead.score} by ${diff}`);
       assert.equal(t.base.lcoe, lead.eco.lcoe, `${label}: base LCOE`);
-      for (let i = 1; i < t.rows.length; i++) assert.ok(t.rows[i - 1].swing >= t.rows[i].swing, `${label}: rows not sorted by swing`);
+      assert.equal(t.measure, 'lcoe', `${label}: default measure is LCOE`);
+      for (let i = 1; i < t.rows.length; i++) assert.ok(t.rows[i - 1].measureSwing >= t.rows[i].measureSwing, `${label}: rows not sorted by LCOE swing`);
+      const bySc = sortRows(t.allRows, 'score');
+      for (let i = 1; i < bySc.length; i++) assert.ok(bySc[i - 1].swing >= bySc[i].swing - 1e-12, `${label}: rows not sorted by score swing`);
       assert.equal(new Set(t.allRows.map((r) => r.id)).size, TORNADO_DRIVERS.length, `${label}: every driver once`);
       assert.equal(t.rows.length, Math.min(t.topN, TORNADO_DRIVERS.length));
       for (const r of t.allRows) for (const x of [r.low.score, r.high.score]) assert.ok(x >= 0 && x <= 100, `${label}: score ${x} outside 0–100`);
@@ -485,6 +488,48 @@ export async function sensitivityTests(test, shared) {
     assert.ok(e2.eco.lcoe !== e1.eco.lcoe, 'entered gas and carbon prices do not change a gas option\'s LCOE');
     out.push(`carbon price ${cd.carbonPrice} → 123 €/t and gas ${cd.gas} → 51 €/MWh_th entered: ctx follows; ${gasOpt.id} LCOE ${e1.eco.lcoe.toFixed(2)} → ${e2.eco.lcoe.toFixed(2)} €/MWh`);
     return out.join('; ') + '.';
+  });
+
+  await test('13d. Work package 9 drivers and measures: the new drivers each move the result they act on (capex, capacity factors, PUE, battery and grid connection capex, period, escalation, test hours; the flexibility trigger acts only with flexibility on); seven ticked by default; the measure re-sorts the rows without a re-run', () => {
+    const out = [];
+    assert.deepEqual(DEFAULT_DRIVER_IDS.slice().sort(), ['capacity-factors', 'capex', 'carbon-price', 'gas-price', 'grid-date', 'grid-price', 'wacc']);
+    for (const id of DEFAULT_DRIVER_IDS) assert.ok(TORNADO_DRIVERS.some((d) => d.id === id), `default driver ${id} missing`);
+    assert.deepEqual(TORNADO_MEASURES.map((m) => m.id), ['lcoe', 'npv', 'carbon', 'score']);
+    assert.equal(TORNADO_DRIVERS.length, 16);
+    const by = (id) => TORNADO_DRIVERS.filter((d) => d.id === id);
+    const run = runT1;
+    const pick = (f, what) => { const o = run.options.slice().sort((a, b) => a.rank - b.rank).find(f); assert.ok(o, `no T1 option ${what}`); return o; };
+    const moved = (o, id, get, what) => {
+      const t = tornado(run, o.id, { site: run.ctx.site, drivers: by(id) });
+      const r = t.rows[0];
+      const lo = get(r.low), hi = get(r.high);
+      assert.ok(Number.isFinite(lo) && Number.isFinite(hi) && Math.abs(hi - lo) > 1e-9 * Math.max(1, Math.abs(lo)), `${id} did not move ${what} for ${o.id}: ${lo} → ${hi}`);
+      out.push(`${id} ${what} ${lo.toPrecision(5)} → ${hi.toPrecision(5)}`);
+      return r;
+    };
+    const lead = pick(() => true, 'at all');
+    const capexR = moved(lead, 'capex', (s) => s.lcoe, 'LCOE');
+    assert.ok(capexR.high.lcoe > capexR.low.lcoe, 'higher capex should raise LCOE');
+    moved(lead, 'pue', (s) => s.lcoe, 'LCOE');
+    moved(lead, 'grid-capex', (s) => s.lcoe, 'LCOE');
+    moved(lead, 'period', (s) => s.npvCost, 'NPV');
+    moved(lead, 'escalation', (s) => s.lcoe, 'LCOE');
+    moved(pick((o) => o.sizing.solarMWp > 0 || o.sizing.windMW > 0, 'with on-site solar or wind'), 'capacity-factors', (s) => s.lcoe, 'LCOE');
+    moved(pick((o) => o.sizing.bess && o.sizing.bess.mwh > 0, 'with a battery'), 'bess-capex', (s) => s.lcoe, 'LCOE');
+    moved(pick((o) => o.sizing.backup && o.sizing.backup.tech, 'with backup generation'), 'test-hours', (s) => s.lcoe, 'LCOE');
+    // Measures: the result carries the measure; sortRows re-sorts the same rows.
+    const t = tornado(run, lead.id, { site: run.ctx.site, drivers: TORNADO_DRIVERS.filter((d) => DEFAULT_DRIVER_IDS.includes(d.id)) });
+    assert.equal(t.allRows.length, 7);
+    for (const m of TORNADO_MEASURES) {
+      const rs = sortRows(t.allRows, m.id);
+      assert.equal(rs.length, 7);
+      for (let i = 1; i < rs.length; i++) assert.ok(rs[i - 1].measureSwing >= rs[i].measureSwing, `${m.id}: not sorted`);
+    }
+    const ts = tornado(run, lead.id, { site: run.ctx.site, drivers: by('wacc'), measure: 'npv' });
+    assert.equal(ts.measure, 'npv');
+    const reg = getRegistry();
+    for (const k of ['economics.capexFactor', 'economics.bessCapexFactor', 'economics.gridCapexFactor', 'utilities.reYieldFactor', 'load.coolingFactor', 'sensitivity.flexTriggerFactor', 'sensitivity.defaultMeasure']) assert.ok(reg[k] && reg[k].label === LABEL, `${k} missing or unlabelled`);
+    return `${out.join('; ')}; LCOE order of the default seven: ${t.allRows.map((r) => r.id).join(', ')}.`;
   });
 
   await test('13c. Sensitivity tab (server render): the tornado is a keyboard-operable application with a description, one bar per driver, and the table lists every driver with its range record and "unverified" label and the base check', async () => {

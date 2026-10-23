@@ -78,12 +78,16 @@ function readColours(el) {
   const g = (k, d) => (cs && cs.getPropertyValue(k).trim()) || d;
   return {
     ttp: [1, 2, 3, 4, 5].map((i) => g(`--ttp-${i}`, ['#9d74c4', '#8659b0', '#70429b', '#592f83', '#421c69'][i - 1])),
+    res: { Meets: g('--ok', '#1f7a3f'), 'Meets with flags': g('--warn', '#8a5a00'), 'Does not meet': g('--bad', '#b3261e') },
     surface: g('--surface', '#ffffff'),
     ink: g('--ink', '#1d1f22'),
   };
 }
 
-export default function ParetoChart({ model, selectedId, onSelect, forceSvg = false, initialWidth, svgId }) {
+// Resilience encoding (work package 6): Meets large and green, Meets with flags medium and amber, Does not meet small and red.
+const RES_R = { Meets: 1, 'Meets with flags': 0.6, 'Does not meet': 0.25 };
+
+export default function ParetoChart({ model, selectedId, onSelect, forceSvg = false, initialWidth, svgId, encoding = 'resilience' }) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
   const measured = useSize(wrapRef);
@@ -121,9 +125,11 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
   }, [cmin, cmax, rMin, rMax]);
 
   const geo = useMemo(() => pts.map((p) => ({
-    p, cx: sx(p.x), cy: sy(p.y), r: radius(p.capex), shape: (model.showSiteFit !== false && SHAPES[p.siteFit]) || 'circle',
-    fill: p.ttpClass == null ? colours.ink : colours.ttp[Math.min(4, p.ttpClass)],
-  })), [pts, sx, sy, radius, colours]);
+    p, cx: sx(p.x), cy: sy(p.y),
+    r: encoding === 'resilience' ? Math.sqrt(rMin * rMin + (RES_R[p.resilience] ?? 0.5) * (rMax * rMax - rMin * rMin)) : radius(p.capex),
+    shape: (model.showSiteFit !== false && SHAPES[p.siteFit]) || 'circle',
+    fill: encoding === 'resilience' ? (colours.res[p.resilience] || colours.ink) : p.ttpClass == null ? colours.ink : colours.ttp[Math.min(4, p.ttpClass)],
+  })), [pts, sx, sy, radius, colours, encoding, rMin, rMax]);
   // Draw order: dominated first, then non-dominated, then frontier, so the useful points sit on top.
   const drawOrder = useMemo(() => geo.slice().sort((a, b) => (a.p.dominatedBy ? 0 : 1) - (b.p.dominatedBy ? 0 : 1) || (a.p.onFrontier ? 1 : 0) - (b.p.onFrontier ? 1 : 0) || b.p.rank - a.p.rank), [geo]);
   const byId = useMemo(() => new Map(geo.map((g) => [g.p.id, g])), [geo]);

@@ -4224,7 +4224,7 @@
   "high": null,
   "basis": "judgement",
   "sourceToVerify": "",
-  "note": "Default x axis of the Pareto scatter. \"follow-scoring\" = the Cost axis metric (settings.costMetric, default LCOE); §12.2 default: cost vs carbon.",
+  "note": "Default horizontal axis of the trade-off chart. \"follow-scoring\" = the Carbon axis metric (settings.carbonMetric, default location-based). Walkthrough 2026-10-21 (work package 6): cost vertical against carbon horizontal.",
   "briefRef": "§12.2"
  },
  {
@@ -4235,7 +4235,18 @@
   "high": null,
   "basis": "judgement",
   "sourceToVerify": "",
-  "note": "Default y axis of the Pareto scatter. \"follow-scoring\" = the Carbon axis metric (settings.carbonMetric, default location-based).",
+  "note": "Default vertical axis of the trade-off chart. \"follow-scoring\" = the Cost axis metric (settings.costMetric, default LCOE).",
+  "briefRef": "§12.2"
+ },
+ {
+  "path": "view.pareto.encoding",
+  "value": "resilience",
+  "unit": "\"resilience\" | \"ttp-capex\"",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Bubble size and colour. Walkthrough 2026-10-21 (work package 6): resilience status sets size and colour; \"ttp-capex\" is the encoding built before (colour time-to-power, size capex).",
   "briefRef": "§12.2"
  },
  {
@@ -4324,6 +4335,28 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Tornado driver range: low and high IT load as factors on the entered phases. No source.",
+  "briefRef": "§13.3"
+ },
+ {
+  "path": "sensitivity.flexTriggerFactor",
+  "value": 1,
+  "unit": "× flexibility trigger level",
+  "low": 0.8,
+  "high": 1.2,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Tornado driver range (work package 9). No source.",
+  "briefRef": "§13.3"
+ },
+ {
+  "path": "sensitivity.defaultMeasure",
+  "value": "lcoe",
+  "unit": "lcoe / npv / carbon / score",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Walkthrough 2026-10-21: the tornado measures LCOE by default.",
   "briefRef": "§13.3"
  },
  {
@@ -4811,6 +4844,17 @@
   "briefRef": "§5.3"
  },
  {
+  "path": "load.coolingFactor",
+  "value": 1,
+  "unit": "× cooling energy (PUE above 1)",
+  "low": 0.8,
+  "high": 1.2,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Tornado driver \"PUE\": scales fans and mechanical cooling. No source.",
+  "briefRef": "§13.3"
+ },
+ {
   "path": "load.ancillaryFrac",
   "value": 0.02,
   "unit": "fraction of installed IT",
@@ -5131,6 +5175,17 @@
   "sourceToVerify": "",
   "note": "",
   "briefRef": "§5.4"
+ },
+ {
+  "path": "utilities.reYieldFactor",
+  "value": 1,
+  "unit": "× on-site solar and wind output (capacity factors)",
+  "low": 0.85,
+  "high": 1.15,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Tornado driver \"capacity factors\". No source.",
+  "briefRef": "§13.3"
  },
  {
   "path": "utilities.ppaInclude",
@@ -5483,6 +5538,39 @@
   "sourceToVerify": "EU ETS / UK ETS forward curves",
   "note": "",
   "briefRef": "§5.6"
+ },
+ {
+  "path": "economics.capexFactor",
+  "value": 1,
+  "unit": "× every capex line",
+  "low": 0.7,
+  "high": 1.5,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Tornado driver \"capex\"; range the AACE Class 5 band (−30 % / +50 %).",
+  "briefRef": "§13.3"
+ },
+ {
+  "path": "economics.bessCapexFactor",
+  "value": 1,
+  "unit": "× battery capex",
+  "low": 0.7,
+  "high": 1.3,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Tornado driver \"battery capex\". No source.",
+  "briefRef": "§13.3"
+ },
+ {
+  "path": "economics.gridCapexFactor",
+  "value": 1,
+  "unit": "× grid connection capex",
+  "low": 0.5,
+  "high": 2,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Tornado driver \"grid connection capex\". No source.",
+  "briefRef": "§13.3"
  },
  {
   "path": "economics.elecEscalation",

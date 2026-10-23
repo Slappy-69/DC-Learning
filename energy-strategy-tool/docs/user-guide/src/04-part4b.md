@@ -366,7 +366,7 @@ For the chosen option, the engine:
 1. re-runs the option with the base inputs, checking that it reproduces the ranking's score;
 2. for each driver, sets it to its low value, re-runs the option through every stage (sizing, layout, dispatch, economics, carbon, resilience, flags, deliverability), then does the same for its high value;
 3. scores each re-run against the **base run's** axis ranges and weights, clipping each axis score to 0–100, so no other option is touched;
-4. sorts the drivers by the swing in weighted score and shows the top ones (up to 12; seven exist today).
+4. sorts the ticked drivers by the swing in the chosen measure (LCOE by default; NPV of net cost, location-based carbon or weighted score) and shows the top ones (up to 12, record `sensitivity.topDrivers`; sixteen drivers exist, seven ticked by default).
 
 How each driver is applied:
 
@@ -375,8 +375,14 @@ How each driver is applied:
 - **Gas price, carbon price**: entered as inputs at the factor times the current value (the country default or your value).
 - **WACC**: set to 4 % and 12 %.
 - **IT load**: the IT load at full build and every phase are scaled.
+- **Capex, battery capex, grid connection capex** (built 23 October 2026): a factor multiplies the capex lines before contingency. "Capex" scales every line; "battery capex" the battery lines (shortfall, bridge and resilience batteries); "grid connection capex" the grid connection and reinforcement line. Replacements follow the capex they replace.
+- **Capacity factors**: the hourly output of on-site solar and wind is scaled (the PPA's own profile is not).
+- **PUE**: the cooling and mechanical share of the facility load, and the cooling term of the design-day PUE, are scaled. A higher PUE raises the energy bought and the plant sized.
+- **Evaluation period, escalation**: set to the input's own low and high.
+- **Flexibility trigger level**: the price, carbon and temperature trigger levels are scaled together (only the active trigger matters).
+- **Generator test hours**: set to the record's low and high; it moves test-run fuel, cost and Scope 1 carbon.
 
-The ranges are records in the registry, all labelled indicative: the inputs' own low and high for price, carbon and WACC; the grid-date uncertainty (−6 / +24 months); and sensitivity records for gas price (× 0.7 / × 1.3), carbon price (× 0.5 / × 1.5) and IT load (× 0.8 / × 1.2).
+The ranges are records in the registry, all labelled indicative: the inputs' own low and high for price, carbon, WACC, evaluation period, escalation and test hours; the grid-date uncertainty (−6 / +24 months); and factor records for gas price (× 0.7 / × 1.3), carbon price (× 0.5 / × 1.5), IT load (× 0.8 / × 1.2), capex (× 0.7 / × 1.5), battery capex (× 0.7 / × 1.3), grid connection capex (× 0.5 / × 2), capacity factors (× 0.85 / × 1.15), PUE (× 0.8 / × 1.2) and the flexibility trigger (× 0.8 / × 1.2). The factor records are all 1 in the main run, so they change nothing outside the tornado.
 
 The T1 results are in chapter 27.
 

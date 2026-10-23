@@ -1629,3 +1629,54 @@ What changed:
 T1 effect: 55,060 combinations (rule k removes 5,400; T3 41,880); 2,000 sampled; 818 with the hybrid PPA (636 adequate after the fix) and 1,182 without. Before the fix the leader had no PPA and the best PPA option ranked 931 (every PPA option not adequate). After it: 1,566 of 2,000 adequate (930 without a PPA, 636 with); leader Grid + rented temporary generation bridge → remove · HVO N+1 · DLC · PPA hybrid 100 % (score 92.69, CFE 66.6 %; undelivered PPA volume 0.015 % import-limited and 99.985 % above the load).
 
 Test run (work package 5, 2026-10-23): `npm test` 58/58 (new test 28, `tests/ppa-tests.mjs`; the port test checks the two O3 flags on every option); `npm run build`; `npm run test:browser` 30/30. Browser check B19 now closes "Run details" when it opened because the generation changed (§12): since the T1 example ticks a PPA and the defaults do not, "Reset to defaults" changes the rule counts.
+
+## Work packages 6 and 7: results cards, trade-off defaults, Compare (2026-10-23)
+
+Branch `feature/results-cards` (from `feature/ppa-rules`). The owner's standing instruction of 2026-10-23 ("I'm happy to follow your recommendation every time"): OPEN-QUESTIONS 24, 29, 30 and 35 answered with Claude's recommendations, recorded as such.
+
+What changed:
+- **`src/engine/cards.js`** (pure): `topCards` picks five distinct strategies (C1, C2, C4, C5), the best-ranked option of each in rank order, skipping options whose figures equal a better-ranked one's; `prosCons` judges LCOE, capex, location carbon, hourly CFE, time-to-power and deliverability against every option in the run (pro: best 10 %; con: worse half; up to three each); `identicalResults` (KNOWN-ISSUES item 5) marks "same results as #k"; `describeWeightChange` writes the live description.
+- **Options tab:** the top-five cards first (`TopFive.jsx`), each with a Compare tick box; "Same results as #k" badges in the table.
+- **Trade-offs:** default axes carbon across and cost up (`view.pareto.xAxis` follows the carbon metric, `yAxis` the cost metric); new record `view.pareto.encoding` = resilience (size and colour by resilience status); "Size and colour" switches back to time-to-power colour and capex size.
+- **Weight changes** on the same run are described in the status line: which weights changed and whether the leader moved.
+- **Compare tab** (`CompareView.jsx`): up to three options (a fourth replaces the oldest), from the cards or "Add to compare" in any option detail; headline figures, differing choices, deep-dive card.
+
+Interpretations (reversible): pros = best 10 % of the run, cons = worse half; the assumed-defaults list on each card waits for work package 2; "same results as" compares nine figures plus resilience and adequacy, to ten significant figures.
+
+T1: cards #1, #2, #3, #4, #6 (#5 repeats a strategy); 64 options marked "same results as".
+
+## Work package 9: tornado drivers and measures (2026-10-23)
+
+Branch `feature/results-cards`, committed with packages 6 and 7 (the edits shared files with them). The decisions are the walkthrough's (BUILD-PLAN package 9); no open question was listed.
+
+What changed:
+- **Sixteen drivers** in `src/engine/sensitivity.js` (`TORNADO_DRIVERS`): the seven built before, plus capex, capacity factors, PUE, battery capex, grid connection capex, evaluation period, escalation, flexibility trigger level and generator test hours.
+- **Seven ticked by default** (`DEFAULT_DRIVER_IDS`, the decision log's list): gas price, grid price, WACC, carbon price, capex, capacity factors, grid connection date. The Sensitivity tab has a tick box per driver, "Default seven" and "Tick all"; the choice stays while the app is open.
+- **Measure** (`TORNADO_MEASURES`): LCOE by default (record `sensitivity.defaultMeasure`), NPV of net cost, location-based carbon, weighted score. Rows sort by the swing in the measure; changing the measure re-sorts the stored rows without a re-run (`sortRows`). The base check still compares the weighted score with the ranking.
+- **New multipliers, all 1 in the main run** (so they change nothing outside the tornado), each a record labelled indicative — unverified:
+  - `economics.capexFactor` (0.7–1.5): every capex line, before contingency; replacements follow.
+  - `economics.bessCapexFactor` (0.7–1.3): lines named BESS or battery.
+  - `economics.gridCapexFactor` (0.5–2): the grid connection and reinforcement line.
+  - `utilities.reYieldFactor` (0.85–1.15): hourly on-site solar and wind output in dispatch (part of the dispatch key).
+  - `load.coolingFactor` (0.8–1.2): the cooling and mechanical share of the hourly facility load, and the cooling term of the design-day PUE.
+  - `sensitivity.flexTriggerFactor` (0.8–1.2): scales the price, carbon and temperature trigger levels together.
+- Evaluation period (15–25 years), escalation (−2 to +2 %/yr) and test hours (3–24 h/yr) use their records' own low and high.
+
+Interpretations (reversible): the capex factors scale lines by name; "capacity factors" means on-site solar and wind (not the PPA profile); "PUE" scales cooling energy rather than setting a PUE value.
+
+Tests: 13a (rows sorted by the LCOE swing; score sort still checked), 13d (each new driver moves the result it acts on; default seven; measures), browser B23 (seven ticked, measure switch, untick asks for a new run).
+
+## Work package 10: PDF report (2026-10-23)
+
+Branch `feature/results-cards`, with packages 6, 7 and 9 (the edits shared files with them). OPEN-QUESTIONS 32 answered with Claude's recommendation, accepted in advance by the owner (2026-10-23).
+
+What changed:
+- **`src/report/pdf.js`** (pure, no dependency): a small PDF 1.4 writer. A4 pages; Helvetica and Helvetica-Bold (two of the 14 standard fonts every reader has, so nothing is embedded); WinAnsi text, with characters outside it replaced (≥ → ">=", CO₂ → "CO2", → → "->"); headings, paragraphs, bullets, tables that repeat their header on a new page, and vector shapes for charts; "Page n of N" and a footer on every page; bookmarks for the sections. Not compressed (about 600 kB for T1).
+- **`src/report/report.js`** (pure): `buildReport(run, { compareIds, sensitivity, sensitivityMeasure, created })` writes the nine sections listed in the user guide (chapter 29). `inputRows` marks every input "Entered", "Entered (required)" or "Default: <label> (<basis>)" by comparing it with its registry record. Site geometry, site-fit flags and the site plan are left out.
+- **App:** "Save PDF report" in the top bar once a run exists (`src/saveFile.js`, same download path as the run log); the status line says how many pages and whether the sensitivity test is included. The last finished tornado is offered to the report (`latestSensitivity` in `SensitivityView.jsx`) when it belongs to the run on screen.
+- **Windows program:** the save dialog has a "PDF report" filter and the title "Save PDF report" (`packaging/desktop/app/lib/guards.js`). No network: the report code imports only app modules (test 30 checks).
+- **Hosted page:** no PDF button and no download code (the build drops it).
+
+Interpretations (reversible): no executive summary (§14 is not built); dispatch is shown as energy balances, not hourly charts; the trade-off chart is fixed at LCOE against location-based carbon; the report is not a tagged (accessible) PDF.
+
+Tests: 30 (structure, section order, inputs, cards, compare, tornado, no Site content, deterministic bytes, offline imports), browser B32 (download, file name, header, pages, status) and B28 (no PDF in the hosted page).

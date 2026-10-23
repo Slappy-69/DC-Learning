@@ -76,7 +76,10 @@ export function economics(ctx, v, sz, disp, ttp) {
   for (let y = 0; y <= N; y++) ledger.push({ year: y, capex: 0, contingency: 0, replacement: 0, residual: 0, fom: 0, vom: 0, fuel: 0, grid: 0, ppa: 0, carbon: 0, rental: 0, testRun: 0, flex: 0, revenue: 0, deliveredMWh: 0, scope1T: 0, scope2LocT: 0, scope2MktT: 0, cfeMWh: 0, netDemandMWh: 0, unmetMWh: 0 });
 
   const assets = []; // for replacement and residual value
+  // Sensitivity multipliers (work package 9; 1 = as entered).
+  const capF = inputs.economics.capexFactor ?? 1, bessF = inputs.economics.bessCapexFactor ?? 1, gridF = inputs.economics.gridCapexFactor ?? 1;
   const addCapex = (item, year, amount, life, opts = {}) => {
+    amount *= capF * (/^BESS|battery/i.test(item) ? bessF : 1) * (item === 'Grid connection and reinforcement' ? gridF : 1);
     if (!(amount > 0) || year > N - 1) return;
     capexLines.push({ item, year, amount });
     ledger[year].capex += amount;

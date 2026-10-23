@@ -609,3 +609,28 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .adequacy-divider-text { position: sticky; left: 8px; display: inline-block; max-width: min(900px, 80vw); white-space: normal; }
 .detail-adequacy { border-left: 3px solid var(--ok); padding: 4px 10px; margin: 8px 0; max-width: 960px; }
 .detail-adequacy.bad { border-left-color: var(--bad); }
+
+/* Top five cards (work package 6) */
+.top5 { margin: 0 0 16px; }
+.top5 h2 { font-size: 16px; margin: 0 0 4px; }
+.top5-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.top5-card { border: 1px solid var(--line, #d9d9d9); border-radius: 8px; padding: 10px 12px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+.tc-head { display: flex; gap: 8px; align-items: baseline; }
+.tc-rank { font-weight: 700; color: var(--ink-2); }
+.tc-name { flex: 1; text-align: left; font-weight: 600; }
+.tc-score { font-weight: 700; font-size: 18px; }
+.tc-axes { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--ink-2); }
+.tc-figs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; margin: 0; font-size: 12.5px; }
+.tc-figs dt { color: var(--ink-2); } .tc-figs dd { margin: 0; font-weight: 600; }
+.tc-figs > div { display: flex; justify-content: space-between; gap: 6px; }
+.tc-pc { display: grid; gap: 2px; }
+.tc-pros li span { color: var(--ok); font-weight: 700; } .tc-cons li span { color: var(--bad); font-weight: 700; }
+
+/* Sensitivity driver tick boxes (work package 9) */
+.sens-drivers { border: 1px solid var(--line, #ccc); border-radius: 6px; padding: 8px 12px; margin: 8px 0; }
+.sens-drivers legend { font-weight: 600; padding: 0 4px; }
+.sens-driver-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 16px; }
+.sens-driver { display: flex; gap: 6px; align-items: center; }
+.sens-driver input[type=checkbox] { width: 24px; height: 24px; margin: 0; flex: none; }
+.sens-driver { min-height: 28px; }
+.sens #sens-measure { min-height: 32px; border: 1px solid var(--control-border); border-radius: var(--radius); background: var(--surface); padding: 2px 6px; }

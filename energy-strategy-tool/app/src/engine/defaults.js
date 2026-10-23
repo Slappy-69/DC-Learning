@@ -581,8 +581,9 @@ function viewRec(path, value, unit, basis, note, briefRef = '§12.2') {
     briefRef, label: LABEL, derived: false,
   };
 }
-viewRec('view.pareto.xAxis', 'follow-scoring', '"follow-scoring" | "lcoe" | "npv" | "location" | "market" | "cfe" | "ttp" | "deliverability"', 'judgement', 'Default x axis of the Pareto scatter. "follow-scoring" = the Cost axis metric (settings.costMetric, default LCOE); §12.2 default: cost vs carbon.');
-viewRec('view.pareto.yAxis', 'follow-scoring', '"follow-scoring" | "lcoe" | "npv" | "location" | "market" | "cfe" | "ttp" | "deliverability"', 'judgement', 'Default y axis of the Pareto scatter. "follow-scoring" = the Carbon axis metric (settings.carbonMetric, default location-based).');
+viewRec('view.pareto.xAxis', 'follow-scoring', '"follow-scoring" | "lcoe" | "npv" | "location" | "market" | "cfe" | "ttp" | "deliverability"', 'judgement', 'Default horizontal axis of the trade-off chart. "follow-scoring" = the Carbon axis metric (settings.carbonMetric, default location-based). Walkthrough 2026-10-21 (work package 6): cost vertical against carbon horizontal.');
+viewRec('view.pareto.yAxis', 'follow-scoring', '"follow-scoring" | "lcoe" | "npv" | "location" | "market" | "cfe" | "ttp" | "deliverability"', 'judgement', 'Default vertical axis of the trade-off chart. "follow-scoring" = the Cost axis metric (settings.costMetric, default LCOE).');
+viewRec('view.pareto.encoding', 'resilience', '"resilience" | "ttp-capex"', 'judgement', 'Bubble size and colour. Walkthrough 2026-10-21 (work package 6): resilience status sets size and colour; "ttp-capex" is the encoding built before (colour time-to-power, size capex).');
 viewRec('view.pareto.ttpClasses', 5, 'quantile classes', 'run setting', 'Number of colour classes for time-to-power, quantiles over the scoring set.');
 viewRec('view.pareto.canvasAbove', 500, 'points', 'run setting', 'Points are drawn on Canvas above this count (§4), SVG at or below it.');
 viewRec('view.pareto.display', 'chart', '"chart" | "table"', 'judgement', 'Chart shown first; the table alternative is one click away and holds the same rows.');
@@ -595,6 +596,8 @@ viewRec('view.table.pageSize', 50, 'rows per page', 'run setting', 'Rows per pag
 rec('sensitivity.gasPriceFactor', 1, '× current gas commodity price (country default or entered value)', { low: 0.7, high: 1.3, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range: low and high gas commodity price as factors on the current value. No source.' });
 rec('sensitivity.carbonPriceFactor', 1, '× current carbon price (country default or entered value)', { low: 0.5, high: 1.5, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range: low and high EU/UK ETS carbon price as factors on the current value. No source.' });
 rec('sensitivity.itLoadFactor', 1, '× IT load of every phase', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range: low and high IT load as factors on the entered phases. No source.' });
+rec('sensitivity.flexTriggerFactor', 1, '× flexibility trigger level', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range (work package 9). No source.' });
+rec('sensitivity.defaultMeasure', 'lcoe', 'lcoe / npv / carbon / score', { basis: 'judgement', ref: '§13.3', dist: 'fixed', note: 'Walkthrough 2026-10-21: the tornado measures LCOE by default.' });
 rec('sensitivity.topDrivers', 12, 'drivers shown', { basis: 'run setting', ref: '§13.3', dist: 'fixed', note: 'Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). This slice has 7 drivers and no control for this setting yet; the code clamps it to 1–30.' });
 
 // Required inputs: no default in the brief. The app pre-fills the T1 reference example
@@ -661,6 +664,7 @@ export function buildDefaultInputs(opts = {}) {
       storeys: rec('load.storeys', 2, 'storeys', { low: 1, high: 6, basis: 'judgement', ref: '§5.3' }),
       storeyHeightM: rec('load.storeyHeightM', 6.0, 'm', { low: 5, high: 7, basis: 'judgement', ref: '§5.3' }),
       roofZoneM: rec('load.roofZoneM', 4.0, 'm', { low: 3, high: 6, basis: 'judgement', ref: '§5.3' }),
+      coolingFactor: rec('load.coolingFactor', 1, '× cooling energy (PUE above 1)', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "PUE": scales fans and mechanical cooling. No source.' }),
       ancillaryFrac: rec('load.ancillaryFrac', 0.02, 'fraction of installed IT', { low: 0.01, high: 0.04, basis: 'judgement', ref: '§5.3' }),
       flexMaxPct: rec('load.flexMaxPct', 0.1, 'fraction of IT curtailable', { low: 0, high: 0.3, basis: 'judgement', ref: '§5.3' }),
       flexHours: rec('load.flexHours', 100, 'h/yr', { low: 0, high: 500, basis: 'judgement', ref: '§5.3' }),
@@ -698,6 +702,7 @@ export function buildDefaultInputs(opts = {}) {
       hydrogenAvailable: rec('utilities.hydrogenAvailable', 'No', '', { basis: 'judgement', ref: '§5.4' }),
       waterAvailable: rec('utilities.waterAvailable', 'Unknown', 'm³/day', { basis: 'judgement', ref: '§5.4' }),
       districtHeating: rec('utilities.districtHeating', 'No', '', { basis: 'judgement', ref: '§5.4' }),
+      reYieldFactor: rec('utilities.reYieldFactor', 1, '× on-site solar and wind output (capacity factors)', { low: 0.85, high: 1.15, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "capacity factors". No source.' }),
       // Offsite PPA (OPEN-QUESTIONS 49, 62): off unless ticked; one type and one coverage, each strategy with and without.
       ppaInclude: rec('utilities.ppaInclude', false, 'toggle', { basis: 'judgement', ref: '§8 C13', note: "Owner, 2026-10-22: off unless the engineer ticks it. Options without a PPA use the national grid's standard price and carbon." }),
       ppaType: rec('utilities.ppaType', 'hybrid', 'solar / wind / hybrid / baseload / cfe247', { basis: 'judgement', ref: '§8 C13' }),
@@ -735,6 +740,10 @@ export function buildDefaultInputs(opts = {}) {
       capexHigh: rec('economics.capexHigh', 0.50, 'fraction (AACE Class 5)', { basis: 'source', verify: 'AACE International RP 18R-97 (confirm revision and year)', ref: '§5.6' }),
       carbonPrice: rec('economics.carbonPrice', 'by country', '€/tCO2e', { basis: 'source', derived: true, verify: 'EU ETS / UK ETS exchange data, official projections', ref: '§5.6', note: 'The country default comes from the scheme records country.carbonPrice.euEts and country.carbonPrice.ukEts (sourced); Switzerland is unresearched.' }),
       carbonEscalation: rec('economics.carbonEscalation', 0.02, 'real per yr', { low: 0, high: 0.05, basis: 'source', verify: 'EU ETS / UK ETS forward curves', ref: '§5.6' }),
+      // Sensitivity multipliers (work package 9): 1 = as entered; the tornado moves them. Judgement, no source.
+      capexFactor: rec('economics.capexFactor', 1, '× every capex line', { low: 0.7, high: 1.5, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "capex"; range the AACE Class 5 band (−30 % / +50 %).' }),
+      bessCapexFactor: rec('economics.bessCapexFactor', 1, '× battery capex', { low: 0.7, high: 1.3, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "battery capex". No source.' }),
+      gridCapexFactor: rec('economics.gridCapexFactor', 1, '× grid connection capex', { low: 0.5, high: 2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "grid connection capex". No source.' }),
       elecEscalation: rec('economics.elecEscalation', 0, 'real per yr', { low: -0.02, high: 0.02, basis: 'source', verify: 'ENTSO-E / forward curves', ref: '§5.6' }),
       gasEscalation: rec('economics.gasEscalation', 0, 'real per yr', { low: -0.02, high: 0.02, basis: 'source', verify: 'TTF/NBP forward curves', ref: '§5.6' }),
       salvageFraction: rec('economics.salvageFraction', 0.5, 'of remaining book value when removed', { low: 0.2, high: 0.7, basis: 'judgement', ref: '§9.5' }),

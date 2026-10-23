@@ -21,4 +21,4 @@ export { evaluateOption } from './option.js';
 export { inspectOption, compareWithRun, balanceFromHourly, weekRange, weekPresets, plantSource, HOURS_PER_WEEK, WEEKS_PER_YEAR } from './inspect.js';
 export { allOptionFlags, unmetSummary } from './evaluate.js';
 export { SOURCE_OF_TECH } from './blocks.js';
-export { tornado, tornadoSteps, TORNADO_DRIVERS, tornadoTopN, scoreAgainstRun } from './sensitivity.js';
+export { tornado, tornadoSteps, TORNADO_DRIVERS, DEFAULT_DRIVER_IDS, TORNADO_MEASURES, measureById, sortRows, tornadoTopN, scoreAgainstRun } from './sensitivity.js';

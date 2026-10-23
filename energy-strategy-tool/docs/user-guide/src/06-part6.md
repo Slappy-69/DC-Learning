@@ -112,6 +112,7 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Backup per building or pooled (C5a); retired bridging plant backs up whole buildings; pooled carries a client-perceived risk item (work package 3b) | Built (23 Oct 2026) | 20, 35, 43 |
 | Battery sized to the permanent shortfall on the design day, with a recharge check, counted as firm supply (C12, work package 3b) | Built (23 Oct 2026) | 20, 34, 35, 42 |
 | Work package 4: load shapes; flexibility in trigger hours and against shortfalls, with battery response and cost of curtailment; economic battery sized to the trigger hours (three hold-fixed modes); resilience reserve battery; genset test running 6 h at 75 %; gensets as primary power | Built (23 Oct 2026) | 5, 7, 16, 18, 35, 37 |
+| Work package 6: top-five cards (five distinct strategies, pros and cons against the run), identical-result marks, trade-off defaults (cost up, carbon across, resilience size and colour), weight change described live | Built (23 Oct 2026) | 13, 22, 24, 45 |
 | IT load estimated from area | Agreed | 16 |
 | Load shapes, AI profiles | Agreed | 16 |
 | Flexibility with triggers; battery response | Agreed | 16 |
@@ -130,15 +131,15 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | 8,760-hour dispatch for every option | Built | 37 |
 | Representative-day screening and verification | Agreed | 10 |
 | Options table, option detail, trade-offs | Built | 22–24 |
-| Top five cards with pros and cons | Agreed | 22 |
-| Trade-off defaults (cost vertical, resilience bubbles) | Agreed | 24 |
-| Compare up to three | Agreed | 25 |
+| Top five cards with pros and cons | Built (23 Oct 2026) | 22 |
+| Trade-off defaults (cost vertical, resilience bubbles) | Built (23 Oct 2026) | 24 |
+| Compare up to three | Built (23 Oct 2026) | 25 |
 | Dispatch tab | Built | 26 |
 | Dispatch for any period, verified options | Agreed | 26 |
 | Tornado (7 drivers, score and LCOE) | Built | 27 |
-| Tornado with driver list, LCOE default | Agreed | 27 |
+| Tornado with driver list, LCOE default | Built (23 Oct 2026) | 27 |
 | Run log export | Built | 29 |
-| PDF report; no Excel | Agreed | 29 |
+| PDF report; no Excel | Built (23 Oct 2026) | 29 |
 | General settings: Site tab (Beta) switch | Built (22 Oct 2026) | 28, 30 |
 | General settings: theme, run-log option, "About this copy" | Proposed | 30 |
 | Project save and reopen | Open | 4 |
@@ -202,7 +203,7 @@ To these, chapter 50 adds: the defaults marked "update suggested" (UK carbon pri
 
 **The top options look the same.** They often are near neighbours. Use the filters (for example "archetypes only" or hide dominated), lock a choice to compare strategies, or look at the trade-off chart.
 
-**Where are my results saved?** Nothing is saved automatically. Save the run log; the agreed PDF report will hold inputs and results.
+**Where are my results saved?** Nothing is saved automatically. Save the run log, or the PDF report (inputs and results, chapter 29).
 
 # 58. Glossary {#ch58}
 

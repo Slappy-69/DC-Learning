@@ -98,7 +98,7 @@ export function PpaHedgeRow({ h }) {
   );
 }
 
-export default function OptionDetail({ o, start, onClose, dominator = null, onShowSite = null, onShowDispatch = null, siteBeta = false }) {
+export default function OptionDetail({ o, start, onClose, dominator = null, onShowSite = null, onShowDispatch = null, siteBeta = false, onCompare = null, inCompare = false }) {
   const shownFlags = visibleFlags(o, siteBeta);
   const sz = o.sizing;
   const ss = o.dispatch.years[o.dispatch.years.length - 1];
@@ -106,6 +106,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
     <section className="detail" aria-labelledby={`det-${o.id}`}>
       <header className="detail-head">
         <h3 id={`det-${o.id}`}>#{o.rank} · {o.name}</h3>
+        {onCompare ? <button type="button" className="chip-btn" aria-pressed={inCompare} onClick={() => onCompare(o.id)}>{inCompare ? 'In compare ✓' : 'Add to compare'}</button> : null}
         <button type="button" className="icon-btn" onClick={onClose} aria-label="Close option detail">×</button>
       </header>
       <p className="model-badge">Full-year hourly (8760 h) · synthetic profiles · all defaults indicative — unverified</p>

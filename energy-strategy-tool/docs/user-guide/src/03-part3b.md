@@ -2,14 +2,16 @@
 
 ## The top five cards
 
-::: {.callout .agreed}
-**Agreed, not built yet.** The first results screen shows the **top five options** as cards. Each card shows:
+::: {.callout .built}
+**Built 23 October 2026 (OPEN-QUESTIONS 24).** The Options tab opens on the **top five cards**: the best-ranked option of each of **five distinct strategies** (a strategy is the grid strategy, bridging plant, firm generation and backup together), in rank order, so near-identical variants do not fill the top five. Each card shows:
 
-- the overall weighted score and the four axis scores;
-- LCOE, carbon intensity, resilience status and capex;
-- the main flags;
-- the **assumed defaults** the option relies on, with their sources;
-- up to **three pros and three cons**, judged against the other options in the run ("n/a" if there are too few to compare). Each card says what it is compared against, for example "lowest of the 5 shown", because a pro or a con can change when the set of options changes.
+- the weighted score and the four axis scores;
+- LCOE, location-based carbon, capex, resilience status and power adequacy;
+- the main (major) flags;
+- up to **three pros and three cons**, judged **against every option in the run** (the card says so): a pro is a figure in the best 10 % of the run, a con one in the worse half, among LCOE, capex, carbon, hourly carbon-free energy, time-to-power and deliverability;
+- a **Compare** tick box (chapter 25).
+
+The list of assumed defaults on each card arrives with work package 2. Options whose every figure equals a better-ranked option's are marked **"Same results as #k"** in the options table and never take a card (KNOWN-ISSUES item 5).
 :::
 
 ![MOCK-UP of the agreed top-five cards, filled with the real T1 results. In this mock-up the pros and cons are worked out against the five options shown.](img/m06-top5.png)
@@ -112,7 +114,7 @@ The note under the table restates the capex scope: energy, backup, grid connecti
 
 The **Trade-offs** tab plots every screened option on two axes. Each axis can be any of: LCOE, NPV of net cost, location-based carbon, market-based carbon, 1 − hourly CFE, time-to-power, or deliverability.
 
-In the current version:
+With "Size and colour: time-to-power colour, capex size" (the encoding before 23 October 2026):
 
 - **Colour** shows time-to-power in up to five classes (quantiles of all options, merged where many options tie).
 - **Shape** shows site fit: circle for Fits, triangle for Fits with flags, square for Does not fit.
@@ -131,16 +133,16 @@ Points are drawn on a canvas when there are more than 500 (faster), and as indiv
 
 Within a band, cost varies with the cooling approach and the plant. The leader sits at the bottom-left of the lowest band.
 
-::: {.callout .agreed}
-**Agreed, not built yet.** The default chart is **cost on the vertical axis against carbon on the horizontal axis**, with **resilience status as the bubble size and colour**. Either axis can be switched (for example to time-to-power or deliverability).
+::: {.callout .built}
+**Built 23 October 2026.** The default chart is **cost on the vertical axis against carbon on the horizontal axis** (each following the scoring metrics), with **resilience status as the bubble size and colour** (Meets large and green, Meets with flags medium and amber, Does not meet small and red). Either axis can be switched, and "Size and colour" switches back to time-to-power colour and capex size.
 :::
 
 ![MOCK-UP of the agreed trade-off chart, with every other T1 option plotted (finite LCOE below €300/MWh). The top five overlap at about 113 g/kWh and €154/MWh.](img/m11-tradeoff.png)
 
 # 25. Compare {#ch25}
 
-::: {.callout .agreed}
-**Agreed, not built yet.** Up to **three options side by side**, chosen from the result cards or the trade-off chart, with a deep-dive card for each. The comparison lists the headline figures and the choices on which the options differ.
+::: {.callout .built}
+**Built 23 October 2026.** A **Compare** tab shows up to **three options side by side**: tick "Compare" on a top-five card, or use "Add to compare" in any option's detail (options table or trade-off chart); a fourth replaces the oldest. It lists the headline figures (rank, score and axis scores, power adequacy, LCOE, NPV, capex, both carbon figures, hourly CFE, first power and full load, deliverability, resilience, unmet load, flags), then the choices on which the options differ. Selecting an option's name opens its deep-dive card.
 :::
 
 ![MOCK-UP of the agreed Compare view with three real T1 options: the leader, the best immersion-cooled option (#6) and the best fuel-cell bridging option (#12).](img/m07-compare.png)
@@ -171,27 +173,38 @@ The **Dispatch** tab shows how one option is supplied. Choose the option at the 
 
 ![Current version: the tornado for the T1 leader. Each bar runs from the weighted score at a driver's low value (L) to its high value (H); the table gives the values, scores and LCOEs.](img/s21-sensitivity.png)
 
-Choose the option to test (the leader by default). The tool re-runs that one option 15 times (the base case, then each of seven drivers at its low and its high value, everything else unchanged) and shows how its weighted score and LCOE move. The other options and their ranks are not changed: the re-run scores are measured against the base run's axis ranges.
+::: {.callout .built}
+**Built (23 October 2026, work package 9).** Tick the drivers to test; the decision log's seven are ticked by default (gas price, grid price, WACC, carbon price, capex, capacity factors, grid connection date). "Tick all" adds the other nine. The **result measured defaults to LCOE**; NPV of net cost, location-based carbon and the weighted score can be chosen. Changing the measure re-sorts the drivers at once, without a re-run.
+:::
 
-| Driver | Low | High |
-|---|---|---|
-| IT load (all phases) | × 0.8 | × 1.2 |
-| Grid full-connection date | −6 months | +24 months |
-| Grid import price | × 0.7 | × 1.5 |
-| WACC (real) | 4 % | 12 % |
-| Grid carbon intensity | × 0.8 | × 1.2 |
-| Carbon price (Scope 1) | × 0.5 | × 1.5 |
-| Gas commodity price | × 0.7 | × 1.3 |
+Choose the option to test (the leader by default). The tool re-runs that one option once for the base case and twice for each ticked driver (its low and its high value, everything else unchanged): 15 re-runs for the default seven, 33 for all sixteen. The other options and their ranks are not changed: the re-run scores are measured against the base run's axis ranges.
 
-Drivers are sorted by the swing in score, largest first. A check confirms that the base re-run reproduces the ranking's score exactly.
+| Driver | Low | High | Ticked by default |
+|---|---|---|---|
+| Gas commodity price | × 0.7 | × 1.3 | yes |
+| Grid import price | × 0.7 | × 1.5 | yes |
+| WACC (real) | 4 % | 12 % | yes |
+| Carbon price (Scope 1) | × 0.5 | × 1.5 | yes |
+| Capex (every capex line) | × 0.7 | × 1.5 | yes |
+| Capacity factors (on-site solar and wind output) | × 0.85 | × 1.15 | yes |
+| Grid full-connection date | −6 months | +24 months | yes |
+| IT load (all phases) | × 0.8 | × 1.2 | |
+| Grid carbon intensity | × 0.8 | × 1.2 | |
+| PUE (cooling energy and design-day cooling load) | × 0.8 | × 1.2 | |
+| Battery capex | × 0.7 | × 1.3 | |
+| Grid connection capex | × 0.5 | × 2 | |
+| Evaluation period | 15 years | 25 years | |
+| Electricity price escalation (real) | −2 %/yr | +2 %/yr | |
+| Flexibility trigger level | × 0.8 | × 1.2 | |
+| Generator test hours | 3 h/yr | 24 h/yr | |
+
+Drivers are sorted by the swing in the chosen measure, largest first. A check confirms that the base re-run reproduces the ranking's score exactly. Every range is a registry record labelled indicative — unverified.
 
 **Reading the T1 tornado.** IT load swings the score most (from 92.5 to 70.8): at 120 MW of IT the design load (136 MW) exceeds the 120 MW grid, the option never reaches full load, and its time-to-power score collapses. The grid date comes next (+24 months costs 7 points). The grid price moves LCOE most (€142 to €173/MWh), but the score less, because every option would pay it. Gas price has no effect: the leader burns no gas.
 
-::: {.callout .agreed}
-**Agreed, not built yet.** A tick-box list of drivers: the brief's seven (gas price, grid price, WACC, carbon price, capex, capacity factors, grid connection date) plus additions such as IT load, PUE, battery capex, grid connection capex, evaluation period, escalation, flexibility trigger and generator test hours. The **result measured defaults to LCOE**; NPV, carbon and weighted score can be selected.
-:::
+The screenshot above shows the tornado before work package 9 (score measured, the first seven drivers). The mock-up below shows the agreed LCOE view, which is now the default.
 
-![MOCK-UP of the agreed tornado measuring LCOE. The LCOE ranges for the seven built drivers are from the T1 run.](img/m08-tornado.png)
+![MOCK-UP of the tornado measuring LCOE (now built as the default measure).](img/m08-tornado.png)
 
 # 28. Site (Beta) {#ch28}
 
@@ -232,13 +245,28 @@ From the Run progress panel, **Download run log** saves the log of the last run 
 
 ## PDF report
 
-::: {.callout .agreed}
-**Agreed, not built yet.** One **PDF report**, **inputs first, results after**, saved with a file dialog (nothing is sent anywhere). **No Excel export.** The Site tab (Beta) is not included.
+::: {.callout .built}
+**Built (23 October 2026, work package 10).** **Save PDF report** at the top of the window makes one PDF of the run on screen, **inputs first, results after**. The Windows program asks where to save it; a browser saves it to its downloads folder. Nothing is sent anywhere: the app writes the PDF itself, with the standard PDF fonts, and uses no outside library. **No Excel export.** The Site tab (Beta) is not included. The hosted page does not offer the PDF (a host's frame ignores downloads).
 :::
 
-![MOCK-UP of the agreed PDF report contents.](img/m09-pdf.png)
+The sections (OPEN-QUESTIONS 32, answered 23 October 2026):
 
-The mock-up suggests these sections: cover (project, date, app and data version, guardrail); inputs (every input with its value and whether it was entered or assumed); assumptions (the defaults used, with source, year and link, or "judgement"); results (top five); trade-offs; compare; dispatch (selected periods); sensitivity; flags; and method (formulas, settings, guardrail).
+| Section | What it holds |
+|---|---|
+| Cover | Project, date, location, analysis start, IT load, options screened, engine version, inputs fingerprint, and the guardrail |
+| 1. Inputs | Every input with its value and "Entered", "Entered (required)" or "Default" with its label and basis. Site geometry (Site tab) is left out |
+| 2. Assumptions | The defaults the run used, with basis and note; how many registry records are unverified |
+| 3. Results | Run summary and weights, the leader, the top five cards (figures, pros, cons, main flags), the top 20 |
+| 4. Trade-offs | LCOE against location-based carbon for every option; the top five numbered |
+| 5. Compare | The options ticked for comparison, their headline figures and the choices on which they differ |
+| 6. Dispatch | Energy balance of the top five in the last modelled year and in the first year with load (GWh) |
+| 7. Sensitivity | The last tornado run in the Sensitivity tab, with its chart and table, in the measure chosen there |
+| 8. Flags | Every flag on the top five (not the site-fit flags), and the run notes |
+| 9. Method | How the options are generated, dispatched, costed and ranked; run settings; the guardrail |
+
+Run the sensitivity test and tick options to compare **before** saving the PDF if you want those sections filled; otherwise they say they are empty. Each page carries the project name, the date and "Page n of N"; the reader's side panel lists the sections.
+
+![MOCK-UP of the PDF report contents (now built; the sections are listed above).](img/m09-pdf.png)
 
 # 30. General settings {#ch30}
 

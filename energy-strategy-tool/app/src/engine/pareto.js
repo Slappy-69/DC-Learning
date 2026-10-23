@@ -44,7 +44,8 @@ export function defaultParetoAxes(settings = {}) {
     if (BY_ID[v]) return v;
     throw new Error(`view.${key} = ${JSON.stringify(v)} is not "follow-scoring" or an axis id`);
   };
-  return { x: resolve('pareto.xAxis', settings.costMetric, 'lcoe'), y: resolve('pareto.yAxis', settings.carbonMetric, 'location') };
+  // Walkthrough 2026-10-21 (work package 6): carbon horizontal, cost vertical.
+  return { x: resolve('pareto.xAxis', settings.carbonMetric, 'location'), y: resolve('pareto.yAxis', settings.costMetric, 'lcoe') };
 }
 
 // Canvas above this many plotted points (§4), from view.pareto.canvasAbove.

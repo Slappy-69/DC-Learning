@@ -1,3 +1,4 @@
+/* global __HOSTED__ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputsPanel from './components/InputsPanel.jsx';
 import RankedList from './components/RankedList.jsx';
@@ -6,12 +7,16 @@ import RunProgress from './components/RunProgress.jsx';
 import ParetoView from './components/ParetoView.jsx';
 import SiteView from './components/SiteView.jsx';
 import DispatchView from './components/DispatchView.jsx';
-import SensitivityView from './components/SensitivityView.jsx';
+import CompareView from './components/CompareView.jsx';
+import SensitivityView, { latestSensitivity } from './components/SensitivityView.jsx';
+import { buildReport, reportFileName } from './report/report.js';
+import { saveBytes } from './saveFile.js';
 import { useCompute } from './useCompute.js';
 import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount } from './engine/index.js';
 import { viewSetting, withoutSiteFilters } from './engine/view.js';
 import { UnverifiedTag } from './components/Field.jsx';
 import { scoreOptions, effectiveWeights, applyView } from './engine/scoring.js';
+import { describeWeightChange } from './engine/cards.js';
 import { GUARDRAIL, sig } from './format.js';
 
 // Inputs that only affect scoring/ranking: changing them re-scores without re-running dispatch (§4).
@@ -61,6 +66,9 @@ export default function App() {
   const [progressOpen, setProgressOpen] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const [announce, setAnnounce] = useState('');
+  // Compare (work package 7): up to three option ids; the oldest drops out when a fourth is added.
+  const [compareIds, setCompareIds] = useState([]);
+  const toggleCompare = (id) => setCompareIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id].slice(-3)));
   const [tab, setTab] = useState('options'); // results view tabs (§16): Options, Trade-offs, Site
   const [siteOptionId, setSiteOptionId] = useState(null); // option shown on the Site tab (null = the leader)
   const [dispatchOptionId, setDispatchOptionId] = useState(null); // option shown on the Dispatch tab (null = the leader)
@@ -106,18 +114,36 @@ export default function App() {
   // The leader is the weighted pick (rank 1): the same function the Trade-offs view uses, so the header,
   // the live region and the highlighted pick always name the same option (AC5).
   const leader = useMemo(() => (run ? weightedPick(run.options) : null), [run]);
+  // PDF report (work package 10): made on this computer from the run on screen; never in the hosted page.
+  const [pdfMsg, setPdfMsg] = useState('');
+  useEffect(() => { setPdfMsg(''); }, [run]);
+  const savePdf = () => {
+    if (__HOSTED__ || !run) return;
+    try {
+      const sens = latestSensitivity(run);
+      const created = new Date();
+      const r = buildReport(run, { compareIds, sensitivity: sens ? sens.result : null, sensitivityMeasure: sens ? sens.measure : null, created });
+      saveBytes(reportFileName(run, created), r.bytes, 'application/pdf');
+      setPdfMsg(`PDF report made: ${r.pages} pages${compareIds.length ? `, ${compareIds.length} compared option${compareIds.length === 1 ? '' : 's'}` : ''}${sens ? ', with the sensitivity test' : ', without a sensitivity test (run one in the Sensitivity tab to include it)'}.`);
+    } catch (e) { setPdfMsg(`Could not make the PDF report: ${e && e.message ? e.message : e}`); }
+  };
 
   useEffect(() => {
     if (!leader) return;
     // The option id is the hash of its choices; its name carries sizes (e.g. PV MWp), which a site
     // edit can change while the choices, and so the leader, stay the same (review, H3 F3).
     const prev = prevLeader.current;
-    const msg = prev && prev.id !== leader.id ? `Options updated. New leader: ${leader.name}.`
-      : prev && prev.name !== leader.name ? `Options updated. Leader unchanged (same choices, re-sized): ${leader.name}.`
-        : 'Options updated. Leader unchanged.';
-    prevLeader.current = { id: leader.id, name: leader.name };
+    // A weight change on the same run is described live (BRIEF §11; walkthrough 2026-10-21; work package 6).
+    const wNow = effectiveWeights(inputs.weights).w;
+    const sameRun = prev && prev.run === compute.run;
+    const wDesc = sameRun && prev.w ? describeWeightChange(prev.w, wNow, prev, leader, run.options) : null;
+    const msg = wDesc ? wDesc
+      : prev && prev.id !== leader.id ? `Options updated. New leader: ${leader.name}.`
+        : prev && prev.name !== leader.name ? `Options updated. Leader unchanged (same choices, re-sized): ${leader.name}.`
+          : 'Options updated. Leader unchanged.';
+    prevLeader.current = { id: leader.id, name: leader.name, score: leader.score, run: compute.run, w: wNow };
     setAnnounce(msg);
-  }, [leader]);
+  }, [leader, inputs.weights]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The selected tab is scrolled into view inside the tab list (it scrolls sideways on phones), without moving the page.
   useEffect(() => {
@@ -166,7 +192,7 @@ export default function App() {
     return c;
   }, [run]);
   const penaltyOn = !!inputs.deliverability.siteFitPenalty;
-  const TABS = [['options', 'Options'], ['tradeoffs', 'Trade-offs'], ...(siteBeta ? [['site', 'Site']] : []), ['dispatch', 'Dispatch'], ['sensitivity', 'Sensitivity']];
+  const TABS = [['options', 'Options'], ['tradeoffs', 'Trade-offs'], ['compare', compareIds.length ? `Compare (${compareIds.length})` : 'Compare'], ...(siteBeta ? [['site', 'Site']] : []), ['dispatch', 'Dispatch'], ['sensitivity', 'Sensitivity']];
 
   // Run progress, run summary and run-level flags; on a phone they fold into "Run details" (review O1).
   const progressEl = <RunProgress compute={compute} open={progressOpen} onToggle={setProgressOpen} />;
@@ -200,6 +226,7 @@ export default function App() {
           <button type="button" className="chip-btn panel-toggle" aria-expanded={panelOpen} aria-controls="inputs-panel" onClick={() => setPanelOpen(!panelOpen)}>{panelOpen ? 'Close inputs' : 'Inputs'}</button>
           <button type="button" className="chip-btn" onClick={() => setInputs(referenceT1())}>Load T1 example</button>
           <button type="button" className="chip-btn" onClick={() => setInputs(buildDefaultInputs())}>Reset to defaults</button>
+          {run && !__HOSTED__ ? <button type="button" className="chip-btn" id="save-pdf" onClick={savePdf} disabled={compute.status === 'running'}>Save PDF report</button> : null}
           <button type="button" className="chip-btn" aria-expanded={settingsOpen} aria-controls="general-settings" onClick={() => setSettingsOpen(!settingsOpen)}>General settings</button>
         </div>
       </header>
@@ -247,7 +274,7 @@ export default function App() {
             ) : compute.status === 'error' ? (
               <span className="flag-text">Run failed: {compute.error}</span>
             ) : compute.status === 'done' ? (
-              <span>{announce} Last run {sig(compute.ms / 1000, 2)} s on {compute.mode}.</span>
+              <span>{announce} Last run {sig(compute.ms / 1000, 2)} s on {compute.mode}.{pdfMsg ? ` ${pdfMsg}` : ''}</span>
             ) : null}
           </div>
 
@@ -284,8 +311,9 @@ export default function App() {
                 ))}
               </div>
               <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} />
-                  : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} />
+                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} onCompare={toggleCompare} compareIds={compareIds} />
+                  : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} onCompare={toggleCompare} compareIds={compareIds} />
+                    : tab === 'compare' ? <CompareView run={run} ids={compareIds} onRemove={toggleCompare} onClear={() => setCompareIds([])} start={start} />
                     : tab === 'site' && siteBeta ? <SiteView run={run} inputs={inputs} update={update} optionId={siteOptionId} setOptionId={setSiteOptionId} computing={compute.status === 'running'} focusPlan={focusPlan} onPlanFocused={() => setFocusPlan(false)} />
                       : tab === 'dispatch' ? <DispatchView run={run} optionId={dispatchOptionId} setOptionId={setDispatchOptionId} />
                         : <SensitivityView run={run} optionId={sensOptionId} setOptionId={setSensOptionId} />}

@@ -66,6 +66,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **load.storeys**: 2 storeys; range 1–6; judg.
 - **load.storeyHeightM**: 6 m; range 5–7; judg.
 - **load.roofZoneM**: 4 m; range 3–6; judg.
+- **load.coolingFactor**: 1 × cooling energy (PUE above 1); range 0.8–1.2; judg. Tornado driver "PUE": scales fans and mechanical cooling. No source.
 - **load.ancillaryFrac**: 0.02 fraction of installed IT; range 0.01–0.04; judg.
 - **load.flexMaxPct**: 0.1 fraction of IT curtailable; range 0–0.3; judg.
 - **load.flexHours**: 100 h/yr; range 0–500; judg.
@@ -102,6 +103,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **utilities.hydrogenAvailable**: No; judg.
 - **utilities.waterAvailable**: Unknown (m³/day); judg.
 - **utilities.districtHeating**: No; judg.
+- **utilities.reYieldFactor**: 1 × on-site solar and wind output (capacity factors); range 0.85–1.15; judg. Tornado driver "capacity factors". No source.
 - **utilities.ppaInclude**: off; judg. Owner, 2026-10-22: off unless the engineer ticks it. Options without a PPA use the national grid's standard price and carbon.
 - **utilities.ppaType**: hybrid (solar / wind / hybrid / baseload / cfe247); judg.
 - **utilities.ppaCoverage**: 100 % of each year's facility consumption; range 25–100; judg. One coverage, set by the engineer (OPEN-QUESTIONS 49).
@@ -140,6 +142,9 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **economics.capexHigh**: 0.5 fraction (AACE Class 5); src; check against AACE International RP 18R-97 (confirm revision and year).
 - **economics.carbonPrice**: by country (€/tCO2e); src. The country default comes from the scheme records country.carbonPrice.euEts and country.carbonPrice.ukEts (sourced); Switzerland is unresearched; check against EU ETS / UK ETS exchange data, official projections.
 - **economics.carbonEscalation**: 0.02 real per yr; range 0–0.05; src; check against EU ETS / UK ETS forward curves.
+- **economics.capexFactor**: 1 × every capex line; range 0.7–1.5; judg. Tornado driver "capex"; range the AACE Class 5 band (−30 % / +50 %).
+- **economics.bessCapexFactor**: 1 × battery capex; range 0.7–1.3; judg. Tornado driver "battery capex". No source.
+- **economics.gridCapexFactor**: 1 × grid connection capex; range 0.5–2; judg. Tornado driver "grid connection capex". No source.
 - **economics.elecEscalation**: 0 real per yr; range -0.02–0.02; src; check against ENTSO-E / forward curves.
 - **economics.gasEscalation**: 0 real per yr; range -0.02–0.02; src; check against TTF/NBP forward curves.
 - **economics.salvageFraction**: 0.5 of remaining book value when removed; range 0.2–0.7; judg.
@@ -758,8 +763,9 @@ Check against: ISO 9613-2 (geometric divergence term only).
 
 ## View settings
 
-- **view.pareto.xAxis**: follow-scoring ("follow-scoring" | "lcoe" | "npv" | "location" | "market" | "cfe" | "ttp" | "deliverability"); judg. Default x axis of the Pareto scatter. "follow-scoring" = the Cost axis metric (settings.costMetric, default LCOE); §12.2 default: cost vs carbon.
-- **view.pareto.yAxis**: follow-scoring ("follow-scoring" | "lcoe" | "npv" | "location" | "market" | "cfe" | "ttp" | "deliverability"); judg. Default y axis of the Pareto scatter. "follow-scoring" = the Carbon axis metric (settings.carbonMetric, default location-based).
+- **view.pareto.xAxis**: follow-scoring ("follow-scoring" | "lcoe" | "npv" | "location" | "market" | "cfe" | "ttp" | "deliverability"); judg. Default horizontal axis of the trade-off chart. "follow-scoring" = the Carbon axis metric (settings.carbonMetric, default location-based). Walkthrough 2026-10-21 (work package 6): cost vertical against carbon horizontal.
+- **view.pareto.yAxis**: follow-scoring ("follow-scoring" | "lcoe" | "npv" | "location" | "market" | "cfe" | "ttp" | "deliverability"); judg. Default vertical axis of the trade-off chart. "follow-scoring" = the Cost axis metric (settings.costMetric, default LCOE).
+- **view.pareto.encoding**: resilience ("resilience" | "ttp-capex"); judg. Bubble size and colour. Walkthrough 2026-10-21 (work package 6): resilience status sets size and colour; "ttp-capex" is the encoding built before (colour time-to-power, size capex).
 - **view.pareto.ttpClasses**: 5 quantile classes; run. Number of colour classes for time-to-power, quantiles over the scoring set.
 - **view.pareto.canvasAbove**: 500 points; run. Points are drawn on Canvas above this count (§4), SVG at or below it.
 - **view.pareto.display**: chart ("chart" | "table"); judg. Chart shown first; the table alternative is one click away and holds the same rows.
@@ -772,4 +778,6 @@ Check against: ISO 9613-2 (geometric divergence term only).
 - **sensitivity.gasPriceFactor**: 1 × current gas commodity price (country default or entered value); range 0.7–1.3; judg. Tornado driver range: low and high gas commodity price as factors on the current value. No source.
 - **sensitivity.carbonPriceFactor**: 1 × current carbon price (country default or entered value); range 0.5–1.5; judg. Tornado driver range: low and high EU/UK ETS carbon price as factors on the current value. No source.
 - **sensitivity.itLoadFactor**: 1 × IT load of every phase; range 0.8–1.2; judg. Tornado driver range: low and high IT load as factors on the entered phases. No source.
+- **sensitivity.flexTriggerFactor**: 1 × flexibility trigger level; range 0.8–1.2; judg. Tornado driver range (work package 9). No source.
+- **sensitivity.defaultMeasure**: lcoe (lcoe / npv / carbon / score); judg. Walkthrough 2026-10-21: the tornado measures LCOE by default.
 - **sensitivity.topDrivers**: 12 drivers shown; run. Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). This slice has 7 drivers and no control for this setting yet; the code clamps it to 1–30.

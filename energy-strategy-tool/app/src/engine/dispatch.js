@@ -121,6 +121,7 @@ export function dispatchConfig(ctx, v, sz) {
     rte: TECH.bess.p.rte,
     ppaType: sz.ppa ? sz.ppa.type : null, ppaCoverage: sz.ppa ? sz.ppa.coverage : 0,
     flex: v.C16 === 'on',
+    reYield: inputs.utilities.reYieldFactor ?? 1, // tornado driver "capacity factors" (work package 9)
     plants,
   };
   return cfg;
@@ -129,7 +130,7 @@ export function dispatchConfig(ctx, v, sz) {
 export function dispatchKey(cfg) {
   return JSON.stringify([cfg.coolingId, cfg.islanded, cfg.exportMW, cfg.exceedance, cfg.respectRunHours, cfg.maxRunHours,
     +cfg.solarMWp.toFixed(6), cfg.solarAvailM, +cfg.windMW.toFixed(6), cfg.windAvailM, +cfg.bessMW.toFixed(6), +cfg.bessMWh.toFixed(6), cfg.bessAvailM, cfg.bessRole,
-    cfg.ppaType, cfg.ppaCoverage, cfg.flex,
+    cfg.ppaType, cfg.ppaCoverage, cfg.flex, cfg.reYield,
     cfg.plants.map((p) => [p.role, p.tech, +p.mw.toFixed(6), Array.from(p.mode).join(''), p.hourMask ? p.hourMask.count : 0])]);
 }
 
@@ -201,6 +202,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
   const respectRH = cfg.respectRunHours;
   const maxRH = cfg.maxRunHours;
   const solarMWp = cfg.solarMWp, solarAvailM = cfg.solarAvailM, windMW = cfg.windMW, windAvailM = cfg.windAvailM;
+  const reYield = cfg.reYield ?? 1;
   const bessAvailM = cfg.bessAvailM, exportMW = cfg.exportMW, exportFactor = ctx.inputs.grid.exportFactor;
   const pSolar = p.solar, pWind = p.wind, pPrice = p.price, pCarbon = p.carbon;
   const plants = cfg.plants;
@@ -242,8 +244,8 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     const ci = pCarbon[h] * cMult; // gCO2e/kWh; × MWh / 1000 = tCO2e
 
     // 1. On-site renewables serve load first
-    const sol = m >= solarAvailM ? solarMWp * pSolar[h] : 0;
-    const win = m >= windAvailM ? windMW * pWind[h] : 0;
+    const sol = m >= solarAvailM ? solarMWp * pSolar[h] * reYield : 0;
+    const win = m >= windAvailM ? windMW * pWind[h] * reYield : 0;
     const re = sol + win;
     const reUse = re < D0 ? re : D0;
     let R = D0 - reUse;

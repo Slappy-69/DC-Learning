@@ -81,12 +81,14 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Decisions:** the results open on the top five cards (scores, LCOE, carbon intensity, resilience, capex, main flags, assumed defaults with sources, up to three pros and three cons, with the comparison set stated); the trade-off chart defaults to cost (vertical) against carbon (horizontal) with resilience as bubble size and colour, either axis switchable; the effect of each weight change described live.
 - **Ask the owner:** OPEN-QUESTIONS 24 (which five; comparison set), 29 (screen structure), 30 (run progress), 35 (repaint target); `KNOWN-ISSUES.md` item 5 (identical options).
 - **Mock-ups:** `m06-top5`, `m11-tradeoff`. **Guide:** chapters 13, 22, 24, 45.
+- **Progress:** built 2026-10-23 on `feature/results-cards` (from `feature/ppa-rules`), not merged: OPEN-QUESTIONS 24, 29, 30, 35 answered with Claude's recommendations (accepted in advance by the owner); KNOWN-ISSUES item 5 handled by "same results as" marks. Not built: the assumed-defaults list on each card (package 2).
 
 ### 7. Compare
 
 - **Brief:** §12.7. **Acceptance:** AC 24 (compare part).
 - **Decisions:** up to three options side by side, chosen from the cards or the trade-off chart, with a deep-dive card each; headline figures and the choices on which they differ.
 - **Mock-up:** `m07-compare`. **Guide:** chapter 25.
+- **Progress:** built 2026-10-23 on `feature/results-cards`, not merged: Compare tab, up to three options from the cards, the options table or the trade-off chart.
 
 ### 8. Dispatch views (and the screening tier)
 
@@ -103,6 +105,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Built today:** seven fixed drivers: grid connection date, grid price, grid carbon, gas price, carbon price, WACC and IT load. Capex, capacity factors and the other additions are new.
 - **Code today:** `app/src/engine/sensitivity.js`; `KNOWN-ISSUES.md` item 3 affects the grid-price bar.
 - **Mock-up:** `m08-tornado`. **Guide:** chapters 27, 46.
+- **Progress:** built 2026-10-23 on `feature/results-cards`, not merged: 16 drivers, seven ticked by default, LCOE / NPV / carbon / score. Not built: PPA price, per-technology capex, lead times.
 
 ### 10. PDF export
 
@@ -111,6 +114,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Ask the owner:** OPEN-QUESTIONS 32 (sections and order).
 - **Watch:** the program must stay offline; the run log already uses a save dialog (see `../packaging/README.md`).
 - **Mock-up:** `m09-pdf`. **Guide:** chapter 29.
+- **Progress:** built 2026-10-23 on `feature/results-cards`, not merged: OPEN-QUESTIONS 32 answered with Claude's recommendation; nine sections; written by the app (no library, no network); Windows save dialog with a PDF filter. Not built: the executive summary (§14).
 
 ## Not scheduled
 

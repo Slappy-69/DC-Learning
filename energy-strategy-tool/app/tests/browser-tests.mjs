@@ -14,7 +14,7 @@
 // Exit code 1 if any check fails.
 
 import { createRequire } from 'node:module';
-import { existsSync, readdirSync, writeFileSync, unlinkSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync, unlinkSync, readFileSync as readFileBytes } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
@@ -514,6 +514,46 @@ await check(`B9. A weight preset moves the pick without a re-run; repaint assert
   ok(med <= B9_BOUND_MS, `median repaint ${med.toFixed(0)} ms is above the ${B9_BOUND_MS} ms regression bound (samples ${samples.map((x) => x.toFixed(0)).join(', ')} ms)`);
   return `"${preset}": pick "${before.slice(0, 40)}…" → "${after.slice(0, 40)}…"; click to repaint of the pick line ${samples.map((x) => x.toFixed(0)).join(', ')} ms, median ${med.toFixed(0)} ms ≤ ${B9_BOUND_MS} ms (asserted); §17 target ≤ 100 ms on the 4-core reference machine: ${med <= 100 ? 'also met on this sandbox' : `not met on this 2-core sandbox (median ${(med - 100).toFixed(0)} ms over; open performance item)`}; no re-run; header leader = pick before (${leaderBefore.includes(before.replace(/^#\d+ /, '')) ? 'yes' : 'no'}) and after (yes).`;
 });
+await check('B31. Top five cards, Compare and the weight-change description (work packages 6 and 7): five cards of distinct strategies; ticking two cards fills the Compare tab with two columns and the choices on which they differ; a weight preset is described in the status line', async () => {
+  const { page } = main;
+  await page.getByRole('tab', { name: /^Options/ }).click();
+  await page.waitForSelector('.top5-card');
+  const n = await page.locator('.top5-card').count();
+  ok(n === 5, `${n} top-five cards`);
+  const names = await page.locator('.top5-card .tc-name').allInnerTexts();
+  await page.locator('.top5-card').nth(0).getByLabel('Compare').check();
+  await page.locator('.top5-card').nth(1).getByLabel('Compare').check();
+  await page.getByRole('tab', { name: /^Compare/ }).click();
+  await page.waitForSelector('.compare-table');
+  const cols = await page.locator('.compare-table').first().locator('thead th').count();
+  ok(cols === 3, `compare table has ${cols - 1} option columns`);
+  const diffRows = await page.locator('.compare-table').nth(1).locator('tr').count().catch(() => 0);
+  await page.getByRole('button', { name: 'Clear the comparison' }).click();
+  await page.locator('.preset-row button', { hasText: 'Lowest carbon' }).click();
+  await page.waitForFunction(() => /Weights changed/.test(document.querySelector('.status').textContent), null, { timeout: 5000 });
+  const status = (await page.locator('.status').innerText()).replace(/\s+/g, ' ');
+  await page.locator('.preset-row button', { hasText: 'Balanced' }).click();
+  await page.getByRole('tab', { name: /^Options/ }).click();
+  return `${n} cards (${names.map((x) => x.slice(0, 28)).join(' | ')}); compare: 2 columns, ${diffRows} differing choices; status: "${status.slice(0, 140)}…"`;
+});
+await check('B32. PDF report (work package 10, AC 26): "Save PDF report" downloads one PDF (application/pdf, a valid header and EOF, several pages) named after the project and date; the status line says what it holds; no page errors', async () => {
+  const { page, errors } = main;
+  const btn = page.locator('#save-pdf');
+  ok(await btn.isVisible(), 'no Save PDF report button');
+  const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), btn.click()]);
+  const name = dl.suggestedFilename();
+  ok(/^energy-strategy-report-.+-\d{4}-\d{2}-\d{2}\.pdf$/.test(name), `file name ${name}`);
+  const file = await dl.path();
+  const buf = readFileBytes(file);
+  const head = buf.subarray(0, 8).toString('latin1'), tail = buf.subarray(buf.length - 6).toString('latin1');
+  const pages = (buf.toString('latin1').match(/\/Type \/Page /g) || []).length;
+  ok(head === '%PDF-1.4' && tail === '%%EOF\n' && pages >= 8 && buf.length > 50000, `PDF ${head} … ${JSON.stringify(tail)}, ${pages} pages, ${buf.length} bytes`);
+  const status = await page.locator('.status[role=status]').innerText();
+  ok(/PDF report made: \d+ pages/.test(status), `status: ${status.slice(0, 160)}`);
+  ok(errors.length === 0, errors.join(' | '));
+  return `${name}: ${pages} pages, ${(buf.length / 1024).toFixed(0)} kB; status "${status.match(/PDF report made[^.]*\./)[0]}".`;
+});
+
 await main.ctx.close();
 await check('B10. No console errors or page errors on the main page', async () => {
   ok(main.errors.length === 0, main.errors.join(' | '));
@@ -625,8 +665,9 @@ await check('B15. Keyboard on the Site tab: Tab reaches the plan; arrow keys foc
   await page.locator('#tab-options').focus();
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
   await page.waitForSelector('#site-plan');
-  ok((await active(page)).id === 'tab-site', 'ArrowRight × 2 from Options did not focus the Site tab');
+  ok((await active(page)).id === 'tab-site', 'ArrowRight × 3 from Options (Trade-offs, Compare, Site) did not focus the Site tab');
   let presses = 0, onPlan = false;
   const stops = [];
   while (presses < 40 && !onPlan) {
@@ -948,35 +989,46 @@ await check('B23. Phone width (375 px, touch): the Sensitivity tab runs the torn
   ok(w[0] <= w[1], `Sensitivity tab scrollWidth ${w[0]} > clientWidth ${w[1]}`);
   const r = await chartReadout(page, '#tornado-chart', ['ArrowDown']);
   ok(r.focused && r.focusVisible, 'tornado not focused with a visible indicator');
-  ok(/^1 of \d+: /.test(r.live) && /Swing [\d.]+ points/.test(r.live) && r.tip === r.live, `tornado readout: live "${r.live.slice(0, 80)}" tip "${r.tip.slice(0, 80)}"`);
+  ok(/^1 of \d+: /.test(r.live) && /LCOE .*Swing €[\d.]+\/MWh/.test(r.live) && r.tip === r.live, `tornado readout: live "${r.live.slice(0, 80)}" tip "${r.tip.slice(0, 80)}"`);
   const r2 = await chartReadout(page, '#tornado-chart', ['End']);
   ok(/^(\d+) of \1: /.test(r2.live), `End: "${r2.live.slice(0, 60)}"`);
   const rows = await page.locator('.sens-table tbody tr').count();
   const bars = await page.locator('#tornado-chart g[data-driver]').count();
   ok(rows === bars && rows >= 7, `rows ${rows}, bars ${bars}`);
   ok((await page.locator('.sens-base [data-check]').getAttribute('data-check')) === 'match', 'base re-run differs from the ranking');
+  // Work package 9: seven drivers ticked by default; the measure select re-sorts without a re-run; unticking a driver
+  // asks for a new run of the remaining ones.
+  ok(rows === 7 && (await page.locator('input[data-driver-tick]:checked').count()) === 7, `default ticks: ${rows} rows`);
+  await page.selectOption('#sens-measure', 'score');
+  ok((await page.locator('.sens-base [data-base-measure]').getAttribute('data-base-measure')) === 'score', 'measure did not switch to the score');
+  const r3 = await chartReadout(page, '#tornado-chart', ['ArrowDown']);
+  ok(/Swing [\d.]+ points/.test(r3.live), `score readout: "${r3.live.slice(0, 90)}"`);
+  await page.selectOption('#sens-measure', 'lcoe');
+  await page.locator('input[data-driver-tick="capex"]').uncheck();
+  ok(/6 ticked drivers/.test(await page.locator('.sens .dv-note[role=status]').innerText()), 'unticking a driver did not ask for a new run');
+  await page.locator('input[data-driver-tick="capex"]').check();
   ok(errors.length === 0, errors.join(' | '));
   return `tornado (15 re-runs) in ${(ms / 1000).toFixed(1)} s; ${w[0]}/${w[1]} px; readout "${r.live.slice(0, 80)}…"; End → "${r2.live.slice(0, 30)}…"; ${rows} drivers; base re-run matches the ranking.`;
 });
 
-await check('B24. Tab bar with five tabs at 375 px: the tab list scrolls sideways, the page does not; arrow keys wrap through all five tabs (ARIA tabs pattern), Home/End go to the first and last, and the selected tab is scrolled into view inside the list', async () => {
+await check('B24. Tab bar with six tabs at 375 px: the tab list scrolls sideways, the page does not; arrow keys wrap through all six tabs (ARIA tabs pattern), Home/End go to the first and last, and the selected tab is scrolled into view inside the list', async () => {
   const { page, errors } = phonePort;
   await optionsTab(page).click();
   const m = await page.evaluate(() => { const t = document.querySelector('.tabs'); return { sw: t.scrollWidth, cw: t.clientWidth, n: t.querySelectorAll('[role=tab]').length, labels: [...t.querySelectorAll('[role=tab]')].map((x) => x.textContent) }; });
-  ok(m.n === 5 && m.sw > m.cw, `tab list ${m.n} tabs, scrollWidth ${m.sw} vs clientWidth ${m.cw}`);
+  ok(m.n === 6 && m.sw > m.cw, `tab list ${m.n} tabs, scrollWidth ${m.sw} vs clientWidth ${m.cw}`);
   const w = await pageWidths(page);
   ok(w[0] <= w[1], `page scrollWidth ${w[0]} > ${w[1]}`);
   await page.focus('#tab-options');
   const seq = [];
   const inView = () => page.evaluate(() => { const a = document.activeElement; const t = document.querySelector('.tabs'); const ra = a.getBoundingClientRect(), rt = t.getBoundingClientRect(); return { id: a.id, sel: a.getAttribute('aria-selected'), tabindex: a.getAttribute('tabindex'), inside: ra.left >= rt.left - 1 && ra.right <= rt.right + 1 }; });
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     await page.keyboard.press('ArrowRight');
     await page.waitForTimeout(200);
     const a = await inView();
     seq.push(a.id.replace('tab-', ''));
     ok(a.sel === 'true' && a.tabindex === '0' && a.inside, `after ${i + 1} ArrowRight: ${JSON.stringify(a)}`);
   }
-  ok(seq.join(',') === 'tradeoffs,site,dispatch,sensitivity,options', `ArrowRight order: ${seq.join(',')}`);
+  ok(seq.join(',') === 'tradeoffs,compare,site,dispatch,sensitivity,options', `ArrowRight order: ${seq.join(',')}`);
   await page.keyboard.press('End'); await page.waitForTimeout(200);
   const e = await inView();
   await page.keyboard.press('Home'); await page.waitForTimeout(200);
@@ -990,7 +1042,7 @@ await check('B24. Tab bar with five tabs at 375 px: the tab list scrolls sideway
 });
 await phonePort.ctx.close();
 
-await check('B25. Skip links with five tabs at 375 px: "Skip to results", "Skip to trade-offs chart" and "Skip to site plan" are still the first three Tab stops, and "Skip to site plan" selects the Site tab (scrolled into view in the tab list) and focuses the plan', async () => {
+await check('B25. Skip links with six tabs at 375 px: "Skip to results", "Skip to trade-offs chart" and "Skip to site plan" are still the first three Tab stops, and "Skip to site plan" selects the Site tab (scrolled into view in the tab list) and focuses the plan', async () => {
   const { ctx, page, errors } = await openPage({ width: 375, height: 812, isMobile: true, hasTouch: true, siteBeta: true });
   const stops = [];
   for (let i = 0; i < 3; i++) { await page.keyboard.press('Tab'); stops.push(await active(page)); }
@@ -1066,7 +1118,8 @@ await check('B28. Hosted page (dist/energy-tool-hosted.html) inside a host-like 
     await page.waitForFunction(() => { const st = document.querySelector('.status'); const t = st ? st.textContent : ''; return /Run failed/.test(t) || (/Last run/.test(t) && !/Screening options/.test(t)); }, null, { timeout: 180000, polling: 250 });
     const status = (await page.locator('.status').innerText()).replace(/\s+/g, ' ').trim();
     ok(!/Run failed/.test(status), `run failed: ${status}`);
-    ok(await page.locator('[role=tab]').count() === 4, 'results tabs missing (four with the Site tab, a Beta feature, off by default)');
+    ok(await page.locator('[role=tab]').count() === 5, 'results tabs missing (five with the Site tab, a Beta feature, off by default)');
+    ok(await page.locator('#save-pdf').count() === 0, 'the hosted page offers a PDF download');
     await page.evaluate(() => { const d = document.querySelector('details.run-progress'); if (d) d.open = true; });
     const label = await page.locator('.rp-dl-label').innerText();
     ok(/Copy run log/.test(label) && !/Download/.test(label), `run-log label "${label}"`);
@@ -1126,7 +1179,7 @@ await check('B29. Loading message and startup errors: with scripts off the singl
   await page.evaluate(() => { window.dispatchEvent(new ErrorEvent('error', { message: 'late test error' })); });
   await page.waitForTimeout(200);
   const late = await page.evaluate(() => ({ box: !!document.getElementById('boot-error'), boot: !!document.querySelector('#root .boot'), tabs: document.querySelectorAll('[role=tab]').length }));
-  ok(!late.box && !late.boot && late.tabs === 4, `after the app runs (four tabs: the Site tab is Beta, off by default): ${JSON.stringify(late)}`);
+  ok(!late.box && !late.boot && late.tabs === 5, `after the app runs (five tabs: the Site tab is Beta, off by default): ${JSON.stringify(late)}`);
   await ctx.close();
   out.push('running app: a later error event leaves the page as it is (no startup box, loading message gone)');
   return out.join('; ') + '.';

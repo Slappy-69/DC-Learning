@@ -5,6 +5,8 @@ import { sig, money, monthLabel, pct } from '../format.js';
 import OptionDetail from './OptionDetail.jsx';
 import FilterChips from './FilterChips.jsx';
 import { UnverifiedTag } from './Field.jsx';
+import TopFive from './TopFive.jsx';
+import { identicalResults } from '../engine/cards.js';
 
 const RES_STATUSES = ['Meets', 'Meets with flags', 'Does not meet'];
 const FIT_STATUSES = ['Fits', 'Fits with flags', 'Does not fit'];
@@ -81,7 +83,7 @@ function ResBadge({ s }) {
   return <span className={`badge badge-${cls}`}><span aria-hidden="true">{icon}</span> {s}</span>;
 }
 
-export default function RankedList({ run, view, setView, start, onShowSite, onShowDispatch = null, siteBeta = false }) {
+export default function RankedList({ run, view, setView, start, onShowSite, onShowDispatch = null, siteBeta = false, onCompare = null, compareIds = [] }) {
   const FLAG_FILTERS = flagFilters(siteBeta);
   const [page, setPage] = useState(0);
   const [openId, setOpenId] = useState(null);
@@ -93,6 +95,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
   const p = Math.min(page, pages - 1);
   const rows = list.slice(p * PAGE, p * PAGE + PAGE);
   const nameById = useMemo(() => new Map(run.options.map((o) => [o.id, o])), [run]);
+  const sameAs = useMemo(() => identicalResults(run.options), [run]); // KNOWN-ISSUES item 5
   const adequateCount = useMemo(() => run.options.filter((o) => !o.adequacy || o.adequacy.adequate).length, [run]);
   // In rank order, a divider row marks where the options that do not serve every hour begin.
   const rankOrder = view.sortKey === 'rank' && view.sortDir === 1;
@@ -109,6 +112,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
 
   return (
     <div className="ranked">
+      <TopFive run={run} onOpen={(id) => { const i = list.findIndex((x) => x.id === id); if (i >= 0) setPage(Math.floor(i / PAGE)); setOpenId(id); }} onCompare={onCompare} compareIds={compareIds} />
       <div className="filters" role="group" aria-label="View filters (never change score or rank)">
         <span className="filters-label">View filters</span>
         {RES_STATUSES.map((s) => (
@@ -199,6 +203,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
                       <button type="button" className="row-btn" aria-expanded={open} onClick={() => setOpenId(open ? null : o.id)}>{o.name}</button>
                       <div className="row-tags">
                         {o.archetype ? <span className="badge badge-arch">{o.archetype} {o.archetypeName}</span> : null}
+                        {sameAs.has(o.id) ? <span className="badge badge-arch" title="Every figure equals a better-ranked option's: the choices that differ change no number">Same results as #{sameAs.get(o.id).rank}</span> : null}
                         {o.dominatedBy ? (() => { const d = nameById.get(o.dominatedBy); const t = `Dominated by #${d?.rank} ${d?.name}`; return <span className="badge badge-dom" title={t}>{t}</span>; })() : null}
                       </div>
                     </td>
@@ -224,7 +229,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
                     <td className="num"><span className="flag-counts" title={`${c.major} major, ${c.minor} minor, ${c.info} info`}>{c.major ? <span className="fc fc-major">{c.major}</span> : null}{c.minor ? <span className="fc fc-minor">{c.minor}</span> : null}<span className="fc fc-info">{c.info}</span></span></td>
                   </tr>
                   {open ? (
-                    <tr className="detail-row"><td colSpan={cols}><OptionDetail o={o} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} /></td></tr>
+                    <tr className="detail-row"><td colSpan={cols}><OptionDetail o={o} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} onCompare={onCompare} inCompare={compareIds.includes(o.id)} /></td></tr>
                   ) : null}
                 </React.Fragment>
               );

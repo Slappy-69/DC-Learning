@@ -74,6 +74,8 @@ import { backupTests } from './backup-tests.mjs';
 import { bessShortfallTests } from './bess-shortfall-tests.mjs';
 import { package4Tests } from './package4-tests.mjs';
 import { ppaRuleTests } from './ppa-tests.mjs';
+import { cardsTests } from './cards-tests.mjs';
+import { reportTests } from './report-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -969,7 +971,7 @@ await test('8f. Every registered view setting and run setting is the value the c
   assert.equal(tablePageSize(), reg['view.table.pageSize'].value);
   out.push(`display "chart" (record "table" → table first); pageSize ${reg['view.table.pageSize'].value} rows (record 7 → 7 rows)`);
   // (g) view.pareto.xAxis / yAxis: "follow-scoring" follows the scoring metrics; an axis id fixes the axis.
-  assert.deepEqual(defaultParetoAxes({ costMetric: 'npv', carbonMetric: 'market' }), { x: 'npv', y: 'market' });
+  assert.deepEqual(defaultParetoAxes({ costMetric: 'npv', carbonMetric: 'market' }), { x: 'market', y: 'npv' }); // carbon across, cost up (work package 6)
   assert.deepEqual(HOOKS.paretoView(runT1, null).axes, defaultParetoAxes(runT1.inputs.settings));
   await withRecord(reg, 'view.pareto.xAxis', 'ttp', () => assert.equal(defaultParetoAxes({ costMetric: 'lcoe' }).x, 'ttp'));
   await withRecord(reg, 'view.pareto.yAxis', 'deliverability', () => assert.equal(HOOKS.paretoView(runT1, null).axes.y, 'deliverability'));
@@ -990,7 +992,11 @@ await test('8f. Every registered view setting and run setting is the value the c
   assert.match(readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8'), /useState\(\(\) => viewSetting\('siteTabBeta'\) === true\)/, 'App.jsx does not start the Site tab switch from view.siteTabBeta');
   out.push('siteTabBeta off (App starts from the record)');
   // (i) Coverage: every registered view setting has a check above.
-  const probed = ['view.pareto.canvasAbove', 'view.pareto.display', 'view.pareto.ttpClasses', 'view.pareto.xAxis', 'view.pareto.yAxis', 'view.site.smallMultiples', 'view.siteTabBeta', 'view.table.pageSize'];
+  // (h3) view.pareto.encoding (work package 7): resilience by default; ParetoView.jsx starts its select from the record.
+  assert.equal(reg['view.pareto.encoding'].value, 'resilience');
+  assert.match(readFileSync(new URL('../src/components/ParetoView.jsx', import.meta.url), 'utf8'), /useState\(\(\) => viewSetting\('pareto\.encoding'\)/, 'ParetoView.jsx does not start the encoding select from view.pareto.encoding');
+  out.push('pareto encoding "resilience" (ParetoView starts from the record)');
+  const probed = ['view.pareto.canvasAbove', 'view.pareto.display', 'view.pareto.encoding', 'view.pareto.ttpClasses', 'view.pareto.xAxis', 'view.pareto.yAxis', 'view.site.smallMultiples', 'view.siteTabBeta', 'view.table.pageSize'];
   assert.deepEqual(Object.keys(reg).filter((k) => k.startsWith('view.')).sort(), probed, 'a registered view setting has no usage check in test 8f');
   assert.deepEqual(Object.keys(breg).filter((k) => k.startsWith('view.')).sort(), probed);
   return out.join('; ') + '.';
@@ -1202,6 +1208,10 @@ await package4Tests(test, siteRuns);
 
 // 28. Work package 5: PPA rules O1–O3 and the PPA tick (AC 21–23) (tests/ppa-tests.mjs)
 await ppaRuleTests(test, siteRuns);
+
+// 29. Work package 6: top-five cards, trade-off defaults, weight-change description (tests/cards-tests.mjs)
+await cardsTests(test, siteRuns);
+await reportTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

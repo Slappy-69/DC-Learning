@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { HOOKS } from '../engine/run.js';
 import { PARETO_AXES, PARETO_AXIS_LIST, PARETO_AXIS_GROUPS, defaultParetoAxes, paretoDefaultDisplay } from '../engine/pareto.js';
-import { defaultView, tablePageSize } from '../engine/view.js';
+import { defaultView, tablePageSize, viewSetting } from '../engine/view.js';
 import { sig, money } from '../format.js';
 import ParetoChart, { SHAPE_LABEL } from './ParetoChart.jsx';
 import ParetoTable, { fmtAxis } from './ParetoTable.jsx';
@@ -36,12 +36,13 @@ function AxisSelect({ label, value, onChange, describedBy }) {
   );
 }
 
-export default function ParetoView({ run, view, setView, start, focusChart = false, onChartFocused, onShowSite = null, onShowDispatch = null, siteBeta = false }) {
+export default function ParetoView({ onCompare = null, compareIds = [], run, view, setView, start, focusChart = false, onChartFocused, onShowSite = null, onShowDispatch = null, siteBeta = false }) {
   const settings = run.inputs.settings;
   const defaultDisplay = paretoDefaultDisplay();
   const pageSize = tablePageSize();
   const [axes, setAxes] = useState(null); // null = registered default axes (follow the scoring metrics)
   const [mode, setMode] = useState(defaultDisplay);
+  const [encoding, setEncoding] = useState(() => viewSetting('pareto.encoding') || 'resilience');
   const [openId, setOpenId] = useState(null);
   const [page, setPage] = useState(0);
   const ax = axes || defaultParetoAxes(settings);
@@ -99,6 +100,13 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
             <span>Hide dominated options</span>
             {view.hideDominated === hdDefault ? <UnverifiedTag path="settings.hideDominated" compact descId="pareto-hd-basis" /> : null}
           </label>
+          <label className="inline-select">
+            <span>Size and colour</span>
+            <select value={encoding} onChange={(e) => setEncoding(e.target.value)}>
+              <option value="resilience">Resilience status</option>
+              <option value="ttp-capex">Time-to-power colour, capex size</option>
+            </select>
+          </label>
           <div className="seg" role="group" aria-label="Show as" aria-describedby={mode === defaultDisplay ? 'pareto-display-basis' : undefined}>
             <button type="button" className="chip-btn" aria-pressed={mode === 'chart'} onClick={() => setMode('chart')}>Chart</button>
             <button type="button" className="chip-btn" aria-pressed={mode === 'table'} onClick={() => setMode('table')}>Table</button>
@@ -127,9 +135,17 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
 
       {mode === 'chart' ? (
         <>
-          <ParetoChart model={model} selectedId={openId} onSelect={(id) => setOpenId(id)} svgId={CHART_ID} />
+          <ParetoChart model={model} selectedId={openId} onSelect={(id) => setOpenId(id)} svgId={CHART_ID} encoding={encoding} />
           <div className="pc-legend" role="group" aria-label="Legend">
-            <div className="lg-group">
+            {encoding === 'resilience' ? (
+              <div className="lg-group">
+                <span className="lg-title">Size and colour: resilience status</span>
+                <span><span className="lg-sw" style={{ background: 'var(--ok)' }} aria-hidden="true" /> Meets (large)</span>
+                <span><span className="lg-sw" style={{ background: 'var(--warn)' }} aria-hidden="true" /> Meets with flags (medium)</span>
+                <span><span className="lg-sw" style={{ background: 'var(--bad)' }} aria-hidden="true" /> Does not meet (small)</span>
+              </div>
+            ) : null}
+            {encoding !== 'resilience' ? <div className="lg-group">
               <span className="lg-title">Colour: time-to-power (months; up to {tq.maxClasses} quantile classes, tied edges merged) <UnverifiedTag path="view.pareto.ttpClasses" compact /></span>
               <span className="lg-ramp">
                 {tq.min == null ? '—' : tq.rampSteps.map((step, i) => {
@@ -139,7 +155,7 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
                   return <span key={i} className="lg-step"><span className="lg-sw" style={{ background: `var(--ttp-${step + 1})` }} aria-hidden="true" />{label}</span>;
                 })}
               </span>
-            </div>
+            </div> : null}
             {siteBeta ? (
               <div className="lg-group">
                 <span className="lg-title">Shape: site fit (Beta)</span>
@@ -153,17 +169,17 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
               <span><span className="lg-dot" aria-hidden="true" /> Not dominated</span>
               <span><span className="lg-dot lg-hollow" aria-hidden="true" /> Dominated (still ranked)</span>
             </div>
-            <div className="lg-group">
+            {encoding !== 'resilience' ? <div className="lg-group">
               <span className="lg-title">Size: capex</span>
               <span>{money(model.capexRange[0], 2)} (small) to {money(model.capexRange[1], 2)} (large)</span>
-            </div>
+            </div> : null}
             <div className="lg-group">
               <span><span className="lg-line" aria-hidden="true" /> Two-axis frontier</span>
               <span><span className="lg-ring" aria-hidden="true" /> Weighted pick (rank 1)</span>
               {model.topScoreId ? <span><span className="lg-ring lg-ring-top" aria-hidden="true" /> Highest weighted score</span> : null}
             </div>
           </div>
-          <p className="note">{siteBeta ? 'Shape shows site-fit status (Site tab, Beta); it changes no score and no rank, and options that do not fit stay in the chart. ' : ''}Resilience status is in the tooltip and the table. Points are P50 values from the full-year hourly model; P10–P90 error crosses arrive with the uncertainty slice.</p>
+          <p className="note">{siteBeta ? 'Shape shows site-fit status (Site tab, Beta); it changes no score and no rank, and options that do not fit stay in the chart. ' : ''}{encoding === 'resilience' ? 'Time-to-power and capex are in the tooltip and the table. ' : 'Resilience status is in the tooltip and the table. '}Points are P50 values from the full-year hourly model; P10–P90 error crosses arrive with the uncertainty slice.</p>
         </>
       ) : (
         <>
@@ -181,7 +197,7 @@ export default function ParetoView({ run, view, setView, start, focusChart = fal
 
       {open ? (
         <div className="pareto-detail">
-          <OptionDetail o={open} start={start} dominator={open.dominatedBy ? byId.get(open.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} />
+          <OptionDetail o={open} start={start} dominator={open.dominatedBy ? byId.get(open.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} onCompare={onCompare} inCompare={compareIds.includes(open.id)} />
         </div>
       ) : null}
     </section>

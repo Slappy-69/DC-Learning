@@ -125,6 +125,12 @@ export function buildContext(inputs, opts = {}) {
 
   const cooling = {};
   for (const id of Object.keys(COOLING)) cooling[id] = coolingProfile(COOLING[id], prof);
+  // Cooling energy multiplier (tornado driver "PUE", work package 9): scales fans and mechanical cooling.
+  const cf = inputs.load.coolingFactor ?? 1;
+  if (cf !== 1) for (const id of Object.keys(cooling)) {
+    const c = cooling[id];
+    cooling[id] = { ...c, coolFrac: c.coolFrac.map((x) => x * cf), mechFrac: c.mechFrac.map((x) => x * cf), coolAvg: c.coolAvg * cf, coolPeak: c.coolPeak * cf };
+  }
 
   // Gas commodity price and carbon price (§5.4, §5.6): a number entered for utilities.gasPrice or economics.carbonPrice
   // replaces the country default (the records' value is "by country"); the gas transport adder applies either way.
@@ -203,7 +209,7 @@ export function designDayPUE(ctx, coolingId) {
     const T = t[d0 + k] + (designT - dayMax);
     const c = Math.max(1.5, p.copRef - p.copSlope * (T - p.tRef));
     const part = T <= p.fcThreshold ? 0 : T >= p.fcThreshold + p.band ? 1 : (T - p.fcThreshold) / p.band;
-    out[k] = 1 + p.fanFrac + part / c + cp.lossFrac;
+    out[k] = 1 + (p.fanFrac + part / c) * (ctx.inputs.load.coolingFactor ?? 1) + cp.lossFrac;
   }
   ctx.designDayCache.set(coolingId, out);
   return out;

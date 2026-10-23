@@ -137,13 +137,14 @@ function handleDownloads(ses, getWindow) {
     const filters = [];
     if (ext === 'json') filters.push({ name: 'JSON', extensions: ['json'] });
     else if (ext === 'csv') filters.push({ name: 'CSV (comma-separated values)', extensions: ['csv'] });
+    else if (ext === 'pdf') filters.push({ name: 'PDF report', extensions: ['pdf'] });
     filters.push({ name: 'All files', extensions: ['*'] });
     const win = (wc && BrowserWindow.fromWebContents(wc)) || getWindow();
     let downloads;
     try { downloads = app.getPath('downloads'); } catch { downloads = app.getPath('home'); }
     // Synchronous on purpose: the save path must be set before this handler returns (the page keeps running).
     const target = dialog.showSaveDialogSync(win, {
-      title: /^run-log/.test(name) ? 'Save run log' : 'Save file',
+      title: /^run-log/.test(name) ? 'Save run log' : /\.pdf$/i.test(name) ? 'Save PDF report' : 'Save file',
       defaultPath: path.join(lastDir || downloads, name),
       filters,
       properties: ['createDirectory', 'showOverwriteConfirmation'],

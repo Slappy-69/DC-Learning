@@ -76,7 +76,56 @@ export const TORNADO_DRIVERS = [
     apply: (inp, x) => { inp.load.itMW *= x; inp.load.phases = inp.load.phases.map((p) => ({ ...p, itMW: Number(p.itMW) * x })); },
     text: factorText,
   },
+  // Work package 9 (walkthrough 2026-10-21): the decision log's capex and capacity factors, and further drivers.
+  ...[
+    ['capex', 'Capex (every line)', 'economics.capexFactor', (inp, x) => { inp.economics.capexFactor = (inp.economics.capexFactor ?? 1) * x; }],
+    ['capacity-factors', 'Capacity factors (on-site solar and wind)', 'utilities.reYieldFactor', (inp, x) => { inp.utilities.reYieldFactor = (inp.utilities.reYieldFactor ?? 1) * x; }],
+    ['pue', 'PUE (cooling energy)', 'load.coolingFactor', (inp, x) => { inp.load.coolingFactor = (inp.load.coolingFactor ?? 1) * x; }],
+    ['bess-capex', 'Battery capex', 'economics.bessCapexFactor', (inp, x) => { inp.economics.bessCapexFactor = (inp.economics.bessCapexFactor ?? 1) * x; }],
+    ['grid-capex', 'Grid connection capex', 'economics.gridCapexFactor', (inp, x) => { inp.economics.gridCapexFactor = (inp.economics.gridCapexFactor ?? 1) * x; }],
+  ].map(([id, label, record, apply]) => ({ id, label, record, unit: '× current', range: () => { const r = rec(record); return [r.low, r.high]; }, apply, text: factorText })),
+  {
+    id: 'period', label: 'Evaluation period', record: 'economics.periodYears', unit: 'years',
+    range: () => { const r = rec('economics.periodYears'); return [r.low, r.high]; },
+    apply: (inp, x) => { inp.economics.periodYears = x; },
+    text: (x) => `${x} years`,
+  },
+  {
+    id: 'escalation', label: 'Electricity price escalation', record: 'economics.elecEscalation', unit: 'real per year',
+    range: () => { const r = rec('economics.elecEscalation'); return [r.low, r.high]; },
+    apply: (inp, x) => { inp.economics.elecEscalation = x; },
+    text: (x) => `${x >= 0 ? '+' : ''}${(x * 100).toFixed(1)} %/yr`,
+  },
+  {
+    id: 'flex-trigger', label: 'Flexibility trigger level', record: 'sensitivity.flexTriggerFactor', unit: '× current',
+    range: () => { const r = rec('sensitivity.flexTriggerFactor'); return [r.low, r.high]; },
+    apply: (inp, x) => { inp.load.flexTriggerPrice *= x; inp.load.flexTriggerCarbon *= x; inp.load.flexTriggerTemp *= x; },
+    text: factorText,
+  },
+  {
+    id: 'test-hours', label: 'Generator test hours', record: 'requirements.testRunHours', unit: 'h/yr per unit',
+    range: () => { const r = rec('requirements.testRunHours'); return [r.low, r.high]; },
+    apply: (inp, x) => { inp.requirements.testRunHours = x; },
+    text: (x) => `${x} h/yr`,
+  },
 ];
+
+// Drivers ticked by default (walkthrough 2026-10-21): the seven the decision log names.
+export const DEFAULT_DRIVER_IDS = ['gas-price', 'grid-price', 'wacc', 'carbon-price', 'capex', 'capacity-factors', 'grid-date'];
+// The result measured (walkthrough 2026-10-21): LCOE by default; NPV, carbon or the weighted score.
+export const TORNADO_MEASURES = [
+  { id: 'lcoe', label: 'LCOE', unit: '€/MWh', get: (s) => s.lcoe },
+  { id: 'npv', label: 'NPV of net cost', unit: '€', get: (s) => s.npvCost },
+  { id: 'carbon', label: 'Carbon, location-based', unit: 'g/kWh', get: (s) => s.carbonG },
+  { id: 'score', label: 'Weighted score', unit: 'points', get: (s) => s.score },
+];
+export const measureById = (id) => TORNADO_MEASURES.find((m) => m.id === id) || TORNADO_MEASURES[0];
+// Rows sorted by the swing in a measure (largest first); non-finite swings last.
+export function sortRows(rows, measureId) {
+  const m = measureById(measureId);
+  const sw = (r) => { const a = m.get(r.low), b = m.get(r.high); return Number.isFinite(a) && Number.isFinite(b) ? Math.abs(b - a) : -1; };
+  return rows.slice().sort((a, c) => sw(c) - sw(a) || (a.id < c.id ? -1 : 1)).map((r) => ({ ...r, measureSwing: sw(r) }));
+}
 
 // Number of drivers shown (§13.3 "top 12 drivers", run setting, editable 1–30).
 export function tornadoTopN() {
@@ -111,7 +160,7 @@ function summary(e, metrics, scored) {
 // tornado() drains it. opts.site: the run's site model (reused while its key matches; the drivers do not change the
 // site). Returns rows sorted by score swing (largest first), the first sensitivity.topDrivers of them, and the base
 // re-run (the caller checks it equals the run's score).
-export function* tornadoSteps(run, optionId, { site = null, drivers = TORNADO_DRIVERS } = {}) {
+export function* tornadoSteps(run, optionId, { site = null, drivers = TORNADO_DRIVERS, measure = null } = {}) {
   const opt = run.options.find((o) => o.id === optionId);
   if (!opt) throw new Error(`Option ${optionId} is not in this run`);
   const inputs = normalizeInputs(run.inputs);
@@ -150,12 +199,14 @@ export function* tornadoSteps(run, optionId, { site = null, drivers = TORNADO_DR
       lcoeSwing: Number.isFinite(out.high.lcoe) && Number.isFinite(out.low.lcoe) ? Math.abs(out.high.lcoe - out.low.lcoe) : Infinity,
     });
   }
-  rows.sort((a, c) => c.swing - a.swing || (a.id < c.id ? -1 : 1));
+  // Sorted by the swing in the chosen measure (work package 9; LCOE by default, sensitivity.defaultMeasure).
+  const m = measureById(measure || (rec('sensitivity.defaultMeasure') || {}).value);
+  const sorted = sortRows(rows, m.id);
   const topN = tornadoTopN();
   const country = resolveCountry(inputs);
   return {
     optionId, optionName: opt.name, optionRank: opt.rank, base: b.s, baseRunScore: opt.score,
-    rows: rows.slice(0, topN), allRows: rows, totalDrivers: drivers.length, shown: Math.min(topN, rows.length), topN,
+    measure: m.id, rows: sorted.slice(0, topN), allRows: sorted, totalDrivers: drivers.length, shown: Math.min(topN, rows.length), topN,
     context: { country: COUNTRIES[country] ? COUNTRIES[country].name : country, gasCommodity: ctx0.gasCommodity, carbonPrice: ctx0.carbonPrice, gasFromInput: Number.isFinite(inputs.utilities.gasPrice), carbonFromInput: Number.isFinite(inputs.economics.carbonPrice) },
   };
 }
