@@ -77,7 +77,9 @@ function ppaShape(ctx, type, Dyear) {
 // Build the dispatch configuration from sizing: everything the hourly loop needs.
 export function dispatchConfig(ctx, v, sz) {
   const inputs = ctx.inputs;
-  const avail = (id) => (TECH[id].p.planM || 0) + (TECH[id].p.procM || 0) + (TECH[id].p.buildM || 0);
+  // Supply available month of each renewable source (sizing.js techAvailMonth: ordered from day one; wind and ground
+  // solar keep their own consent months, OPEN-QUESTIONS 44, 56).
+  const avail = (id) => techAvailMonth(ctx, TECH[id]);
   const plants = sz.plants.map((pl) => ({ ...pl, mc: plantMarginalCost(ctx, pl), units: Math.max(1, Math.round(pl.mw / pl.unitMW)),
     chpK: pl.tech === 'chp' ? TECH.chp.p.heatToPower * TECH.chp.p.absorptionCOP : 0 }));
   const durationH = sz.storage.mw > 0 ? sz.storage.mwh / sz.storage.mw : 0;

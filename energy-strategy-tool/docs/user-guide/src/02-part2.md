@@ -223,22 +223,29 @@ Each technology carries a maturity class that feeds the deliverability score (ch
 
 ## Programme
 
-Every technology has a planning, procurement and construction time in months. Their sum is the earliest month (counted from the analysis start) at which it can supply power. Some also have an earliest calendar year (for SMR, 2035). Gas plant also waits for the gas supply date.
+Plant is ordered from **day one** of the project (the analysis start), in parallel with construction of the first phase (built 23 October 2026; OPEN-QUESTIONS 44, 45 and 56). Its earliest month of supply is its procurement time plus its construction time, counted from the analysis start. Only plant that needs **significant environmental permitting** first waits a **permitting allowance** of 6 months:
 
-| Technology | Months to first supply | Maturity |
-|---|---|---|
-| Rented temporary generation | 6 | Commercial |
-| Rooftop solar | 13 | Commercial |
-| Fuel cells (SOFC) | 15 | Emerging |
-| HVO-diesel prime gensets | 18 | Commercial |
-| Ground-mounted solar | 21 | Commercial |
-| Battery storage (BESS) | 21 | Commercial |
-| Gas reciprocating engines | 24 | Commercial |
-| Gas turbines | 27 | Commercial |
-| Gas CHP / trigeneration | 33 | Commercial |
-| Hydrogen gensets / fuel cells | 45 | Nascent |
-| Onshore wind | 54 | Commercial |
-| Small modular reactor | 120, and not before 2035 | Nascent |
+- **IED** (Industrial Emissions Directive): every combustion plant of an option whose total combustion thermal input (prime, bridging and backup units together) is 50 MWth or more. On a data centre campus the backup gensets alone usually pass this, so gas engines, CHP, turbines, diesel prime and rented generation are normally held.
+- **Seveso**: liquid-fuel plant when the diesel/HVO store is 2,500 t or more; hydrogen plant when the hydrogen store is 5 t or more.
+
+Onshore wind, ground-mounted solar and small modular reactors need a consent of their own, so they keep their **planning and consent months** instead. Some technologies also have an earliest calendar year (for SMR, 2035). Gas plant also waits for the gas supply date. The sizing sentences of each option give the month and how it was reached.
+
+| Technology | Months to first supply (ordered at once) | With the permitting allowance | Maturity |
+|---|---|---|---|
+| Rented temporary generation | 4 | 10 | Commercial |
+| Fuel cells (SOFC) | 9 | not combustion: never held | Emerging |
+| Rooftop solar | 10 | — | Commercial |
+| HVO-diesel prime gensets | 12 | 18 | Commercial |
+| Battery storage (BESS) | 15 | — | Commercial |
+| Gas reciprocating engines | 15 | 21 | Commercial |
+| Gas turbines | 18 | 24 | Commercial |
+| Gas CHP / trigeneration | 21 | 27 | Commercial |
+| Ground-mounted solar | 21 (9 planning + 6 + 6) | — | Commercial |
+| Hydrogen gensets / fuel cells | 27 | 33 | Nascent |
+| Onshore wind | 54 (24 planning + 18 + 12) | — | Commercial |
+| Small modular reactor | 120 (36 planning + 36 + 48), and not before 2035 | — | Nascent |
+
+The permitting outlook for held plant (likely, uncertain, unlikely) is agreed but not built yet.
 
 ## The grid
 

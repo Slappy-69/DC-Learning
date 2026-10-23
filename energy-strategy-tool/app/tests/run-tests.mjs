@@ -65,6 +65,7 @@ import { batteryTimingTests, ppaTests, inspectorTests, sensitivityTests, hostedP
 import { betaTests } from './beta-tests.mjs';
 import { solarTests } from './solar-tests.mjs';
 import { adequacyTests } from './adequacy-tests.mjs';
+import { programmeTests } from './programme-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1163,6 +1164,9 @@ await solarTests(test, siteRuns);
 
 // 17. Power adequacy first (OPEN-QUESTIONS 37–41, 2026-10-22; build plan 3b) (tests/adequacy-tests.mjs)
 await adequacyTests(test, siteRuns);
+
+// 18. Ordering from day one and the permitting allowance (OPEN-QUESTIONS 44, 45, 56; build plan 3b) (tests/programme-tests.mjs)
+await programmeTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

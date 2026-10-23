@@ -234,14 +234,14 @@ function tech(id, base, params) {
   }
 }
 // role, maturity, fuel, placement
-tech('solarGround', { name: 'Solar PV ground-mount', role: 'intermittent', maturity: 'Commercial' }, {
+tech('solarGround', { name: 'Solar PV ground-mount', role: 'intermittent', maturity: 'Commercial', ownConsent: true }, {
   capexPerKW: [700, '€/kWp', 600, 800], fomPerKW: [12, '€/kWp/yr', 9, 15], life: [30, 'yr', 25, 35],
   haPerMWp: [1.2, 'ha/MWp', 0.8, 1.8], planM: [9, 'months', 6, 18], procM: [6, 'months', 3, 9], buildM: [6, 'months', 4, 9] });
 tech('solarRoof', { name: 'Solar PV rooftop', role: 'intermittent', maturity: 'Commercial' }, {
   capexPerKW: [900, '€/kWp', 750, 1100], fomPerKW: [14, '€/kWp/yr', 10, 18], life: [25, 'yr', 20, 30],
   m2PerKWp: [5.5, 'm²/kWp', 4.5, 7.0], usableFraction: [0.5, 'fraction of free roof', 0.4, 0.6],
-  planM: [3, 'months', 2, 6], procM: [6, 'months', 3, 9], buildM: [4, 'months', 3, 6] });
-tech('wind', { name: 'Wind onshore', role: 'intermittent', maturity: 'Commercial' }, {
+  procM: [6, 'months', 3, 9], buildM: [4, 'months', 3, 6] });
+tech('wind', { name: 'Wind onshore', role: 'intermittent', maturity: 'Commercial', ownConsent: true }, {
   capexPerKW: [1350, '€/kW', 1200, 1500], fomPerKW: [35, '€/kW/yr', 25, 45], life: [25, 'yr', 20, 30],
   turbineMW: [5, 'MW', 3, 6], tipHeightM: [180, 'm', 150, 220], toppleFactor: [1.5, '× tip height', 1.1, 2.0],
   haPerTurbine: [33.75, 'ha per turbine (5 × 3 rotor diameters)', 20, 50],
@@ -249,34 +249,34 @@ tech('wind', { name: 'Wind onshore', role: 'intermittent', maturity: 'Commercial
 tech('bess', { name: 'BESS (Li-ion, containerised)', role: 'storage', maturity: 'Commercial' }, {
   capexPerKWh: [250, '€/kWh', 200, 350], capexPerKW: [150, '€/kW', 100, 200], fomPct: [0.015, 'fraction of capex/yr', 0.01, 0.025],
   rte: [0.88, 'round-trip efficiency', 0.85, 0.92], life: [15, 'yr', 12, 20], m2PerMWh: [50, 'm²/MWh', 30, 90],
-  socInit: [0.5, 'fraction', 0.5, 0.5], planM: [6, 'months', 3, 12], procM: [9, 'months', 6, 15], buildM: [6, 'months', 3, 9] });
+  socInit: [0.5, 'fraction', 0.5, 0.5], procM: [9, 'months', 6, 15], buildM: [6, 'months', 3, 9] });
 tech('gasRecip', { name: 'Gas reciprocating engines', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Danish Energy Agency Technology Catalogue; vendor data' }, {
   capexPerKW: [900, '€/kW', 800, 1000], fomPerKW: [15, '€/kW/yr', 10, 20], vomPerMWh: [8, '€/MWh', 5, 12], eff: [0.44, 'electrical efficiency (LHV)', 0.40, 0.48],
   msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [4.5, 'MW', 2, 10], life: [20, 'yr', 15, 25], m2PerMW: [200, 'm²/MWe', 120, 300],
-  stackM: [25, 'm', 20, 30], planM: [9, 'months', 6, 18], procM: [9, 'months', 6, 15], buildM: [6, 'months', 4, 9] });
+  stackM: [25, 'm', 20, 30], procM: [9, 'months', 6, 15], buildM: [6, 'months', 4, 9] });
 tech('gasTurbine', { name: 'Gas turbines (OCGT / aeroderivative)', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Danish Energy Agency Technology Catalogue; vendor data' }, {
   capexPerKW: [750, '€/kW', 600, 900], fomPerKW: [12, '€/kW/yr', 8, 16], vomPerMWh: [6, '€/MWh', 4, 9], eff: [0.38, 'electrical efficiency (LHV)', 0.33, 0.42],
   msl: [0.4, 'min stable load fraction', 0.3, 0.5], unitMW: [30, 'MW', 10, 50], life: [25, 'yr', 20, 30], m2PerMW: [120, 'm²/MWe', 80, 200],
-  stackM: [30, 'm', 25, 40], planM: [9, 'months', 6, 18], procM: [12, 'months', 9, 24], buildM: [6, 'months', 4, 9] });
+  stackM: [30, 'm', 25, 40], procM: [12, 'months', 9, 24], buildM: [6, 'months', 4, 9] });
 tech('chp', { name: 'Gas CHP / trigeneration', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Vendor data; Danish Energy Agency Technology Catalogue' }, {
   capexPerKW: [1300, '€/kW', 1100, 1600], fomPerKW: [20, '€/kW/yr', 15, 28], vomPerMWh: [10, '€/MWh', 7, 14], eff: [0.42, 'electrical efficiency (LHV)', 0.38, 0.46],
   heatToPower: [1.0, 'MWth recoverable per MWe', 0.8, 1.2], absorptionCOP: [0.7, 'COP', 0.6, 0.8], msl: [0.4, 'min stable load fraction', 0.3, 0.5],
   unitMW: [4.5, 'MW', 2, 10], life: [20, 'yr', 15, 25], m2PerMW: [280, 'm²/MWe (recip + 40 %)', 170, 420], stackM: [25, 'm', 20, 30],
   sizeFraction: [1.0, 'fraction of average facility load', 0.5, 1.0],
-  planM: [12, 'months', 9, 24], procM: [12, 'months', 9, 18], buildM: [9, 'months', 6, 12] });
+  procM: [12, 'months', 9, 18], buildM: [9, 'months', 6, 12] });
 tech('fuelCell', { name: 'Fuel cells (SOFC)', role: 'firm', maturity: 'Emerging', fuel: 'gas', combustion: false, verify: 'Vendor data' }, {
   capexPerKW: [2800, '€/kW', 2200, 3500], fomPerKW: [40, '€/kW/yr', 30, 60], vomPerMWh: [5, '€/MWh', 3, 8], eff: [0.55, 'electrical efficiency (LHV)', 0.5, 0.6],
   msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [1, 'MW', 0.3, 2], life: [20, 'yr', 15, 25], stackLife: [7, 'yr', 5, 10], stackFraction: [0.25, 'fraction of capex', 0.2, 0.35],
-  m2PerMW: [120, 'm²/MW', 60, 200], planM: [6, 'months', 3, 12], procM: [6, 'months', 4, 12], buildM: [3, 'months', 2, 6] });
+  m2PerMW: [120, 'm²/MW', 60, 200], procM: [6, 'months', 4, 12], buildM: [3, 'months', 2, 6] });
 tech('dieselPrime', { name: 'HVO-diesel prime gensets', role: 'firm', maturity: 'Commercial', fuel: 'diesel', combustion: true, verify: 'Manufacturer datasheets' }, {
   capexPerKW: [450, '€/kW', 350, 550], fomPerKW: [10, '€/kW/yr', 6, 14], vomPerMWh: [12, '€/MWh', 8, 16], eff: [0.40, 'electrical efficiency', 0.36, 0.43],
   msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [2.75, 'MW', 2.5, 3.0], life: [15, 'yr', 10, 20], m2PerMW: [40, 'm²/MW', 28, 56],
-  stackM: [10, 'm', 8, 12], planM: [6, 'months', 3, 9], procM: [9, 'months', 6, 15], buildM: [3, 'months', 2, 6] });
+  stackM: [10, 'm', 8, 12], procM: [9, 'months', 6, 15], buildM: [3, 'months', 2, 6] });
 tech('rented', { name: 'Rented temporary generation (gas)', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Rental vendor indications' }, {
   rentalPerKWMonth: [12, '€/kW/month', 8, 18], vomPerMWh: [10, '€/MWh', 6, 14], eff: [0.38, 'electrical efficiency', 0.34, 0.42],
   msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [2, 'MW', 1, 3], m2PerMW: [150, 'm²/MW', 100, 250], stackM: [10, 'm', 8, 12],
-  planM: [2, 'months', 1, 6], procM: [2, 'months', 1, 4], buildM: [2, 'months', 1, 3] });
-tech('smr', { name: 'Small modular reactor', role: 'firm', maturity: 'Nascent', fuel: 'nuclear', combustion: false, verify: 'Vendor and regulator publications' }, {
+  procM: [2, 'months', 1, 4], buildM: [2, 'months', 1, 3] });
+tech('smr', { name: 'Small modular reactor', role: 'firm', maturity: 'Nascent', fuel: 'nuclear', combustion: false, ownConsent: true, verify: 'Vendor and regulator publications' }, {
   capexPerKW: [7000, '€/kW', 5000, 12000], fomPerKW: [120, '€/kW/yr', 80, 160], vomPerMWh: [3, '€/MWh', 2, 5], fuelPerMWhE: [9, '€/MWh_e', 6, 12],
   msl: [0.5, 'min stable load fraction', 0.4, 0.7], unitMW: [80, 'MW', 50, 300], life: [60, 'yr', 40, 80], earliestYear: [2035, 'year', 2032, 2040],
   planM: [36, 'months', 24, 60], procM: [36, 'months', 24, 48], buildM: [48, 'months', 36, 72] });
@@ -284,19 +284,19 @@ tech('hydrogen', { name: 'Hydrogen gensets / fuel cells', role: 'firm', maturity
   capexPerKW: [2500, '€/kW', 1800, 3500], fomPerKW: [40, '€/kW/yr', 30, 60], vomPerMWh: [5, '€/MWh', 3, 8], eff: [0.5, 'electrical efficiency (LHV)', 0.4, 0.55],
   msl: [0.2, 'min stable load fraction', 0.1, 0.3], unitMW: [1, 'MW', 0.5, 2], life: [15, 'yr', 10, 20], m2PerMW: [300, 'm²/MW + storage', 200, 450],
   storageHours: [24, 'h of full output stored on site', 12, 48],
-  planM: [18, 'months', 12, 24], procM: [18, 'months', 12, 30], buildM: [9, 'months', 6, 12] });
+  procM: [18, 'months', 12, 30], buildM: [9, 'months', 6, 12] });
 tech('backupDiesel', { name: 'Diesel standby gensets', role: 'backup', maturity: 'Commercial', fuel: 'diesel', combustion: true, verify: 'Manufacturer datasheets' }, {
   capexPerKW: [450, '€/kW', 350, 550], fomPerKW: [8, '€/kW/yr', 5, 12], unitMW: [2.75, 'MW', 2.5, 3.0], eff: [0.38, 'electrical efficiency', 0.35, 0.42],
   life: [25, 'yr', 20, 30], m2PerUnit: [100, 'm² per unit incl. access', 70, 140], stackM: [10, 'm', 8, 12],
-  planM: [6, 'months', 3, 9], procM: [12, 'months', 9, 18], buildM: [6, 'months', 3, 9] });
+  procM: [12, 'months', 9, 18], buildM: [6, 'months', 3, 9] });
 tech('backupHvo', { name: 'HVO standby gensets', role: 'backup', maturity: 'Commercial', fuel: 'hvo', combustion: true, verify: 'Manufacturer datasheets' }, {
   capexPerKW: [460, '€/kW', 360, 560], fomPerKW: [8, '€/kW/yr', 5, 12], unitMW: [2.75, 'MW', 2.5, 3.0], eff: [0.38, 'electrical efficiency', 0.35, 0.42],
   life: [25, 'yr', 20, 30], m2PerUnit: [100, 'm² per unit incl. access', 70, 140], stackM: [10, 'm', 8, 12],
-  planM: [6, 'months', 3, 9], procM: [12, 'months', 9, 18], buildM: [6, 'months', 3, 9] });
+  procM: [12, 'months', 9, 18], buildM: [6, 'months', 3, 9] });
 tech('backupGas', { name: 'Gas standby gensets', role: 'backup', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Manufacturer datasheets' }, {
   capexPerKW: [550, '€/kW', 450, 700], fomPerKW: [9, '€/kW/yr', 6, 13], unitMW: [2.0, 'MW', 1.5, 2.5], eff: [0.40, 'electrical efficiency', 0.36, 0.43],
   life: [25, 'yr', 20, 30], m2PerUnit: [110, 'm² per unit incl. access', 80, 150], stackM: [10, 'm', 8, 12],
-  planM: [6, 'months', 3, 9], procM: [12, 'months', 9, 18], buildM: [6, 'months', 3, 9] });
+  procM: [12, 'months', 9, 18], buildM: [6, 'months', 3, 9] });
 tech('bessUps', { name: 'BESS-augmented UPS', role: 'backup', maturity: 'Emerging' }, {
   durationH: [2, 'h at redundancy capacity', 1, 4] });
 tech('fuelStorage', { name: 'Bulk fuel storage (bunded)', role: 'backup support', maturity: 'Commercial', verify: 'Fuel storage regulations by country; fire engineer' }, {
@@ -646,6 +646,7 @@ export function buildDefaultInputs(opts = {}) {
       mcpMinMWth: rec('requirements.mcpMinMWth', 1, 'MWth per unit', { basis: 'source', verify: 'Directive (EU) 2015/2193 (MCPD)', ref: '§5.5' }),
       mcpMaxMWth: rec('requirements.mcpMaxMWth', 50, 'MWth per unit', { basis: 'source', verify: 'Directive (EU) 2015/2193 (MCPD)', ref: '§5.5' }),
       sevesoH2t: rec('requirements.sevesoH2t', 5, 't hydrogen stored', { basis: 'source', verify: 'Directive 2012/18/EU (Seveso III) Annex I lower tier', ref: '§5.5' }),
+      permitAllowanceM: rec('requirements.permitAllowanceM', 6, 'months before ordering plant that needs significant environmental permitting (IED, Seveso)', { low: 0, high: 18, basis: 'judgement', ref: '§9.8', note: "Owner's decision 2026-10-22 (OPEN-QUESTIONS 44, 45): plant is ordered from day one; only plant under the IED or Seveso waits this allowance. Wind, ground solar and SMRs keep their own planning months (OPEN-QUESTIONS 56)." }),
       sevesoFuelT: rec('requirements.sevesoFuelT', 2500, 't diesel/HVO stored', { basis: 'source', verify: 'Directive 2012/18/EU (Seveso III) Annex I lower tier', ref: '§5.5' }),
       testRunHours: rec('requirements.testRunHours', 12, 'h/yr per unit', { low: 6, high: 24, basis: 'judgement', ref: '§9.4' }),
       testRunLoad: rec('requirements.testRunLoad', 0.75, 'fraction of rating', { low: 0.5, high: 1, basis: 'judgement', ref: '§9.4' }),

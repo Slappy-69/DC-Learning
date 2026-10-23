@@ -1471,3 +1471,26 @@ Tests: 8b and 8g now expect the pick to be the highest score among adequate opti
 Header strip: the power adequacy count sits after the leader, so the leader stays the second item (browser check B9 reads it by position).
 
 Test run (power adequacy first, 2026-10-23): `npm test` 47/47; `npm run build`; `npm run test:browser` 30/30, axe 0 serious or critical, light and dark.
+
+## Slice: ordering from day one and the permitting allowance (work package 3b, part 2; 2026-10-23)
+
+Branch `feature/adequacy-first`. The owner's decisions OPEN-QUESTIONS 44 and 45 (2026-10-22) and 56 (2026-10-23).
+
+What changed:
+- **Programme months** (`sizing.js` `programmeMonths`, `techAvailMonth`): plant is ordered from the analysis start, in parallel with construction of the first phase. Supply available month = permitting allowance + procurement + construction. Before, planning, procurement and construction were added one after another for every technology.
+- **Permitting allowance** (new record `requirements.permitAllowanceM`, 6 months, judgement, the owner's decision): only for plant held by significant environmental permitting (new `src/engine/permitting.js`, one rule shared with the permitting flags):
+  - IED: every combustion plant of an option whose aggregated combustion thermal input (prime, bridging and backup units, the sum the `permit-ied` flag uses) is at or above `requirements.iedMWth` (50 MWth);
+  - Seveso: liquid-fuel plant when the diesel/HVO store is at or above `requirements.sevesoFuelT`, and hydrogen plant when the hydrogen store is at or above `requirements.sevesoH2t`.
+- **Own consent** (OPEN-QUESTIONS 56): onshore wind, ground-mount solar and SMRs (`ownConsent` in the technology library) keep their planning and consent months. The planning-month records of the other twelve technologies are removed (registry 491 → 480 records, with the new allowance record).
+- **One rule everywhere:** sizing (prime and bridging plant), dispatch (solar and wind availability, battery), and the capex years (`evaluate.js`, renewables now read `techAvailMonth`). The permitting flags now call the same `permittingTriggers`.
+- **Sizing sentences:** the prime and bridging sentences no longer state availability; a new sentence per plant says the month and how it was reached, e.g. "Gas reciprocating engines (bridging) available from month 21: 6 permitting allowance (IED) + 9 procurement + 6 construction months."
+
+Interpretations (reversible):
+- The IED test is the option's aggregated thermal input, as the `permit-ied` flag already counts it, so backup gensets count. On a data centre campus they alone are usually above 50 MWth, so all combustion plant, rented temporary generation included, is normally held for 6 months.
+- Fuel cells are not combustion plant, so they are never held by the IED. Batteries and rooftop solar are never held.
+- Backup gensets have no availability month in the engine (as before), so the allowance does not change them.
+- "Day one" is the analysis start.
+
+Months now (held / not held): rented generation 10 / 4; fuel cells 9; rooftop solar 10; HVO-diesel prime 18 / 12; BESS 15; gas engines 21 / 15; gas turbines 24 / 18 (the owner's example); CHP 27 / 21; hydrogen 33 / 27; ground solar 21, wind 54, SMR 120 and not before 2035 (unchanged).
+
+T1 effect: in the 2,000 screened options, gas-engine bridges are available from month 21 (was 24), CHP from 27 (was 33), fuel cells from 9 (was 15; gas still arrives at month 18), rented generation from 10 (was 6). 953 options are still adequate and the leader is unchanged (OPIAR4Q, score 90.10, was 89.83; the scores move with the shorter lead times of the other options).

@@ -4,7 +4,8 @@
 import { TECH, FUEL, PPA, COOLING, COUNTRIES, choiceLabel } from './defaults.js';
 import { decarbFactor } from './context.js';
 import { fuelPrice, fuelEF } from './dispatch.js';
-import { bridgeActive, programmeMonths, techAvailMonth } from './sizing.js';
+import { bridgeActive, techAvailMonth } from './sizing.js';
+import { permittingTriggers } from './permitting.js';
 import { NA } from './generator.js';
 import { adequacyOf, adequacyText } from './adequacy.js';
 
@@ -101,7 +102,7 @@ export function economics(ctx, v, sz, disp, ttp) {
     addCapex(`Substation (${band.toUpperCase()}, ${v.C17})`, gridYear, fullMW * sp[`subCapexPerMW_${band}`] * (v.C17 === 'GIS' ? sp.gisMultiplier : 1), 40);
   }
   // Renewables
-  const avail = (id) => yearOfMonth(programmeMonths(TECH[id]));
+  const avail = (id) => yearOfMonth(techAvailMonth(ctx, TECH[id]));
   addCapex('Solar PV rooftop', avail('solarRoof'), sz.solarRoofMWp * 1000 * TECH.solarRoof.p.capexPerKW, TECH.solarRoof.p.life);
   addCapex('Solar PV ground-mount', avail('solarGround'), sz.solarGroundMWp * 1000 * TECH.solarGround.p.capexPerKW, TECH.solarGround.p.life);
   addCapex('Wind onshore', avail('wind'), sz.windMW * 1000 * TECH.wind.p.capexPerKW, TECH.wind.p.life);
@@ -485,21 +486,13 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   }
 
   // Permitting
-  const combustion = [];
-  if (sz.prime && TECH[sz.prime.tech].combustion) combustion.push({ name: TECH[sz.prime.tech].name, mw: sz.prime.mw, unitMW: sz.prime.unitMW, eff: TECH[sz.prime.tech].p.eff });
-  if (sz.bridge && TECH[sz.bridge.tech].combustion) combustion.push({ name: TECH[sz.bridge.tech].name, mw: sz.bridge.mw, unitMW: sz.bridge.unitMW, eff: TECH[sz.bridge.tech].p.eff });
-  if (sz.backup.tech) {
-    const t = TECH[sz.backup.tech];
-    combustion.push({ name: t.name, mw: (v.C5 === 'bessUps' ? sz.backup.nUnits : sz.backup.units) * t.p.unitMW, unitMW: t.p.unitMW, eff: t.p.eff });
-  }
-  const thermal = combustion.reduce((s, c) => s + c.mw / c.eff, 0);
+  // The same triggers set the permitting allowance in the programme (permitting.js, OPEN-QUESTIONS 45).
+  const { combustion, thermal, fuelT, h2t } = permittingTriggers(sz, v, req);
   if (thermal >= req.iedMWth) flags.push(flag('permit-ied', 'major', 'Permitting', `Aggregated combustion thermal input ${Math.round(thermal)} MWth ≥ ${req.iedMWth} MWth (IED threshold).${permitSuffix}`, { permitting: true, value: thermal, threshold: req.iedMWth }));
   const mcp = combustion.filter((c) => c.unitMW / c.eff >= req.mcpMinMWth && c.unitMW / c.eff < req.mcpMaxMWth);
   if (mcp.length) flags.push(flag('permit-mcp', 'minor', 'Permitting', `Individual combustion units of ${mcp.map((c) => `${(c.unitMW / c.eff).toFixed(1)} MWth (${c.name})`).join(', ')} are within ${req.mcpMinMWth}–${req.mcpMaxMWth} MWth (medium combustion plant rules).${permitSuffix}`, { permitting: true }));
-  const fuelT = sz.backup.fuelM3 * TECH.fuelStorage.p.densityTPerM3;
   if (fuelT >= req.sevesoFuelT) flags.push(flag('permit-seveso-fuel', 'major', 'Permitting', `Hazardous substance storage above threshold: ${Math.round(fuelT).toLocaleString('en-GB')} t diesel/HVO ≥ ${req.sevesoFuelT.toLocaleString('en-GB')} t.${permitSuffix}`, { permitting: true }));
   if (sz.prime && sz.prime.tech === 'hydrogen') {
-    const h2t = (sz.prime.mw / TECH.hydrogen.p.eff) * TECH.hydrogen.p.storageHours / 33.3;
     flags.push(flag('permit-h2', h2t >= req.sevesoH2t ? 'major' : 'minor', 'Permitting', `Hydrogen storage ${h2t.toFixed(0)} t on site${h2t >= req.sevesoH2t ? ` ≥ ${req.sevesoH2t} t (hazardous substance storage above threshold)` : ''}; large separation distances, hazardous-substance flag always raised.${permitSuffix}`, { permitting: true }));
   }
   if (sz.windMW > 0 && v.C11 === 'fit') flags.push(flag('permit-wind', 'major', 'Permitting', `Wind turbines on site (${sz.windTurbines} × tip height ${TECH.wind.p.tipHeightM} m): planning and aviation.${permitSuffix}`, { permitting: true }));

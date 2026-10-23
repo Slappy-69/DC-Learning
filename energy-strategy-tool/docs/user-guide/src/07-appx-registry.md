@@ -96,6 +96,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **requirements.mcpMinMWth**: 1 MWth per unit; src; check against Directive (EU) 2015/2193 (MCPD).
 - **requirements.mcpMaxMWth**: 50 MWth per unit; src; check against Directive (EU) 2015/2193 (MCPD).
 - **requirements.sevesoH2t**: 5 t hydrogen stored; src; check against Directive 2012/18/EU (Seveso III) Annex I lower tier.
+- **requirements.permitAllowanceM**: 6 months before ordering plant that needs significant environmental permitting (IED, Seveso); range 0–18; judg. Owner's decision 2026-10-22 (OPEN-QUESTIONS 44, 45): plant is ordered from day one; only plant under the IED or Seveso waits this allowance. Wind, ground solar and SMRs keep their own planning months (OPEN-QUESTIONS 56).
 - **requirements.sevesoFuelT**: 2,500 t diesel/HVO stored; src; check against Directive 2012/18/EU (Seveso III) Annex I lower tier.
 - **requirements.testRunHours**: 12 h/yr per unit; range 6–24; judg.
 - **requirements.testRunLoad**: 0.75 fraction of rating; range 0.5–1; judg.
@@ -295,7 +296,6 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 - **life**: 25 yr; range 20–30; src.
 - **m2PerKWp**: 5.5 m²/kWp; range 4.5–7; src.
 - **usableFraction**: 0.5 fraction of free roof; range 0.4–0.6; src.
-- **planM**: 3 months; range 2–6; src.
 - **procM**: 6 months; range 3–9; src.
 - **buildM**: 4 months; range 3–6; src.
 
@@ -325,7 +325,6 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 - **life**: 15 yr; range 12–20; src.
 - **m2PerMWh**: 50 m²/MWh; range 30–90; src.
 - **socInit**: 0.5 fraction; src.
-- **planM**: 6 months; range 3–12; src.
 - **procM**: 9 months; range 6–15; src.
 - **buildM**: 6 months; range 3–9; src.
 
@@ -342,7 +341,6 @@ Check against: Danish Energy Agency Technology Catalogue; vendor data.
 - **life**: 20 yr; range 15–25; src.
 - **m2PerMW**: 200 m²/MWe; range 120–300; src.
 - **stackM**: 25 m; range 20–30; src.
-- **planM**: 9 months; range 6–18; src.
 - **procM**: 9 months; range 6–15; src.
 - **buildM**: 6 months; range 4–9; src.
 
@@ -359,7 +357,6 @@ Check against: Danish Energy Agency Technology Catalogue; vendor data.
 - **life**: 25 yr; range 20–30; src.
 - **m2PerMW**: 120 m²/MWe; range 80–200; src.
 - **stackM**: 30 m; range 25–40; src.
-- **planM**: 9 months; range 6–18; src.
 - **procM**: 12 months; range 9–24; src.
 - **buildM**: 6 months; range 4–9; src.
 
@@ -379,7 +376,6 @@ Check against: Vendor data; Danish Energy Agency Technology Catalogue.
 - **m2PerMW**: 280 m²/MWe (recip + 40 %); range 170–420; src.
 - **stackM**: 25 m; range 20–30; src.
 - **sizeFraction**: 1 fraction of average facility load; range 0.5–1; src.
-- **planM**: 12 months; range 9–24; src.
 - **procM**: 12 months; range 9–18; src.
 - **buildM**: 9 months; range 6–12; src.
 
@@ -397,7 +393,6 @@ Check against: Vendor data.
 - **stackLife**: 7 yr; range 5–10; src.
 - **stackFraction**: 0.25 fraction of capex; range 0.2–0.35; src.
 - **m2PerMW**: 120 m²/MW; range 60–200; src.
-- **planM**: 6 months; range 3–12; src.
 - **procM**: 6 months; range 4–12; src.
 - **buildM**: 3 months; range 2–6; src.
 
@@ -414,7 +409,6 @@ Check against: Manufacturer datasheets.
 - **life**: 15 yr; range 10–20; src.
 - **m2PerMW**: 40 m²/MW; range 28–56; src.
 - **stackM**: 10 m; range 8–12; src.
-- **planM**: 6 months; range 3–9; src.
 - **procM**: 9 months; range 6–15; src.
 - **buildM**: 3 months; range 2–6; src.
 
@@ -429,7 +423,6 @@ Check against: Rental vendor indications.
 - **unitMW**: 2 MW; range 1–3; src.
 - **m2PerMW**: 150 m²/MW; range 100–250; src.
 - **stackM**: 10 m; range 8–12; src.
-- **planM**: 2 months; range 1–6; src.
 - **procM**: 2 months; range 1–4; src.
 - **buildM**: 2 months; range 1–3; src.
 
@@ -462,7 +455,6 @@ Check against: National hazardous-substance regulation; specialist input; vendor
 - **life**: 15 yr; range 10–20; src.
 - **m2PerMW**: 300 m²/MW + storage; range 200–450; src.
 - **storageHours**: 24 h of full output stored on site; range 12–48; src.
-- **planM**: 18 months; range 12–24; src.
 - **procM**: 18 months; range 12–30; src.
 - **buildM**: 9 months; range 6–12; src.
 
@@ -477,7 +469,6 @@ Check against: Manufacturer datasheets.
 - **life**: 25 yr; range 20–30; src.
 - **m2PerUnit**: 100 m² per unit incl. access; range 70–140; src.
 - **stackM**: 10 m; range 8–12; src.
-- **planM**: 6 months; range 3–9; src.
 - **procM**: 12 months; range 9–18; src.
 - **buildM**: 6 months; range 3–9; src.
 
@@ -492,7 +483,6 @@ Check against: Manufacturer datasheets.
 - **life**: 25 yr; range 20–30; src.
 - **m2PerUnit**: 100 m² per unit incl. access; range 70–140; src.
 - **stackM**: 10 m; range 8–12; src.
-- **planM**: 6 months; range 3–9; src.
 - **procM**: 12 months; range 9–18; src.
 - **buildM**: 6 months; range 3–9; src.
 
@@ -507,7 +497,6 @@ Check against: Manufacturer datasheets.
 - **life**: 25 yr; range 20–30; src.
 - **m2PerUnit**: 110 m² per unit incl. access; range 80–150; src.
 - **stackM**: 10 m; range 8–12; src.
-- **planM**: 6 months; range 3–9; src.
 - **procM**: 12 months; range 9–18; src.
 - **buildM**: 6 months; range 3–9; src.
 

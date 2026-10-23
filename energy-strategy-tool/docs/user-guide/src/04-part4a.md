@@ -326,7 +326,15 @@ The cable route is the straight line from the POC to the buildable envelope (on 
 | units = max(1, round(target ÷ unit size));  installed MW = units × unit size
 :::
 
-Available from its programme month (or its earliest year, or the gas date, whichever is later).
+Available from its programme month (or its earliest year, or the gas date, whichever is later). The programme month (built 23 October 2026) is counted from day one:
+
+::: formula
+| programme month = permitting allowance + procurement + construction
+| permitting allowance = 6 months if the plant is held by the IED or Seveso (chapter 8), otherwise 0
+| (wind, ground solar and SMR: planning and consent + procurement + construction)
+:::
+
+The same month applies to bridging plant, the battery and the solar and wind, and the capex of each item is booked in the year it becomes available.
 
 ## Bridging plant (C1, C2)
 

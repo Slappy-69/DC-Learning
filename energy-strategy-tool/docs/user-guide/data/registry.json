@@ -544,17 +544,6 @@
   "briefRef": "§6"
  },
  {
-  "path": "tech.solarRoof.planM",
-  "value": 3,
-  "unit": "months",
-  "low": 2,
-  "high": 6,
-  "basis": "source",
-  "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
   "path": "tech.solarRoof.procM",
   "value": 6,
   "unit": "months",
@@ -764,17 +753,6 @@
   "briefRef": "§6"
  },
  {
-  "path": "tech.bess.planM",
-  "value": 6,
-  "unit": "months",
-  "low": 3,
-  "high": 12,
-  "basis": "source",
-  "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
   "path": "tech.bess.procM",
   "value": 9,
   "unit": "months",
@@ -896,17 +874,6 @@
   "briefRef": "§6"
  },
  {
-  "path": "tech.gasRecip.planM",
-  "value": 9,
-  "unit": "months",
-  "low": 6,
-  "high": 18,
-  "basis": "source",
-  "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
-  "note": "",
-  "briefRef": "§6"
- },
- {
   "path": "tech.gasRecip.procM",
   "value": 9,
   "unit": "months",
@@ -1022,17 +989,6 @@
   "unit": "m",
   "low": 25,
   "high": 40,
-  "basis": "source",
-  "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.gasTurbine.planM",
-  "value": 9,
-  "unit": "months",
-  "low": 6,
-  "high": 18,
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
@@ -1193,17 +1149,6 @@
   "briefRef": "§6"
  },
  {
-  "path": "tech.chp.planM",
-  "value": 12,
-  "unit": "months",
-  "low": 9,
-  "high": 24,
-  "basis": "source",
-  "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
-  "note": "",
-  "briefRef": "§6"
- },
- {
   "path": "tech.chp.procM",
   "value": 12,
   "unit": "months",
@@ -1336,17 +1281,6 @@
   "briefRef": "§6"
  },
  {
-  "path": "tech.fuelCell.planM",
-  "value": 6,
-  "unit": "months",
-  "low": 3,
-  "high": 12,
-  "basis": "source",
-  "sourceToVerify": "Vendor data",
-  "note": "",
-  "briefRef": "§6"
- },
- {
   "path": "tech.fuelCell.procM",
   "value": 6,
   "unit": "months",
@@ -1468,17 +1402,6 @@
   "briefRef": "§6"
  },
  {
-  "path": "tech.dieselPrime.planM",
-  "value": 6,
-  "unit": "months",
-  "low": 3,
-  "high": 9,
-  "basis": "source",
-  "sourceToVerify": "Manufacturer datasheets",
-  "note": "",
-  "briefRef": "§6"
- },
- {
   "path": "tech.dieselPrime.procM",
   "value": 9,
   "unit": "months",
@@ -1572,17 +1495,6 @@
   "unit": "m",
   "low": 8,
   "high": 12,
-  "basis": "source",
-  "sourceToVerify": "Rental vendor indications",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.rented.planM",
-  "value": 2,
-  "unit": "months",
-  "low": 1,
-  "high": 6,
   "basis": "source",
   "sourceToVerify": "Rental vendor indications",
   "note": "",
@@ -1831,17 +1743,6 @@
   "briefRef": "§6"
  },
  {
-  "path": "tech.hydrogen.planM",
-  "value": 18,
-  "unit": "months",
-  "low": 12,
-  "high": 24,
-  "basis": "source",
-  "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
-  "note": "",
-  "briefRef": "§6"
- },
- {
   "path": "tech.hydrogen.procM",
   "value": 18,
   "unit": "months",
@@ -1935,17 +1836,6 @@
   "unit": "m",
   "low": 8,
   "high": 12,
-  "basis": "source",
-  "sourceToVerify": "Manufacturer datasheets",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.backupDiesel.planM",
-  "value": 6,
-  "unit": "months",
-  "low": 3,
-  "high": 9,
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
@@ -2051,17 +1941,6 @@
   "briefRef": "§6"
  },
  {
-  "path": "tech.backupHvo.planM",
-  "value": 6,
-  "unit": "months",
-  "low": 3,
-  "high": 9,
-  "basis": "source",
-  "sourceToVerify": "Manufacturer datasheets",
-  "note": "",
-  "briefRef": "§6"
- },
- {
   "path": "tech.backupHvo.procM",
   "value": 12,
   "unit": "months",
@@ -2155,17 +2034,6 @@
   "unit": "m",
   "low": 8,
   "high": 12,
-  "basis": "source",
-  "sourceToVerify": "Manufacturer datasheets",
-  "note": "",
-  "briefRef": "§6"
- },
- {
-  "path": "tech.backupGas.planM",
-  "value": 6,
-  "unit": "months",
-  "low": 3,
-  "high": 9,
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
@@ -5020,6 +4888,17 @@
   "sourceToVerify": "Directive 2012/18/EU (Seveso III) Annex I lower tier",
   "note": "",
   "briefRef": "§5.5"
+ },
+ {
+  "path": "requirements.permitAllowanceM",
+  "value": 6,
+  "unit": "months before ordering plant that needs significant environmental permitting (IED, Seveso)",
+  "low": 0,
+  "high": 18,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Owner's decision 2026-10-22 (OPEN-QUESTIONS 44, 45): plant is ordered from day one; only plant under the IED or Seveso waits this allowance. Wind, ground solar and SMRs keep their own planning months (OPEN-QUESTIONS 56).",
+  "briefRef": "§9.8"
  },
  {
   "path": "requirements.sevesoFuelT",

@@ -5,19 +5,26 @@
 import { TECH, COOLING, SPATIAL, choiceLabel } from './defaults.js';
 import { designDemandByMonth, demandYear } from './context.js';
 import { NA } from './generator.js';
+import { permittingTriggers, permitRegimes } from './permitting.js';
 
 const r1 = (x) => (Math.abs(x) >= 100 ? x.toFixed(0) : x.toFixed(1));
 
-export function programmeMonths(t) {
-  return (t.p.planM || 0) + (t.p.procM || 0) + (t.p.buildM || 0);
+// Programme months from the analysis start (day one of the project). Plant is ordered from day one, in parallel
+// with construction of the first phase (owner, 2026-10-22, OPEN-QUESTIONS 44): procurement + construction, after a
+// permitting allowance only for plant that needs significant environmental permitting (IED, Seveso; OPEN-QUESTIONS
+// 45; `permitM`, see permitting.js). Technologies with a consent of their own (wind, ground solar, SMR) keep their
+// planning months (OPEN-QUESTIONS 56, 2026-10-23).
+export function programmeMonths(t, permitM = 0) {
+  const before = t.ownConsent ? (t.p.planM || 0) : permitM;
+  return before + (t.p.procM || 0) + (t.p.buildM || 0);
 }
 
-// Month a technology can first supply (BRIEF §9.8 "supply available date per source"): its planning,
-// procurement and construction months, or its earliest-availability date if later. One rule for every
-// source, batteries included: the bridging battery's availMonth below, time-to-power (evaluate.js), dispatch
-// (dispatch.js bessAvailM) and the BESS capex year (evaluate.js) all read this month (port of e1161ce).
-export function techAvailMonth(ctx, t) {
-  let m = programmeMonths(t);
+// Month a technology can first supply (BRIEF §9.8 "supply available date per source"): its programme months, or
+// its earliest-availability date if later. One rule for every source, batteries included: the bridging battery's
+// availMonth below, time-to-power (evaluate.js), dispatch (dispatch.js) and the capex years (evaluate.js) all read
+// this month (port of e1161ce).
+export function techAvailMonth(ctx, t, permitM = 0) {
+  let m = programmeMonths(t, permitM);
   if (t.p.earliestYear) {
     const em = (t.p.earliestYear - ctx.baseYear) * 12 - (ctx.startMonth - 1);
     m = Math.max(m, em);
@@ -136,7 +143,7 @@ export function sizeOption(ctx, v) {
     const avail = techAvailMonth(ctx, t);
     const fuelM = fuelAvailMonth(ctx, t.fuel);
     prime = { role: 'prime', tech: t.id, mw, units, unitMW: t.p.unitMW, availMonth: avail, fuelMonth: fuelM };
-    sentences.push(`${t.name} (firm prime): ${(frac * 100).toFixed(0)} % of steady-state average facility load ${r1(avgMW)} MW = ${r1(target)} MW → ${units} × ${t.p.unitMW} MW = ${r1(mw)} MW; available from month ${avail}${fuelM === Infinity ? '; fuel not available at current inputs, so it does not run' : fuelM > avail ? ` (fuel from month ${fuelM})` : ''}.`);
+    sentences.push(`${t.name} (firm prime): ${(frac * 100).toFixed(0)} % of steady-state average facility load ${r1(avgMW)} MW = ${r1(target)} MW → ${units} × ${t.p.unitMW} MW = ${r1(mw)} MW.`);
   }
 
   // --- Bridging (C1/C2) ---
@@ -166,7 +173,7 @@ export function sizeOption(ctx, v) {
       const avail = techAvailMonth(ctx, t);
       const fuelM = fuelAvailMonth(ctx, t.fuel);
       bridge = { role: 'bridge', tech: t.id, mw: total * t.p.unitMW, units: total, nUnits: n, unitMW: t.p.unitMW, availMonth: avail, fuelMonth: fuelM, shortfallMW: S, shortfallMonth: sMonth };
-      sentences.push(`Bridging ${t.name}: ${v.C1 === 'islanded' ? 'on-site supply of design load' : `largest shortfall (design demand − offered grid) ${r1(S)} MW in month ${sMonth}`} ÷ ${t.p.unitMW} MW = ${n} units + N+1 per block of ${req.blockSize} (+${extra}) = ${total} units (${r1(bridge.mw)} MW); available from month ${avail}${fuelM === Infinity ? '; fuel not available at current inputs, so it does not run' : fuelM > avail ? ` (fuel from month ${fuelM})` : ''}.`);
+      sentences.push(`Bridging ${t.name}: ${v.C1 === 'islanded' ? 'on-site supply of design load' : `largest shortfall (design demand − offered grid) ${r1(S)} MW in month ${sMonth}`} ÷ ${t.p.unitMW} MW = ${n} units + N+1 per block of ${req.blockSize} (+${extra}) = ${total} units (${r1(bridge.mw)} MW).`);
       if (v.C1 === 'bridge') sentences.push(`After the grid full-connection date (month ${T}) the bridging plant is: ${choiceLabel('C3', v.C3).toLowerCase()}.`);
     } else {
       sentences.push('Bridging: no shortfall between design demand and offered grid capacity before the full-connection date; no bridging plant sized.');
@@ -216,6 +223,21 @@ export function sizeOption(ctx, v) {
     sentences.push(`BESS: ${(pct * 100).toFixed(0)} % of design facility load ${r1(designMW)} MW = ${r1(bess.mw)} MW × ${h} h = ${r1(bess.mwh)} MWh; role ${choiceLabel('C12r', v.C12r).toLowerCase()}; size kept as given.`);
   }
   const storage = { mw: bess.mw + bridgeBess.mw, mwh: bess.mwh + bridgeBess.mwh, role: bess.role || (bridgeBess.mw > 0 ? 'bridgingSupport' : null) };
+
+  // --- Programme: ordered from day one; permitting allowance only under the IED or Seveso (OPEN-QUESTIONS 44, 45, 56) ---
+  const permits = permittingTriggers({ prime, bridge, backup }, v, req);
+  for (const p of [prime, bridge]) {
+    if (!p) continue;
+    const t = TECH[p.tech];
+    p.permitRegimes = permitRegimes(p, permits);
+    p.permitM = p.permitRegimes.length ? req.permitAllowanceM : 0;
+    p.availMonth = techAvailMonth(ctx, t, p.permitM);
+    const steps = t.ownConsent
+      ? `${t.p.planM} planning and consent + ${t.p.procM} procurement + ${t.p.buildM} construction`
+      : `${p.permitM ? `${p.permitM} permitting allowance (${p.permitRegimes.join(', ')}) + ` : 'ordered from day one: '}${t.p.procM} procurement + ${t.p.buildM} construction`;
+    const early = t.p.earliestYear && p.availMonth > programmeMonths(t, p.permitM) ? `, not before ${t.p.earliestYear}` : '';
+    sentences.push(`${t.name} (${p.role === 'prime' ? 'firm prime' : 'bridging'}) available from month ${p.availMonth}: ${steps} months${early}${p.fuelMonth === Infinity ? '; fuel not available at current inputs, so it does not run' : p.fuelMonth > p.availMonth ? ` (fuel from month ${p.fuelMonth})` : ''}.`);
+  }
 
   // --- Area budget (site areas, land take). Ground solar is sized from the ground area for PV the engineer
   // enters (OPEN-QUESTIONS 53–54, 2026-10-22), never from the layout ---
