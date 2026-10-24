@@ -42,8 +42,8 @@ Needs Node.js 22.
 ```
 cd energy-strategy-tool/app
 npm ci
+npm run build          # dist/, including energy-tool-single-file.html (build first: test 14 reads dist/)
 npm test               # Node suite
-npm run build          # dist/, including energy-tool-single-file.html
 npm run test:browser   # Playwright + axe (needs Chromium)
 ```
 

@@ -53,8 +53,8 @@ Prices: mean wholesale price and non-commodity adder (€/MWh), gas commodity pr
 | Czechia (CZ) | 95 + 45 | 42 | 88.3 | EUR |
 | Denmark (DK) | 80 + 40 | 40 | 88.3 | DKK |
 | Estonia (EE) | 90 + 35 | 42 | 88.3 | EUR |
-| Finland (FI) | 55 + 30 | 45 | 88.3 | EUR |
-| France (FR) | 85 + 40 | 40 | 88.3 | EUR |
+| Finland (FI) | 41 + 30 | 45 | 88.3 | EUR |
+| France (FR) | 62 + 40 | 40 | 88.3 | EUR |
 | Germany (DE) | 95 + 55 | 40 | 88.3 | EUR |
 | Greece (GR) | 105 + 40 | 42 | 88.3 | EUR |
 | Hungary (HU) | 105 + 40 | 42 | 88.3 | EUR |
@@ -66,14 +66,14 @@ Prices: mean wholesale price and non-commodity adder (€/MWh), gas commodity pr
 | Malta (MT) | 130 + 40 | 60 | 88.3 | EUR |
 | Netherlands (NL) | 90 + 45 | 40 | 88.3 | EUR |
 | Poland (PL) | 110 + 40 | 42 | 88.3 | EUR |
-| Portugal (PT) | 75 + 40 | 42 | 88.3 | EUR |
+| Portugal (PT) | 66 + 40 | 42 | 88.3 | EUR |
 | Romania (RO) | 100 + 35 | 42 | 88.3 | EUR |
 | Slovakia (SK) | 100 + 40 | 42 | 88.3 | EUR |
 | Slovenia (SI) | 105 + 40 | 42 | 88.3 | EUR |
 | Spain (ES) | 70 + 40 | 40 | 88.3 | EUR |
 | Sweden (SE) | 45 + 30 | 45 | 88.3 | SEK |
 | United Kingdom (GB) | 95 + 55 | 40 | 75 | GBP |
-| Norway (NO) | 50 + 25 | 45 | 88.3 | NOK |
+| Norway (NO) | 44 + 25 | 45 | 88.3 | NOK |
 | Switzerland (CH) | 95 + 50 | 45 | 85 | CHF |
 | Iceland (IS) | 40 + 25 | 80 | 88.3 | ISK |
 
@@ -91,8 +91,8 @@ Published values: mean day-ahead price for 2025 (Electricity Maps "Grid in revie
 | CZ | 95 | 85.2 (2024, ACER) | +12 %, update |
 | DK | 80 | 80.1 (2025, Electricity Maps) | -0 %, consistent |
 | EE | 90 | 87.3 (2024, ACER) | +3 %, consistent |
-| FI | 55 | 45.7 (2024, ACER) | +20 %, update |
-| FR | 85 | 61.5 (2025, Electricity Maps) | +38 %, update |
+| FI | 41 | 45.7 (2024, ACER) | -10 %, update |
+| FR | 62 | 61.5 (2025, Electricity Maps) | +1 %, consistent |
 | DE | 95 | 89.6 (2025, Electricity Maps) | +6 %, consistent |
 | GR | 105 | 101 (2024, ACER) | +4 %, consistent |
 | HU | 105 | 100.9 (2024, ACER) | +4 %, consistent |
@@ -104,14 +104,14 @@ Published values: mean day-ahead price for 2025 (Electricity Maps "Grid in revie
 | MT | 130 | not found | not checked |
 | NL | 90 | 83 (2025, Electricity Maps) | +8 %, consistent |
 | PL | 110 | 105.8 (2025, Electricity Maps) | +4 %, consistent |
-| PT | 75 | 63.5 (2024, ACER) | +18 %, update |
+| PT | 66 | 63.5 (2024, ACER) | +4 %, consistent |
 | RO | 100 | 103.7 (2024, ACER) | -4 %, consistent |
 | SK | 100 | 93 (2024, ACER) | +8 %, consistent |
 | SI | 105 | 91.4 (2024, ACER) | +15 %, update |
 | ES | 70 | 66.3 (2025, Electricity Maps) | +6 %, consistent |
 | SE | 45 | 43.4 (2025, Electricity Maps, country) | +4 %, consistent |
 | GB | 95 | 96.9 (2025, £81.2 at ECB rate) | -2 %, consistent |
-| NO | 50 | 44.2 (2025, Electricity Maps, country) | +13 %, update |
+| NO | 44 | 44.2 (2025, Electricity Maps, country) | -0 %, consistent |
 | CH | 95 | not found | not checked |
 | IS | 40 | not found | not checked |
 
@@ -121,37 +121,37 @@ Published values: Ember's 2025 carbon intensity of electricity generation (g CO�
 
 | Country | App | Ember 2025 | Difference |
 |---|---|---|---|
-| AT | 110 | 116.91 | -6 %, consistent |
-| BE | 140 | 149.82 | -7 %, consistent |
-| BG | 400 | 275.55 | +45 %, update |
-| HR | 200 | 158.5 | +26 %, update |
-| CY | 600 | 489 | +23 %, update |
-| CZ | 430 | 401.46 | +7 %, consistent |
-| DK | 130 | 114.41 | +14 %, update |
-| EE | 500 | 319.15 | +57 %, update |
-| FI | 80 | 57.47 | +39 %, update |
-| FR | 55 | 41.44 | +33 %, update |
-| DE | 380 | 329.65 | +15 %, update |
-| GR | 330 | 315.09 | +5 %, consistent |
-| HU | 200 | 163.02 | +23 %, update |
-| IE | 280 | 256.54 | +9 %, consistent |
-| IT | 280 | 284.78 | -2 %, consistent |
-| LV | 120 | 138.76 | -14 %, update |
-| LT | 180 | 138.36 | +30 %, update |
-| LU | 120 | 123.38 | -3 %, consistent |
-| MT | 380 | 484.02 | -21 %, update |
-| NL | 300 | 253.56 | +18 %, update |
-| PL | 660 | 588.6 | +12 %, update |
-| PT | 140 | 127.91 | +9 %, consistent |
-| RO | 260 | 250.75 | +4 %, consistent |
-| SK | 120 | 94.85 | +27 %, update |
-| SI | 230 | 183.29 | +25 %, update |
-| ES | 150 | 153.6 | -2 %, consistent |
-| SE | 25 | 35.26 | -29 %, update |
-| GB | 200 | 217.41 | -8 %, consistent |
-| NO | 25 | 28.11 | -11 %, update |
-| CH | 40 | 39.22 | +2 %, consistent |
-| IS | 15 | 27.82 | -46 %, update |
+| AT | 117 | 116.91 | +0 %, consistent |
+| BE | 150 | 149.82 | +0 %, consistent |
+| BG | 276 | 275.55 | +0 %, consistent |
+| HR | 159 | 158.5 | +0 %, consistent |
+| CY | 489 | 489 | +0 %, consistent |
+| CZ | 401 | 401.46 | -0 %, consistent |
+| DK | 114 | 114.41 | -0 %, consistent |
+| EE | 319 | 319.15 | -0 %, consistent |
+| FI | 57 | 57.47 | -1 %, consistent |
+| FR | 41 | 41.44 | -1 %, consistent |
+| DE | 330 | 329.65 | +0 %, consistent |
+| GR | 315 | 315.09 | -0 %, consistent |
+| HU | 163 | 163.02 | -0 %, consistent |
+| IE | 257 | 256.54 | +0 %, consistent |
+| IT | 285 | 284.78 | +0 %, consistent |
+| LV | 139 | 138.76 | +0 %, consistent |
+| LT | 138 | 138.36 | -0 %, consistent |
+| LU | 123 | 123.38 | -0 %, consistent |
+| MT | 484 | 484.02 | -0 %, consistent |
+| NL | 254 | 253.56 | +0 %, consistent |
+| PL | 589 | 588.6 | +0 %, consistent |
+| PT | 128 | 127.91 | +0 %, consistent |
+| RO | 251 | 250.75 | +0 %, consistent |
+| SK | 95 | 94.85 | +0 %, consistent |
+| SI | 183 | 183.29 | -0 %, consistent |
+| ES | 154 | 153.6 | +0 %, consistent |
+| SE | 35 | 35.26 | -1 %, consistent |
+| GB | 217 | 217.41 | -0 %, consistent |
+| NO | 28 | 28.11 | -0 %, consistent |
+| CH | 39 | 39.22 | -1 %, consistent |
+| IS | 28 | 27.82 | +1 %, consistent |
 
 ## B4. Exchange rates
 

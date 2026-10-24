@@ -21,6 +21,17 @@ const SRC = {
   euEts: { source: 'ICE EUA December 2026 futures close, reported by GMK Center, "European carbon prices rose to €88/t in October" (15 Oct 2026)', year: '2026-10-12', url: 'https://gmk.center/en/news/european-carbon-prices-rose-to-e88-t-in-october/', accessed: '2026-10-22', approved: '2026-10-22' },
   ukEts: { source: 'ICE UKA December 2026 futures, £62.90/t on 7 Oct 2026, reported by ClearBlue Markets (9 Oct 2026); converted at the ECB reference rate of 22 Oct 2026 (0.83770 £/€) = €75.09/t', year: '2026-10-07', url: 'https://www.clearbluemarkets.com/knowledge-base/ukas-rally-4-on-reports-of-a-uk-eu-ets-linkage-deal', accessed: '2026-10-22', approved: '2026-10-22' },
   hydrogen: { source: 'EEX HYDRIX renewable hydrogen index, 2025 average €8.20/kg; range €7–10/kg from ACER European hydrogen markets 2025, reported by pv magazine (3 Dec 2025); 33.3 kWh/kg (LHV)', year: '2025', url: 'https://www.pv-magazine.com/2025/12/03/price-gap-between-conventional-renewable-hydrogen-widens-in-europe/', accessed: '2026-10-22', approved: '2026-10-22' },
+  // Batch 2 (2026-10-23; approved in advance by the owner's standing instruction to follow Claude's recommendations).
+  carbonEmber: { source: 'Ember, Yearly Electricity Data Europe (2026): carbon intensity of electricity generation, 2025, life-cycle basis, as published by Our World in Data ("Carbon intensity of electricity generation"); values rounded to 1 g/kWh (user guide Appendix B3)', year: '2025', url: 'https://ourworldindata.org/grapher/carbon-intensity-electricity', accessed: '2026-10-21', approved: '2026-10-23' },
+  priceEM: { source: 'Electricity Maps, "Electricity Grid Review 2025", mean day-ahead price 2025 for each country (France €61.5, Norway €44.2, Finland €40.8, Portugal €66.1, Austria €100.4, Czechia €95.5, Slovenia €106.0/MWh checked on 2026-10-23); other countries as in user guide Appendix B2', year: '2025', url: 'https://www.electricitymaps.com/grid-in-review-2025', accessed: '2026-10-23', approved: '2026-10-23' },
+  fraunhofer: { source: 'Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh', year: '2024', url: 'https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/DE2024_ISE_Studie_Stromgestehungskosten_Erneuerbare_Energien.pdf', accessed: '2026-10-23', approved: '2026-10-23' },
+  bnef: { source: 'BloombergNEF Energy Storage System Cost Survey 2025, reported by Energy-Storage.news (16 Dec 2025): turnkey system price Europe US$177/kWh (global US$117, 4-hour US$110); at the ECB rate of 12 Oct 2026 (1.1181 $/€) €158/kWh. The split into energy and power cost is a judgement', year: '2025', url: 'https://www.energy-storage.news/?p=92133', accessed: '2026-10-23', approved: '2026-10-23' },
+  eiaTurbine: { source: 'US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: aeroderivative combustion turbine (4 × 54 MW) US$1,606/kW and H-class simple cycle US$836/kW, both 2023 dollars; at 1.1181 $/€ €1,436 and €748/kW. Set between them for 30 MW units', year: '2025', url: 'https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf', accessed: '2026-10-23', approved: '2026-10-23' },
+  eiaSmr: { source: 'US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: small modular reactor (6 × 80 MW) US$8,936/kW (2023 dollars), at 1.1181 $/€ €7,992/kW. For comparison, Darlington BWRX-300 (4 × 300 MWe): CAD20.9 billion including interest and escalation, first unit in service 2030 (World Nuclear News, 23 May 2025)', year: '2025', url: 'https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf', accessed: '2026-10-23', approved: '2026-10-23' },
+  dcGas: { source: 'Datacentres.com Research, on-site gas generation for data centres (2026): natural gas turbines or reciprocating engines US$800–1,200/kW installed; at 1.1181 $/€ €715–1,073/kW', year: '2026', url: 'https://www.datacentres.com/news/diesel-duty-cycles-and-dollars-inside-the-2-8m-per-mw-backup-power-stack-powerin-slot3-2026-09-03', accessed: '2026-10-23', approved: '2026-10-23' },
+  wartsila: { source: 'Wärtsilä press release, 16 Apr 2026: 40 Wärtsilä 34SG engines, 412 MW, for a hyperscale data centre in Ohio (about 10.3 MW per engine)', year: '2026-04-16', url: 'https://www.wartsila.com/media/news/16-04-2026-wartsila-s-34sg-engine-makes-its-data-center-debut-with-new-412-mw-u-s-project-3740972', accessed: '2026-10-23', approved: '2026-10-23' },
+  gensetLead: { source: 'Global Power Supply, "Generator lead times in 2026" (11 May 2026): standby diesel generators 1,250–3,250 kW, 52 to 70 weeks', year: '2026-05-11', url: 'https://globalpwr.com/blog/generator-lead-times-in-2026', accessed: '2026-10-23', approved: '2026-10-23' },
+  levelten: { source: 'LevelTen Energy European PPA Price Index Q2 2026, reported by PV Tech (23 Jul 2026): solar €56.59/MWh, wind US$95.86/MWh (at 1.1181 $/€ €85.7/MWh)', year: '2026-Q2', url: 'https://www.pv-tech.org/solar-ppa-prices-buck-trends-increasing-europe-falling-north-america-q2-2026/', accessed: '2026-10-23', approved: '2026-10-23' },
   fx: { source: 'European Central Bank euro foreign exchange reference rates', year: '2026-10-22', url: 'https://www.ecb.europa.eu/stats/shared/pdf/eurofxref.pdf', accessed: '2026-10-22', approved: '2026-10-22' },
 };
 
@@ -77,37 +88,37 @@ const C = (name, currency, lat, lon, tMean, tAmp, solarYield, windCF, price, add
   ({ name, currency, lat, lon, tMean, tAmp, solarYield, windCF, price, adder, carbon, gas, carbonPrice, eu, decarb2050 });
 
 export const COUNTRIES = {
-  AT: C('Austria', 'EUR', 47.6, 14.1, 8.5, 10.0, 1100, 0.24, 100, 45, 110, 42, EU_ETS, true, 0.15),
-  BE: C('Belgium', 'EUR', 50.6, 4.6, 10.5, 7.5, 950, 0.28, 90, 50, 140, 40, EU_ETS, true, 0.15),
-  BG: C('Bulgaria', 'EUR', 42.7, 25.5, 11.5, 11.0, 1350, 0.22, 95, 35, 400, 42, EU_ETS, true, 0.25),
-  HR: C('Croatia', 'EUR', 45.1, 15.2, 12.0, 10.0, 1250, 0.25, 100, 40, 200, 42, EU_ETS, true, 0.2),
-  CY: C('Cyprus', 'EUR', 35.1, 33.4, 19.5, 8.5, 1650, 0.22, 140, 40, 600, 70, EU_ETS, true, 0.3),
-  CZ: C('Czechia', 'EUR', 49.8, 15.5, 8.5, 9.5, 1000, 0.24, 95, 45, 430, 42, EU_ETS, true, 0.25),
-  DK: C('Denmark', 'DKK', 56.0, 10.0, 8.5, 7.5, 950, 0.34, 80, 40, 130, 40, EU_ETS, true, 0.1),
-  EE: C('Estonia', 'EUR', 58.6, 25.0, 6.0, 10.5, 900, 0.30, 90, 35, 500, 42, EU_ETS, true, 0.2),
-  FI: C('Finland', 'EUR', 61.9, 25.7, 4.0, 11.0, 850, 0.30, 55, 30, 80, 45, EU_ETS, true, 0.1),
-  FR: C('France', 'EUR', 46.6, 2.2, 12.0, 8.0, 1200, 0.26, 85, 40, 55, 40, EU_ETS, true, 0.5),
-  DE: C('Germany', 'EUR', 51.2, 10.4, 9.5, 8.5, 1000, 0.27, 95, 55, 380, 40, EU_ETS, true, 0.15),
-  GR: C('Greece', 'EUR', 39.1, 21.8, 16.5, 9.5, 1550, 0.27, 105, 40, 330, 42, EU_ETS, true, 0.2),
-  HU: C('Hungary', 'EUR', 47.2, 19.5, 11.0, 11.0, 1250, 0.22, 105, 40, 200, 42, EU_ETS, true, 0.2),
-  IE: C('Ireland', 'EUR', 53.4, -8.2, 10.0, 5.0, 900, 0.35, 110, 50, 280, 42, EU_ETS, true, 0.15),
-  IT: C('Italy', 'EUR', 42.8, 12.6, 14.5, 9.5, 1400, 0.22, 120, 45, 280, 45, EU_ETS, true, 0.2),
-  LV: C('Latvia', 'EUR', 56.9, 24.6, 6.5, 10.5, 900, 0.28, 90, 35, 120, 42, EU_ETS, true, 0.15),
-  LT: C('Lithuania', 'EUR', 55.2, 23.9, 7.0, 10.5, 950, 0.28, 90, 35, 180, 42, EU_ETS, true, 0.15),
-  LU: C('Luxembourg', 'EUR', 49.8, 6.1, 9.5, 8.0, 980, 0.25, 95, 45, 120, 42, EU_ETS, true, 0.15),
-  MT: C('Malta', 'EUR', 35.9, 14.4, 19.0, 7.5, 1650, 0.25, 130, 40, 380, 60, EU_ETS, true, 0.3),
-  NL: C('Netherlands', 'EUR', 52.1, 5.3, 10.5, 7.0, 950, 0.32, 90, 45, 300, 40, EU_ETS, true, 0.15),
-  PL: C('Poland', 'EUR', 51.9, 19.1, 8.5, 10.0, 1000, 0.27, 110, 40, 660, 42, EU_ETS, true, 0.3),
-  PT: C('Portugal', 'EUR', 39.4, -8.2, 16.0, 6.5, 1550, 0.27, 75, 40, 140, 42, EU_ETS, true, 0.1),
-  RO: C('Romania', 'EUR', 45.9, 24.9, 10.5, 11.5, 1300, 0.24, 100, 35, 260, 42, EU_ETS, true, 0.2),
-  SK: C('Slovakia', 'EUR', 48.7, 19.7, 9.5, 10.5, 1150, 0.22, 100, 40, 120, 42, EU_ETS, true, 0.2),
-  SI: C('Slovenia', 'EUR', 46.1, 14.9, 10.5, 10.0, 1200, 0.22, 105, 40, 230, 42, EU_ETS, true, 0.2),
-  ES: C('Spain', 'EUR', 40.4, -3.7, 15.0, 9.0, 1650, 0.26, 70, 40, 150, 40, EU_ETS, true, 0.1),
-  SE: C('Sweden', 'SEK', 60.1, 18.6, 6.5, 10.0, 900, 0.31, 45, 30, 25, 45, EU_ETS, true, 0.5),
-  GB: C('United Kingdom', 'GBP', 52.4, -1.5, 10.0, 6.5, 950, 0.34, 95, 55, 200, 40, UK_ETS, false, 0.1),
-  NO: C('Norway', 'NOK', 60.5, 8.5, 5.5, 9.0, 850, 0.32, 50, 25, 25, 45, EU_ETS, false, 0.5),
-  CH: C('Switzerland', 'CHF', 46.8, 8.2, 9.0, 9.0, 1150, 0.20, 95, 50, 40, 45, 85, false, 0.5),
-  IS: C('Iceland', 'ISK', 64.9, -19.0, 4.5, 6.0, 700, 0.38, 40, 25, 15, 80, EU_ETS, false, 0.8),
+  AT: C('Austria', 'EUR', 47.6, 14.1, 8.5, 10.0, 1100, 0.24, 100, 45, 117, 42, EU_ETS, true, 0.15),
+  BE: C('Belgium', 'EUR', 50.6, 4.6, 10.5, 7.5, 950, 0.28, 90, 50, 150, 40, EU_ETS, true, 0.15),
+  BG: C('Bulgaria', 'EUR', 42.7, 25.5, 11.5, 11.0, 1350, 0.22, 95, 35, 276, 42, EU_ETS, true, 0.25),
+  HR: C('Croatia', 'EUR', 45.1, 15.2, 12.0, 10.0, 1250, 0.25, 100, 40, 159, 42, EU_ETS, true, 0.2),
+  CY: C('Cyprus', 'EUR', 35.1, 33.4, 19.5, 8.5, 1650, 0.22, 140, 40, 489, 70, EU_ETS, true, 0.3),
+  CZ: C('Czechia', 'EUR', 49.8, 15.5, 8.5, 9.5, 1000, 0.24, 95, 45, 401, 42, EU_ETS, true, 0.25),
+  DK: C('Denmark', 'DKK', 56.0, 10.0, 8.5, 7.5, 950, 0.34, 80, 40, 114, 40, EU_ETS, true, 0.1),
+  EE: C('Estonia', 'EUR', 58.6, 25.0, 6.0, 10.5, 900, 0.30, 90, 35, 319, 42, EU_ETS, true, 0.2),
+  FI: C('Finland', 'EUR', 61.9, 25.7, 4.0, 11.0, 850, 0.30, 41, 30, 57, 45, EU_ETS, true, 0.1),
+  FR: C('France', 'EUR', 46.6, 2.2, 12.0, 8.0, 1200, 0.26, 62, 40, 41, 40, EU_ETS, true, 0.5),
+  DE: C('Germany', 'EUR', 51.2, 10.4, 9.5, 8.5, 1000, 0.27, 95, 55, 330, 40, EU_ETS, true, 0.15),
+  GR: C('Greece', 'EUR', 39.1, 21.8, 16.5, 9.5, 1550, 0.27, 105, 40, 315, 42, EU_ETS, true, 0.2),
+  HU: C('Hungary', 'EUR', 47.2, 19.5, 11.0, 11.0, 1250, 0.22, 105, 40, 163, 42, EU_ETS, true, 0.2),
+  IE: C('Ireland', 'EUR', 53.4, -8.2, 10.0, 5.0, 900, 0.35, 110, 50, 257, 42, EU_ETS, true, 0.15),
+  IT: C('Italy', 'EUR', 42.8, 12.6, 14.5, 9.5, 1400, 0.22, 120, 45, 285, 45, EU_ETS, true, 0.2),
+  LV: C('Latvia', 'EUR', 56.9, 24.6, 6.5, 10.5, 900, 0.28, 90, 35, 139, 42, EU_ETS, true, 0.15),
+  LT: C('Lithuania', 'EUR', 55.2, 23.9, 7.0, 10.5, 950, 0.28, 90, 35, 138, 42, EU_ETS, true, 0.15),
+  LU: C('Luxembourg', 'EUR', 49.8, 6.1, 9.5, 8.0, 980, 0.25, 95, 45, 123, 42, EU_ETS, true, 0.15),
+  MT: C('Malta', 'EUR', 35.9, 14.4, 19.0, 7.5, 1650, 0.25, 130, 40, 484, 60, EU_ETS, true, 0.3),
+  NL: C('Netherlands', 'EUR', 52.1, 5.3, 10.5, 7.0, 950, 0.32, 90, 45, 254, 40, EU_ETS, true, 0.15),
+  PL: C('Poland', 'EUR', 51.9, 19.1, 8.5, 10.0, 1000, 0.27, 110, 40, 589, 42, EU_ETS, true, 0.3),
+  PT: C('Portugal', 'EUR', 39.4, -8.2, 16.0, 6.5, 1550, 0.27, 66, 40, 128, 42, EU_ETS, true, 0.1),
+  RO: C('Romania', 'EUR', 45.9, 24.9, 10.5, 11.5, 1300, 0.24, 100, 35, 251, 42, EU_ETS, true, 0.2),
+  SK: C('Slovakia', 'EUR', 48.7, 19.7, 9.5, 10.5, 1150, 0.22, 100, 40, 95, 42, EU_ETS, true, 0.2),
+  SI: C('Slovenia', 'EUR', 46.1, 14.9, 10.5, 10.0, 1200, 0.22, 105, 40, 183, 42, EU_ETS, true, 0.2),
+  ES: C('Spain', 'EUR', 40.4, -3.7, 15.0, 9.0, 1650, 0.26, 70, 40, 154, 40, EU_ETS, true, 0.1),
+  SE: C('Sweden', 'SEK', 60.1, 18.6, 6.5, 10.0, 900, 0.31, 45, 30, 35, 45, EU_ETS, true, 0.5),
+  GB: C('United Kingdom', 'GBP', 52.4, -1.5, 10.0, 6.5, 950, 0.34, 95, 55, 217, 40, UK_ETS, false, 0.1),
+  NO: C('Norway', 'NOK', 60.5, 8.5, 5.5, 9.0, 850, 0.32, 44, 25, 28, 45, EU_ETS, false, 0.5),
+  CH: C('Switzerland', 'CHF', 46.8, 8.2, 9.0, 9.0, 1150, 0.20, 95, 50, 39, 45, 85, false, 0.5),
+  IS: C('Iceland', 'ISK', 64.9, -19.0, 4.5, 6.0, 700, 0.38, 40, 25, 28, 80, EU_ETS, false, 0.8),
 };
 REGISTRY['profiles.countries'] = {
   path: 'profiles.countries', value: 'built-in synthetic country set (31)', unit: '', low: null, high: null,
@@ -254,27 +265,27 @@ function tech(id, base, params) {
 }
 // role, maturity, fuel, placement
 tech('solarGround', { name: 'Solar PV ground-mount', role: 'intermittent', maturity: 'Commercial', ownConsent: true }, {
-  capexPerKW: [700, '€/kWp', 600, 800], fomPerKW: [12, '€/kWp/yr', 9, 15], life: [30, 'yr', 25, 35],
+  capexPerKW: [700, '€/kWp', 700, 900], fomPerKW: [13.3, '€/kWp/yr', 10, 16], life: [30, 'yr', 25, 35],
   haPerMWp: [1.2, 'ha/MWp', 0.8, 1.8], planM: [9, 'months', 6, 18], procM: [6, 'months', 3, 9], buildM: [6, 'months', 4, 9] });
 tech('solarRoof', { name: 'Solar PV rooftop', role: 'intermittent', maturity: 'Commercial' }, {
-  capexPerKW: [900, '€/kWp', 750, 1100], fomPerKW: [14, '€/kWp/yr', 10, 18], life: [25, 'yr', 20, 30],
+  capexPerKW: [900, '€/kWp', 900, 1600], fomPerKW: [21.5, '€/kWp/yr', 15, 25], life: [25, 'yr', 20, 30],
   m2PerKWp: [5.5, 'm²/kWp', 4.5, 7.0], usableFraction: [0.5, 'fraction of free roof', 0.4, 0.6],
   procM: [6, 'months', 3, 9], buildM: [4, 'months', 3, 6] });
 tech('wind', { name: 'Wind onshore', role: 'intermittent', maturity: 'Commercial', ownConsent: true }, {
-  capexPerKW: [1350, '€/kW', 1200, 1500], fomPerKW: [35, '€/kW/yr', 25, 45], life: [25, 'yr', 20, 30],
+  capexPerKW: [1350, '€/kW', 1300, 1900], fomPerKW: [50, '€/kW/yr', 40, 60], life: [25, 'yr', 20, 30],
   turbineMW: [5, 'MW', 3, 6], tipHeightM: [180, 'm', 150, 220], toppleFactor: [1.5, '× tip height', 1.1, 2.0],
   haPerTurbine: [33.75, 'ha per turbine (5 × 3 rotor diameters)', 20, 50],
   planM: [24, 'months', 12, 48], procM: [18, 'months', 12, 24], buildM: [12, 'months', 9, 18] });
 tech('bess', { name: 'BESS (Li-ion, containerised)', role: 'storage', maturity: 'Commercial' }, {
-  capexPerKWh: [250, '€/kWh', 200, 350], capexPerKW: [150, '€/kW', 100, 200], fomPct: [0.015, 'fraction of capex/yr', 0.01, 0.025],
+  capexPerKWh: [125, '€/kWh', 100, 180], capexPerKW: [135, '€/kW', 100, 200], fomPct: [0.015, 'fraction of capex/yr', 0.01, 0.025],
   rte: [0.88, 'round-trip efficiency', 0.85, 0.92], life: [15, 'yr', 12, 20], m2PerMWh: [50, 'm²/MWh', 30, 90],
   socInit: [0.5, 'fraction', 0.5, 0.5], procM: [9, 'months', 6, 15], buildM: [6, 'months', 3, 9] });
 tech('gasRecip', { name: 'Gas reciprocating engines', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Danish Energy Agency Technology Catalogue; vendor data' }, {
-  capexPerKW: [900, '€/kW', 800, 1000], fomPerKW: [15, '€/kW/yr', 10, 20], vomPerMWh: [8, '€/MWh', 5, 12], eff: [0.44, 'electrical efficiency (LHV)', 0.40, 0.48],
-  msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [4.5, 'MW', 2, 10], life: [20, 'yr', 15, 25], m2PerMW: [200, 'm²/MWe', 120, 300],
+  capexPerKW: [900, '€/kW', 715, 1075], fomPerKW: [15, '€/kW/yr', 10, 20], vomPerMWh: [8, '€/MWh', 5, 12], eff: [0.44, 'electrical efficiency (LHV)', 0.40, 0.48],
+  msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [10, 'MW', 4.5, 10.3], life: [20, 'yr', 15, 25], m2PerMW: [200, 'm²/MWe', 120, 300],
   stackM: [25, 'm', 20, 30], procM: [9, 'months', 6, 15], buildM: [6, 'months', 4, 9] });
 tech('gasTurbine', { name: 'Gas turbines (OCGT / aeroderivative)', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Danish Energy Agency Technology Catalogue; vendor data' }, {
-  capexPerKW: [750, '€/kW', 600, 900], fomPerKW: [12, '€/kW/yr', 8, 16], vomPerMWh: [6, '€/MWh', 4, 9], eff: [0.38, 'electrical efficiency (LHV)', 0.33, 0.42],
+  capexPerKW: [1100, '€/kW', 750, 1450], fomPerKW: [12, '€/kW/yr', 8, 16], vomPerMWh: [6, '€/MWh', 4, 9], eff: [0.38, 'electrical efficiency (LHV)', 0.33, 0.42],
   msl: [0.4, 'min stable load fraction', 0.3, 0.5], unitMW: [30, 'MW', 10, 50], life: [25, 'yr', 20, 30], m2PerMW: [120, 'm²/MWe', 80, 200],
   stackM: [30, 'm', 25, 40], procM: [12, 'months', 9, 24], buildM: [6, 'months', 4, 9] });
 tech('chp', { name: 'Gas CHP / trigeneration', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Vendor data; Danish Energy Agency Technology Catalogue' }, {
@@ -296,7 +307,7 @@ tech('rented', { name: 'Rented temporary generation (gas)', role: 'firm', maturi
   msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [2, 'MW', 1, 3], m2PerMW: [150, 'm²/MW', 100, 250], stackM: [10, 'm', 8, 12],
   procM: [2, 'months', 1, 4], buildM: [2, 'months', 1, 3] });
 tech('smr', { name: 'Small modular reactor', role: 'firm', maturity: 'Nascent', fuel: 'nuclear', combustion: false, ownConsent: true, verify: 'Vendor and regulator publications' }, {
-  capexPerKW: [7000, '€/kW', 5000, 12000], fomPerKW: [120, '€/kW/yr', 80, 160], vomPerMWh: [3, '€/MWh', 2, 5], fuelPerMWhE: [9, '€/MWh_e', 6, 12],
+  capexPerKW: [8000, '€/kW', 7000, 13000], fomPerKW: [120, '€/kW/yr', 80, 160], vomPerMWh: [3, '€/MWh', 2, 5], fuelPerMWhE: [9, '€/MWh_e', 6, 12],
   msl: [0.5, 'min stable load fraction', 0.4, 0.7], unitMW: [80, 'MW', 50, 300], life: [60, 'yr', 40, 80], earliestYear: [2035, 'year', 2032, 2040],
   planM: [36, 'months', 24, 60], procM: [36, 'months', 24, 48], buildM: [48, 'months', 36, 72] });
 tech('hydrogen', { name: 'Hydrogen gensets / fuel cells', role: 'firm', maturity: 'Nascent', fuel: 'hydrogen', combustion: true, verify: 'National hazardous-substance regulation; specialist input; vendor data' }, {
@@ -307,11 +318,11 @@ tech('hydrogen', { name: 'Hydrogen gensets / fuel cells', role: 'firm', maturity
 tech('backupDiesel', { name: 'Diesel standby gensets', role: 'backup', maturity: 'Commercial', fuel: 'diesel', combustion: true, verify: 'Manufacturer datasheets' }, {
   capexPerKW: [450, '€/kW', 350, 550], fomPerKW: [8, '€/kW/yr', 5, 12], unitMW: [2.75, 'MW', 2.5, 3.0], eff: [0.38, 'electrical efficiency', 0.35, 0.42],
   life: [25, 'yr', 20, 30], m2PerUnit: [100, 'm² per unit incl. access', 70, 140], stackM: [10, 'm', 8, 12],
-  procM: [12, 'months', 9, 18], buildM: [6, 'months', 3, 9] });
+  procM: [15, 'months', 12, 16], buildM: [6, 'months', 3, 9] });
 tech('backupHvo', { name: 'HVO standby gensets', role: 'backup', maturity: 'Commercial', fuel: 'hvo', combustion: true, verify: 'Manufacturer datasheets' }, {
   capexPerKW: [460, '€/kW', 360, 560], fomPerKW: [8, '€/kW/yr', 5, 12], unitMW: [2.75, 'MW', 2.5, 3.0], eff: [0.38, 'electrical efficiency', 0.35, 0.42],
   life: [25, 'yr', 20, 30], m2PerUnit: [100, 'm² per unit incl. access', 70, 140], stackM: [10, 'm', 8, 12],
-  procM: [12, 'months', 9, 18], buildM: [6, 'months', 3, 9] });
+  procM: [15, 'months', 12, 16], buildM: [6, 'months', 3, 9] });
 tech('backupGas', { name: 'Gas standby gensets', role: 'backup', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Manufacturer datasheets' }, {
   capexPerKW: [550, '€/kW', 450, 700], fomPerKW: [9, '€/kW/yr', 6, 13], unitMW: [2.0, 'MW', 1.5, 2.5], eff: [0.40, 'electrical efficiency', 0.36, 0.43],
   life: [25, 'yr', 20, 30], m2PerUnit: [110, 'm² per unit incl. access', 80, 150], stackM: [10, 'm', 8, 12],
@@ -543,10 +554,37 @@ cooling('evap', 'Evaporative-adiabatic', { tempBasis: ['wetbulb', ''], fcThresho
 cooling('dlc', 'DLC + dry coolers', { tempBasis: ['drybulb', ''], fcThreshold: [26, '°C', 22, 30], band: [10, 'K', 6, 12], copRef: [5.5, 'COP at tRef', 4.5, 6.5], tRef: [35, '°C', 35, 35], copSlope: [0.1, 'COP per K', 0.06, 0.14], fanFrac: [0.045, 'MW per MW IT', 0.03, 0.06], lossFrac: [0.06, 'MW per MW IT', 0.05, 0.08], densityKWm2: [4.0, 'kW IT/m² whitespace', 3.0, 6.0], wueBase: [0.02, 'L/kWh IT', 0, 0.1], capexDeltaPerKW: [150, '€/kW IT vs air', 80, 250] });
 cooling('immersion', 'Immersion', { tempBasis: ['drybulb', ''], fcThreshold: [30, '°C', 26, 34], band: [10, 'K', 6, 12], copRef: [5.5, 'COP at tRef', 4.5, 6.5], tRef: [38, '°C', 38, 38], copSlope: [0.1, 'COP per K', 0.06, 0.14], fanFrac: [0.03, 'MW per MW IT', 0.02, 0.05], lossFrac: [0.06, 'MW per MW IT', 0.05, 0.08], densityKWm2: [3.0, 'kW IT/m² whitespace', 2.0, 4.5], wueBase: [0.02, 'L/kWh IT', 0, 0.1], capexDeltaPerKW: [250, '€/kW IT vs air', 150, 400] });
 
+// Batch 2 source records (work package 0, 2026-10-23).
+const SOURCED_TECH = {
+  'tech.solarGround.capexPerKW': SRC.fraunhofer, 'tech.solarGround.fomPerKW': SRC.fraunhofer,
+  'tech.solarRoof.capexPerKW': SRC.fraunhofer, 'tech.solarRoof.fomPerKW': SRC.fraunhofer,
+  'tech.wind.capexPerKW': SRC.fraunhofer, 'tech.wind.fomPerKW': SRC.fraunhofer,
+  'tech.bess.capexPerKWh': SRC.bnef, 'tech.bess.capexPerKW': SRC.bnef,
+  'tech.gasRecip.capexPerKW': SRC.dcGas, 'tech.gasRecip.unitMW': SRC.wartsila,
+  'tech.gasTurbine.capexPerKW': SRC.eiaTurbine, 'tech.smr.capexPerKW': SRC.eiaSmr, 'tech.smr.unitMW': SRC.eiaSmr,
+  'tech.backupDiesel.procM': SRC.gensetLead, 'tech.backupHvo.procM': SRC.gensetLead,
+};
+const SOURCED_NOTES = {
+  'tech.wind.fomPerKW': 'Fraunhofer €32/kW a year fixed + €0.007/kWh variable; at about 2,600 full-load hours that is about €50/kW a year, all booked as fixed.',
+  'tech.bess.capexPerKWh': '€125/kWh + €135/kW gives €158/kWh for a 4-hour system (BNEF Europe 2025 turnkey); the split is a judgement.',
+  'tech.bess.capexPerKW': 'See tech.bess.capexPerKWh.',
+  'tech.gasRecip.unitMW': 'Data centre gas engine orders now use units of about 10 MW (was 4.5 MW).',
+  'tech.gasTurbine.capexPerKW': 'Between the EIA aeroderivative and large simple-cycle figures; was €750/kW.',
+  'tech.smr.capexPerKW': 'EIA generic 6 × 80 MW SMR, 2023 dollars not escalated; Darlington suggests higher (about CAD17,400/kW for four 300 MWe units).',
+  'tech.backupDiesel.procM': '52–70 weeks quoted for 1.25–3.25 MW standby units in 2026; was 12 months.',
+  'tech.backupHvo.procM': 'As diesel standby units (same machines); was 12 months.',
+};
+for (const [path, src] of Object.entries(SOURCED_TECH)) {
+  applySource(REGISTRY[path], src);
+  if (SOURCED_NOTES[path]) REGISTRY[path].note = SOURCED_NOTES[path];
+}
+rec('country.gridCarbon', 'by country', 'gCO2e/kWh, life-cycle, 2025', { dist: 'fixed', ref: '§5.4, §18', src: SRC.carbonEmber, note: 'Ember 2025 for all 31 countries (one basis: life-cycle intensity of generation). The GHG Protocol location-based method often uses direct-combustion factors, which are lower; the basis is a judgement recorded in OPEN-QUESTIONS 66.' });
+rec('country.wholesalePrice', 'by country', '€/MWh, mean day-ahead 2025', { dist: 'fixed', ref: '§5.4, §18', src: SRC.priceEM, note: 'Batch 2 updated France 85 → 62, Finland 55 → 41, Norway 50 → 44, Portugal 75 → 66. Cyprus, Malta, Switzerland and Iceland keep unresearched values (no published day-ahead figure found).' });
+
 export const PPA = {
   strike: {
-    solar: rec('ppa.strike.solar', 55, '€/MWh', { low: 45, high: 70, verify: 'PPA market indices (e.g. LevelTen, Pexapark)', ref: '§9.5' }),
-    wind: rec('ppa.strike.wind', 65, '€/MWh', { low: 55, high: 80, verify: 'PPA market indices', ref: '§9.5' }),
+    solar: rec('ppa.strike.solar', 57, '€/MWh', { low: 45, high: 70, verify: 'PPA market indices (e.g. LevelTen, Pexapark)', ref: '§9.5', src: SRC.levelten }),
+    wind: rec('ppa.strike.wind', 86, '€/MWh', { low: 70, high: 100, verify: 'PPA market indices', ref: '§9.5', src: SRC.levelten }),
     hybrid: rec('ppa.strike.hybrid', 62, '€/MWh', { low: 50, high: 75, verify: 'PPA market indices', ref: '§9.5' }),
     baseload: rec('ppa.strike.baseload', 80, '€/MWh', { low: 65, high: 95, verify: 'PPA market indices', ref: '§9.5' }),
     cfe247: rec('ppa.strike.cfe247', 95, '€/MWh', { low: 80, high: 120, verify: 'PPA market indices', ref: '§9.5' }),

@@ -247,8 +247,8 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 
 ## PPA prices
 
-- **ppa.strike.solar**: 55 €/MWh; range 45–70; src; check against PPA market indices (e.g. LevelTen, Pexapark).
-- **ppa.strike.wind**: 65 €/MWh; range 55–80; src; check against PPA market indices.
+- **ppa.strike.solar**: 57 €/MWh; range 45–70; src; check against PPA market indices (e.g. LevelTen, Pexapark).
+- **ppa.strike.wind**: 86 €/MWh; range 70–100; src; check against PPA market indices.
 - **ppa.strike.hybrid**: 62 €/MWh; range 50–75; src; check against PPA market indices.
 - **ppa.strike.baseload**: 80 €/MWh; range 65–95; src; check against PPA market indices.
 - **ppa.strike.cfe247**: 95 €/MWh; range 80–120; src; check against PPA market indices.
@@ -329,8 +329,8 @@ Check against: ASHRAE TC 9.9 thermal guidelines; vendor data; published design s
 
 Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications.
 
-- **capexPerKW**: 700 €/kWp; range 600–800; src.
-- **fomPerKW**: 12 €/kWp/yr; range 9–15; src.
+- **capexPerKW**: 700 €/kWp; range 700–900; src.
+- **fomPerKW**: 13.3 €/kWp/yr; range 10–16; src.
 - **life**: 30 yr; range 25–35; src.
 - **haPerMWp**: 1.2 ha/MWp; range 0.8–1.8; src.
 - **planM**: 9 months; range 6–18; src.
@@ -341,8 +341,8 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 
 Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications.
 
-- **capexPerKW**: 900 €/kWp; range 750–1,100; src.
-- **fomPerKW**: 14 €/kWp/yr; range 10–18; src.
+- **capexPerKW**: 900 €/kWp; range 900–1,600; src.
+- **fomPerKW**: 21.5 €/kWp/yr; range 15–25; src.
 - **life**: 25 yr; range 20–30; src.
 - **m2PerKWp**: 5.5 m²/kWp; range 4.5–7; src.
 - **usableFraction**: 0.5 fraction of free roof; range 0.4–0.6; src.
@@ -353,8 +353,8 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 
 Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications.
 
-- **capexPerKW**: 1,350 €/kW; range 1,200–1,500; src.
-- **fomPerKW**: 35 €/kW/yr; range 25–45; src.
+- **capexPerKW**: 1,350 €/kW; range 1,300–1,900; src.
+- **fomPerKW**: 50 €/kW/yr; range 40–60; src. Fraunhofer €32/kW a year fixed + €0.007/kWh variable; at about 2,600 full-load hours that is about €50/kW a year, all booked as fixed.
 - **life**: 25 yr; range 20–30; src.
 - **turbineMW**: 5 MW; range 3–6; src.
 - **tipHeightM**: 180 m; range 150–220; src.
@@ -368,8 +368,8 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 
 Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications.
 
-- **capexPerKWh**: 250 €/kWh; range 200–350; src.
-- **capexPerKW**: 150 €/kW; range 100–200; src.
+- **capexPerKWh**: 125 €/kWh; range 100–180; src. €125/kWh + €135/kW gives €158/kWh for a 4-hour system (BNEF Europe 2025 turnkey); the split is a judgement.
+- **capexPerKW**: 135 €/kW; range 100–200; src. See tech.bess.capexPerKWh.
 - **fomPct**: 0.015 fraction of capex/yr; range 0.01–0.025; src.
 - **rte**: 0.88 round-trip efficiency; range 0.85–0.92; src.
 - **life**: 15 yr; range 12–20; src.
@@ -382,12 +382,12 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 
 Check against: Danish Energy Agency Technology Catalogue; vendor data.
 
-- **capexPerKW**: 900 €/kW; range 800–1,000; src.
+- **capexPerKW**: 900 €/kW; range 715–1,075; src.
 - **fomPerKW**: 15 €/kW/yr; range 10–20; src.
 - **vomPerMWh**: 8 €/MWh; range 5–12; src.
 - **eff**: 0.44 electrical efficiency (LHV); range 0.4–0.48; src.
 - **msl**: 0.3 min stable load fraction; range 0.2–0.4; src.
-- **unitMW**: 4.5 MW; range 2–10; src.
+- **unitMW**: 10 MW; range 4.5–10.3; src. Data centre gas engine orders now use units of about 10 MW (was 4.5 MW).
 - **life**: 20 yr; range 15–25; src.
 - **m2PerMW**: 200 m²/MWe; range 120–300; src.
 - **stackM**: 25 m; range 20–30; src.
@@ -398,7 +398,7 @@ Check against: Danish Energy Agency Technology Catalogue; vendor data.
 
 Check against: Danish Energy Agency Technology Catalogue; vendor data.
 
-- **capexPerKW**: 750 €/kW; range 600–900; src.
+- **capexPerKW**: 1,100 €/kW; range 750–1,450; src. Between the EIA aeroderivative and large simple-cycle figures; was €750/kW.
 - **fomPerKW**: 12 €/kW/yr; range 8–16; src.
 - **vomPerMWh**: 6 €/MWh; range 4–9; src.
 - **eff**: 0.38 electrical efficiency (LHV); range 0.33–0.42; src.
@@ -480,7 +480,7 @@ Check against: Rental vendor indications.
 
 Check against: Vendor and regulator publications.
 
-- **capexPerKW**: 7,000 €/kW; range 5,000–12,000; src.
+- **capexPerKW**: 8,000 €/kW; range 7,000–13,000; src. EIA generic 6 × 80 MW SMR, 2023 dollars not escalated; Darlington suggests higher (about CAD17,400/kW for four 300 MWe units).
 - **fomPerKW**: 120 €/kW/yr; range 80–160; src.
 - **vomPerMWh**: 3 €/MWh; range 2–5; src.
 - **fuelPerMWhE**: 9 €/MWh_e; range 6–12; src.
@@ -519,7 +519,7 @@ Check against: Manufacturer datasheets.
 - **life**: 25 yr; range 20–30; src.
 - **m2PerUnit**: 100 m² per unit incl. access; range 70–140; src.
 - **stackM**: 10 m; range 8–12; src.
-- **procM**: 12 months; range 9–18; src.
+- **procM**: 15 months; range 12–16; src. 52–70 weeks quoted for 1.25–3.25 MW standby units in 2026; was 12 months.
 - **buildM**: 6 months; range 3–9; src.
 
 ### HVO standby gensets
@@ -533,7 +533,7 @@ Check against: Manufacturer datasheets.
 - **life**: 25 yr; range 20–30; src.
 - **m2PerUnit**: 100 m² per unit incl. access; range 70–140; src.
 - **stackM**: 10 m; range 8–12; src.
-- **procM**: 12 months; range 9–18; src.
+- **procM**: 15 months; range 12–16; src. As diesel standby units (same machines); was 12 months.
 - **buildM**: 6 months; range 3–9; src.
 
 ### Gas standby gensets

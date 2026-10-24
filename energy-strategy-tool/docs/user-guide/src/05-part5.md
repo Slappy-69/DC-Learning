@@ -20,6 +20,10 @@ A check here is not a verification in the brief's sense. Values should be verifi
 
 # 50. Defaults checked against published sources {#ch50}
 
+::: {.callout .built}
+**Batch 2 applied (23 October 2026).** The updates marked below were made with their sources (OPEN-QUESTIONS 66, 67), and carry the label "sourced — not independently checked". The "App" column still shows the value before the update.
+:::
+
 ## Market prices and exchange rates
 
 | Default | App | Published | Status |
@@ -41,9 +45,9 @@ A check here is not a verification in the brief's sense. Values should be verifi
 
 | Default | App | Published | Status |
 |---|---|---|---|
-| Wholesale price (27 countries with data) | by country | 20 within 10 % of the latest annual figure; France €85 against €61.5 (2025); Austria, Finland, Portugal, Slovenia, Norway and Czechia 12–22 % high (mostly against 2024 data) | 7 updates suggested (Appendix B) |
+| Wholesale price (27 countries with data) | by country | 20 within 10 % of the latest annual figure; France €85 against €61.5 (2025); Austria, Finland, Portugal, Slovenia, Norway and Czechia 12–22 % high (mostly against 2024 data) | **Updated 23 Oct 2026 (batch 2)**: France 62, Finland 41, Norway 44, Portugal 66 (Electricity Maps 2025); Austria (100.4), Czechia (95.5) and Slovenia (106.0) are consistent with 2025 and kept |
 | Non-commodity adder | €25–55/MWh (Germany and United Kingdom €55) | 50Hertz (German transmission operator), 2026, extra-high voltage, ≥ 2,500 h a year: €53.06 per kW a year + 0.69 ct/kWh, about €13.5/MWh at 8,000 hours, before levies and taxes | Check: likely high for a transmission-connected site; research by country |
-| Grid carbon (31 countries) | by country | 12 within 10 % of Ember's 2025 figures; largest gaps Estonia (500 against 319 g/kWh), Bulgaria (400 against 276), Iceland (15 against 28), Finland (80 against 57), France (55 against 41) | 19 updates suggested (Appendix B) |
+| Grid carbon (31 countries) | by country | 12 within 10 % of Ember's 2025 figures; largest gaps Estonia (500 against 319 g/kWh), Bulgaria (400 against 276), Iceland (15 against 28), Finland (80 against 57), France (55 against 41) | **Updated 23 Oct 2026 (batch 2)**: all 31 set to Ember 2025, life-cycle basis (OPEN-QUESTIONS 66) |
 | Grid connection capex (EHV) | €120k/MW + substation €70k/MW | 50Hertz 2026 construction-cost contribution €96.91/kW at extra-high voltage, €113.15/kW at the EHV/HV transformation level | Consistent (agreed: default 0, with country reference) |
 
 ## Technology costs and performance
@@ -53,18 +57,18 @@ A check here is not a verification in the brief's sense. Values should be verifi
 | Ground PV capex | €700/kWp | Fraunhofer ISE 2024 (Germany, > 1 MWp): €700–900/kWp; IRENA, 2025 global average $667/kW | Consistent (low end) |
 | Ground PV fixed O&M | €12/kWp a year | Fraunhofer: €13.3 | Consistent |
 | Roof PV capex | €900/kWp | Fraunhofer, large roofs: €900–1,600/kWp | Consistent (low end) |
-| Roof PV fixed O&M | €14/kWp a year | Fraunhofer: €21.5 | Update suggested |
+| Roof PV fixed O&M | €14/kWp a year | Fraunhofer: €21.5 | **Updated (batch 2)**: €21.5; ground PV €13.3 |
 | Onshore wind capex | €1,350/kW | Fraunhofer: €1,300–1,900; IRENA 2025 global $976; Lazard 2026 (US) $1,900–2,750 | Consistent (European low end) |
-| Wind O&M | €35/kW a year | Fraunhofer: €32 + €0.007/kWh (about €50 a year in all) | Slightly low |
-| Battery capex | €250/kWh + €150/kW (about €288/kWh for 4 h) | BloombergNEF 2025 turnkey: Europe $177/kWh, global $117; IRENA 2025 $140; Lazard 2026 (US, 4 h) $270–365 | Update suggested (high) |
+| Wind O&M | €35/kW a year | Fraunhofer: €32 + €0.007/kWh (about €50 a year in all) | **Updated (batch 2)**: €50 |
+| Battery capex | €250/kWh + €150/kW (about €288/kWh for 4 h) | BloombergNEF 2025 turnkey: Europe $177/kWh, global $117; IRENA 2025 $140; Lazard 2026 (US, 4 h) $270–365 | **Updated (batch 2)**: €125/kWh + €135/kW (€158/kWh for 4 h) |
 | Battery round-trip efficiency | 88 % | typical 85–90 % | Consistent |
 | Lifetimes | PV 30 (roof 25), wind 25, battery 15 years | Fraunhofer: PV 30, wind 25, battery 15 | Consistent |
-| Gas engines | 4.5 MW units, €900/kW | data centre orders now use engines of about 10 MW (Wärtsilä 34SG, 40 × 10.3 MW, April 2026); capex not checked | Unit size: update; capex: research |
-| Gas turbines | €750/kW | EIA 2025, aeroderivative: $1,606/kW (2023 $); Lazard 2026, gas peaking: $1,100–1,650/kW | Update suggested (low) |
+| Gas engines | 4.5 MW units, €900/kW | data centre orders now use engines of about 10 MW (Wärtsilä 34SG, 40 × 10.3 MW, April 2026); turbines or engines $800–1,200/kW installed (Datacentres.com 2026) | **Updated (batch 2)**: 10 MW units; €900/kW sourced |
+| Gas turbines | €750/kW | EIA 2025, aeroderivative: $1,606/kW (2023 $), H-class simple cycle $836/kW; Lazard 2026, gas peaking: $1,100–1,650/kW | **Updated (batch 2)**: €1,100/kW |
 | Fuel cells (SOFC) | €2,800/kW, 55 % | about $2,500–3,000/kW, about 60 % (secondary source, low confidence) | Consistent (low confidence) |
-| Diesel standby gensets | €450/kW, 2.75 MW, 12 months procurement | $450–600/kW installed (2026); 3.0–3.75 MW units now usual on large campuses; 18–24 months lead time above 2.5 MW | Capex consistent; unit size and lead time: update |
+| Diesel standby gensets | €450/kW, 2.75 MW, 12 months procurement | $450–600/kW installed (2026); 3.0–3.75 MW units now usual on large campuses; 52–70 weeks for 1.25–3.25 MW units (Global Power Supply, May 2026) | **Updated (batch 2)**: 15 months procurement; unit size kept (no clear source) |
 | Genset fuel use | 0.26 L/kWh | 0.24–0.25 L/kWh at full load (3 MW unit) | Consistent (slightly cautious) |
-| SMR | €7,000/kW, 80 MW units, from 2035 | Darlington BWRX-300 (Canada): 300 MWe units, about CAD 17,400/kW (first unit about CAD 20,300/kW), first unit in service 2030; EIA 2025: $8,936/kW (2023 $) | Update suggested |
+| SMR | €7,000/kW, 80 MW units, from 2035 | Darlington BWRX-300 (Canada): 300 MWe units, about CAD 17,400/kW (first unit about CAD 20,300/kW), first unit in service 2030; EIA 2025: $8,936/kW (2023 $) | **Updated (batch 2)**: €8,000/kW (EIA); 80 MW units and 2035 kept |
 
 ## Fuels and emission factors
 
@@ -80,7 +84,7 @@ A check here is not a verification in the brief's sense. Values should be verifi
 | Default | App | Published | Status |
 |---|---|---|---|
 | Solar PPA | €55/MWh | LevelTen, Q2 2026, pan-European solar: €56.59 | Consistent |
-| Wind PPA | €65/MWh | LevelTen, Q2 2026, wind: $95.86 (about €85) | Update suggested |
+| Wind PPA | €65/MWh | LevelTen, Q2 2026, wind: $95.86 (about €85) | **Updated (batch 2)**: €86; solar €57 |
 | Hybrid, baseload, 24/7 | €62, €80, €95/MWh | Pexapark European composite, September 2026: €48.34; no like-for-like figures found | Research |
 | Shaping cost | €5/MWh | not checked | Research |
 

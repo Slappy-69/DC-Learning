@@ -1749,3 +1749,25 @@ What changed:
 Not built: roads on the map (OpenStreetMap PMTiles, owner's call on size and licence), editable exchange rates, NOAA/EPW weather (package 0), inputs in the display currency.
 
 Tests: 34 (outlines, pins incl. Strasbourg and Belgrade, flags, currency, offline); browser B36.
+
+### Batch 2 applied (2026-10-23, branch `feature/defaults-batch2` from `feature/input-model`)
+
+Approved under the owner's standing instruction of 2026-10-23 to follow Claude's recommendations (OPEN-QUESTIONS 66, 67). Sources opened on 2026-10-23 unless noted; each record has source, year, link, access and approval dates and the label "sourced — not independently checked" (23 sourced records in all, with batch 1).
+
+| Default | Was | Now | Source |
+|---|---|---|---|
+| Grid carbon, 31 countries | various | Ember 2025 life-cycle (GB 200 → 217 g/kWh) | Ember via Our World in Data (accessed 2026-10-21 for the guide, Appendix B3) |
+| Wholesale price FR, FI, NO, PT | 85, 55, 50, 75 | 62, 41, 44, 66 €/MWh | Electricity Maps, Grid Review 2025 (AT, CZ, SI checked, unchanged) |
+| Roof / ground PV O&M | 14 / 12 | 21.5 / 13.3 €/kWp a year | Fraunhofer ISE 2024 |
+| Wind O&M | 35 | 50 €/kW a year (fixed + variable) | Fraunhofer ISE 2024 |
+| Battery capex | €250/kWh + €150/kW | €125/kWh + €135/kW | BNEF 2025 Europe turnkey $177/kWh |
+| Gas turbine capex | €750/kW | €1,100/kW | EIA AEO2025 |
+| Gas engine unit | 4.5 MW | 10 MW | Wärtsilä, 16 Apr 2026 |
+| Gas engine capex | €900/kW | €900/kW (sourced) | Datacentres.com 2026, $800–1,200/kW |
+| SMR capex | €7,000/kW | €8,000/kW | EIA AEO2025 (Darlington noted) |
+| Standby genset procurement | 12 months | 15 months | Global Power Supply, May 2026 |
+| PPA solar / wind | 55 / 65 | 57 / 86 €/MWh | LevelTen Q2 2026 via PV Tech |
+
+USD converted at the ECB reference rate of 12 Oct 2026 (1.1181 $/€); 2023-dollar EIA figures are not escalated.
+
+T1 after batch 2: the leader is unchanged (O1W8C9Z9, score 92.69, LCOE €153.1/MWh); its location-based carbon rises from 113 to 123 g/kWh with the UK grid at 217 g/kWh; 1,566 options adequate (unchanged).
