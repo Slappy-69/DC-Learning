@@ -155,12 +155,20 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **User guide:** chapters 22, 34 and 47.
 - **Progress:** built 2026-10-24 on `feature/engine-fixes`, not merged.
 
+### 15. Study files: save and reopen (added 2026-10-24)
+
+- **Why:** OPEN-QUESTIONS 27: without it an engineer cannot return to a study.
+- **Decision:** OPEN-QUESTIONS 27, Claude's recommendation accepted in advance by the owner (2026-10-24).
+- **What:** `src/engine/study.js` (`studyFile`, `readStudyFile`, `compareWithSaved`, schema `dc-energy-study/1`); "Save study" and "Open study…" in the header; a status line under the header.
+- **Acceptance tests:** Node test 42 (`app/tests/study-tests.mjs`); browser check B37.
+- **User guide:** chapters 4, 29 and 56.
+- **Progress:** built 2026-10-24 on `feature/engine-fixes`, not merged.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:
 
 - Known issues: none open (all 20 resolved by 2026-10-24).
-- Saving and reopening a study (OPEN-QUESTIONS 27).
 - The plain-English summary (§14; OPEN-QUESTIONS 12).
 - Ranges, Monte Carlo, robust pick, breakevens and scenarios (§13).
 - Parallel coordinates, the choice-impact chart, the schematic, key quantities, presentation mode, snapshots, undo and redo (§12, §16).

@@ -49,7 +49,7 @@ Audience (walkthrough, 2026-10-21): engineers at data centre consultancies in ge
 
 ### 1.4 Scope of a session
 
-One site and one project at a time. A project file (JSON) can be saved and reopened, and two saved projects can be compared offline by exporting each (multi-site portfolio is out of scope). Not built, and the walkthrough of 2026-10-21 did not cover it (OPEN-QUESTIONS 27).
+One site and one project at a time. A project file (JSON) can be saved and reopened, and two saved projects can be compared offline by exporting each (multi-site portfolio is out of scope). *As built 2026-10-24 (work package 15, OPEN-QUESTIONS 27):* "Save study" and "Open study…", schema `dc-energy-study/1`; the reopened study is re-run and compared with the saved result.
 
 ---
 

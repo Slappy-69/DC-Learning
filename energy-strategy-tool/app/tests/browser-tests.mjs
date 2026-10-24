@@ -554,6 +554,26 @@ await check('B32. PDF report (work package 10, AC 26): "Save PDF report" downloa
   return `${name}: ${pages} pages, ${(buf.length / 1024).toFixed(0)} kB; status "${status.match(/PDF report made[^.]*\./)[0]}".`;
 });
 
+await check('B37. Study files (work package 15): "Save study" downloads a JSON study file with the inputs and the leader; "Open study…" reads it back, re-runs if needed and says the result matches the saved study; a file that is not a study is refused with a reason', async () => {
+  const { page, errors } = main;
+  const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.locator('#save-study').click()]);
+  const name = dl.suggestedFilename();
+  ok(/-study-\d{4}-\d{2}-\d{2}\.json$/.test(name), `file name ${name}`);
+  const path = await dl.path();
+  const f = JSON.parse(readFileBytes(path).toString('utf8'));
+  ok(f.schema === 'dc-energy-study/1' && f.inputs && f.result && f.result.leader && f.result.leader.name, 'study file content');
+  const leaderNow = await page.locator('.header-strip').innerText();
+  await page.locator('#open-study-file').setInputFiles(path);
+  await page.waitForFunction(() => { const m = document.querySelector('.study-msg'); return m && /matches the saved study|differs|different result/.test(m.textContent); }, null, { timeout: 180000 });
+  const msg = await page.locator('.study-msg').innerText();
+  ok(/Re-run matches the saved study/.test(msg), `message: ${msg.slice(0, 200)}`);
+  ok((await page.locator('.header-strip').innerText()) === leaderNow, 'header changed after reopening the same study');
+  await page.locator('#open-study-file').setInputFiles({ name: 'notes.json', mimeType: 'application/json', buffer: Buffer.from('{"hello": 1}') });
+  await page.waitForFunction(() => /Could not open notes\.json/.test((document.querySelector('.study-msg') || {}).textContent || ''), null, { timeout: 10000 });
+  ok(errors.length === 0, errors.join(' | '));
+  return `${name} (${(readFileBytes(path).length / 1024).toFixed(0)} kB, leader ${f.result.leader.name.slice(0, 60)}…); reopened: "${msg.slice(0, 120)}…"; a JSON file without a schema refused.`;
+});
+
 await check('B34. Knowledge levels and the economics section (work package 2, AC 16): the IT load and grid fields accept "Not known"; section 5 is Economics with the WACC explanation and the further periods; each top-five card counts its assumed defaults', async () => {
   const { page, errors } = main;
   await page.getByRole('tab', { name: /^Options/ }).click();

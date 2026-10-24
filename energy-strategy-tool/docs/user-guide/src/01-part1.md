@@ -166,9 +166,10 @@ Move the **weights** (cost, carbon, time-to-power, deliverability) or pick a pre
 - **Inputs** / **Close inputs**: opens and closes the inputs panel.
 - **Load T1 example**: replaces your inputs with the T1 example.
 - **Reset to defaults**: replaces your inputs with the defaults (required fields keep the example values, marked as such).
+- **Save study** and **Open study…**: save your inputs to a study file and open one again (built 24 October 2026; chapter 29).
 
-::: {.callout .open}
-**Open.** The current version cannot save and reopen a project. The brief planned a project file; the walkthrough did not discuss it. Until it exists, record your inputs (the agreed PDF report will list them all).
+::: {.callout .built}
+**Built 24 October 2026** (work package 15, OPEN-QUESTIONS 27). A study is saved as one JSON file and reopened from it: chapter 29 says what it holds and what happens when the tool has changed since it was saved.
 :::
 
 ## The inputs panel

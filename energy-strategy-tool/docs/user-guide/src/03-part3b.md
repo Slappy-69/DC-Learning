@@ -241,6 +241,17 @@ How the layout works is in chapter 36.
 
 # 29. Export: PDF report and run log {#ch29}
 
+## Study files (built 24 October 2026)
+
+**Save study** writes one file, named after the project and the date (for example `Pego-data-centre-campus-study-2026-10-24.json`; the Windows program asks where to save it). It holds:
+
+- your inputs as entered: a value you did not enter is stored as "at default", so a reopened study takes the tool's defaults of the day;
+- the inputs as they were run, with every default resolved, for the record;
+- a record of the result of the last run of those inputs: its fingerprint (input hash), the number of options and adequate options, and the leader with its score, LCOE, carbon and capex.
+
+**Open study…** reads a study file, replaces the inputs and runs the study. When the run finishes, the line under the header says either "Re-run matches the saved study" or that the tool's defaults or engine have changed since it was saved, naming the saved leader and today's. A study saved by an earlier version opens with today's defaults for any input it lacks (for example the existing-plant inputs), and the line lists them. A file that is not a study of this tool, or one saved by a newer version, is refused with a reason. Nothing is sent anywhere: the file stays on your computer.
+
+
 ## Run log (current version)
 
 From the Run progress panel, **Download run log** saves the log of the last run as JSON or CSV. The Windows program asks where to save it. The log has the schema name `dc-energy-run-log/1` and one row per event: sequence number, stage, event type (start, progress, end or warning), milliseconds since the start, count, total, and details (the source, and stage-specific data such as cache hits or the leader). Two runs with the same inputs give identical logs apart from the timings.

@@ -12,7 +12,7 @@ import SensitivityView, { latestSensitivity } from './components/SensitivityView
 import { buildReport, reportFileName } from './report/report.js';
 import { saveBytes } from './saveFile.js';
 import { useCompute } from './useCompute.js';
-import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount } from './engine/index.js';
+import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount, studyFile, studyFileName, readStudyFile, compareWithSaved, hashInputs } from './engine/index.js';
 import { viewSetting, withoutSiteFilters } from './engine/view.js';
 import { UnverifiedTag } from './components/Field.jsx';
 import { scoreOptions, effectiveWeights, applyView } from './engine/scoring.js';
@@ -123,6 +123,38 @@ export default function App() {
   const leader = useMemo(() => (run ? weightedPick(run.options) : null), [run]);
   // PDF report (work package 10): made on this computer from the run on screen; never in the hosted page.
   const [pdfMsg, setPdfMsg] = useState('');
+  // Study files (work package 15, OPEN-QUESTIONS 27): save the inputs (and a record of the result); open one, re-run it and
+  // say whether the result matches the record.
+  const [studyMsg, setStudyMsg] = useState('');
+  const [openedStudy, setOpenedStudy] = useState(null);
+  const studyInput = useRef(null);
+  const saveStudy = () => {
+    if (__HOSTED__) return;
+    try {
+      const hash = hashInputs(normalizeInputs(inputs));
+      const f = studyFile(inputs, compute.run && compute.run.inputHash === hash ? compute.run : null);
+      saveBytes(studyFileName(inputs), JSON.stringify(f, null, 1), 'application/json');
+      setStudyMsg(`Study saved: ${f.name}${f.result ? `, with the result of the last run (leader ${f.result.leader.name})` : ' (inputs only: run it before saving to keep a record of the result)'}.`);
+    } catch (e) { setStudyMsg(`Could not save the study: ${e && e.message ? e.message : e}`); }
+  };
+  const openStudy = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const r = readStudyFile(await file.text());
+      if (!r.ok) { setStudyMsg(`Could not open ${file.name}: ${r.error}`); return; }
+      setInputs(r.inputs);
+      setOpenedStudy({ file: r.file, hash: hashInputs(normalizeInputs(r.inputs)) });
+      setStudyMsg(`Opened "${r.file.name}" (saved ${String(r.file.savedAt || '').slice(0, 10)}). ${r.warnings.join(' ')} Running it…`.replace(/\s+/g, ' '));
+    } catch (err) { setStudyMsg(`Could not open ${file.name}: ${err && err.message ? err.message : err}`); }
+  };
+  useEffect(() => {
+    if (!openedStudy || compute.status !== 'done' || !compute.run || compute.run.inputHash !== openedStudy.hash) return;
+    const c = compareWithSaved(openedStudy.file, compute.run);
+    setStudyMsg(`Opened "${openedStudy.file.name}". ${c ? c.message : 'The file holds no saved result to compare with.'}`);
+    setOpenedStudy(null);
+  }, [compute.status, compute.run, openedStudy]);
   useEffect(() => { setPdfMsg(''); }, [run]);
   const savePdf = () => {
     if (__HOSTED__ || !run) return;
@@ -233,6 +265,9 @@ export default function App() {
           <button type="button" className="chip-btn panel-toggle" aria-expanded={panelOpen} aria-controls="inputs-panel" onClick={() => setPanelOpen(!panelOpen)}>{panelOpen ? 'Close inputs' : 'Inputs'}</button>
           <button type="button" className="chip-btn" onClick={() => setInputs(referenceT1())}>Load T1 example</button>
           <button type="button" className="chip-btn" onClick={() => setInputs(buildDefaultInputs())}>Reset to defaults</button>
+          {!__HOSTED__ ? <button type="button" className="chip-btn" id="save-study" onClick={saveStudy}>Save study</button> : null}
+          <button type="button" className="chip-btn" id="open-study" onClick={() => studyInput.current && studyInput.current.click()}>Open study…</button>
+          <input ref={studyInput} id="open-study-file" type="file" accept=".json,application/json" hidden onChange={openStudy} aria-label="Study file to open" />
           {run && !__HOSTED__ ? <button type="button" className="chip-btn" id="save-pdf" onClick={savePdf} disabled={compute.status === 'running'}>Save PDF report</button> : null}
           <button type="button" className="chip-btn" aria-expanded={settingsOpen} aria-controls="general-settings" onClick={() => setSettingsOpen(!settingsOpen)}>General settings</button>
         </div>
@@ -273,6 +308,7 @@ export default function App() {
             <div className="hs-item"><span className="hs-k">Unverified defaults</span><span className="hs-v">{unverifiedCount} of {recordCount} default records are <span className="tag tag-unverified">{LABEL}</span>{recordCount - unverifiedCount > 0 ? <> · {recordCount - unverifiedCount} <span className="tag tag-sourced">sourced — not independently checked</span></> : null}</span><span className="hs-sub">The count affecting the leader needs a per-option record map (not in this slice)</span></div>
           </div>
 
+          {studyMsg ? <p className="study-msg" role="status" aria-live="polite">{studyMsg}</p> : null}
           <div className="status" role="status" aria-live="polite">
             {compute.notice ? <span className="flag-text">{compute.notice} </span> : null}
             {compute.status === 'running' ? (

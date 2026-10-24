@@ -137,6 +137,7 @@ table.mini th[scope=row] { font-weight: 500; color: var(--ink-2); }
 .hs-v { font-size: 13px; overflow-wrap: anywhere; }
 .hs-sub { font-size: 11px; color: var(--ink-3); }
 .status { min-height: 28px; padding: 6px 2px; font-size: 13px; color: var(--ink-2); }
+.study-msg { margin: 0; padding: 6px 2px 0; font-size: 13px; color: var(--ink-2); }
 .running { display: inline-flex; align-items: center; gap: 8px; }
 .spinner { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

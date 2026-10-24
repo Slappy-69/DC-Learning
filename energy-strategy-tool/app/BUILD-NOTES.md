@@ -1873,3 +1873,13 @@ Known issues 4 and 5, OPEN-QUESTIONS 84 and 85 (Claude's recommendations accepte
 - **Identical options:** an analysis of T1's 37 "same results as" marks found C9 (27, all without rooftop solar), C3 backup against grid services (4) and both together (6). Rule (o): without rooftop solar only the first open heat rejection location is generated (24,168 combinations removed in T1). C3 default set: Remove, Retain as backup, Retain as prime, Split; "Retain for grid services" stays available with a "values not generated" note. T1 now: 4 marks (C3 split and prime coinciding).
 - **T1 after the change:** 48,340 combinations; 1,604 of 2,000 adequate; leader OP13Y1Y "Grid + HVO-diesel prime bridge → retain as prime · retained-plant backup · Evaporative-adiabatic · PV 5.6 MWp · PPA hybrid 100 %", score 94.15, LCOE €151.9/MWh, capex €85 m, 121 g/kWh.
 - Tests: test 41; test 9c builds its air-cooled A1 reference explicitly; 72/72 Node tests.
+
+## Work package 15: study files (2026-10-24)
+
+OPEN-QUESTIONS 27 (Claude's recommendation accepted in advance by the owner). `src/engine/study.js`:
+
+- `studyFile(inputs, run)`: `{ schema: 'dc-energy-study/1', savedAt, engineVersion, name, inputs (as entered; null = at default), inputsAsRun (normalised), inputHash, result: { inputHash, options, adequate, leader: { id, name, score, lcoe, carbonG, capex } } | null }`. The result is kept only when the run on screen is of these inputs.
+- `readStudyFile(text)`: refuses invalid JSON, no schema, another schema, a newer schema version, no inputs, each with a reason; fills anything the file lacks from today's defaults (`buildDefaultInputs`, choices merged) and lists the paths filled; warns when the engine version differs.
+- `compareWithSaved(file, run)`: same inputs (hash) and the same leader, score and LCOE → "Re-run matches the saved study"; otherwise names the saved and current leaders and says whether the inputs (defaults) or the engine changed.
+- App: "Save study" (not in the hosted page: no downloads there) and "Open study…" (a hidden file input; the desktop program's file dialog), with a status line under the header. The desktop save dialog keeps its generic title for study files ("Save file"); the packaging was not changed, to avoid a Windows build for a title.
+- Tests: Node test 42 (round trip of T1, an older file with three inputs and a choice removed, a changed-default comparison, five refused files, a study without a run); browser check B37 (save, reopen with the same result, a JSON file without a schema refused).

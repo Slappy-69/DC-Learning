@@ -144,10 +144,11 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | PDF report; no Excel | Built (23 Oct 2026) | 29 |
 | General settings: Site tab (Beta) switch | Built (22 Oct 2026) | 28, 30 |
 | General settings: theme, run-log option, "About this copy" | Proposed | 30 |
-| Project save and reopen | Open | 4 |
+| Project save and reopen (study files) | Built (24 Oct 2026) | 4, 29 |
 | Plain-English summary of the result | Not built; in the brief, not discussed in the walkthrough | — |
 | Parallel coordinates, choice-impact chart | Not built; in the brief, not discussed in the walkthrough | — |
 | Monte Carlo ranges, robust pick, breakevens, scenarios | Not built; in the brief, not discussed in the walkthrough | 13 |
+| Work package 15: study files (save and reopen, with a check that the re-run matches) | Built (24 Oct 2026) | 4, 29 |
 | Work package 14: archetypes take the best open cooling type; identical options removed (heat rejection without rooftop solar, grid services while their revenue is not modelled) | Built (24 Oct 2026) | 34, 47 |
 | Work package 13: a large campus is laid out on demand on the Site tab, not option by option in the run | Built (24 Oct 2026) | 19, 28, 36 |
 | Work package 12: existing plant near the site, leased (exactly the units offered, lease from a month before first need, outside the campus) | Built (24 Oct 2026) | 17, 34, 35, 39 |
@@ -163,7 +164,7 @@ Collected from the chapters:
 - (Answered 23 October 2026) the top five show distinct strategies; pros and cons compare against the whole run (22).
 - (Answered 23 October 2026) wind uses the net developable area, which does not depend on the Site tab (15).
 - (Answered 23 October 2026) one density rule, the building massing (16).
-- Project save and reopen (4).
+- (Answered 24 October 2026) project save and reopen: study files (29).
 - Whether more than one cooling type can be compared in a run (6).
 
 ## Research before the first release

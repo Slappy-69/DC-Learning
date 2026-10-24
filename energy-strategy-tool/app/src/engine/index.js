@@ -20,6 +20,7 @@ export { layoutFacts, siteFitOf, SITE_FIT_STATUSES, NOISE_LABEL, siteFitIcon } f
 export { layoutForOption, lightContext } from './siteapi.js';
 export * as geometry from './geometry.js';
 export { evaluateOption } from './option.js';
+export { STUDY_SCHEMA, studyFile, studyFileName, readStudyFile, compareWithSaved } from './study.js';
 export { inspectOption, compareWithRun, balanceFromHourly, weekRange, weekPresets, plantSource, HOURS_PER_WEEK, WEEKS_PER_YEAR } from './inspect.js';
 export { allOptionFlags, unmetSummary, expectedConnectionCharge } from './evaluate.js';
 export { SOURCE_OF_TECH } from './blocks.js';
