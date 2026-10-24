@@ -22,7 +22,7 @@ export function setDisplayCurrency(code, rate) {
 export const displayCurrency = () => DISPLAY;
 export const cur = () => DISPLAY.symbol;
 // A unit string with the euro sign replaced by the display currency ("€/MWh" → "£/MWh").
-export const curUnit = (u) => (DISPLAY.code === 'EUR' ? u : String(u).replace(/€/g, DISPLAY.symbol.trim()));
+export const curUnit = (u) => (DISPLAY.code === 'EUR' ? u : String(u).replace(/\u20AC/g, DISPLAY.symbol.trim()));
 // Cost per MWh in the display currency.
 export function perMWh(x, n = 3) {
   if (x == null || !Number.isFinite(x)) return '—';
