@@ -10,7 +10,7 @@ import { representativeHours } from '../src/engine/dispatch.js';
 import { H } from '../src/engine/profiles.js';
 
 export async function screeningTests(test, ctxRuns) {
-  await test('33. Screening tier (work package 8, AC 4): off by default (every option full-year); on, every option is dispatched over representative days (design day, dearest day and a typical day per month, weights adding to 8,760 h), the best 10 are verified with the full year and give exactly the full run\'s figures, LCOE from screening is within ±5 % of the full year for every option, and every option says which model produced it', () => {
+  await test('33. Screening tier (work package 8, AC 4): off by default (every option full-year); on, every option is dispatched over representative days (design day, dearest day and three clustered days per month, weights adding to 8,760 h), the best 10 are verified with the full year (repeated until the final top 10 are all verified) and give exactly the full run\'s figures, LCOE and carbon from screening are within ±5 % of the full year for every option, and every option says which model produced it', () => {
     const out = [];
     const full = ctxRuns.runT1;
     assert.equal(normalizeInputs(full.inputs).settings.screeningModel, 'full');
@@ -21,7 +21,7 @@ export async function screeningTests(test, ctxRuns) {
     assert.equal(rep.weights.reduce((a, x) => a + x, 0), H);
     const designDay = Math.floor(ctx.prof.temp.indexOf(Math.max(...ctx.prof.temp)) / 24);
     assert.ok(rep.days.some((d) => d.day === designDay), 'design day not represented');
-    assert.ok(rep.days.length >= 24 && rep.days.length <= 36);
+    assert.ok(rep.days.length >= 24 && rep.days.length <= 12 * 8, `${rep.days.length} days`);
     out.push(`${rep.days.length} representative days (${rep.hours.length} h) weighted to ${H} h, design day ${designDay + 1} included`);
     // Screening run.
     const inp = referenceT1({ analysisStart: ctxRuns.START });
@@ -29,9 +29,10 @@ export async function screeningTests(test, ctxRuns) {
     const t0 = Date.now();
     const scr = runModel(inp);
     const ms = Date.now() - t0;
-    assert.equal(scr.verification.verified, 10);
     const ver = scr.options.filter((o) => o.verified);
-    assert.equal(ver.length, 10);
+    assert.ok(scr.verification.verified >= 10 && ver.length === scr.verification.verified);
+    // Every option in the final top 10 is verified (repeated rounds, Haiku check H2, M1).
+    assert.ok(scr.options.filter((o) => o.rank <= 10).every((o) => o.verified), 'an option not verified is in the final top 10');
     assert.ok(scr.options.filter((o) => !o.verified).every((o) => /^Representative days/.test(o.model)));
     assert.ok(scr.runFlags.some((f) => f.id === 'screening-model'));
     const fById = new Map(full.options.map((o) => [o.id, o]));
@@ -53,8 +54,9 @@ export async function screeningTests(test, ctxRuns) {
       if (f.carbon.locationG > 0) maxC = Math.max(maxC, Math.abs(sc / f.carbon.locationG - 1));
     }
     assert.ok(maxD <= 0.05, `screening LCOE differs from the full year by up to ${(maxD * 100).toFixed(2)} %`);
+    assert.ok(maxC <= 0.05, `screening carbon differs from the full year by up to ${(maxC * 100).toFixed(2)} %`);
     const lf = full.options.reduce((a, b) => (a.rank < b.rank ? a : b)), ls = scr.options.reduce((a, b) => (a.rank < b.rank ? a : b));
-    out.push(`screening run ${(ms / 1000).toFixed(1)} s; 10 verified equal to the full run; LCOE within ${(maxD * 100).toFixed(2)} % for all ${scr.options.length} options (location carbon within ${(maxC * 100).toFixed(1)} %, not part of AC 4); leader ${ls.id === lf.id ? 'unchanged' : `${ls.id} (full: ${lf.id})`}`);
+    out.push(`screening run ${(ms / 1000).toFixed(1)} s; ${ver.length} verified in ${scr.verification.rounds} round(s), equal to the full run, the final top 10 all verified; LCOE within ${(maxD * 100).toFixed(2)} % and location carbon within ${(maxC * 100).toFixed(2)} % for all ${scr.options.length} options; leader ${ls.id === lf.id ? 'unchanged' : `${ls.id} (full: ${lf.id})`}`);
     return out.join('; ') + '.';
   });
 }

@@ -26,7 +26,7 @@ const SRC = {
   priceEM: { source: 'Electricity Maps, "Electricity Grid Review 2025", mean day-ahead price 2025 for each country (France €61.5, Norway €44.2, Finland €40.8, Portugal €66.1, Austria €100.4, Czechia €95.5, Slovenia €106.0/MWh checked on 2026-10-23); other countries as in user guide Appendix B2', year: '2025', url: 'https://www.electricitymaps.com/grid-in-review-2025', accessed: '2026-10-23', approved: '2026-10-23' },
   fraunhofer: { source: 'Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh', year: '2024', url: 'https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/DE2024_ISE_Studie_Stromgestehungskosten_Erneuerbare_Energien.pdf', accessed: '2026-10-23', approved: '2026-10-23' },
   bnef: { source: 'BloombergNEF Energy Storage System Cost Survey 2025, reported by Energy-Storage.news (16 Dec 2025): turnkey system price Europe US$177/kWh (global US$117, 4-hour US$110); at the ECB rate of 12 Oct 2026 (1.1181 $/€) €158/kWh. The split into energy and power cost is a judgement', year: '2025', url: 'https://www.energy-storage.news/?p=92133', accessed: '2026-10-23', approved: '2026-10-23' },
-  eiaTurbine: { source: 'US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: aeroderivative combustion turbine (4 × 54 MW) US$1,606/kW and H-class simple cycle US$836/kW, both 2023 dollars; at 1.1181 $/€ €1,436 and €748/kW. Set between them for 30 MW units', year: '2025', url: 'https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf', accessed: '2026-10-23', approved: '2026-10-23' },
+  eiaTurbine: { source: 'US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: aeroderivative combustion turbine (4 × 54 MW) US$1,606/kW and H-class simple cycle US$836/kW, both 2023 dollars; at 1.1181 $/€ €1,436 and €748/kW. The default uses the aeroderivative figure, rounded to €1,450/kW, for 30 MW units (Haiku check H2)', year: '2025', url: 'https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf', accessed: '2026-10-23', approved: '2026-10-23' },
   eiaSmr: { source: 'US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: small modular reactor (6 × 80 MW) US$8,936/kW (2023 dollars), at 1.1181 $/€ €7,992/kW. For comparison, Darlington BWRX-300 (4 × 300 MWe): CAD20.9 billion including interest and escalation, first unit in service 2030 (World Nuclear News, 23 May 2025)', year: '2025', url: 'https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf', accessed: '2026-10-23', approved: '2026-10-23' },
   dcGas: { source: 'Datacentres.com Research, on-site gas generation for data centres (2026): natural gas turbines or reciprocating engines US$800–1,200/kW installed; at 1.1181 $/€ €715–1,073/kW', year: '2026', url: 'https://www.datacentres.com/news/diesel-duty-cycles-and-dollars-inside-the-2-8m-per-mw-backup-power-stack-powerin-slot3-2026-09-03', accessed: '2026-10-23', approved: '2026-10-23' },
   wartsila: { source: 'Wärtsilä press release, 16 Apr 2026: 40 Wärtsilä 34SG engines, 412 MW, for a hyperscale data centre in Ohio (about 10.3 MW per engine)', year: '2026-04-16', url: 'https://www.wartsila.com/media/news/16-04-2026-wartsila-s-34sg-engine-makes-its-data-center-debut-with-new-412-mw-u-s-project-3740972', accessed: '2026-10-23', approved: '2026-10-23' },
@@ -93,7 +93,7 @@ export const COUNTRIES = {
   BG: C('Bulgaria', 'EUR', 42.7, 25.5, 11.5, 11.0, 1350, 0.22, 95, 35, 276, 42, EU_ETS, true, 0.25),
   HR: C('Croatia', 'EUR', 45.1, 15.2, 12.0, 10.0, 1250, 0.25, 100, 40, 159, 42, EU_ETS, true, 0.2),
   CY: C('Cyprus', 'EUR', 35.1, 33.4, 19.5, 8.5, 1650, 0.22, 140, 40, 489, 70, EU_ETS, true, 0.3),
-  CZ: C('Czechia', 'EUR', 49.8, 15.5, 8.5, 9.5, 1000, 0.24, 95, 45, 401, 42, EU_ETS, true, 0.25),
+  CZ: C('Czechia', 'EUR', 49.8, 15.5, 8.5, 9.5, 1000, 0.24, 96, 45, 401, 42, EU_ETS, true, 0.25),
   DK: C('Denmark', 'DKK', 56.0, 10.0, 8.5, 7.5, 950, 0.34, 80, 40, 114, 40, EU_ETS, true, 0.1),
   EE: C('Estonia', 'EUR', 58.6, 25.0, 6.0, 10.5, 900, 0.30, 90, 35, 319, 42, EU_ETS, true, 0.2),
   FI: C('Finland', 'EUR', 61.9, 25.7, 4.0, 11.0, 850, 0.30, 41, 30, 57, 45, EU_ETS, true, 0.1),
@@ -112,7 +112,7 @@ export const COUNTRIES = {
   PT: C('Portugal', 'EUR', 39.4, -8.2, 16.0, 6.5, 1550, 0.27, 66, 40, 128, 42, EU_ETS, true, 0.1),
   RO: C('Romania', 'EUR', 45.9, 24.9, 10.5, 11.5, 1300, 0.24, 100, 35, 251, 42, EU_ETS, true, 0.2),
   SK: C('Slovakia', 'EUR', 48.7, 19.7, 9.5, 10.5, 1150, 0.22, 100, 40, 95, 42, EU_ETS, true, 0.2),
-  SI: C('Slovenia', 'EUR', 46.1, 14.9, 10.5, 10.0, 1200, 0.22, 105, 40, 183, 42, EU_ETS, true, 0.2),
+  SI: C('Slovenia', 'EUR', 46.1, 14.9, 10.5, 10.0, 1200, 0.22, 106, 40, 183, 42, EU_ETS, true, 0.2),
   ES: C('Spain', 'EUR', 40.4, -3.7, 15.0, 9.0, 1650, 0.26, 70, 40, 154, 40, EU_ETS, true, 0.1),
   SE: C('Sweden', 'SEK', 60.1, 18.6, 6.5, 10.0, 900, 0.31, 45, 30, 35, 45, EU_ETS, true, 0.5),
   GB: C('United Kingdom', 'GBP', 52.4, -1.5, 10.0, 6.5, 950, 0.34, 95, 55, 217, 40, UK_ETS, false, 0.1),
@@ -195,7 +195,9 @@ export function choiceLabel(id, value) {
 export function defaultChoiceState(id, inputs) {
   switch (id) {
     case 'C1': return { state: 'open', values: ['wait', 'bridge', 'islanded'] };
-    case 'C2': return { state: 'open', values: ['gasRecip', 'fuelCell', 'rented'] };
+    // OPEN-QUESTIONS 43 (2026-10-22): every technology is considered for bridging, gas turbines included; turbines and
+    // HVO-diesel prime added to the default set after Haiku check H1 (2026-10-23). BESS + solar stays opt-in.
+    case 'C2': return { state: 'open', values: ['gasRecip', 'gasTurbine', 'fuelCell', 'dieselPrime', 'rented'] };
     case 'C3': return { state: 'open', values: ['remove', 'backup', 'prime', 'gridServices', 'split'] };
     case 'C4': return { state: 'open', values: ['none', 'chp', 'fuelCell'] };
     case 'C5': return { state: 'open', values: ['hvo', 'diesel', 'retained'] };
@@ -285,7 +287,7 @@ tech('gasRecip', { name: 'Gas reciprocating engines', role: 'firm', maturity: 'C
   msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [10, 'MW', 4.5, 10.3], life: [20, 'yr', 15, 25], m2PerMW: [200, 'm²/MWe', 120, 300],
   stackM: [25, 'm', 20, 30], procM: [9, 'months', 6, 15], buildM: [6, 'months', 4, 9] });
 tech('gasTurbine', { name: 'Gas turbines (OCGT / aeroderivative)', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Danish Energy Agency Technology Catalogue; vendor data' }, {
-  capexPerKW: [1100, '€/kW', 750, 1450], fomPerKW: [12, '€/kW/yr', 8, 16], vomPerMWh: [6, '€/MWh', 4, 9], eff: [0.38, 'electrical efficiency (LHV)', 0.33, 0.42],
+  capexPerKW: [1450, '€/kW', 750, 1650], fomPerKW: [12, '€/kW/yr', 8, 16], vomPerMWh: [6, '€/MWh', 4, 9], eff: [0.38, 'electrical efficiency (LHV)', 0.33, 0.42],
   msl: [0.4, 'min stable load fraction', 0.3, 0.5], unitMW: [30, 'MW', 10, 50], life: [25, 'yr', 20, 30], m2PerMW: [120, 'm²/MWe', 80, 200],
   stackM: [30, 'm', 25, 40], procM: [12, 'months', 9, 24], buildM: [6, 'months', 4, 9] });
 tech('chp', { name: 'Gas CHP / trigeneration', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Vendor data; Danish Energy Agency Technology Catalogue' }, {
@@ -301,7 +303,7 @@ tech('fuelCell', { name: 'Fuel cells (SOFC)', role: 'firm', maturity: 'Emerging'
 tech('dieselPrime', { name: 'HVO-diesel prime gensets', role: 'firm', maturity: 'Commercial', fuel: 'diesel', combustion: true, verify: 'Manufacturer datasheets' }, {
   capexPerKW: [450, '€/kW', 350, 550], fomPerKW: [10, '€/kW/yr', 6, 14], vomPerMWh: [12, '€/MWh', 8, 16], eff: [0.40, 'electrical efficiency', 0.36, 0.43],
   msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [2.75, 'MW', 2.5, 3.0], life: [15, 'yr', 10, 20], m2PerMW: [40, 'm²/MW', 28, 56],
-  stackM: [10, 'm', 8, 12], procM: [9, 'months', 6, 15], buildM: [3, 'months', 2, 6] });
+  stackM: [10, 'm', 8, 12], procM: [15, 'months', 12, 16], buildM: [3, 'months', 2, 6] });
 tech('rented', { name: 'Rented temporary generation (gas)', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Rental vendor indications' }, {
   rentalPerKWMonth: [12, '€/kW/month', 8, 18], vomPerMWh: [10, '€/MWh', 6, 14], eff: [0.38, 'electrical efficiency', 0.34, 0.42],
   msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [2, 'MW', 1, 3], m2PerMW: [150, 'm²/MW', 100, 250], stackM: [10, 'm', 8, 12],
@@ -562,24 +564,25 @@ const SOURCED_TECH = {
   'tech.bess.capexPerKWh': SRC.bnef, 'tech.bess.capexPerKW': SRC.bnef,
   'tech.gasRecip.capexPerKW': SRC.dcGas, 'tech.gasRecip.unitMW': SRC.wartsila,
   'tech.gasTurbine.capexPerKW': SRC.eiaTurbine, 'tech.smr.capexPerKW': SRC.eiaSmr, 'tech.smr.unitMW': SRC.eiaSmr,
-  'tech.backupDiesel.procM': SRC.gensetLead, 'tech.backupHvo.procM': SRC.gensetLead,
+  'tech.backupDiesel.procM': SRC.gensetLead, 'tech.backupHvo.procM': SRC.gensetLead, 'tech.dieselPrime.procM': SRC.gensetLead,
 };
 const SOURCED_NOTES = {
   'tech.wind.fomPerKW': 'Fraunhofer €32/kW a year fixed + €0.007/kWh variable; at about 2,600 full-load hours that is about €50/kW a year, all booked as fixed.',
-  'tech.bess.capexPerKWh': '€125/kWh + €135/kW gives €158/kWh for a 4-hour system (BNEF Europe 2025 turnkey); the split is a judgement.',
+  'tech.bess.capexPerKWh': '€125/kWh + €135/kW gives €158.75/kWh for a 4-hour system (BNEF Europe 2025 turnkey); the split is a judgement.',
   'tech.bess.capexPerKW': 'See tech.bess.capexPerKWh.',
   'tech.gasRecip.unitMW': 'Data centre gas engine orders now use units of about 10 MW (was 4.5 MW).',
-  'tech.gasTurbine.capexPerKW': 'Between the EIA aeroderivative and large simple-cycle figures; was €750/kW.',
+  'tech.gasTurbine.capexPerKW': 'EIA aeroderivative (4 × 54 MW) US$1,606/kW at 1.1181 $/€ = €1,436, rounded to €1,450 for 30 MW aeroderivative or industrial units (was €750, then €1,100 between the EIA figures until Haiku check H2 judged that a judgement). Low end: EIA H-class simple cycle €748; high end: Lazard 2026 peaking US$1,650 = €1,476 plus margin.',
   'tech.smr.capexPerKW': 'EIA generic 6 × 80 MW SMR, 2023 dollars not escalated; Darlington suggests higher (about CAD17,400/kW for four 300 MWe units).',
   'tech.backupDiesel.procM': '52–70 weeks quoted for 1.25–3.25 MW standby units in 2026; was 12 months.',
   'tech.backupHvo.procM': 'As diesel standby units (same machines); was 12 months.',
+  'tech.dieselPrime.procM': 'The same 2.75 MW machines as the standby sets (52–70 weeks in 2026); was 9 months. Aligned after Haiku check H1, when turbines and HVO-diesel prime joined the default bridging set.',
 };
 for (const [path, src] of Object.entries(SOURCED_TECH)) {
   applySource(REGISTRY[path], src);
   if (SOURCED_NOTES[path]) REGISTRY[path].note = SOURCED_NOTES[path];
 }
 rec('country.gridCarbon', 'by country', 'gCO2e/kWh, life-cycle, 2025', { dist: 'fixed', ref: '§5.4, §18', src: SRC.carbonEmber, note: 'Ember 2025 for all 31 countries (one basis: life-cycle intensity of generation). The GHG Protocol location-based method often uses direct-combustion factors, which are lower; the basis is a judgement recorded in OPEN-QUESTIONS 66.' });
-rec('country.wholesalePrice', 'by country', '€/MWh, mean day-ahead 2025', { dist: 'fixed', ref: '§5.4, §18', src: SRC.priceEM, note: 'Batch 2 updated France 85 → 62, Finland 55 → 41, Norway 50 → 44, Portugal 75 → 66. Cyprus, Malta, Switzerland and Iceland keep unresearched values (no published day-ahead figure found).' });
+rec('country.wholesalePrice', 'by country', '€/MWh, mean day-ahead 2025', { dist: 'fixed', ref: '§5.4, §18', src: SRC.priceEM, note: 'Batch 2 updated France 85 → 62, Finland 55 → 41, Norway 50 → 44, Portugal 75 → 66; Czechia 95 → 96 and Slovenia 105 → 106 after Haiku check H2 (to match the cited 2025 figures; Austria 100 against 100.4 kept). Cyprus, Malta, Switzerland and Iceland keep unresearched values (no published day-ahead figure found).' });
 
 export const PPA = {
   strike: {
@@ -636,7 +639,7 @@ rec('sensitivity.carbonPriceFactor', 1, '× current carbon price (country defaul
 rec('sensitivity.itLoadFactor', 1, '× IT load of every phase', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range: low and high IT load as factors on the entered phases. No source.' });
 rec('sensitivity.flexTriggerFactor', 1, '× flexibility trigger level', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range (work package 9). No source.' });
 rec('sensitivity.defaultMeasure', 'lcoe', 'lcoe / npv / carbon / score', { basis: 'judgement', ref: '§13.3', dist: 'fixed', note: 'Walkthrough 2026-10-21: the tornado measures LCOE by default.' });
-rec('sensitivity.topDrivers', 12, 'drivers shown', { basis: 'run setting', ref: '§13.3', dist: 'fixed', note: 'Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). This slice has 7 drivers and no control for this setting yet; the code clamps it to 1–30.' });
+rec('sensitivity.topDrivers', 12, 'drivers shown', { basis: 'run setting', ref: '§13.3', dist: 'fixed', note: 'Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). Work package 9 offers 16 drivers with tick boxes; the code clamps this setting to 1–30.' });
 
 // Required inputs (walkthrough 2026-10-21, knowledge levels): only the location and the site area. The app
 // pre-fills the T1 reference example so it can run on load; these are marked "example value — replace" in the UI.
@@ -846,7 +849,8 @@ export function buildDefaultInputs(opts = {}) {
       // Work package 8 (OPEN-QUESTIONS 23, 2026-10-23): the screening tier is optional and off by default, because power
       // adequacy needs every hour. 'repDays' dispatches every option over representative days, then verifies the best
       // settings.verifyTop options with the full year and re-scores.
-      screeningModel: rec('settings.screeningModel', 'full', '"full" | "repDays"', { basis: 'run setting', ref: '§9.1', note: 'OPEN-QUESTIONS 23: full-year hourly for every option by default; representative days (design day, dearest day and a typical day per month) as an optional faster screening.' }),
+      screeningModel: rec('settings.screeningModel', 'full', '"full" | "repDays"', { basis: 'run setting', ref: '§9.1', note: 'OPEN-QUESTIONS 23: full-year hourly for every option by default; representative days (the design day, the dearest day and three clustered typical days per month, about 50 days) as an optional faster screening.' }),
+      repDaysPerMonth: rec('settings.repDaysPerMonth', 3, 'typical days a month (plus the dearest day and the design day)', { low: 1, high: 6, basis: 'run setting', ref: '§9.1', note: 'Screening model: the days of each month are grouped into this many clusters on price, solar, wind, grid carbon and temperature; each cluster is represented by its most central day, weighted by its size.' }),
       verifyTop: rec('settings.verifyTop', 10, 'options verified with the full year', { low: 1, high: 50, basis: 'run setting', ref: '§9.1', note: 'OPEN-QUESTIONS 23: the best-ranked options re-run hour by hour when the screening model is on.' }),
       autonomyBasis: rec('settings.autonomyBasis', 'critical load', '', { basis: 'judgement', ref: '§9.2' }),
       layoutCellM: rec('settings.layoutCellM', 2, 'm raster cell', { basis: 'run setting', ref: '§10.4', note: 'Auto-layout raster cell size; chosen for the §17 layout timing, not from a source.' }),

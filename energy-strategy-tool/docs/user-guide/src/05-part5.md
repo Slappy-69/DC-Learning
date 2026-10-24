@@ -60,13 +60,13 @@ A check here is not a verification in the brief's sense. Values should be verifi
 | Roof PV fixed O&M | €14/kWp a year | Fraunhofer: €21.5 | **Updated (batch 2)**: €21.5; ground PV €13.3 |
 | Onshore wind capex | €1,350/kW | Fraunhofer: €1,300–1,900; IRENA 2025 global $976; Lazard 2026 (US) $1,900–2,750 | Consistent (European low end) |
 | Wind O&M | €35/kW a year | Fraunhofer: €32 + €0.007/kWh (about €50 a year in all) | **Updated (batch 2)**: €50 |
-| Battery capex | €250/kWh + €150/kW (about €288/kWh for 4 h) | BloombergNEF 2025 turnkey: Europe $177/kWh, global $117; IRENA 2025 $140; Lazard 2026 (US, 4 h) $270–365 | **Updated (batch 2)**: €125/kWh + €135/kW (€158/kWh for 4 h) |
+| Battery capex | €250/kWh + €150/kW (about €288/kWh for 4 h) | BloombergNEF 2025 turnkey: Europe $177/kWh, global $117; IRENA 2025 $140; Lazard 2026 (US, 4 h) $270–365 | **Updated (batch 2)**: €125/kWh + €135/kW (€158.75, about €159/kWh, for 4 h) |
 | Battery round-trip efficiency | 88 % | typical 85–90 % | Consistent |
 | Lifetimes | PV 30 (roof 25), wind 25, battery 15 years | Fraunhofer: PV 30, wind 25, battery 15 | Consistent |
 | Gas engines | 4.5 MW units, €900/kW | data centre orders now use engines of about 10 MW (Wärtsilä 34SG, 40 × 10.3 MW, April 2026); turbines or engines $800–1,200/kW installed (Datacentres.com 2026) | **Updated (batch 2)**: 10 MW units; €900/kW sourced |
-| Gas turbines | €750/kW | EIA 2025, aeroderivative: $1,606/kW (2023 $), H-class simple cycle $836/kW; Lazard 2026, gas peaking: $1,100–1,650/kW | **Updated (batch 2)**: €1,100/kW |
+| Gas turbines | €750/kW | EIA 2025, aeroderivative: $1,606/kW (2023 $), H-class simple cycle $836/kW; Lazard 2026, gas peaking: $1,100–1,650/kW | **Updated (batch 2)**: €1,450/kW, the EIA aeroderivative figure at 1.1181 $/€ (range €750–1,650); €1,100 at first, changed after Haiku check H2 because it was a judgement between two figures |
 | Fuel cells (SOFC) | €2,800/kW, 55 % | about $2,500–3,000/kW, about 60 % (secondary source, low confidence) | Consistent (low confidence) |
-| Diesel standby gensets | €450/kW, 2.75 MW, 12 months procurement | $450–600/kW installed (2026); 3.0–3.75 MW units now usual on large campuses; 52–70 weeks for 1.25–3.25 MW units (Global Power Supply, May 2026) | **Updated (batch 2)**: 15 months procurement; unit size kept (no clear source) |
+| Diesel standby gensets | €450/kW, 2.75 MW, 12 months procurement | $450–600/kW installed (2026); 3.0–3.75 MW units now usual on large campuses; 52–70 weeks for 1.25–3.25 MW units (Global Power Supply, May 2026) | **Updated (batch 2)**: 15 months procurement, also for HVO-diesel prime sets (the same machines; was 9 months); unit size kept (no clear source) |
 | Genset fuel use | 0.26 L/kWh | 0.24–0.25 L/kWh at full load (3 MW unit) | Consistent (slightly cautious) |
 | SMR | €7,000/kW, 80 MW units, from 2035 | Darlington BWRX-300 (Canada): 300 MWe units, about CAD 17,400/kW (first unit about CAD 20,300/kW), first unit in service 2030; EIA 2025: $8,936/kW (2023 $) | **Updated (batch 2)**: €8,000/kW (EIA); 80 MW units and 2035 kept |
 
@@ -139,7 +139,7 @@ What the checks found (Appendix B, tables B2 to B4):
 - **Exchange rates**: all six non-euro rates have moved since they were set (the Icelandic króna by 10 %).
 - **Not checked**: solar yields, wind capacity factors and temperatures (to be replaced by PVGIS and ERA5 or station data, chapter 52), the adders (chapter 50), gas prices by country, and the 2050 multipliers (which should follow national plans or a published scenario).
 
-The **reference location** of each country is a single point. Countries are picked by the nearest reference point, which can be wrong near borders; the agreed map pin fixes this by taking the country from the pin.
+The **reference location** of each country is a single point. Since the map pin was built (work package 1), the country comes from the pin's outline; the reference point is the last resort, used only for pins far from every built-in outline. Pins within about 1 km of a border can still fall on the neighbour's side, so they are flagged.
 
 # 52. Data sources and APIs {#ch52}
 

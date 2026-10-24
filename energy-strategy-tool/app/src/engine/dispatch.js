@@ -453,7 +453,9 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
     itMWh += IT[h] * w;
     // Hourly CFE (24/7 matching): on-site renewables used + PPA volume counted only against grid energy actually used
     // for load in that hour (O2, walkthrough 2026-10-21) + carbon-free firm output.
-    const gridUsed = ppaUse + g;
+    // In "Show exceedance" mode g can exceed the connection; only import within the connection can carry PPA energy
+    // (Haiku check H1, M1). In the default mode this is ppaUse + g, unchanged.
+    const gridUsed = ppaUse + (g < capPhys - ppaUse ? g : (capPhys - ppaUse > 0 ? capPhys - ppaUse : 0));
     const clean = reUse + (ppaV < gridUsed ? ppaV : gridUsed) + firm * cleanRatio;
     cfeMWh += (clean < netDemand ? clean : netDemand) * w;
 
@@ -508,37 +510,48 @@ function indexOfMax(a) {
 export function representativeHours(ctx) {
   if (ctx.repHours) return ctx.repHours;
   const p = ctx.prof;
+  const K = Math.max(1, Math.min(6, Math.round(ctx.inputs.settings.repDaysPerMonth ?? 3)));
   const days = Math.floor(H / 24);
   const designDay = Math.floor(indexOfMax(p.temp) / 24);
   const mean = (a, d) => { let s = 0; for (let h = d * 24; h < d * 24 + 24; h++) s += a[h]; return s / 24; };
-  const dPrice = [], dSolar = [], dWind = [];
-  for (let d = 0; d < days; d++) { dPrice.push(mean(p.price, d)); dSolar.push(mean(p.solar, d)); dWind.push(mean(p.wind, d)); }
-  const sd = (a) => { const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / a.length) || 1; };
-  const sP = sd(dPrice), sS = sd(dSolar), sW = sd(dWind);
+  // Daily features: mean price, solar, wind, grid carbon and temperature, standardised over the year. Carbon was added
+  // after Haiku check H2 (screening carbon up to 12 % off with price, solar and wind only).
+  const feats = [p.price, p.solar, p.wind, p.carbon, p.temp].map((a) => { const v = []; for (let d = 0; d < days; d++) v.push(mean(a, d)); return v; });
+  const z = feats.map((v) => { const m = v.reduce((x, y) => x + y, 0) / v.length; const sd = Math.sqrt(v.reduce((x, y) => x + (y - m) ** 2, 0) / v.length) || 1; return v.map((x) => (x - m) / sd); });
+  const dist = (a, b) => z.reduce((t, f) => t + (f[a] - f[b]) ** 2, 0);
   const picked = []; // { day, weight }
   for (let mo = 0; mo < 12; mo++) {
     // Months as the dispatch loop counts them: 730 h each, the last to the end of the year.
     const d0 = Math.floor((mo * 730) / 24), d1 = mo === 11 ? days : Math.floor(((mo + 1) * 730) / 24);
     const ds = [];
     for (let d = d0; d < d1; d++) ds.push(d);
-    const n = ds.length;
-    const mP = ds.reduce((a, d) => a + dPrice[d], 0) / n, mS = ds.reduce((a, d) => a + dSolar[d], 0) / n, mW = ds.reduce((a, d) => a + dWind[d], 0) / n;
-    let typical = ds[0], best = Infinity, dear = ds[0];
-    for (const d of ds) {
-      const z = ((dPrice[d] - mP) / sP) ** 2 + ((dSolar[d] - mS) / sS) ** 2 + ((dWind[d] - mW) / sW) ** 2;
-      if (z < best) { best = z; typical = d; }
-      if (dPrice[d] > dPrice[dear]) dear = d;
-    }
-    const extra = [...new Set([dear, ...(designDay >= d0 && designDay < d1 ? [designDay] : [])])].filter((d) => d !== typical);
+    // Extremes kept as themselves, weight 1: the dearest day and, in its month, the design day.
+    let dear = ds[0];
+    for (const d of ds) if (feats[0][d] > feats[0][dear]) dear = d;
+    const extra = [...new Set([dear, ...(designDay >= d0 && designDay < d1 ? [designDay] : [])])];
+    const rest = ds.filter((d) => !extra.includes(d));
     for (const d of extra) picked.push({ day: d, weight: 1 });
-    picked.push({ day: typical, weight: n - extra.length });
+    // The other days: K clusters (k-medoids, deterministic start spread by price), each represented by its medoid and
+    // weighted by its number of days.
+    const k = Math.min(K, rest.length);
+    const byPrice = rest.slice().sort((a, b) => feats[0][a] - feats[0][b]);
+    let med = Array.from({ length: k }, (_, i) => byPrice[Math.floor(((i + 0.5) * byPrice.length) / k)]);
+    let groups = [];
+    for (let it = 0; it < 20; it++) {
+      groups = med.map(() => []);
+      for (const d of rest) { let bi = 0, bd = Infinity; med.forEach((m, i) => { const x = dist(d, m); if (x < bd) { bd = x; bi = i; } }); groups[bi].push(d); }
+      const next = groups.map((g, i) => (g.length ? g.reduce((bm, c) => { const sc = g.reduce((t, x) => t + dist(c, x), 0); return sc < bm.s ? { d: c, s: sc } : bm; }, { d: g[0], s: Infinity }).d : med[i]));
+      if (next.every((m, i) => m === med[i])) break;
+      med = next;
+    }
+    groups.forEach((g, i) => { if (g.length) picked.push({ day: med[i], weight: g.length }); });
   }
   picked.sort((a, b) => a.day - b.day);
   const hours = new Int32Array(picked.length * 24), weights = new Float64Array(picked.length * 24);
-  picked.forEach((x, i) => { for (let k = 0; k < 24; k++) { hours[i * 24 + k] = x.day * 24 + k; weights[i * 24 + k] = x.weight; } });
+  picked.forEach((x, i) => { for (let k2 = 0; k2 < 24; k2++) { hours[i * 24 + k2] = x.day * 24 + k2; weights[i * 24 + k2] = x.weight; } });
   // The 8,760-hour year has 365 days; a remainder of hours after the last full day is folded into the last weight.
   const covered = weights.reduce((a, x) => a + x, 0);
-  if (covered < H) for (let k = weights.length - 24; k < weights.length; k++) weights[k] += (H - covered) / 24;
+  if (covered < H) for (let k2 = weights.length - 24; k2 < weights.length; k2++) weights[k2] += (H - covered) / 24;
   ctx.repHours = { hours, weights, days: picked, label: `Representative days (${picked.length} days a year)` };
   return ctx.repHours;
 }

@@ -9,7 +9,7 @@ buildDefaultInputs({ analysisStart: '2027-01' });
 // importing sensitivity registers its records
 await import(E + 'sensitivity.js');
 const reg = getRegistry();
-const out = Object.values(reg).map(r => ({ path: r.path, value: r.value, unit: r.unit, low: r.low, high: r.high, basis: r.basis, sourceToVerify: r.sourceToVerify, note: r.note, briefRef: r.briefRef }));
+const out = Object.values(reg).map(r => ({ path: r.path, value: r.value, unit: r.unit, low: r.low, high: r.high, basis: r.basis, sourceToVerify: r.sourceToVerify, note: r.note, briefRef: r.briefRef, label: r.label, source: r.label && /^sourced/.test(r.label) ? r.source : undefined, year: r.year, url: r.url, accessed: r.accessed }));
 fs.writeFileSync(OUT + '/registry.json', JSON.stringify(out, null, 1));
 fs.writeFileSync(OUT + '/countries.json', JSON.stringify(COUNTRIES, null, 1));
 fs.writeFileSync(OUT + '/fx.json', JSON.stringify(FX, null, 1));

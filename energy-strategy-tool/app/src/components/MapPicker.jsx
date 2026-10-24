@@ -1,6 +1,7 @@
 import React, { useId, useMemo, useRef, useState } from 'react';
 import { MAP_COUNTRIES, MAP_SOURCE } from '../data/europe-map.js';
-import { countryAtPoint } from '../engine/geocountry.js';
+import { pinCountryInfo } from '../engine/context.js';
+import { COUNTRIES } from '../engine/defaults.js';
 
 // Map pin (work package 1; BRIEF §5.1, AC 17): an offline map of Europe from the bundled Natural Earth outlines
 // (no tiles, no network). Click or tap to place the pin; with the map focused, the arrow keys move it (0.1°, with
@@ -27,7 +28,7 @@ export default function MapPicker({ lat, lon, onPick }) {
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState(null); // null = follow the pin
   const P = useMemo(paths, []);
-  const here = countryAtPoint(lat, lon);
+  const info = pinCountryInfo(lat, lon);
   const cx = center ? center[0] : px(lon), cy = center ? center[1] : py(lat);
   const w = FULL.w / zoom, h = FULL.h / zoom;
   const vb = zoom === 1 ? FULL : { x: cx - w / 2, y: cy - h / 2, w, h };
@@ -52,7 +53,9 @@ export default function MapPicker({ lat, lon, onPick }) {
     e.preventDefault();
   };
   const pinR = vb.w / 120;
-  const where = here ? `${here.name}${here.iso2 ? '' : ' (not a built-in country)'}` : 'at sea or outside the map';
+  const where = info.inside
+    ? `${info.mapName}${info.via === 'coast' ? ` (nearest coast, ${info.km.toFixed(1)} km)` : ''}${info.nearBorder ? `; ${info.nearBorder.km.toFixed(1)} km from ${info.nearBorder.name}, check the country` : ''}`
+    : `${info.mapName ? `${info.mapName} (no built-in profile)` : 'at sea or outside the map'}; nearest built-in country ${COUNTRIES[info.code].name}`;
   const latTxt = `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'}`, lonTxt = `${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? 'E' : 'W'}`;
   return (
     <div className="map-picker">

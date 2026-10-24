@@ -20,7 +20,7 @@ This part goes through every input and every results view. For each, it says wha
 | Analysis start | today + 3 months | Month 0 of every timeline; the base year for prices and discounting |
 | Seed | 20261015 | Starting number for the synthetic profiles and the sampling of options |
 
-**Country from location.** Since 23 October 2026 the tool picks the built-in country whose outline contains the pin (before, the nearest reference point, which could be wrong near a border). Check the label "From location (…)" and override it if needed. The 31 built-in countries are the 27 EU member states plus the United Kingdom, Norway, Switzerland and Iceland.
+**Country from location.** Since 23 October 2026 the tool picks the built-in country whose outline contains the pin. If the pin is at sea or on the coast just outside every outline, it takes the built-in country whose outline is nearest, up to 25 km away ("nearest coast"). If the pin is inside a country with no built-in profile (for example Serbia or Ukraine) but within 3 km of a built-in country, it takes that country. Otherwise it takes the nearest reference point. The outlines are simplified (Natural Earth 1:50m, rounded to about 1 km), so a pin within 3 km of a border carries a flag on every option naming the neighbour and asking you to check the country (before, it always took the nearest reference point, which could be wrong near a border). Check the label "From location (…)" and override it if needed. The 31 built-in countries are the 27 EU member states plus the United Kingdom, Norway, Switzerland and Iceland.
 
 **Analysis start.** All dates (phases, grid steps, plant availability) are counted in months from this month. It also sets the price base year: all money is in real terms of that year.
 

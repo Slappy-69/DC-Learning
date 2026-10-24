@@ -8,7 +8,7 @@
 
 - Hourly profiles are synthetic and country-level, for a single year. Real data and location-specific profiles are agreed but not built.
 - The design temperature is the hottest hour of the synthetic year, not a published design condition.
-- Countries are chosen by the nearest reference point.
+- Countries are chosen from simplified outlines (about 1 km); pins within 3 km of a border are flagged for checking.
 
 **Time**
 

@@ -123,7 +123,8 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     // Work package 3 (OPEN-QUESTIONS 20, 2026-10-23): the grid connection charge is one lump sum entered by the
     // engineer (default 0), the same for every grid-connected option; islanded options contract 0 MW and pay neither
     // it nor the cable route. Before: every option paid the offered MW × the standard rate per MW (KNOWN-ISSUES 7).
-    if (v.C1 !== 'islanded') {
+    // A strategy contracted at 0 MW has no connection to pay for (Haiku check H2, L7).
+    if (v.C1 !== 'islanded' && contractLimit(inputs, v.C1) > 0) {
       addCapex('Grid connection charge', gridYear, Number(inputs.grid.connectionCharge) || 0, 40);
       // Cable route from the POC (§5.4): route length from the site model (sizing.js, sz.grid.cableKm).
       addCapex('Grid cable route (POC to site)', gridYear, sp.cablePerKm * (sz.grid.cableKm || 0), 40);
@@ -536,8 +537,8 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
     flags.push(flag('grid-bess-peakshave', 'minor', 'Grid', 'BESS peak-shave cannot hold import within grid capacity on the design day'));
   }
   // Grid connection charge left at its default 0 (work package 3, AC 18): flagged "assumed" on every grid-connected option.
-  if (v.C1 !== 'islanded' && inputs.grid.fullMW > 0 && !(Number(inputs.grid.connectionCharge) > 0)) {
-    const ex = expectedConnectionCharge(inputs, v.C1, sz.grid.band);
+  if (v.C1 !== 'islanded' && inputs.grid.fullMW > 0 && contractLimit(inputs, v.C1) > 0 && !(Number(inputs.grid.connectionCharge) > 0)) {
+    const ex = expectedConnectionCharge(inputs, v.C1);
     flags.push(flag('grid-charge-assumed', 'info', 'Grid', `Grid connection charge assumed €0 (the default, indicative — unverified); at the standard rate of €${Math.round(ex.rate / 1000)}k per MW (${ex.band.toUpperCase()}) the ${Math.round(ex.mw)} MW contracted would cost about €${(ex.amount / 1e6).toFixed(1)} m`, { value: ex.amount }));
   }
   for (const s of sz.grid.shortfalls) flags.push(flag('grid-shortfall', 'info', 'Grid', `Grid shortfall at design load: up to ${s.mw.toFixed(1)} MW in months ${s.from}–${s.to}`));

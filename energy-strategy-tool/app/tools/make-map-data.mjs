@@ -24,7 +24,12 @@ for (const f of fc.features) {
     const outer = poly[0];
     const inBox = outer.some(([lon, lat]) => lon >= BBOX.w && lon <= BBOX.e && lat >= BBOX.s && lat <= BBOX.n);
     if (!inBox) continue;
-    for (const ring of poly) {
+    for (const ring0 of poly) {
+      // A ring that crosses 180° (Russia's Chukotka) is unwrapped to 0–360°, so its outline stays east of the map and
+      // never covers Scandinavia in the point-in-polygon test (Haiku check H3, finding H1, 2026-10-23).
+      const lons = ring0.map((q) => q[0]);
+      const wraps = Math.max(...lons) - Math.min(...lons) > 180;
+      const ring = wraps ? ring0.map(([lon, lat]) => [lon < 0 ? lon + 360 : lon, lat]) : ring0;
       const pts = [];
       for (const [lon, lat] of ring) {
         const p = [r2(lon), r2(lat)];

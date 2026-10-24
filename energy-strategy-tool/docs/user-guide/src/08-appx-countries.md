@@ -1,6 +1,6 @@
 # Appendix B. Country data {#appB}
 
-The 31 built-in countries and the annual targets their synthetic profiles are calibrated to. All values are indicative and unverified in the current version. Tables B2 and B3 compare the price and carbon targets with the latest published annual figures found on 21 October 2026; a difference within ±10 % is marked "consistent".
+The 31 built-in countries and the annual targets their synthetic profiles are calibrated to. All values are indicative and unverified in the current version. Tables B2 and B3 compare the price and carbon targets with the latest published annual figures found on 21 October 2026 (Austria, Czechia, Finland, Portugal and Slovenia rechecked against the 2025 figures on 23 October 2026, Haiku check H2); a difference within ±10 % is marked "consistent".
 
 
 ## B1. Calibration targets
@@ -50,7 +50,7 @@ Prices: mean wholesale price and non-commodity adder (€/MWh), gas commodity pr
 | Bulgaria (BG) | 95 + 35 | 42 | 88.3 | EUR |
 | Croatia (HR) | 100 + 40 | 42 | 88.3 | EUR |
 | Cyprus (CY) | 140 + 40 | 70 | 88.3 | EUR |
-| Czechia (CZ) | 95 + 45 | 42 | 88.3 | EUR |
+| Czechia (CZ) | 96 + 45 | 42 | 88.3 | EUR |
 | Denmark (DK) | 80 + 40 | 40 | 88.3 | DKK |
 | Estonia (EE) | 90 + 35 | 42 | 88.3 | EUR |
 | Finland (FI) | 41 + 30 | 45 | 88.3 | EUR |
@@ -69,7 +69,7 @@ Prices: mean wholesale price and non-commodity adder (€/MWh), gas commodity pr
 | Portugal (PT) | 66 + 40 | 42 | 88.3 | EUR |
 | Romania (RO) | 100 + 35 | 42 | 88.3 | EUR |
 | Slovakia (SK) | 100 + 40 | 42 | 88.3 | EUR |
-| Slovenia (SI) | 105 + 40 | 42 | 88.3 | EUR |
+| Slovenia (SI) | 106 + 40 | 42 | 88.3 | EUR |
 | Spain (ES) | 70 + 40 | 40 | 88.3 | EUR |
 | Sweden (SE) | 45 + 30 | 45 | 88.3 | SEK |
 | United Kingdom (GB) | 95 + 55 | 40 | 75 | GBP |
@@ -83,15 +83,15 @@ Published values: mean day-ahead price for 2025 (Electricity Maps "Grid in revie
 
 | Country | App | Published (basis) | Difference |
 |---|---|---|---|
-| AT | 100 | 81.7 (2024, ACER) | +22 %, update |
+| AT | 100 | 100.4 (2025, Electricity Maps) | -0 %, consistent |
 | BE | 90 | 82.5 (2025, Electricity Maps) | +9 %, consistent |
 | BG | 95 | 102.7 (2024, ACER) | -7 %, consistent |
 | HR | 100 | 94.8 (2024, ACER) | +5 %, consistent |
 | CY | 140 | not found | not checked |
-| CZ | 95 | 85.2 (2024, ACER) | +12 %, update |
+| CZ | 96 | 95.5 (2025, Electricity Maps) | +1 %, consistent |
 | DK | 80 | 80.1 (2025, Electricity Maps) | -0 %, consistent |
 | EE | 90 | 87.3 (2024, ACER) | +3 %, consistent |
-| FI | 41 | 45.7 (2024, ACER) | -10 %, update |
+| FI | 41 | 40.8 (2025, Electricity Maps) | +0 %, consistent |
 | FR | 62 | 61.5 (2025, Electricity Maps) | +1 %, consistent |
 | DE | 95 | 89.6 (2025, Electricity Maps) | +6 %, consistent |
 | GR | 105 | 101 (2024, ACER) | +4 %, consistent |
@@ -104,10 +104,10 @@ Published values: mean day-ahead price for 2025 (Electricity Maps "Grid in revie
 | MT | 130 | not found | not checked |
 | NL | 90 | 83 (2025, Electricity Maps) | +8 %, consistent |
 | PL | 110 | 105.8 (2025, Electricity Maps) | +4 %, consistent |
-| PT | 66 | 63.5 (2024, ACER) | +4 %, consistent |
+| PT | 66 | 66.1 (2025, Electricity Maps) | -0 %, consistent |
 | RO | 100 | 103.7 (2024, ACER) | -4 %, consistent |
 | SK | 100 | 93 (2024, ACER) | +8 %, consistent |
-| SI | 105 | 91.4 (2024, ACER) | +15 %, update |
+| SI | 106 | 106 (2025, Electricity Maps) | +0 %, consistent |
 | ES | 70 | 66.3 (2025, Electricity Maps) | +6 %, consistent |
 | SE | 45 | 43.4 (2025, Electricity Maps, country) | +4 %, consistent |
 | GB | 95 | 96.9 (2025, £81.2 at ECB rate) | -2 %, consistent |

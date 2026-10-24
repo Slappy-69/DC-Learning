@@ -86,6 +86,7 @@ export function assumedBase(ctx) {
   if (!inputs.project.country) {
     const pc = pinCountryInfo(inputs.project.lat, inputs.project.lon);
     if (!pc.inside) list.push({ path: 'project.country', name: 'Country profile', when: () => true, text: `the pin is ${pc.mapName ? `in ${pc.mapName}, which has no built-in profile` : 'at sea or outside the map'}; the nearest built-in country, ${cname}, is used (judgement, indicative — unverified)` });
+    else if (pc.nearBorder) list.push({ path: 'project.country', name: 'Country profile', when: () => true, text: `${cname} from the pin, which is ${pc.nearBorder.km.toFixed(1)} km from ${pc.nearBorder.name} on the simplified map outlines (about 1–2 km accurate); check the country (judgement, indicative — unverified)` });
   }
   // Design temperatures (work package 1): no ASHRAE station data is bundled (licensed data), so the design day is the
   // hottest hour of the synthetic country profile.

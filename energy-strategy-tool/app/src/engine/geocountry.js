@@ -37,3 +37,33 @@ export function countryAtPoint(lat, lon) {
   }
   return null;
 }
+
+// Nearest built-in country outline to a point that no outline contains (a coastal pin that the simplified 1:50m
+// outline leaves in the sea, Haiku check H3, finding H2): the closest ring edge, in km on a local flat projection,
+// within maxKm. Returns { iso2, name, km } or null.
+export function nearestOutline(lat, lon, maxKm = 25, builtInOnly = true, exclude = null) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const kx = 111.32 * Math.cos((lat * Math.PI) / 180), ky = 110.57;
+  const dDeg = maxKm / Math.min(kx, ky);
+  const B = boxes();
+  let best = null;
+  for (let k = 0; k < MAP_COUNTRIES.length; k++) {
+    const c = MAP_COUNTRIES[k];
+    if (builtInOnly && !c.iso2) continue;
+    if (exclude && (c.iso2 === exclude || c.name === exclude)) continue;
+    const b = B[k];
+    if (lon < b.w - dDeg || lon > b.e + dDeg || lat < b.s - dDeg || lat > b.n + dDeg) continue;
+    for (const r of c.rings) {
+      for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+        const ax = (r[j][0] - lon) * kx, ay = (r[j][1] - lat) * ky, bx = (r[i][0] - lon) * kx, by = (r[i][1] - lat) * ky;
+        const dx = bx - ax, dy = by - ay;
+        const L = dx * dx + dy * dy;
+        const t = L > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / L)) : 0;
+        const px = ax + t * dx, py = ay + t * dy;
+        const d = Math.sqrt(px * px + py * py);
+        if (d <= maxKm && (!best || d < best.km)) best = { iso2: c.iso2, name: c.name, km: d };
+      }
+    }
+  }
+  return best;
+}

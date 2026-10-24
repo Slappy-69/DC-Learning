@@ -1,18 +1,25 @@
 # Appendix A. The full defaults register {#appA}
 
-Every default value in the current version: **496 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. Every record is labelled "indicative — unverified" (confidence C, not verified). Chapter 50 compares the important values with published sources.
+Every default value in the current version: **546 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. **24 records** carry a published source and the label "sourced — not independently checked" (work package 0, batches 1 and 2; the source, year and access date follow the entry). The other 522 are labelled "indicative — unverified" (confidence C, not verified). None is verified. Chapter 50 compares the important values with published sources.
 
 Abbreviations: **src** = basis "source" (should come from a published source); **judg** = judgement; **run** = run setting.
 
 
 ## Project
 
-- **project.fx**: EUR 1; GBP 0.8377; NOK 10.488; SEK 11.112; DKK 7.4747; CHF 0.9211; ISK 136.2 (per EUR); src. Fixed rates; display conversion only. Engine works in EUR; check against ECB reference rates.
+- **project.fx**: EUR 1; GBP 0.8377; NOK 10.488; SEK 11.112; DKK 7.4747; CHF 0.9211; ISK 136.2 (per EUR); src. Fixed rates; display conversion only. Engine works in EUR; **sourced — not independently checked**: European Central Bank euro foreign exchange reference rates (2026-10-22, accessed 2026-10-22).
 - **project.name**: Untitled project; judg.
 - **project.country**: none; judg. null = derived from location (nearest built-in country centroid); overridable.
 - **project.currency**: by country (by country / EUR / GBP / CHF / NOK / SEK / DKK / ISK); judg. Display only; converted at the ECB reference rates of the release (project.fx). Inputs stay in euro.
 - **project.analysisStart**: 2027-01 (YYYY-MM); judg. Today + 3 months. No source; replace with the client programme start.
 - **project.seed**: 20261015 integer; run.
+
+## Country data (values in Appendix B)
+
+- **country.carbonPrice.euEts**: 88.3 €/tCO2e; src. EU ETS price for EU-27, Norway and Iceland. Escalates at the carbon escalation rate; **sourced — not independently checked**: ICE EUA December 2026 futures close, reported by GMK Center, "European carbon prices rose to €88/t in October" (15 Oct 2026) (2026-10-12, accessed 2026-10-22).
+- **country.carbonPrice.ukEts**: 75 €/tCO2e; src. UK ETS price for the United Kingdom, rounded from €75.09. Escalates at the carbon escalation rate; **sourced — not independently checked**: ICE UKA December 2026 futures, £62.90/t on 7 Oct 2026, reported by ClearBlue Markets (9 Oct 2026); converted at the ECB reference rate of 22 Oct 2026 (0.83770 £/€) = €75.09/t (2026-10-07, accessed 2026-10-22).
+- **country.gridCarbon**: by country (gCO2e/kWh, life-cycle, 2025); src. Ember 2025 for all 31 countries (one basis: life-cycle intensity of generation). The GHG Protocol location-based method often uses direct-combustion factors, which are lower; the basis is a judgement recorded in OPEN-QUESTIONS 66; **sourced — not independently checked**: Ember, Yearly Electricity Data Europe (2026): carbon intensity of electricity generation, 2025, life-cycle basis, as published by Our World in Data ("Carbon intensity of electricity generation"); values rounded to 1 g/kWh (user guide Appendix B3) (2025, accessed 2026-10-21).
+- **country.wholesalePrice**: by country (€/MWh, mean day-ahead 2025); src. Batch 2 updated France 85 → 62, Finland 55 → 41, Norway 50 → 44, Portugal 75 → 66; Czechia 95 → 96 and Slovenia 105 → 106 after Haiku check H2 (to match the cited 2025 figures; Austria 100 against 100.4 kept). Cyprus, Malta, Switzerland and Iceland keep unresearched values (no published day-ahead figure found); **sourced — not independently checked**: Electricity Maps, "Electricity Grid Review 2025", mean day-ahead price 2025 for each country (France €61.5, Norway €44.2, Finland €40.8, Portugal €66.1, Austria €100.4, Czechia €95.5, Slovenia €106.0/MWh checked on 2026-10-23); other countries as in user guide Appendix B2 (2025, accessed 2026-10-23).
 
 ## Country profiles
 
@@ -201,7 +208,8 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **settings.bridgeBessHours**: 24 h; judg.
 - **settings.timelineMonths**: 120 months; run. Time-to-power horizon.
 - **settings.maxDispatchYears**: 8 years; run. Distinct 8760-h dispatch years before steady state is assumed.
-- **settings.screeningModel**: full ("full" | "repDays"); run. OPEN-QUESTIONS 23: full-year hourly for every option by default; representative days (design day, dearest day and a typical day per month) as an optional faster screening.
+- **settings.screeningModel**: full ("full" | "repDays"); run. OPEN-QUESTIONS 23: full-year hourly for every option by default; representative days (the design day, the dearest day and three clustered typical days per month, about 50 days) as an optional faster screening.
+- **settings.repDaysPerMonth**: 3 typical days a month (plus the dearest day and the design day); range 1–6; run. Screening model: the days of each month are grouped into this many clusters on price, solar, wind, grid carbon and temperature; each cluster is represented by its most central day, weighted by its size.
 - **settings.verifyTop**: 10 options verified with the full year; range 1–50; run. OPEN-QUESTIONS 23: the best-ranked options re-run hour by hour when the screening model is on.
 - **settings.autonomyBasis**: critical load; judg.
 - **settings.layoutCellM**: 2 m raster cell; run. Auto-layout raster cell size; chosen for the §17 layout timing, not from a source.
@@ -211,7 +219,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 ## Choice default states
 
 - **choices.C1**: open: wait, bridge, islanded; judg.
-- **choices.C2**: open: gasRecip, fuelCell, rented; judg.
+- **choices.C2**: open: gasRecip, gasTurbine, fuelCell, dieselPrime, rented; judg.
 - **choices.C3**: open: remove, backup, prime, gridServices, split; judg.
 - **choices.C4**: open: none, chp, fuelCell; judg.
 - **choices.C4s**: open: average, shortfall; judg. Both sizings generated (OPEN-QUESTIONS 58, 2026-10-23); "Permanent shortfall" only for cooling types with a permanent shortfall (rule g).
@@ -239,7 +247,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **fuel.gasTransportAdder**: 4 €/MWh_th; range 2–8; src; check against National gas transport tariffs.
 - **fuel.dieselPrice**: 110 €/MWh_th; range 85–140; src; check against National fuel price statistics.
 - **fuel.hvoPrice**: 170 €/MWh_th; range 130–220; src; check against Fuel supplier indications.
-- **fuel.hydrogenPrice**: 246 €/MWh_th; range 210–300; src. Renewable hydrogen delivered price; €8.20/kg ÷ 33.3 kWh/kg. Range €7–10/kg; check against Hydrogen supply price indications.
+- **fuel.hydrogenPrice**: 246 €/MWh_th; range 210–300; src. Renewable hydrogen delivered price; €8.20/kg ÷ 33.3 kWh/kg. Range €7–10/kg; **sourced — not independently checked**: EEX HYDRIX renewable hydrogen index, 2025 average €8.20/kg; range €7–10/kg from ACER European hydrogen markets 2025, reported by pv magazine (3 Dec 2025); 33.3 kWh/kg (LHV) (2025, accessed 2026-10-22).
 - **fuel.efGas**: 0.202 tCO2e/MWh_th; range 0.2–0.205; src; check against National GHG inventory emission factors.
 - **fuel.efDiesel**: 0.267 tCO2e/MWh_th; range 0.264–0.27; src; check against National GHG inventory emission factors.
 - **fuel.efHvo**: 0.03 tCO2e/MWh_th; range 0–0.06; src. Fossil-equivalent proxy; biogenic CO₂ not counted. Indicative; check against HVO supplier sustainability data.
@@ -247,8 +255,8 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 
 ## PPA prices
 
-- **ppa.strike.solar**: 57 €/MWh; range 45–70; src; check against PPA market indices (e.g. LevelTen, Pexapark).
-- **ppa.strike.wind**: 86 €/MWh; range 70–100; src; check against PPA market indices.
+- **ppa.strike.solar**: 57 €/MWh; range 45–70; src; **sourced — not independently checked**: LevelTen Energy European PPA Price Index Q2 2026, reported by PV Tech (23 Jul 2026): solar €56.59/MWh, wind US$95.86/MWh (at 1.1181 $/€ €85.7/MWh) (2026-Q2, accessed 2026-10-23).
+- **ppa.strike.wind**: 86 €/MWh; range 70–100; src; **sourced — not independently checked**: LevelTen Energy European PPA Price Index Q2 2026, reported by PV Tech (23 Jul 2026): solar €56.59/MWh, wind US$95.86/MWh (at 1.1181 $/€ €85.7/MWh) (2026-Q2, accessed 2026-10-23).
 - **ppa.strike.hybrid**: 62 €/MWh; range 50–75; src; check against PPA market indices.
 - **ppa.strike.baseload**: 80 €/MWh; range 65–95; src; check against PPA market indices.
 - **ppa.strike.cfe247**: 95 €/MWh; range 80–120; src; check against PPA market indices.
@@ -329,8 +337,8 @@ Check against: ASHRAE TC 9.9 thermal guidelines; vendor data; published design s
 
 Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications.
 
-- **capexPerKW**: 700 €/kWp; range 700–900; src.
-- **fomPerKW**: 13.3 €/kWp/yr; range 10–16; src.
+- **capexPerKW**: 700 €/kWp; range 700–900; src; **sourced — not independently checked**: Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh (2024, accessed 2026-10-23).
+- **fomPerKW**: 13.3 €/kWp/yr; range 10–16; src; **sourced — not independently checked**: Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh (2024, accessed 2026-10-23).
 - **life**: 30 yr; range 25–35; src.
 - **haPerMWp**: 1.2 ha/MWp; range 0.8–1.8; src.
 - **planM**: 9 months; range 6–18; src.
@@ -341,8 +349,8 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 
 Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications.
 
-- **capexPerKW**: 900 €/kWp; range 900–1,600; src.
-- **fomPerKW**: 21.5 €/kWp/yr; range 15–25; src.
+- **capexPerKW**: 900 €/kWp; range 900–1,600; src; **sourced — not independently checked**: Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh (2024, accessed 2026-10-23).
+- **fomPerKW**: 21.5 €/kWp/yr; range 15–25; src; **sourced — not independently checked**: Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh (2024, accessed 2026-10-23).
 - **life**: 25 yr; range 20–30; src.
 - **m2PerKWp**: 5.5 m²/kWp; range 4.5–7; src.
 - **usableFraction**: 0.5 fraction of free roof; range 0.4–0.6; src.
@@ -353,8 +361,8 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 
 Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications.
 
-- **capexPerKW**: 1,350 €/kW; range 1,300–1,900; src.
-- **fomPerKW**: 50 €/kW/yr; range 40–60; src. Fraunhofer €32/kW a year fixed + €0.007/kWh variable; at about 2,600 full-load hours that is about €50/kW a year, all booked as fixed.
+- **capexPerKW**: 1,350 €/kW; range 1,300–1,900; src; **sourced — not independently checked**: Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh (2024, accessed 2026-10-23).
+- **fomPerKW**: 50 €/kW/yr; range 40–60; src. Fraunhofer €32/kW a year fixed + €0.007/kWh variable; at about 2,600 full-load hours that is about €50/kW a year, all booked as fixed; **sourced — not independently checked**: Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh (2024, accessed 2026-10-23).
 - **life**: 25 yr; range 20–30; src.
 - **turbineMW**: 5 MW; range 3–6; src.
 - **tipHeightM**: 180 m; range 150–220; src.
@@ -368,8 +376,8 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 
 Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications.
 
-- **capexPerKWh**: 125 €/kWh; range 100–180; src. €125/kWh + €135/kW gives €158/kWh for a 4-hour system (BNEF Europe 2025 turnkey); the split is a judgement.
-- **capexPerKW**: 135 €/kW; range 100–200; src. See tech.bess.capexPerKWh.
+- **capexPerKWh**: 125 €/kWh; range 100–180; src. €125/kWh + €135/kW gives €158.75/kWh for a 4-hour system (BNEF Europe 2025 turnkey); the split is a judgement; **sourced — not independently checked**: BloombergNEF Energy Storage System Cost Survey 2025, reported by Energy-Storage.news (16 Dec 2025): turnkey system price Europe US$177/kWh (global US$117, 4-hour US$110); at the ECB rate of 12 Oct 2026 (1.1181 $/€) €158/kWh. The split into energy and power cost is a judgement (2025, accessed 2026-10-23).
+- **capexPerKW**: 135 €/kW; range 100–200; src. See tech.bess.capexPerKWh; **sourced — not independently checked**: BloombergNEF Energy Storage System Cost Survey 2025, reported by Energy-Storage.news (16 Dec 2025): turnkey system price Europe US$177/kWh (global US$117, 4-hour US$110); at the ECB rate of 12 Oct 2026 (1.1181 $/€) €158/kWh. The split into energy and power cost is a judgement (2025, accessed 2026-10-23).
 - **fomPct**: 0.015 fraction of capex/yr; range 0.01–0.025; src.
 - **rte**: 0.88 round-trip efficiency; range 0.85–0.92; src.
 - **life**: 15 yr; range 12–20; src.
@@ -382,12 +390,12 @@ Check against: IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy A
 
 Check against: Danish Energy Agency Technology Catalogue; vendor data.
 
-- **capexPerKW**: 900 €/kW; range 715–1,075; src.
+- **capexPerKW**: 900 €/kW; range 715–1,075; src; **sourced — not independently checked**: Datacentres.com Research, on-site gas generation for data centres (2026): natural gas turbines or reciprocating engines US$800–1,200/kW installed; at 1.1181 $/€ €715–1,073/kW (2026, accessed 2026-10-23).
 - **fomPerKW**: 15 €/kW/yr; range 10–20; src.
 - **vomPerMWh**: 8 €/MWh; range 5–12; src.
 - **eff**: 0.44 electrical efficiency (LHV); range 0.4–0.48; src.
 - **msl**: 0.3 min stable load fraction; range 0.2–0.4; src.
-- **unitMW**: 10 MW; range 4.5–10.3; src. Data centre gas engine orders now use units of about 10 MW (was 4.5 MW).
+- **unitMW**: 10 MW; range 4.5–10.3; src. Data centre gas engine orders now use units of about 10 MW (was 4.5 MW); **sourced — not independently checked**: Wärtsilä press release, 16 Apr 2026: 40 Wärtsilä 34SG engines, 412 MW, for a hyperscale data centre in Ohio (about 10.3 MW per engine) (2026-04-16, accessed 2026-10-23).
 - **life**: 20 yr; range 15–25; src.
 - **m2PerMW**: 200 m²/MWe; range 120–300; src.
 - **stackM**: 25 m; range 20–30; src.
@@ -398,7 +406,7 @@ Check against: Danish Energy Agency Technology Catalogue; vendor data.
 
 Check against: Danish Energy Agency Technology Catalogue; vendor data.
 
-- **capexPerKW**: 1,100 €/kW; range 750–1,450; src. Between the EIA aeroderivative and large simple-cycle figures; was €750/kW.
+- **capexPerKW**: 1,450 €/kW; range 750–1,650; src. EIA aeroderivative (4 × 54 MW) US$1,606/kW at 1.1181 $/€ = €1,436, rounded to €1,450 for 30 MW aeroderivative or industrial units (was €750, then €1,100 between the EIA figures until Haiku check H2 judged that a judgement). Low end: EIA H-class simple cycle €748; high end: Lazard 2026 peaking US$1,650 = €1,476 plus margin; **sourced — not independently checked**: US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: aeroderivative combustion turbine (4 × 54 MW) US$1,606/kW and H-class simple cycle US$836/kW, both 2023 dollars; at 1.1181 $/€ €1,436 and €748/kW. The default uses the aeroderivative figure, rounded to €1,450/kW, for 30 MW units (Haiku check H2) (2025, accessed 2026-10-23).
 - **fomPerKW**: 12 €/kW/yr; range 8–16; src.
 - **vomPerMWh**: 6 €/MWh; range 4–9; src.
 - **eff**: 0.38 electrical efficiency (LHV); range 0.33–0.42; src.
@@ -459,7 +467,7 @@ Check against: Manufacturer datasheets.
 - **life**: 15 yr; range 10–20; src.
 - **m2PerMW**: 40 m²/MW; range 28–56; src.
 - **stackM**: 10 m; range 8–12; src.
-- **procM**: 9 months; range 6–15; src.
+- **procM**: 15 months; range 12–16; src. The same 2.75 MW machines as the standby sets (52–70 weeks in 2026); was 9 months. Aligned after Haiku check H1, when turbines and HVO-diesel prime joined the default bridging set; **sourced — not independently checked**: Global Power Supply, "Generator lead times in 2026" (11 May 2026): standby diesel generators 1,250–3,250 kW, 52 to 70 weeks (2026-05-11, accessed 2026-10-23).
 - **buildM**: 3 months; range 2–6; src.
 
 ### Rented temporary generation
@@ -480,12 +488,12 @@ Check against: Rental vendor indications.
 
 Check against: Vendor and regulator publications.
 
-- **capexPerKW**: 8,000 €/kW; range 7,000–13,000; src. EIA generic 6 × 80 MW SMR, 2023 dollars not escalated; Darlington suggests higher (about CAD17,400/kW for four 300 MWe units).
+- **capexPerKW**: 8,000 €/kW; range 7,000–13,000; src. EIA generic 6 × 80 MW SMR, 2023 dollars not escalated; Darlington suggests higher (about CAD17,400/kW for four 300 MWe units); **sourced — not independently checked**: US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: small modular reactor (6 × 80 MW) US$8,936/kW (2023 dollars), at 1.1181 $/€ €7,992/kW. For comparison, Darlington BWRX-300 (4 × 300 MWe): CAD20.9 billion including interest and escalation, first unit in service 2030 (World Nuclear News, 23 May 2025) (2025, accessed 2026-10-23).
 - **fomPerKW**: 120 €/kW/yr; range 80–160; src.
 - **vomPerMWh**: 3 €/MWh; range 2–5; src.
 - **fuelPerMWhE**: 9 €/MWh_e; range 6–12; src.
 - **msl**: 0.5 min stable load fraction; range 0.4–0.7; src.
-- **unitMW**: 80 MW; range 50–300; src.
+- **unitMW**: 80 MW; range 50–300; src; **sourced — not independently checked**: US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: small modular reactor (6 × 80 MW) US$8,936/kW (2023 dollars), at 1.1181 $/€ €7,992/kW. For comparison, Darlington BWRX-300 (4 × 300 MWe): CAD20.9 billion including interest and escalation, first unit in service 2030 (World Nuclear News, 23 May 2025) (2025, accessed 2026-10-23).
 - **life**: 60 yr; range 40–80; src.
 - **earliestYear**: 2035 year; range 2032–2040; src.
 - **planM**: 36 months; range 24–60; src.
@@ -519,7 +527,7 @@ Check against: Manufacturer datasheets.
 - **life**: 25 yr; range 20–30; src.
 - **m2PerUnit**: 100 m² per unit incl. access; range 70–140; src.
 - **stackM**: 10 m; range 8–12; src.
-- **procM**: 15 months; range 12–16; src. 52–70 weeks quoted for 1.25–3.25 MW standby units in 2026; was 12 months.
+- **procM**: 15 months; range 12–16; src. 52–70 weeks quoted for 1.25–3.25 MW standby units in 2026; was 12 months; **sourced — not independently checked**: Global Power Supply, "Generator lead times in 2026" (11 May 2026): standby diesel generators 1,250–3,250 kW, 52 to 70 weeks (2026-05-11, accessed 2026-10-23).
 - **buildM**: 6 months; range 3–9; src.
 
 ### HVO standby gensets
@@ -533,7 +541,7 @@ Check against: Manufacturer datasheets.
 - **life**: 25 yr; range 20–30; src.
 - **m2PerUnit**: 100 m² per unit incl. access; range 70–140; src.
 - **stackM**: 10 m; range 8–12; src.
-- **procM**: 15 months; range 12–16; src. As diesel standby units (same machines); was 12 months.
+- **procM**: 15 months; range 12–16; src. As diesel standby units (same machines); was 12 months; **sourced — not independently checked**: Global Power Supply, "Generator lead times in 2026" (11 May 2026): standby diesel generators 1,250–3,250 kW, 52 to 70 weeks (2026-05-11, accessed 2026-10-23).
 - **buildM**: 6 months; range 3–9; src.
 
 ### Gas standby gensets
@@ -795,4 +803,4 @@ Check against: ISO 9613-2 (geometric divergence term only).
 - **sensitivity.itLoadFactor**: 1 × IT load of every phase; range 0.8–1.2; judg. Tornado driver range: low and high IT load as factors on the entered phases. No source.
 - **sensitivity.flexTriggerFactor**: 1 × flexibility trigger level; range 0.8–1.2; judg. Tornado driver range (work package 9). No source.
 - **sensitivity.defaultMeasure**: lcoe (lcoe / npv / carbon / score); judg. Walkthrough 2026-10-21: the tornado measures LCOE by default.
-- **sensitivity.topDrivers**: 12 drivers shown; run. Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). This slice has 7 drivers and no control for this setting yet; the code clamps it to 1–30.
+- **sensitivity.topDrivers**: 12 drivers shown; run. Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). Work package 9 offers 16 drivers with tick boxes; the code clamps this setting to 1–30.

@@ -63,7 +63,8 @@ export function prosCons(o, options, sortedCache = new Map()) {
     const share = betterShare(s, x, m.higher);
     const pct = Math.round(share * 100);
     if (share <= PRO_SHARE) pros.push({ id: m.id, share, text: share === 0 ? `Best ${m.label} in the run (${m.fmt(x)})` : `${m.label[0].toUpperCase() + m.label.slice(1)} in the best ${Math.max(1, pct)} % (${m.fmt(x)})` });
-    else if (share >= CON_SHARE) cons.push({ id: m.id, share, text: `${m.label[0].toUpperCase() + m.label.slice(1)} worse than ${pct} % of the run (${m.fmt(x)})` });
+    // Rounded down and capped at 99 %, so the worst option never reads "worse than 100 %" (Haiku check H3, L1).
+    else if (share >= CON_SHARE) cons.push({ id: m.id, share, text: `${m.label[0].toUpperCase() + m.label.slice(1)} worse than ${Math.min(99, Math.floor(share * 100))} % of the run (${m.fmt(x)})` });
   }
   pros.sort((a, b) => a.share - b.share);
   cons.sort((a, b) => b.share - a.share);

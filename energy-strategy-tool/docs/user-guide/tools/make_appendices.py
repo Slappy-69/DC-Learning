@@ -48,7 +48,7 @@ def fmt_val(v):
     return str(v)
 
 GROUP_TITLES = collections.OrderedDict([
-    ("project", "Project"), ("profiles", "Country profiles"), ("site", "Site"), ("load", "Load and building"),
+    ("project", "Project"), ("country", "Country data (values in Appendix B)"), ("profiles", "Country profiles"), ("site", "Site"), ("load", "Load and building"),
     ("grid", "Grid"), ("utilities", "Utilities"), ("requirements", "Requirements"), ("economics", "Economics"),
     ("weights", "Weights"), ("deliverability", "Deliverability"), ("settings", "Run settings"), ("choices", "Choice default states"),
     ("fuel", "Fuels and emission factors"), ("ppa", "PPA prices"), ("cooling", "Cooling approaches"), ("tech", "Technology library"),
@@ -71,7 +71,8 @@ for r in reg:
 
 out = []
 out.append("# Appendix A. The full defaults register {#appA}\n")
-out.append("Every default value in the current version: **496 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. Every record is labelled \"indicative — unverified\" (confidence C, not verified). Chapter 50 compares the important values with published sources.\n")
+n_sourced = sum(1 for r in reg if (r.get("label") or "").startswith("sourced"))
+out.append(f"Every default value in the current version: **{len(reg)} records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. **{n_sourced} records** carry a published source and the label \"sourced — not independently checked\" (work package 0, batches 1 and 2; the source, year and access date follow the entry). The other {len(reg) - n_sourced} are labelled \"indicative — unverified\" (confidence C, not verified). None is verified. Chapter 50 compares the important values with published sources.\n")
 out.append("Abbreviations: **src** = basis \"source\" (should come from a published source); **judg** = judgement; **run** = run setting.\n")
 
 def entry(r, short=None):
@@ -102,6 +103,8 @@ def entry(r, short=None):
     s = f"- **{name}**: {val}{rng}; {basis}"
     if r.get("note"):
         s += f". {r['note'].rstrip('.')}"
+    if (r.get("label") or "").startswith("sourced") and r.get("source"):
+        s += f"; **sourced — not independently checked**: {r['source'].rstrip('.')} ({r.get('year') or 'n.d.'}, accessed {r.get('accessed') or 'n.d.'})"
     return s + "."
 
 for key, title in GROUP_TITLES.items():
@@ -148,7 +151,7 @@ for key, title in GROUP_TITLES.items():
         continue
     for r in rs:
         line = entry(r)
-        if r.get("sourceToVerify"):
+        if r.get("sourceToVerify") and not (r.get("label") or "").startswith("sourced"):
             line = line[:-1] + f"; check against {r['sourceToVerify'].rstrip('.')}."
         out.append(line)
 
@@ -159,9 +162,9 @@ pub_price = {  # published annual mean day-ahead price, €/MWh, (value, basis)
     "DE": (89.6, "2025, Electricity Maps"), "FR": (61.5, "2025, Electricity Maps"), "NL": (83.0, "2025, Electricity Maps"), "BE": (82.5, "2025, Electricity Maps"),
     "IE": (116.8, "2025, Electricity Maps"), "ES": (66.3, "2025, Electricity Maps"), "PL": (105.8, "2025, Electricity Maps"), "SE": (43.4, "2025, Electricity Maps, country"),
     "NO": (44.2, "2025, Electricity Maps, country"), "DK": (80.1, "2025, Electricity Maps"), "GB": (96.9, "2025, £81.2 at ECB rate"), "IT": (117.8, "2025, PUN 12 months"),
-    "AT": (81.7, "2024, ACER"), "BG": (102.7, "2024, ACER"), "HR": (94.8, "2024, ACER"), "CZ": (85.2, "2024, ACER"), "EE": (87.3, "2024, ACER"), "FI": (45.7, "2024, ACER"),
+    "AT": (100.4, "2025, Electricity Maps"), "BG": (102.7, "2024, ACER"), "HR": (94.8, "2024, ACER"), "CZ": (95.5, "2025, Electricity Maps"), "EE": (87.3, "2024, ACER"), "FI": (40.8, "2025, Electricity Maps"),
     "GR": (101.0, "2024, ACER"), "HU": (100.9, "2024, ACER"), "LV": (87.4, "2024, ACER"), "LT": (87.3, "2024, ACER"), "LU": (89.6, "2025, DE-LU zone"),
-    "PT": (63.5, "2024, ACER"), "RO": (103.7, "2024, ACER"), "SK": (93.0, "2024, ACER"), "SI": (91.4, "2024, ACER"),
+    "PT": (66.1, "2025, Electricity Maps"), "RO": (103.7, "2024, ACER"), "SK": (93.0, "2024, ACER"), "SI": (106.0, "2025, Electricity Maps"),
 }
 pub_carbon = {"AT": 116.91, "BE": 149.82, "BG": 275.55, "HR": 158.5, "CY": 489, "CZ": 401.46, "DK": 114.41, "EE": 319.15, "FI": 57.47, "FR": 41.44,
               "DE": 329.65, "GR": 315.09, "HU": 163.02, "IE": 256.54, "IT": 284.78, "LV": 138.76, "LT": 138.36, "LU": 123.38, "MT": 484.02, "NL": 253.56,
@@ -175,7 +178,7 @@ def status(app, pub, tol=0.10):
 
 b = []
 b.append("# Appendix B. Country data {#appB}\n")
-b.append("The 31 built-in countries and the annual targets their synthetic profiles are calibrated to. All values are indicative and unverified in the current version. Tables B2 and B3 compare the price and carbon targets with the latest published annual figures found on 21 October 2026; a difference within ±10 % is marked \"consistent\".\n")
+b.append("The 31 built-in countries and the annual targets their synthetic profiles are calibrated to. All values are indicative and unverified in the current version. Tables B2 and B3 compare the price and carbon targets with the latest published annual figures found on 21 October 2026 (Austria, Czechia, Finland, Portugal and Slovenia rechecked against the 2025 figures on 23 October 2026, Haiku check H2); a difference within ±10 % is marked \"consistent\".\n")
 b.append("\n## B1. Calibration targets\n")
 b.append("Mean temperature (°C) and seasonal swing (± °C); solar yield (kWh per kWp a year); wind capacity factor; and the 2050 grid carbon multiplier.\n")
 b.append("| Country | Temp. | Solar | Wind | 2050 |\n|---|---|---|---|---|")

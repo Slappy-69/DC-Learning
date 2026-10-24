@@ -112,7 +112,7 @@ The context holds everything that depends on the inputs but not on any option's 
 
 ## Country
 
-If the country is not set, the engine picks the built-in country whose reference point is nearest the location, measuring east–west distances scaled by the cosine of the latitude. Each country row holds: name, currency, reference latitude and longitude, mean temperature and seasonal swing, solar yield (kWh/kWp a year), wind capacity factor, mean wholesale price, non-commodity adder, mean grid carbon, gas price, carbon price, EU membership and the grid carbon multiplier reached in 2050. Appendix B lists them.
+If the country is not set, the engine picks the built-in country whose outline contains the pin. If the pin is at sea or on the coast just outside every outline, it takes the built-in country whose outline is nearest, up to 25 km away ("nearest coast"). If the pin is inside a country with no built-in profile (for example Serbia or Ukraine) but within 3 km of a built-in country, it takes that country. Otherwise it takes the nearest reference point. The outlines are simplified (Natural Earth 1:50m, rounded to about 1 km), so a pin within 3 km of a border carries a flag on every option naming the neighbour and asking you to check the country. Reference-point distances measure east–west distances scaled by the cosine of the latitude (`context.js` `pinCountryInfo`, `geocountry.js`). Each country row holds: name, currency, reference latitude and longitude, mean temperature and seasonal swing, solar yield (kWh/kWp a year), wind capacity factor, mean wholesale price, non-commodity adder, mean grid carbon, gas price, carbon price, EU membership and the grid carbon multiplier reached in 2050. Appendix B lists them.
 
 ## Synthetic hourly profiles
 

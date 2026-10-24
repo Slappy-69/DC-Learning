@@ -6,7 +6,7 @@
 // Pure: built from the run and the view state handed in; no browser APIs.
 
 import { PdfDoc, INK, MUTED, ACCENT, FLAG, LINE } from './pdf.js';
-import { getRegistry, normalizeInputs, CHOICES, choiceLabel, LABEL, REQUIRED_EXAMPLE } from '../engine/defaults.js';
+import { getRegistry, normalizeInputs, CHOICES, choiceLabel, LABEL, LABEL_SOURCED, REQUIRED_EXAMPLE } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
 import { topCards } from '../engine/cards.js';
 import { measureById, sortRows } from '../engine/sensitivity.js';
@@ -17,7 +17,10 @@ const SECTIONS = [
   ['project', 'Project'], ['site', 'Site (area and land)'], ['load', 'Load'], ['grid', 'Grid'], ['utilities', 'Utilities and PPA'],
   ['requirements', 'Requirements'], ['economics', 'Economics'], ['weights', 'Weights'], ['deliverability', 'Deliverability'], ['settings', 'Run settings'],
 ];
-export const SITE_BETA_KEYS = ['site.boundary', 'site.setbackByEdge', 'site.heightZones', 'site.exclusions', 'site.poc', 'site.gasMain', 'site.access', 'site.receptors'];
+export const SITE_BETA_KEYS = ['site.boundary', 'site.setbackByEdge', 'site.heightZones', 'site.exclusions', 'site.poc', 'site.gasMain', 'site.access', 'site.receptors',
+  'deliverability.siteFitPenalty', 'deliverability.siteFitFlagsPenalty', 'deliverability.siteFitNoFitPenalty'];
+// Notes printed without their sentences about the Site tab (Beta) or site fit (AC 26; Haiku check H3, M2).
+export const noSiteNote = (t) => String(t || '').split(/(?<=\.)\s+/).filter((x) => !/site tab|site[- ]fit|beta/i.test(x)).join(' ');
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 export function valueText(v) {
@@ -51,7 +54,7 @@ export function inputRows(inputs) {
       else if (path === 'assumedInputs') continue;
       else if (r && same(r.value, v)) status = `Default: ${r.label}${r.basis ? ` (${r.basis})` : ''}`;
       else status = 'Entered';
-      out.push({ section: title, path, value: `${valueText(v)}${r && r.unit && typeof v === 'number' ? ` ${r.unit}` : ''}`, status, note: r && r.note ? r.note : '', isDefault: !!((r && same(r.value, v) && !(path in REQUIRED_EXAMPLE)) || A[path]) });
+      out.push({ section: title, path, value: `${valueText(v)}${r && r.unit && typeof v === 'number' ? ` ${r.unit}` : ''}`, status, note: r && r.note ? noSiteNote(r.note) : '', isDefault: !!((r && same(r.value, v) && !(path in REQUIRED_EXAMPLE)) || A[path]) });
     }
   }
   return out;
@@ -140,8 +143,9 @@ export function buildReport(run, view = {}) {
   const defs = rows.filter((r) => r.isDefault);
   const reg = getRegistry();
   const all = Object.values(reg);
-  const unverified = all.filter((r) => !r.verified).length;
-  doc.para(`${defs.length} inputs use their default. The registry holds ${all.length} records (inputs, technology, cost, carbon, spatial and run settings); ${unverified} are "${LABEL}". None is presented as verified. The full registry is in the user guide's appendix, and the run log lists the records each run read.`, { size: 9 });
+  const unverified = all.filter((r) => r.label === LABEL).length;
+  const sourced = all.filter((r) => r.label === LABEL_SOURCED).length;
+  doc.para(`${defs.length} inputs use their default. The registry holds ${all.length} records (inputs, technology, cost, carbon, spatial and run settings); ${unverified} are "${LABEL}" and ${sourced} are "${LABEL_SOURCED}" (researched, with source, year and link, approved by the owner, not checked by an independent person). None is presented as verified. The full registry is in the user guide's appendix, and the run log lists the records each run read.`, { size: 9 });
   doc.table([{ label: 'Default used', w: 1.2 }, { label: 'Value', w: 1 }, { label: 'Basis and note', w: 2.6 }], defs.map((r) => [r.path, r.value, `${r.status.replace(/^Default: /, '')}${r.note ? `. ${r.note}` : ''}`]), { size: 7, headSize: 8 });
 
   // ---- 3 Results ----
@@ -165,6 +169,15 @@ export function buildReport(run, view = {}) {
     if (c.cons.length) doc.bullets(c.cons.map((p) => `Con: ${p.text}`), { size: 8.5 });
     const major = c.majorFlags.filter((f) => !f.siteFit);
     doc.para(major.length ? `Main flags: ${major.slice(0, 4).map((f) => f.message.split(':')[0].split('.')[0]).join(' · ')}${major.length > 4 ? ` · +${major.length - 4} more` : ''}` : 'No major flags.', { size: 8.5, color: major.length ? FLAG : MUTED, gap: 8 });
+  }
+  // Several evaluation periods (OPEN-QUESTIONS 21; Haiku check H2, M3): LCOE and NPV over each period; only the
+  // scoring period ranks.
+  const periods = tc.cards.length && tc.cards[0].o.eco.byPeriod ? tc.cards[0].o.eco.byPeriod.map((p) => p.years) : [];
+  if (periods.length > 1) {
+    doc.heading('Top five by evaluation period', 2);
+    doc.para(`LCOE and NPV of net cost over each period; the ${I.economics.periodYears}-year period sets the ranking.`, { size: 8.5, color: MUTED });
+    doc.table([{ label: 'Option', w: 2.2 }, ...periods.flatMap((y) => [{ label: `LCOE ${y} yr`, align: 'right' }, { label: `NPV ${y} yr`, align: 'right' }])],
+      tc.cards.map((c) => [`#${c.o.rank} ${c.o.name}`, ...periods.flatMap((y) => { const p = (c.o.eco.byPeriod || []).find((q) => q.years === y); return p ? [perMWh(p.lcoe, 3), money(p.npvCost, 3)] : ['—', '—']; })]), { size: 7, headSize: 7 });
   }
   doc.heading('Ranked list (top 20)', 2);
   doc.table([{ label: '#', w: 0.3, align: 'right' }, { label: 'Option', w: 3 }, { label: 'Score', w: 0.55, align: 'right' }, { label: `LCOE ${cur().trim()}/MWh`, w: 0.55, align: 'right' }, { label: 'Capex', w: 0.7, align: 'right' }, { label: 'g/kWh', w: 0.55, align: 'right' }, { label: 'Full load', w: 0.75 }, { label: 'Adequate', w: 0.6 }],

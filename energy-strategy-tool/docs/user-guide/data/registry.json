@@ -8,7 +8,12 @@
   "basis": "source",
   "sourceToVerify": "",
   "note": "EU ETS price for EU-27, Norway and Iceland. Escalates at the carbon escalation rate.",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "sourced — not independently checked",
+  "source": "ICE EUA December 2026 futures close, reported by GMK Center, \"European carbon prices rose to €88/t in October\" (15 Oct 2026)",
+  "year": "2026-10-12",
+  "url": "https://gmk.center/en/news/european-carbon-prices-rose-to-e88-t-in-october/",
+  "accessed": "2026-10-22"
  },
  {
   "path": "country.carbonPrice.ukEts",
@@ -19,7 +24,12 @@
   "basis": "source",
   "sourceToVerify": "",
   "note": "UK ETS price for the United Kingdom, rounded from €75.09. Escalates at the carbon escalation rate.",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "sourced — not independently checked",
+  "source": "ICE UKA December 2026 futures, £62.90/t on 7 Oct 2026, reported by ClearBlue Markets (9 Oct 2026); converted at the ECB reference rate of 22 Oct 2026 (0.83770 £/€) = €75.09/t",
+  "year": "2026-10-07",
+  "url": "https://www.clearbluemarkets.com/knowledge-base/ukas-rally-4-on-reports-of-a-uk-eu-ets-linkage-deal",
+  "accessed": "2026-10-22"
  },
  {
   "path": "profiles.countries",
@@ -30,7 +40,11 @@
   "basis": "source",
   "sourceToVerify": "PVGIS (EU JRC), Renewables.ninja / ERA5, ENTSO-E Transparency Platform, Ember, TTF/NBP, EU ETS / UK ETS",
   "note": "Synthetic calibration targets for seeded synthetic hourly profiles. Not measured data. Replace with verified profiles.",
-  "briefRef": "§5.1, §18"
+  "briefRef": "§5.1, §18",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "project.fx",
@@ -49,7 +63,12 @@
   "basis": "source",
   "sourceToVerify": "ECB reference rates",
   "note": "Fixed rates; display conversion only. Engine works in EUR.",
-  "briefRef": "§5.1"
+  "briefRef": "§5.1",
+  "label": "sourced — not independently checked",
+  "source": "European Central Bank euro foreign exchange reference rates",
+  "year": "2026-10-22",
+  "url": "https://www.ecb.europa.eu/stats/shared/pdf/eurofxref.pdf",
+  "accessed": "2026-10-22"
  },
  {
   "path": "choices.C1",
@@ -67,7 +86,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C2",
@@ -75,7 +98,9 @@
    "state": "open",
    "values": [
     "gasRecip",
+    "gasTurbine",
     "fuelCell",
+    "dieselPrime",
     "rented"
    ]
   },
@@ -85,7 +110,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C3",
@@ -105,7 +134,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C4",
@@ -123,7 +156,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C4s",
@@ -140,7 +177,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Both sizings generated (OPEN-QUESTIONS 58, 2026-10-23); \"Permanent shortfall\" only for cooling types with a permanent shortfall (rule g).",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C5",
@@ -158,7 +199,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C5a",
@@ -175,7 +220,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Both arrangements generated (OPEN-QUESTIONS 47, 48, 2026-10-22): per building is the rule; pooled is studied alongside and carries a client-perceived risk item in deliverability.",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C6",
@@ -191,7 +240,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C7",
@@ -207,7 +260,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C8",
@@ -226,7 +283,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C9",
@@ -244,7 +305,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C10",
@@ -262,7 +327,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C11",
@@ -279,7 +348,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Default \"None\" when site area ≤ 20 ha and no off-site land; otherwise open.",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C12",
@@ -299,7 +372,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C12r",
@@ -315,7 +392,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Default role \"peak-shave against grid cap\" (§8 C12).",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C13",
@@ -331,7 +412,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No PPA unless the engineer ticks one (utilities.ppaInclude); then None and the entered type (OPEN-QUESTIONS 49, 62).",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C14",
@@ -347,7 +432,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "The one coverage the engineer enters (utilities.ppaCoverage).",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C15",
@@ -363,7 +452,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C16",
@@ -379,7 +472,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C17",
@@ -395,7 +492,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C18",
@@ -411,7 +512,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C19",
@@ -427,7 +532,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "choices.C20",
@@ -443,7 +552,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8"
+  "briefRef": "§8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.solarGround.capexPerKW",
@@ -454,7 +567,12 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh",
+  "year": "2024",
+  "url": "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/DE2024_ISE_Studie_Stromgestehungskosten_Erneuerbare_Energien.pdf",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.solarGround.fomPerKW",
@@ -465,7 +583,12 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh",
+  "year": "2024",
+  "url": "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/DE2024_ISE_Studie_Stromgestehungskosten_Erneuerbare_Energien.pdf",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.solarGround.life",
@@ -476,7 +599,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.solarGround.haPerMWp",
@@ -487,7 +614,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.solarGround.planM",
@@ -498,7 +629,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.solarGround.procM",
@@ -509,7 +644,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.solarGround.buildM",
@@ -520,7 +659,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.solarRoof.capexPerKW",
@@ -531,7 +674,12 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh",
+  "year": "2024",
+  "url": "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/DE2024_ISE_Studie_Stromgestehungskosten_Erneuerbare_Energien.pdf",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.solarRoof.fomPerKW",
@@ -542,7 +690,12 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh",
+  "year": "2024",
+  "url": "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/DE2024_ISE_Studie_Stromgestehungskosten_Erneuerbare_Energien.pdf",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.solarRoof.life",
@@ -553,7 +706,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.solarRoof.m2PerKWp",
@@ -564,7 +721,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.solarRoof.usableFraction",
@@ -575,7 +736,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.solarRoof.procM",
@@ -586,7 +751,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.solarRoof.buildM",
@@ -597,7 +766,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.wind.capexPerKW",
@@ -608,7 +781,12 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh",
+  "year": "2024",
+  "url": "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/DE2024_ISE_Studie_Stromgestehungskosten_Erneuerbare_Energien.pdf",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.wind.fomPerKW",
@@ -619,7 +797,12 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "Fraunhofer €32/kW a year fixed + €0.007/kWh variable; at about 2,600 full-load hours that is about €50/kW a year, all booked as fixed.",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Fraunhofer ISE, Stromgestehungskosten Erneuerbare Energien (July 2024), Tables 1 and 2: CAPEX PV Dach groß €900–1,600/kW, PV Freifläche €700–900/kW, wind onshore €1,300–1,900/kW; fixed OPEX €21.5, €13.3 and €32/kW a year, wind variable €0.007/kWh",
+  "year": "2024",
+  "url": "https://www.ise.fraunhofer.de/content/dam/ise/de/documents/publications/studies/DE2024_ISE_Studie_Stromgestehungskosten_Erneuerbare_Energien.pdf",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.wind.life",
@@ -630,7 +813,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.wind.turbineMW",
@@ -641,7 +828,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.wind.tipHeightM",
@@ -652,7 +843,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.wind.toppleFactor",
@@ -663,7 +858,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.wind.haPerTurbine",
@@ -674,7 +873,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.wind.planM",
@@ -685,7 +888,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.wind.procM",
@@ -696,7 +903,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.wind.buildM",
@@ -707,7 +918,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.bess.capexPerKWh",
@@ -717,8 +932,13 @@
   "high": 180,
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
-  "note": "€125/kWh + €135/kW gives €158/kWh for a 4-hour system (BNEF Europe 2025 turnkey); the split is a judgement.",
-  "briefRef": "§6"
+  "note": "€125/kWh + €135/kW gives €158.75/kWh for a 4-hour system (BNEF Europe 2025 turnkey); the split is a judgement.",
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "BloombergNEF Energy Storage System Cost Survey 2025, reported by Energy-Storage.news (16 Dec 2025): turnkey system price Europe US$177/kWh (global US$117, 4-hour US$110); at the ECB rate of 12 Oct 2026 (1.1181 $/€) €158/kWh. The split into energy and power cost is a judgement",
+  "year": "2025",
+  "url": "https://www.energy-storage.news/?p=92133",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.bess.capexPerKW",
@@ -729,7 +949,12 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "See tech.bess.capexPerKWh.",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "BloombergNEF Energy Storage System Cost Survey 2025, reported by Energy-Storage.news (16 Dec 2025): turnkey system price Europe US$177/kWh (global US$117, 4-hour US$110); at the ECB rate of 12 Oct 2026 (1.1181 $/€) €158/kWh. The split into energy and power cost is a judgement",
+  "year": "2025",
+  "url": "https://www.energy-storage.news/?p=92133",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.bess.fomPct",
@@ -740,7 +965,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.bess.rte",
@@ -751,7 +980,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.bess.life",
@@ -762,7 +995,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.bess.m2PerMWh",
@@ -773,7 +1010,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.bess.socInit",
@@ -784,7 +1025,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.bess.procM",
@@ -795,7 +1040,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.bess.buildM",
@@ -806,7 +1055,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasRecip.capexPerKW",
@@ -817,7 +1070,12 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Datacentres.com Research, on-site gas generation for data centres (2026): natural gas turbines or reciprocating engines US$800–1,200/kW installed; at 1.1181 $/€ €715–1,073/kW",
+  "year": "2026",
+  "url": "https://www.datacentres.com/news/diesel-duty-cycles-and-dollars-inside-the-2-8m-per-mw-backup-power-stack-powerin-slot3-2026-09-03",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.gasRecip.fomPerKW",
@@ -828,7 +1086,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasRecip.vomPerMWh",
@@ -839,7 +1101,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasRecip.eff",
@@ -850,7 +1116,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasRecip.msl",
@@ -861,7 +1131,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasRecip.unitMW",
@@ -872,7 +1146,12 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "Data centre gas engine orders now use units of about 10 MW (was 4.5 MW).",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Wärtsilä press release, 16 Apr 2026: 40 Wärtsilä 34SG engines, 412 MW, for a hyperscale data centre in Ohio (about 10.3 MW per engine)",
+  "year": "2026-04-16",
+  "url": "https://www.wartsila.com/media/news/16-04-2026-wartsila-s-34sg-engine-makes-its-data-center-debut-with-new-412-mw-u-s-project-3740972",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.gasRecip.life",
@@ -883,7 +1162,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasRecip.m2PerMW",
@@ -894,7 +1177,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasRecip.stackM",
@@ -905,7 +1192,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasRecip.procM",
@@ -916,7 +1207,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasRecip.buildM",
@@ -927,18 +1222,27 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasTurbine.capexPerKW",
-  "value": 1100,
+  "value": 1450,
   "unit": "€/kW",
   "low": 750,
-  "high": 1450,
+  "high": 1650,
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
-  "note": "Between the EIA aeroderivative and large simple-cycle figures; was €750/kW.",
-  "briefRef": "§6"
+  "note": "EIA aeroderivative (4 × 54 MW) US$1,606/kW at 1.1181 $/€ = €1,436, rounded to €1,450 for 30 MW aeroderivative or industrial units (was €750, then €1,100 between the EIA figures until Haiku check H2 judged that a judgement). Low end: EIA H-class simple cycle €748; high end: Lazard 2026 peaking US$1,650 = €1,476 plus margin.",
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: aeroderivative combustion turbine (4 × 54 MW) US$1,606/kW and H-class simple cycle US$836/kW, both 2023 dollars; at 1.1181 $/€ €1,436 and €748/kW. The default uses the aeroderivative figure, rounded to €1,450/kW, for 30 MW units (Haiku check H2)",
+  "year": "2025",
+  "url": "https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.gasTurbine.fomPerKW",
@@ -949,7 +1253,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasTurbine.vomPerMWh",
@@ -960,7 +1268,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasTurbine.eff",
@@ -971,7 +1283,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasTurbine.msl",
@@ -982,7 +1298,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasTurbine.unitMW",
@@ -993,7 +1313,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasTurbine.life",
@@ -1004,7 +1328,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasTurbine.m2PerMW",
@@ -1015,7 +1343,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasTurbine.stackM",
@@ -1026,7 +1358,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasTurbine.procM",
@@ -1037,7 +1373,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasTurbine.buildM",
@@ -1048,7 +1388,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.capexPerKW",
@@ -1059,7 +1403,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.fomPerKW",
@@ -1070,7 +1418,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.vomPerMWh",
@@ -1081,7 +1433,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.eff",
@@ -1092,7 +1448,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.heatToPower",
@@ -1103,7 +1463,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.absorptionCOP",
@@ -1114,7 +1478,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.msl",
@@ -1125,7 +1493,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.unitMW",
@@ -1136,7 +1508,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.life",
@@ -1147,7 +1523,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.m2PerMW",
@@ -1158,7 +1538,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.stackM",
@@ -1169,7 +1553,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.sizeFraction",
@@ -1180,7 +1568,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.procM",
@@ -1191,7 +1583,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.chp.buildM",
@@ -1202,7 +1598,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data; Danish Energy Agency Technology Catalogue",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.capexPerKW",
@@ -1213,7 +1613,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.fomPerKW",
@@ -1224,7 +1628,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.vomPerMWh",
@@ -1235,7 +1643,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.eff",
@@ -1246,7 +1658,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.msl",
@@ -1257,7 +1673,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.unitMW",
@@ -1268,7 +1688,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.life",
@@ -1279,7 +1703,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.stackLife",
@@ -1290,7 +1718,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.stackFraction",
@@ -1301,7 +1733,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.m2PerMW",
@@ -1312,7 +1748,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.procM",
@@ -1323,7 +1763,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelCell.buildM",
@@ -1334,7 +1778,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.dieselPrime.capexPerKW",
@@ -1345,7 +1793,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.dieselPrime.fomPerKW",
@@ -1356,7 +1808,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.dieselPrime.vomPerMWh",
@@ -1367,7 +1823,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.dieselPrime.eff",
@@ -1378,7 +1838,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.dieselPrime.msl",
@@ -1389,7 +1853,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.dieselPrime.unitMW",
@@ -1400,7 +1868,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.dieselPrime.life",
@@ -1411,7 +1883,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.dieselPrime.m2PerMW",
@@ -1422,7 +1898,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.dieselPrime.stackM",
@@ -1433,18 +1913,27 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.dieselPrime.procM",
-  "value": 9,
+  "value": 15,
   "unit": "months",
-  "low": 6,
-  "high": 15,
+  "low": 12,
+  "high": 16,
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
-  "note": "",
-  "briefRef": "§6"
+  "note": "The same 2.75 MW machines as the standby sets (52–70 weeks in 2026); was 9 months. Aligned after Haiku check H1, when turbines and HVO-diesel prime joined the default bridging set.",
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Global Power Supply, \"Generator lead times in 2026\" (11 May 2026): standby diesel generators 1,250–3,250 kW, 52 to 70 weeks",
+  "year": "2026-05-11",
+  "url": "https://globalpwr.com/blog/generator-lead-times-in-2026",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.dieselPrime.buildM",
@@ -1455,7 +1944,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.rented.rentalPerKWMonth",
@@ -1466,7 +1959,11 @@
   "basis": "source",
   "sourceToVerify": "Rental vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.rented.vomPerMWh",
@@ -1477,7 +1974,11 @@
   "basis": "source",
   "sourceToVerify": "Rental vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.rented.eff",
@@ -1488,7 +1989,11 @@
   "basis": "source",
   "sourceToVerify": "Rental vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.rented.msl",
@@ -1499,7 +2004,11 @@
   "basis": "source",
   "sourceToVerify": "Rental vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.rented.unitMW",
@@ -1510,7 +2019,11 @@
   "basis": "source",
   "sourceToVerify": "Rental vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.rented.m2PerMW",
@@ -1521,7 +2034,11 @@
   "basis": "source",
   "sourceToVerify": "Rental vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.rented.stackM",
@@ -1532,7 +2049,11 @@
   "basis": "source",
   "sourceToVerify": "Rental vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.rented.procM",
@@ -1543,7 +2064,11 @@
   "basis": "source",
   "sourceToVerify": "Rental vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.rented.buildM",
@@ -1554,7 +2079,11 @@
   "basis": "source",
   "sourceToVerify": "Rental vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.smr.capexPerKW",
@@ -1565,7 +2094,12 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "EIA generic 6 × 80 MW SMR, 2023 dollars not escalated; Darlington suggests higher (about CAD17,400/kW for four 300 MWe units).",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: small modular reactor (6 × 80 MW) US$8,936/kW (2023 dollars), at 1.1181 $/€ €7,992/kW. For comparison, Darlington BWRX-300 (4 × 300 MWe): CAD20.9 billion including interest and escalation, first unit in service 2030 (World Nuclear News, 23 May 2025)",
+  "year": "2025",
+  "url": "https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.smr.fomPerKW",
@@ -1576,7 +2110,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.smr.vomPerMWh",
@@ -1587,7 +2125,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.smr.fuelPerMWhE",
@@ -1598,7 +2140,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.smr.msl",
@@ -1609,7 +2155,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.smr.unitMW",
@@ -1620,7 +2170,12 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "US EIA, Capital Cost and Performance Characteristics (AEO2025), Table 1-2: small modular reactor (6 × 80 MW) US$8,936/kW (2023 dollars), at 1.1181 $/€ €7,992/kW. For comparison, Darlington BWRX-300 (4 × 300 MWe): CAD20.9 billion including interest and escalation, first unit in service 2030 (World Nuclear News, 23 May 2025)",
+  "year": "2025",
+  "url": "https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.smr.life",
@@ -1631,7 +2186,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.smr.earliestYear",
@@ -1642,7 +2201,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.smr.planM",
@@ -1653,7 +2216,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.smr.procM",
@@ -1664,7 +2231,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.smr.buildM",
@@ -1675,7 +2246,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.capexPerKW",
@@ -1686,7 +2261,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.fomPerKW",
@@ -1697,7 +2276,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.vomPerMWh",
@@ -1708,7 +2291,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.eff",
@@ -1719,7 +2306,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.msl",
@@ -1730,7 +2321,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.unitMW",
@@ -1741,7 +2336,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.life",
@@ -1752,7 +2351,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.m2PerMW",
@@ -1763,7 +2366,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.storageHours",
@@ -1774,7 +2381,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.procM",
@@ -1785,7 +2396,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.hydrogen.buildM",
@@ -1796,7 +2411,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input; vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupDiesel.capexPerKW",
@@ -1807,7 +2426,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupDiesel.fomPerKW",
@@ -1818,7 +2441,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupDiesel.unitMW",
@@ -1829,7 +2456,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupDiesel.eff",
@@ -1840,7 +2471,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupDiesel.life",
@@ -1851,7 +2486,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupDiesel.m2PerUnit",
@@ -1862,7 +2501,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupDiesel.stackM",
@@ -1873,7 +2516,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupDiesel.procM",
@@ -1884,7 +2531,12 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "52–70 weeks quoted for 1.25–3.25 MW standby units in 2026; was 12 months.",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Global Power Supply, \"Generator lead times in 2026\" (11 May 2026): standby diesel generators 1,250–3,250 kW, 52 to 70 weeks",
+  "year": "2026-05-11",
+  "url": "https://globalpwr.com/blog/generator-lead-times-in-2026",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.backupDiesel.buildM",
@@ -1895,7 +2547,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupHvo.capexPerKW",
@@ -1906,7 +2562,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupHvo.fomPerKW",
@@ -1917,7 +2577,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupHvo.unitMW",
@@ -1928,7 +2592,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupHvo.eff",
@@ -1939,7 +2607,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupHvo.life",
@@ -1950,7 +2622,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupHvo.m2PerUnit",
@@ -1961,7 +2637,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupHvo.stackM",
@@ -1972,7 +2652,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupHvo.procM",
@@ -1983,7 +2667,12 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "As diesel standby units (same machines); was 12 months.",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "sourced — not independently checked",
+  "source": "Global Power Supply, \"Generator lead times in 2026\" (11 May 2026): standby diesel generators 1,250–3,250 kW, 52 to 70 weeks",
+  "year": "2026-05-11",
+  "url": "https://globalpwr.com/blog/generator-lead-times-in-2026",
+  "accessed": "2026-10-23"
  },
  {
   "path": "tech.backupHvo.buildM",
@@ -1994,7 +2683,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupGas.capexPerKW",
@@ -2005,7 +2698,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupGas.fomPerKW",
@@ -2016,7 +2713,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupGas.unitMW",
@@ -2027,7 +2728,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupGas.eff",
@@ -2038,7 +2743,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupGas.life",
@@ -2049,7 +2758,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupGas.m2PerUnit",
@@ -2060,7 +2773,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupGas.stackM",
@@ -2071,7 +2788,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupGas.procM",
@@ -2082,7 +2803,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.backupGas.buildM",
@@ -2093,7 +2818,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.upsReserve.capexPerKWh",
@@ -2104,7 +2833,11 @@
   "basis": "source",
   "sourceToVerify": "UPS battery cabinet vendor pricing",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.upsReserve.fomPct",
@@ -2115,7 +2848,11 @@
   "basis": "source",
   "sourceToVerify": "UPS battery cabinet vendor pricing",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.upsReserve.life",
@@ -2126,7 +2863,11 @@
   "basis": "source",
   "sourceToVerify": "UPS battery cabinet vendor pricing",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.bessUps.durationH",
@@ -2137,7 +2878,11 @@
   "basis": "source",
   "sourceToVerify": "IRENA Renewable Power Generation Costs, NREL ATB, Danish Energy Agency Technology Catalogues, Lazard LCOE+, vendor indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelStorage.capexPerM3",
@@ -2148,7 +2893,11 @@
   "basis": "source",
   "sourceToVerify": "Fuel storage regulations by country; fire engineer",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelStorage.m2PerM3",
@@ -2159,7 +2908,11 @@
   "basis": "source",
   "sourceToVerify": "Fuel storage regulations by country; fire engineer",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelStorage.dieselLPerKWh",
@@ -2170,7 +2923,11 @@
   "basis": "source",
   "sourceToVerify": "Fuel storage regulations by country; fire engineer",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelStorage.bellyTankM3",
@@ -2181,7 +2938,11 @@
   "basis": "source",
   "sourceToVerify": "Fuel storage regulations by country; fire engineer",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.fuelStorage.densityTPerM3",
@@ -2192,7 +2953,11 @@
   "basis": "source",
   "sourceToVerify": "Fuel storage regulations by country; fire engineer",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.connCapexPerMW_mv",
@@ -2203,7 +2968,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.connCapexPerMW_hv",
@@ -2214,7 +2983,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.connCapexPerMW_ehv",
@@ -2225,7 +2998,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.subCapexPerMW_mv",
@@ -2236,7 +3013,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.subCapexPerMW_hv",
@@ -2247,7 +3028,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.subCapexPerMW_ehv",
@@ -2258,7 +3043,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.gisMultiplier",
@@ -2269,7 +3058,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.cablePerKm",
@@ -2280,7 +3073,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.m2Per20MVA_mv",
@@ -2291,7 +3088,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.haAIS_hv",
@@ -2302,7 +3103,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.haGIS_hv",
@@ -2313,7 +3118,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.haAIS_ehv",
@@ -2324,7 +3133,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.haGIS_ehv",
@@ -2335,7 +3148,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.bandMvMaxMW",
@@ -2346,7 +3163,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.substation.bandHvMaxMW",
@@ -2357,7 +3178,11 @@
   "basis": "source",
   "sourceToVerify": "TSO/DSO design standards and connection charging statements",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.gasConnection.pipePerKm",
@@ -2368,7 +3193,11 @@
   "basis": "source",
   "sourceToVerify": "Gas network connection charging statements; pipeline cost benchmarks",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.heatRejection.m2PerMW",
@@ -2379,7 +3208,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "tech.heatRejection.roofPlantFraction",
@@ -2390,7 +3223,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "permitting.outlook.gasRecip",
@@ -2401,7 +3238,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Gas engines running in normal operation need an IED permit with NOx limits and an air-quality assessment; consentable on many sites but site-specific",
-  "briefRef": "§9.8"
+  "briefRef": "§9.8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "permitting.outlook.gasTurbine",
@@ -2412,7 +3253,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Gas turbines running in normal operation need an IED permit with NOx limits and an air-quality assessment; consentable on many sites but site-specific",
-  "briefRef": "§9.8"
+  "briefRef": "§9.8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "permitting.outlook.chp",
@@ -2423,7 +3268,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Gas CHP needs an IED permit with NOx limits and an air-quality assessment; the use of the heat helps the case",
-  "briefRef": "§9.8"
+  "briefRef": "§9.8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "permitting.outlook.rented",
@@ -2434,7 +3283,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Temporary gas generation running for months counts towards the installation and its permit; regulators increasingly scrutinise long-running temporary plant",
-  "briefRef": "§9.8"
+  "briefRef": "§9.8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "permitting.outlook.dieselPrime",
@@ -2445,7 +3298,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Diesel or HVO engines running as prime power in normal operation are unlikely to be consented under air-quality rules in most of Europe",
-  "briefRef": "§9.8"
+  "briefRef": "§9.8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "permitting.outlook.hydrogen",
@@ -2456,7 +3313,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Hydrogen storage above the Seveso threshold adds a major-accident regime and separation distances; few precedents at data centres",
-  "briefRef": "§9.8"
+  "briefRef": "§9.8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "permitting.outlook.backup",
@@ -2467,7 +3328,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Standby gensets tested a few hours a year are routinely permitted at data centres, although they bring the site under the IED",
-  "briefRef": "§9.8"
+  "briefRef": "§9.8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.building.lw",
@@ -2478,7 +3343,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Plan proportion of each data hall block. No source.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.building.clearanceM",
@@ -2489,7 +3358,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Fire-tender access route around the building. Not in §6.3; replace with the fire strategy.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.building.clearanceMinM",
@@ -2500,7 +3373,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Minimum access width used only when the default cannot be met (option then \"Fits with flags\").",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.building.maxHallM2",
@@ -2511,7 +3388,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "A phase whose footprint exceeds this is split into equal halls.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.building.splitByPhase",
@@ -2522,7 +3403,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "One building block per phase (each phase's share of the footprint).",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.lw",
@@ -2533,7 +3418,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Plan proportion. No source.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.mvPowerFactor",
@@ -2544,7 +3433,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "§6.3 gives the 11–33 kV footprint per 20 MVA; the offered MW is converted to MVA at this power factor. No source.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.mvHeightM",
@@ -2555,7 +3448,11 @@
   "basis": "source",
   "sourceToVerify": "Utility / DNO standards, TSO/DSO design standards, vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.mvClearanceM",
@@ -2566,7 +3463,11 @@
   "basis": "source",
   "sourceToVerify": "Utility / DNO standards, TSO/DSO design standards, vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.mvClearanceMinM",
@@ -2577,7 +3478,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.hvAisHeightM",
@@ -2588,7 +3493,11 @@
   "basis": "source",
   "sourceToVerify": "Utility / DNO standards, TSO/DSO design standards, vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.hvGisHeightM",
@@ -2599,7 +3508,11 @@
   "basis": "source",
   "sourceToVerify": "Utility / DNO standards, TSO/DSO design standards, vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.ehvAisHeightM",
@@ -2610,7 +3523,11 @@
   "basis": "source",
   "sourceToVerify": "Utility / DNO standards, TSO/DSO design standards, vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.ehvGisHeightM",
@@ -2621,7 +3538,11 @@
   "basis": "source",
   "sourceToVerify": "Utility / DNO standards, TSO/DSO design standards, vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.hvClearanceM",
@@ -2632,7 +3553,11 @@
   "basis": "source",
   "sourceToVerify": "Utility / DNO standards, TSO/DSO design standards, vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.hvClearanceMinM",
@@ -2643,7 +3568,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.pocPreferredM",
@@ -2654,7 +3583,11 @@
   "basis": "source",
   "sourceToVerify": "Utility / DNO standards, TSO/DSO design standards, vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.noiseLwA",
@@ -2665,7 +3598,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Screening value; verify with transformer data.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.substation.noiseLwAmv",
@@ -2676,7 +3613,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.genset.unitLw",
@@ -2687,7 +3628,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Unit cell = m² per unit (incl. maintenance access) at this proportion.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.genset.heightM",
@@ -2698,7 +3643,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.genset.doubleDeckHeightM",
@@ -2709,7 +3658,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "Source to verify against: manufacturer / project precedent.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.genset.doubleDeckFootprintFactor",
@@ -2720,7 +3673,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "\"Halves footprint per unit\" (§6.3). Read by sizing (area budget) and by the blocks: ceil(units × factor) stacked positions of one unit footprint each (0.5 = two units per position).",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.genset.clearanceM",
@@ -2731,7 +3688,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.genset.clearanceMinM",
@@ -2742,7 +3703,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.genset.maxDistBuildingM",
@@ -2753,7 +3718,11 @@
   "basis": "source",
   "sourceToVerify": "Manufacturer datasheets",
   "note": "\"Adjacent to building (≤ 30 m)\" (§6.3).",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.genset.noiseLwA",
@@ -2764,7 +3733,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Screening value; verify with the manufacturer datasheet.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuel.lw",
@@ -2775,7 +3748,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuel.heightM",
@@ -2786,7 +3763,11 @@
   "basis": "source",
   "sourceToVerify": "Fuel storage regulations by country; fire engineer",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuel.clearanceM",
@@ -2797,7 +3778,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuel.clearanceMinM",
@@ -2808,7 +3793,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuel.sepBuildingM",
@@ -2819,7 +3808,11 @@
   "basis": "source",
   "sourceToVerify": "Fuel storage regulations by country; fire engineer",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuel.sepBuildingMinM",
@@ -2830,7 +3823,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "For example with a fire wall; fire engineer to confirm.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuel.sepBoundaryM",
@@ -2841,7 +3838,11 @@
   "basis": "source",
   "sourceToVerify": "Fuel storage regulations by country; fire engineer",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuel.sepBoundaryMinM",
@@ -2852,7 +3853,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.bess.unitMWh",
@@ -2863,7 +3868,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Array unit for the row/column arrangement; the footprint basis is m²/MWh (TECH).",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.bess.unitLw",
@@ -2874,7 +3883,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.bess.heightM",
@@ -2885,7 +3898,11 @@
   "basis": "source",
   "sourceToVerify": "NFPA 855 (current edition), FM Global DS 5-33, vendor UL 9540A data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.bess.clearanceM",
@@ -2896,7 +3913,11 @@
   "basis": "source",
   "sourceToVerify": "NFPA 855 (current edition), FM Global DS 5-33, vendor UL 9540A data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.bess.clearanceMinM",
@@ -2907,7 +3928,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Less than 3 m only where UL 9540A test data supports it.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.bess.sepBuildingM",
@@ -2918,7 +3943,11 @@
   "basis": "source",
   "sourceToVerify": "NFPA 855 (current edition), FM Global DS 5-33, vendor UL 9540A data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.bess.sepBuildingMinM",
@@ -2929,7 +3958,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Reduced separation needs test data or a fire-rated barrier.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.bess.noiseLwA",
@@ -2940,7 +3973,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.gasEngine.unitLw",
@@ -2951,7 +3988,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.gasEngine.heightM",
@@ -2962,7 +4003,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.gasEngine.containerHeightM",
@@ -2973,7 +4018,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.gasEngine.clearanceM",
@@ -2984,7 +4033,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.gasEngine.clearanceMinM",
@@ -2995,7 +4048,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.gasEngine.sepBoundaryM",
@@ -3006,7 +4063,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.gasEngine.sepBoundaryMinM",
@@ -3017,7 +4078,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.gasEngine.noiseLwA",
@@ -3028,7 +4093,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.turbine.unitLw",
@@ -3039,7 +4108,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.turbine.heightM",
@@ -3050,7 +4123,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.turbine.clearanceM",
@@ -3061,7 +4138,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.turbine.clearanceMinM",
@@ -3072,7 +4153,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.turbine.sepBoundaryM",
@@ -3083,7 +4168,11 @@
   "basis": "source",
   "sourceToVerify": "Danish Energy Agency Technology Catalogue; vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.turbine.sepBoundaryMinM",
@@ -3094,7 +4183,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.turbine.noiseLwA",
@@ -3105,7 +4198,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuelCell.unitLw",
@@ -3116,7 +4213,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuelCell.heightM",
@@ -3127,7 +4228,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuelCell.clearanceM",
@@ -3138,7 +4243,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuelCell.clearanceMinM",
@@ -3149,7 +4258,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.fuelCell.noiseLwA",
@@ -3160,7 +4273,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.hydrogen.unitLw",
@@ -3171,7 +4288,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.hydrogen.heightM",
@@ -3182,7 +4303,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.hydrogen.clearanceM",
@@ -3193,7 +4318,11 @@
   "basis": "source",
   "sourceToVerify": "National hazardous-substance regulation; specialist input",
   "note": "Not relaxed by the layout; flagged always.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.hydrogen.noiseLwA",
@@ -3204,7 +4333,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.heatRejection.moduleMW",
@@ -3215,7 +4348,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Array unit for the row/column arrangement; footprint basis m²/MW rejected (TECH).",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.heatRejection.unitLw",
@@ -3226,7 +4363,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.heatRejection.heightM",
@@ -3237,7 +4378,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.heatRejection.clearanceM",
@@ -3248,7 +4393,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.heatRejection.clearanceMinM",
@@ -3259,7 +4408,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.heatRejection.noiseLwAperMW",
@@ -3270,7 +4423,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Ground or roof heat rejection runs day and night.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.solarGround.heightM",
@@ -3281,7 +4438,11 @@
   "basis": "source",
   "sourceToVerify": "NREL land-use study (Ong et al., 2013) plus recent European project data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.solarGround.clearanceM",
@@ -3292,7 +4453,11 @@
   "basis": "source",
   "sourceToVerify": "NREL land-use study (Ong et al., 2013) plus recent European project data",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.solarGround.minArrayM",
@@ -3303,7 +4468,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Residual strips narrower than this are not filled.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.solarRoof.heightAboveRoofM",
@@ -3314,7 +4483,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data, fire-access guidance",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.solarRoof.edgeSetbackM",
@@ -3325,7 +4498,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor data, fire-access guidance",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.wind.padM2",
@@ -3336,7 +4513,11 @@
   "basis": "source",
   "sourceToVerify": "National planning guidance",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.wind.noiseBufferM",
@@ -3347,7 +4528,11 @@
   "basis": "source",
   "sourceToVerify": "National planning guidance",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.wind.noiseLwA",
@@ -3358,7 +4543,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.smr.haPer100MW",
@@ -3369,7 +4558,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.smr.heightM",
@@ -3380,7 +4573,11 @@
   "basis": "source",
   "sourceToVerify": "Vendor and regulator publications",
   "note": "",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.smr.lw",
@@ -3391,7 +4588,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Plan proportion of an on-site SMR block. No source.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.smr.clearanceM",
@@ -3402,7 +4603,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "§6.3 gives no SMR clearance (\"emergency planning zone not modelled; flag always\"). Used only when spatial.smr.placement is \"onsite\"; not relaxed by the layout.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.smr.placement",
@@ -3413,7 +4618,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Not placed within a typical campus boundary by default (§6.2).",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.unitArrays.maxUnits",
@@ -3424,7 +4633,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Units are grouped into arrays of at most this many.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.unitArrays.maxArrayM2",
@@ -3435,7 +4648,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Large units (engines, turbines) are grouped into fewer units per array so that no array block exceeds this area (at least one unit per array).",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.unitArrays.rows",
@@ -3446,7 +4663,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Row/column arrangement of the units in an array (§10.3).",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "spatial.noise.hemisphericalDb",
@@ -3457,7 +4678,11 @@
   "basis": "source",
   "sourceToVerify": "ISO 9613-2 (geometric divergence term only)",
   "note": "Geometric spreading only; no barrier, ground or air absorption.",
-  "briefRef": "§6.3"
+  "briefRef": "§6.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.exclusionType.easement.hard",
@@ -3468,7 +4693,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Overhead lines and buried services; no plant over a wayleave without consent.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.exclusionType.flood.hard",
@@ -3479,7 +4708,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Soft: raised ground solar can often use flood zones; critical plant cannot.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.exclusionType.ecology.hard",
@@ -3490,7 +4723,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.exclusionType.tree.hard",
@@ -3501,7 +4738,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Root protection areas.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.exclusionType.structure.hard",
@@ -3512,7 +4753,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.exclusionType.other.hard",
@@ -3523,7 +4768,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "fuel.gasTransportAdder",
@@ -3534,7 +4783,11 @@
   "basis": "source",
   "sourceToVerify": "National gas transport tariffs",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "fuel.dieselPrice",
@@ -3545,7 +4798,11 @@
   "basis": "source",
   "sourceToVerify": "National fuel price statistics",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "fuel.hvoPrice",
@@ -3556,7 +4813,11 @@
   "basis": "source",
   "sourceToVerify": "Fuel supplier indications",
   "note": "",
-  "briefRef": "§6"
+  "briefRef": "§6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "fuel.hydrogenPrice",
@@ -3567,7 +4828,12 @@
   "basis": "source",
   "sourceToVerify": "Hydrogen supply price indications",
   "note": "Renewable hydrogen delivered price; €8.20/kg ÷ 33.3 kWh/kg. Range €7–10/kg.",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "sourced — not independently checked",
+  "source": "EEX HYDRIX renewable hydrogen index, 2025 average €8.20/kg; range €7–10/kg from ACER European hydrogen markets 2025, reported by pv magazine (3 Dec 2025); 33.3 kWh/kg (LHV)",
+  "year": "2025",
+  "url": "https://www.pv-magazine.com/2025/12/03/price-gap-between-conventional-renewable-hydrogen-widens-in-europe/",
+  "accessed": "2026-10-22"
  },
  {
   "path": "fuel.efGas",
@@ -3578,7 +4844,11 @@
   "basis": "source",
   "sourceToVerify": "National GHG inventory emission factors",
   "note": "",
-  "briefRef": "§9.6"
+  "briefRef": "§9.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "fuel.efDiesel",
@@ -3589,7 +4859,11 @@
   "basis": "source",
   "sourceToVerify": "National GHG inventory emission factors",
   "note": "",
-  "briefRef": "§9.6"
+  "briefRef": "§9.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "fuel.efHvo",
@@ -3600,7 +4874,11 @@
   "basis": "source",
   "sourceToVerify": "HVO supplier sustainability data",
   "note": "Fossil-equivalent proxy; biogenic CO₂ not counted. Indicative.",
-  "briefRef": "§9.6"
+  "briefRef": "§9.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "fuel.efHydrogen",
@@ -3611,7 +4889,11 @@
   "basis": "source",
   "sourceToVerify": "",
   "note": "Scope 1 only; upstream production emissions not counted.",
-  "briefRef": "§9.6"
+  "briefRef": "§9.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.tempBasis",
@@ -3622,7 +4904,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.fcThreshold",
@@ -3633,7 +4919,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.band",
@@ -3644,7 +4934,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.copRef",
@@ -3655,7 +4949,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.tRef",
@@ -3666,7 +4964,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.copSlope",
@@ -3677,7 +4979,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.fanFrac",
@@ -3688,7 +4994,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.lossFrac",
@@ -3699,7 +5009,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.densityKWm2",
@@ -3710,7 +5024,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.wueBase",
@@ -3721,7 +5039,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.air.capexDeltaPerKW",
@@ -3732,7 +5054,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.tempBasis",
@@ -3743,7 +5069,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.fcThreshold",
@@ -3754,7 +5084,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.band",
@@ -3765,7 +5099,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.copRef",
@@ -3776,7 +5114,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.tRef",
@@ -3787,7 +5129,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.copSlope",
@@ -3798,7 +5144,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.fanFrac",
@@ -3809,7 +5159,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.lossFrac",
@@ -3820,7 +5174,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.densityKWm2",
@@ -3831,7 +5189,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.wueBase",
@@ -3842,7 +5204,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.wueEvap",
@@ -3853,7 +5219,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.evap.capexDeltaPerKW",
@@ -3864,7 +5234,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.tempBasis",
@@ -3875,7 +5249,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.fcThreshold",
@@ -3886,7 +5264,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.band",
@@ -3897,7 +5279,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.copRef",
@@ -3908,7 +5294,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.tRef",
@@ -3919,7 +5309,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.copSlope",
@@ -3930,7 +5324,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.fanFrac",
@@ -3941,7 +5339,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.lossFrac",
@@ -3952,7 +5354,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.densityKWm2",
@@ -3963,7 +5369,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.wueBase",
@@ -3974,7 +5384,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.dlc.capexDeltaPerKW",
@@ -3985,7 +5399,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.tempBasis",
@@ -3996,7 +5414,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.fcThreshold",
@@ -4007,7 +5429,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.band",
@@ -4018,7 +5444,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.copRef",
@@ -4029,7 +5459,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.tRef",
@@ -4040,7 +5474,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.copSlope",
@@ -4051,7 +5489,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.fanFrac",
@@ -4062,7 +5504,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.lossFrac",
@@ -4073,7 +5519,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.densityKWm2",
@@ -4084,7 +5534,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.wueBase",
@@ -4095,7 +5549,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "cooling.immersion.capexDeltaPerKW",
@@ -4106,7 +5564,11 @@
   "basis": "source",
   "sourceToVerify": "ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies",
   "note": "",
-  "briefRef": "§9.3"
+  "briefRef": "§9.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "country.gridCarbon",
@@ -4117,7 +5579,12 @@
   "basis": "source",
   "sourceToVerify": "",
   "note": "Ember 2025 for all 31 countries (one basis: life-cycle intensity of generation). The GHG Protocol location-based method often uses direct-combustion factors, which are lower; the basis is a judgement recorded in OPEN-QUESTIONS 66.",
-  "briefRef": "§5.4, §18"
+  "briefRef": "§5.4, §18",
+  "label": "sourced — not independently checked",
+  "source": "Ember, Yearly Electricity Data Europe (2026): carbon intensity of electricity generation, 2025, life-cycle basis, as published by Our World in Data (\"Carbon intensity of electricity generation\"); values rounded to 1 g/kWh (user guide Appendix B3)",
+  "year": "2025",
+  "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity",
+  "accessed": "2026-10-21"
  },
  {
   "path": "country.wholesalePrice",
@@ -4127,8 +5594,13 @@
   "high": null,
   "basis": "source",
   "sourceToVerify": "",
-  "note": "Batch 2 updated France 85 → 62, Finland 55 → 41, Norway 50 → 44, Portugal 75 → 66. Cyprus, Malta, Switzerland and Iceland keep unresearched values (no published day-ahead figure found).",
-  "briefRef": "§5.4, §18"
+  "note": "Batch 2 updated France 85 → 62, Finland 55 → 41, Norway 50 → 44, Portugal 75 → 66; Czechia 95 → 96 and Slovenia 105 → 106 after Haiku check H2 (to match the cited 2025 figures; Austria 100 against 100.4 kept). Cyprus, Malta, Switzerland and Iceland keep unresearched values (no published day-ahead figure found).",
+  "briefRef": "§5.4, §18",
+  "label": "sourced — not independently checked",
+  "source": "Electricity Maps, \"Electricity Grid Review 2025\", mean day-ahead price 2025 for each country (France €61.5, Norway €44.2, Finland €40.8, Portugal €66.1, Austria €100.4, Czechia €95.5, Slovenia €106.0/MWh checked on 2026-10-23); other countries as in user guide Appendix B2",
+  "year": "2025",
+  "url": "https://www.electricitymaps.com/grid-in-review-2025",
+  "accessed": "2026-10-23"
  },
  {
   "path": "ppa.strike.solar",
@@ -4139,7 +5611,12 @@
   "basis": "source",
   "sourceToVerify": "PPA market indices (e.g. LevelTen, Pexapark)",
   "note": "",
-  "briefRef": "§9.5"
+  "briefRef": "§9.5",
+  "label": "sourced — not independently checked",
+  "source": "LevelTen Energy European PPA Price Index Q2 2026, reported by PV Tech (23 Jul 2026): solar €56.59/MWh, wind US$95.86/MWh (at 1.1181 $/€ €85.7/MWh)",
+  "year": "2026-Q2",
+  "url": "https://www.pv-tech.org/solar-ppa-prices-buck-trends-increasing-europe-falling-north-america-q2-2026/",
+  "accessed": "2026-10-23"
  },
  {
   "path": "ppa.strike.wind",
@@ -4150,7 +5627,12 @@
   "basis": "source",
   "sourceToVerify": "PPA market indices",
   "note": "",
-  "briefRef": "§9.5"
+  "briefRef": "§9.5",
+  "label": "sourced — not independently checked",
+  "source": "LevelTen Energy European PPA Price Index Q2 2026, reported by PV Tech (23 Jul 2026): solar €56.59/MWh, wind US$95.86/MWh (at 1.1181 $/€ €85.7/MWh)",
+  "year": "2026-Q2",
+  "url": "https://www.pv-tech.org/solar-ppa-prices-buck-trends-increasing-europe-falling-north-america-q2-2026/",
+  "accessed": "2026-10-23"
  },
  {
   "path": "ppa.strike.hybrid",
@@ -4161,7 +5643,11 @@
   "basis": "source",
   "sourceToVerify": "PPA market indices",
   "note": "",
-  "briefRef": "§9.5"
+  "briefRef": "§9.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "ppa.strike.baseload",
@@ -4172,7 +5658,11 @@
   "basis": "source",
   "sourceToVerify": "PPA market indices",
   "note": "",
-  "briefRef": "§9.5"
+  "briefRef": "§9.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "ppa.strike.cfe247",
@@ -4183,7 +5673,11 @@
   "basis": "source",
   "sourceToVerify": "PPA market indices",
   "note": "",
-  "briefRef": "§9.5"
+  "briefRef": "§9.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "ppa.shapingAdder",
@@ -4194,7 +5688,11 @@
   "basis": "source",
   "sourceToVerify": "PPA market indices",
   "note": "",
-  "briefRef": "§9.5"
+  "briefRef": "§9.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "weights.presets",
@@ -4236,7 +5734,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "First-cut judgement, no source.",
-  "briefRef": "§5.7"
+  "briefRef": "§5.7",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "view.pareto.xAxis",
@@ -4247,7 +5749,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Default horizontal axis of the trade-off chart. \"follow-scoring\" = the Carbon axis metric (settings.carbonMetric, default location-based). Walkthrough 2026-10-21 (work package 6): cost vertical against carbon horizontal.",
-  "briefRef": "§12.2"
+  "briefRef": "§12.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "view.pareto.yAxis",
@@ -4258,7 +5764,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Default vertical axis of the trade-off chart. \"follow-scoring\" = the Cost axis metric (settings.costMetric, default LCOE).",
-  "briefRef": "§12.2"
+  "briefRef": "§12.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "view.pareto.encoding",
@@ -4269,7 +5779,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Bubble size and colour. Walkthrough 2026-10-21 (work package 6): resilience status sets size and colour; \"ttp-capex\" is the encoding built before (colour time-to-power, size capex).",
-  "briefRef": "§12.2"
+  "briefRef": "§12.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "view.pareto.ttpClasses",
@@ -4280,7 +5794,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "Number of colour classes for time-to-power, quantiles over the scoring set.",
-  "briefRef": "§12.2"
+  "briefRef": "§12.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "view.pareto.canvasAbove",
@@ -4291,7 +5809,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "Points are drawn on Canvas above this count (§4), SVG at or below it.",
-  "briefRef": "§12.2"
+  "briefRef": "§12.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "view.pareto.display",
@@ -4302,7 +5824,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Chart shown first; the table alternative is one click away and holds the same rows.",
-  "briefRef": "§12.2"
+  "briefRef": "§12.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "view.site.smallMultiples",
@@ -4313,7 +5839,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "Number of top-ranked options drawn as small-multiple plans on the Site tab, all at the same scale (§10.7 \"thumbnails of pinned or top options\"; pinning is not in this slice). 0 hides them.",
-  "briefRef": "§10.7"
+  "briefRef": "§10.7",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "view.table.pageSize",
@@ -4324,7 +5854,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "Rows per page in the ranked table and the trade-off table; every page is reachable with the pager.",
-  "briefRef": "§12.2"
+  "briefRef": "§12.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "sensitivity.gasPriceFactor",
@@ -4335,7 +5869,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Tornado driver range: low and high gas commodity price as factors on the current value. No source.",
-  "briefRef": "§13.3"
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "sensitivity.carbonPriceFactor",
@@ -4346,7 +5884,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Tornado driver range: low and high EU/UK ETS carbon price as factors on the current value. No source.",
-  "briefRef": "§13.3"
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "sensitivity.itLoadFactor",
@@ -4357,7 +5899,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Tornado driver range: low and high IT load as factors on the entered phases. No source.",
-  "briefRef": "§13.3"
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "sensitivity.flexTriggerFactor",
@@ -4368,7 +5914,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Tornado driver range (work package 9). No source.",
-  "briefRef": "§13.3"
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "sensitivity.defaultMeasure",
@@ -4379,7 +5929,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Walkthrough 2026-10-21: the tornado measures LCOE by default.",
-  "briefRef": "§13.3"
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "sensitivity.topDrivers",
@@ -4389,8 +5943,12 @@
   "high": null,
   "basis": "run setting",
   "sourceToVerify": "",
-  "note": "Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). This slice has 7 drivers and no control for this setting yet; the code clamps it to 1–30.",
-  "briefRef": "§13.3"
+  "note": "Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). Work package 9 offers 16 drivers with tick boxes; the code clamps this setting to 1–30.",
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "view.siteTabBeta",
@@ -4401,7 +5959,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Site tab (Beta): site layout, boundary drawing, GeoJSON/KML import and site fit. Hidden by default; when on it is labelled Beta and never affects the ranking or the PDF.",
-  "briefRef": "§12.12"
+  "briefRef": "§12.12",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "project.name",
@@ -4412,7 +5974,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.1"
+  "briefRef": "§5.1",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "project.country",
@@ -4423,7 +5989,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "null = derived from location (nearest built-in country centroid); overridable.",
-  "briefRef": "§5.1"
+  "briefRef": "§5.1",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "project.currency",
@@ -4434,7 +6004,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Display only; converted at the ECB reference rates of the release (project.fx). Inputs stay in euro.",
-  "briefRef": "§5.1"
+  "briefRef": "§5.1",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "project.analysisStart",
@@ -4445,7 +6019,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Today + 3 months. No source; replace with the client programme start.",
-  "briefRef": "§5.1"
+  "briefRef": "§5.1",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "project.seed",
@@ -4456,7 +6034,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§4"
+  "briefRef": "§4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.aspect",
@@ -4467,7 +6049,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.boundary",
@@ -4478,7 +6064,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "null = rectangle from the site area and aspect ratio, long side east–west, centred on the project location. A drawn, typed or imported polygon replaces it and sets the site area.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.setbackM",
@@ -4489,7 +6079,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source; replace with local planning requirement.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.setbackByEdge",
@@ -4500,7 +6094,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Per-edge override of the uniform boundary setback; null = uniform on every edge.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.heightLimitM",
@@ -4511,7 +6109,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.heightZones",
@@ -4522,7 +6124,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Per-zone override of the height limit; none by default.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.exclusions",
@@ -4533,7 +6139,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "None by default.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.softUsableBySolar",
@@ -4544,7 +6154,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Soft exclusions can be used by ground solar (configurable). Off: ground solar does not use them either. Other blocks never use a soft exclusion by default; only at the last relaxation level (L4), flagged \"Block in soft exclusion\" and \"Fits with flags\" (§10.4 step 5, §15).",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.poc",
@@ -4555,7 +6169,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "The brief default is the boundary point nearest the map's nearest road. This offline tool has no road data, so the default POC is the default access point (mid-point of the longest edge), standing in for the road side. Replace with the real POC.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.gasMain",
@@ -4566,7 +6184,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "None: gas off-site, location unknown.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.access",
@@ -4577,7 +6199,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "null = one access point at the mid-point of the longest edge.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.receptors",
@@ -4588,7 +6214,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "None by default; used for distance-based noise flags only.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.roadsFraction",
@@ -4599,7 +6229,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Applied to the buildable envelope area: allowance = fraction × envelope, net developable = envelope − allowance (the brief's definition is circular). Held back as a land budget, not a located area.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.pvRoofM2",
@@ -4610,7 +6244,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "OPEN-QUESTIONS 53 (2026-10-22): blank = today's rule, 50 % of the free roof after roof plant is usable (solarRoof.usableFraction). An entered area replaces the rule; car-park canopies can be included here or in the ground area.",
-  "briefRef": "§5.2, §8 C10"
+  "briefRef": "§5.2, §8 C10",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.pvGroundHa",
@@ -4621,7 +6259,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "OPEN-QUESTIONS 53 (2026-10-22): 0 = no ground solar. An entered area makes C10 \"Roof + ground\" available and sizes ground PV at solarGround.haPerMWp; with the Site tab (Beta) on it is placed as one block of that area.",
-  "briefRef": "§5.2, §8 C10"
+  "briefRef": "§5.2, §8 C10",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.offsiteLandHa",
@@ -4632,7 +6274,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.offsiteDistanceKm",
@@ -4643,7 +6289,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Used only when off-site land or off-site plant exists; replace with the real route length.",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "site.groundConditions",
@@ -4654,7 +6304,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Note only; no geotechnical modelling (flat site, §10.1).",
-  "briefRef": "§5.2"
+  "briefRef": "§5.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.itMW",
@@ -4665,7 +6319,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Blank: site area × building coverage × storeys ÷ gross-up × whitespace density of the cooling type (air when the cooling is an open choice), the same rule the building massing uses (OPEN-QUESTIONS 26).",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.estimateCoverage",
@@ -4676,7 +6334,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Walkthrough 2026-10-21: 35 % site coverage for the IT estimate from area. To research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.rampStart",
@@ -4687,7 +6349,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "The owner's judgement (2026-10-22, OPEN-QUESTIONS 51; was 50 %). No source; replace with the client's fit-out programme.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.rampMonths",
@@ -4698,7 +6364,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.utilisation",
@@ -4709,7 +6379,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.workload",
@@ -4720,7 +6394,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Mixed cloud",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.shape",
@@ -4731,7 +6409,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Daily fluctuation is the shape built before work package 4.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.dailySwing",
@@ -4742,7 +6424,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Blank = by workload, as built: ±1 % AI training, ±8 % enterprise, ±4 % otherwise.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.aiTrainUtil",
@@ -4753,7 +6439,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Mock-up value (walkthrough 2026-10-21); to research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.aiTrainDip",
@@ -4764,7 +6454,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Mock-up value; to research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.aiTrainDipEveryH",
@@ -4775,7 +6469,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Mock-up value; to research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.aiTrainDipH",
@@ -4786,7 +6484,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Mock-up value; to research. The hourly model cannot show dips shorter than an hour.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.aiInfUtil",
@@ -4797,7 +6499,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source; to research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.aiInfTrough",
@@ -4808,7 +6514,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source; to research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.aiInfPeakHour",
@@ -4819,7 +6529,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source; to research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.aiInfWeekend",
@@ -4830,7 +6544,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source; to research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.coolingApproach",
@@ -4841,7 +6559,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Open choice (C8)",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.grossUp",
@@ -4852,7 +6574,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.storeys",
@@ -4863,7 +6589,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.storeyHeightM",
@@ -4874,7 +6604,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.roofZoneM",
@@ -4885,7 +6619,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.coolingFactor",
@@ -4896,7 +6634,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Tornado driver \"PUE\": scales fans and mechanical cooling. No source.",
-  "briefRef": "§13.3"
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.ancillaryFrac",
@@ -4907,7 +6649,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexMaxPct",
@@ -4918,7 +6664,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexHours",
@@ -4929,7 +6679,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexTrigger",
@@ -4940,7 +6694,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Weather and grid stress is modelled as the ambient temperature at or above the trigger level (source to research).",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexTriggerPrice",
@@ -4951,7 +6709,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Mock-up value; to research against ENTSO-E price history.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexTriggerCarbon",
@@ -4962,7 +6724,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source; to research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexTriggerTemp",
@@ -4973,7 +6739,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source; to research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexEventH",
@@ -4984,7 +6754,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Mock-up value.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexNoticeH",
@@ -4995,7 +6769,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Mock-up value. Recorded, not modelled: the hourly model knows prices and carbon in advance (day-ahead), so notice does not change the hours.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexRecoveryH",
@@ -5006,7 +6784,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Mock-up value.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexCostPerMWh",
@@ -5017,7 +6799,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Mock-up value: the cost of curtailing customer IT; to research.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexBatteryFixed",
@@ -5028,7 +6814,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Walkthrough 2026-10-21: the engineer chooses which is held fixed. Threshold (default): the battery is sized to cover the trigger hours at the trigger level. Hours: the trigger level is set so the events reach the target hours, and the battery covers them. Size: the battery size is entered and the hours it covers are reported.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexBatteryHours",
@@ -5039,7 +6829,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexBatteryMW",
@@ -5050,7 +6844,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Blank = the trigger-hours size.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexBatteryMWh",
@@ -5061,7 +6859,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Blank = the trigger-hours size.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.flexBatteryResponse",
@@ -5072,7 +6874,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Walkthrough 2026-10-21: the economic battery runs the site in trigger hours before any curtailment.",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.nowMW",
@@ -5083,7 +6889,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Blank = not known: no import before the full connection (grid.unknownNowMW).",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.fullMW",
@@ -5094,7 +6904,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Blank = not known: the IT load × grid.unknownFullPerITMW, about the design facility load.",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.fullDate",
@@ -5105,7 +6919,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Blank = not known: the analysis start + grid.unknownFullMonths.",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.unknownNowMW",
@@ -5116,7 +6934,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source. Country values to research (package 0).",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.unknownFullPerITMW",
@@ -5127,7 +6949,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "About the design facility load (IT × design-day PUE + ancillary). No source; country values to research.",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.unknownFullMonths",
@@ -5138,7 +6964,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source; country connection lead times to research (package 0).",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.steps",
@@ -5149,7 +6979,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.exportMW",
@@ -5160,7 +6994,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.exportFactor",
@@ -5171,7 +7009,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.priceAdder",
@@ -5182,7 +7024,11 @@
   "basis": "source",
   "sourceToVerify": "National regulators (network charges, levies)",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.priceMultiplier",
@@ -5193,7 +7039,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.carbonMultiplier",
@@ -5204,7 +7054,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.contractWaitMW",
@@ -5215,7 +7069,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "OPEN-QUESTIONS 19: the contracted grid capacity of every C1 = \"Wait for grid\" option; the import limit is the lower of this and the offer in each period. Blank = the full offer (as built before).",
-  "briefRef": "§5.4, §9.2"
+  "briefRef": "§5.4, §9.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.contractBridgeMW",
@@ -5226,7 +7084,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "OPEN-QUESTIONS 19: the contracted grid capacity of every C1 = \"Bridge until grid\" option, for example 80 MW of a 120 MW offer. Blank = the full offer.",
-  "briefRef": "§5.4, §9.2"
+  "briefRef": "§5.4, §9.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.contractExportMW",
@@ -5237,7 +7099,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "OPEN-QUESTIONS 19: the contracted import capacity of C1 = \"Grid + export\" options. Blank = the full offer.",
-  "briefRef": "§5.4, §9.2"
+  "briefRef": "§5.4, §9.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.connectionCharge",
@@ -5248,7 +7114,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Walkthrough 2026-10-21: default 0, the same for every option; OPEN-QUESTIONS 20: a lump sum, not paid by islanded options (0 MW contracted); OPEN-QUESTIONS 50: the expected cost (standard rate per MW × contracted MW) is shown next to the field. Every option relying on the default 0 is flagged \"assumed\".",
-  "briefRef": "§5.4, §9.5"
+  "briefRef": "§5.4, §9.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "grid.dateUncertainty",
@@ -5262,7 +7132,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Feeds Monte Carlo (not in this slice).",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "utilities.gasAvailable",
@@ -5273,7 +7147,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "utilities.gasDateMonths",
@@ -5284,7 +7162,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Gas capacity unlimited from this date.",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "utilities.gasPrice",
@@ -5295,7 +7177,11 @@
   "basis": "source",
   "sourceToVerify": "TTF/NBP forward curves; national tariffs",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "utilities.hydrogenAvailable",
@@ -5306,7 +7192,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "utilities.waterAvailable",
@@ -5317,7 +7207,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "utilities.districtHeating",
@@ -5328,7 +7222,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.4"
+  "briefRef": "§5.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "utilities.reYieldFactor",
@@ -5339,7 +7237,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Tornado driver \"capacity factors\". No source.",
-  "briefRef": "§13.3"
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "utilities.ppaInclude",
@@ -5350,7 +7252,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Owner, 2026-10-22: off unless the engineer ticks it. Options without a PPA use the national grid's standard price and carbon.",
-  "briefRef": "§8 C13"
+  "briefRef": "§8 C13",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "utilities.ppaType",
@@ -5361,7 +7267,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8 C13"
+  "briefRef": "§8 C13",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "utilities.ppaCoverage",
@@ -5372,7 +7282,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "One coverage, set by the engineer (OPEN-QUESTIONS 49).",
-  "briefRef": "§8 C14"
+  "briefRef": "§8 C14",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.backedPct",
@@ -5383,7 +7297,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.topology",
@@ -5394,7 +7312,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.autonomyH",
@@ -5405,7 +7327,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.islanding",
@@ -5416,7 +7342,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Default not stated in brief; \"No\" chosen (judgement).",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.upsMin",
@@ -5427,7 +7357,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "The resilience reserve battery (walkthrough 2026-10-21): always kept, never used for economic duties; longer autonomy can be chosen site-wide.",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.blockSize",
@@ -5438,7 +7372,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.2"
+  "briefRef": "§9.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.catcherN",
@@ -5449,7 +7387,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.2"
+  "briefRef": "§9.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.carbonTarget",
@@ -5460,7 +7402,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "None",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.capexCeiling",
@@ -5471,7 +7417,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "None",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.maxRunHours",
@@ -5482,7 +7432,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "None",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.iedMWth",
@@ -5493,7 +7447,11 @@
   "basis": "source",
   "sourceToVerify": "Directive 2010/75/EU (IED), consolidated text; check 2024 revision",
   "note": "",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.mcpMinMWth",
@@ -5504,7 +7462,11 @@
   "basis": "source",
   "sourceToVerify": "Directive (EU) 2015/2193 (MCPD)",
   "note": "",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.mcpMaxMWth",
@@ -5515,7 +7477,11 @@
   "basis": "source",
   "sourceToVerify": "Directive (EU) 2015/2193 (MCPD)",
   "note": "",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.sevesoH2t",
@@ -5526,7 +7492,11 @@
   "basis": "source",
   "sourceToVerify": "Directive 2012/18/EU (Seveso III) Annex I lower tier",
   "note": "",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.permitAllowanceM",
@@ -5537,7 +7507,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Owner's decision 2026-10-22 (OPEN-QUESTIONS 44, 45): plant is ordered from day one; only plant under the IED or Seveso waits this allowance. Wind, ground solar and SMRs keep their own planning months (OPEN-QUESTIONS 56).",
-  "briefRef": "§9.8"
+  "briefRef": "§9.8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.sevesoFuelT",
@@ -5548,7 +7522,11 @@
   "basis": "source",
   "sourceToVerify": "Directive 2012/18/EU (Seveso III) Annex I lower tier",
   "note": "",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.testRunHours",
@@ -5559,7 +7537,11 @@
   "basis": "judgement",
   "sourceToVerify": "NFPA 110 (monthly exercise runs)",
   "note": "Walkthrough 2026-10-21: 6 h a year per generator (replaces 12 h), about monthly 30-minute exercise runs.",
-  "briefRef": "§5.5, §9.4"
+  "briefRef": "§5.5, §9.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.gensetPrimaryHours",
@@ -5570,7 +7552,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Walkthrough 2026-10-21: backup gensets can run as primary power for a set number of hours a year, dispatched and costed. Default 0: they never run in normal dispatch. Hours chosen: the most expensive grid-price hours of each year.",
-  "briefRef": "§5.5, §9.4"
+  "briefRef": "§5.5, §9.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.testRunLoad",
@@ -5581,7 +7567,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Walkthrough 2026-10-21: test load 75 %, a separate editable input.",
-  "briefRef": "§5.5, §9.4"
+  "briefRef": "§5.5, §9.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.bessUpsGensetFraction",
@@ -5592,7 +7582,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "BESS-augmented UPS replaces redundant genset units with BESS for its duration.",
-  "briefRef": "§8 C5"
+  "briefRef": "§8 C5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.landTakeCeilingHa",
@@ -5603,7 +7597,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Flag only. At the default it coincides with the \"Does not fit\" status; a lower value raises the minor flag \"land take above ceiling\" without changing the site-fit status.",
-  "briefRef": "§5.5"
+  "briefRef": "§5.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "requirements.noiseNightDbA",
@@ -5614,7 +7612,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "No source; replace with the local planning or environmental noise criterion. Screening proxy, not an acoustic assessment.",
-  "briefRef": "§10.6"
+  "briefRef": "§10.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.periodYears",
@@ -5625,7 +7627,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.wacc",
@@ -5636,7 +7642,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.contingency",
@@ -5647,7 +7657,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.capexLow",
@@ -5658,7 +7672,11 @@
   "basis": "source",
   "sourceToVerify": "AACE International RP 18R-97 (confirm revision and year)",
   "note": "",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.capexHigh",
@@ -5669,7 +7687,11 @@
   "basis": "source",
   "sourceToVerify": "AACE International RP 18R-97 (confirm revision and year)",
   "note": "",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.carbonPrice",
@@ -5680,7 +7702,11 @@
   "basis": "source",
   "sourceToVerify": "EU ETS / UK ETS exchange data, official projections",
   "note": "The country default comes from the scheme records country.carbonPrice.euEts and country.carbonPrice.ukEts (sourced); Switzerland is unresearched.",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.carbonEscalation",
@@ -5691,7 +7717,11 @@
   "basis": "source",
   "sourceToVerify": "EU ETS / UK ETS forward curves",
   "note": "",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.capexFactor",
@@ -5702,7 +7732,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Tornado driver \"capex\"; range the AACE Class 5 band (−30 % / +50 %).",
-  "briefRef": "§13.3"
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.bessCapexFactor",
@@ -5713,7 +7747,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Tornado driver \"battery capex\". No source.",
-  "briefRef": "§13.3"
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.gridCapexFactor",
@@ -5724,7 +7762,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Tornado driver \"grid connection capex\". No source.",
-  "briefRef": "§13.3"
+  "briefRef": "§13.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.elecEscalation",
@@ -5735,7 +7777,11 @@
   "basis": "source",
   "sourceToVerify": "ENTSO-E / forward curves",
   "note": "",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.gasEscalation",
@@ -5746,7 +7792,11 @@
   "basis": "source",
   "sourceToVerify": "TTF/NBP forward curves",
   "note": "",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.salvageFraction",
@@ -5757,7 +7807,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.5"
+  "briefRef": "§9.5",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.revenueExport",
@@ -5768,7 +7822,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "economics.displayPeriods",
@@ -5782,7 +7840,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Walkthrough 2026-10-21: several evaluation periods at once (for example 10, 15 and 20 years). The scoring period (economics.periodYears) sets the cost axis.",
-  "briefRef": "§5.6"
+  "briefRef": "§5.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "weights.cost",
@@ -5793,7 +7855,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.7"
+  "briefRef": "§5.7",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "weights.carbon",
@@ -5804,7 +7870,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.7"
+  "briefRef": "§5.7",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "weights.ttp",
@@ -5815,7 +7885,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.7"
+  "briefRef": "§5.7",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "weights.deliverability",
@@ -5826,7 +7900,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§5.7"
+  "briefRef": "§5.7",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.emergingPenalty",
@@ -5837,7 +7915,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.nascentPenalty",
@@ -5848,7 +7930,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.majorFlagPenalty",
@@ -5859,7 +7945,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.minorFlagPenalty",
@@ -5870,7 +7960,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.gasUnknownPenalty",
@@ -5881,7 +7975,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.hydrogenPenalty",
@@ -5892,7 +7990,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.leadTimePenalty",
@@ -5903,7 +8005,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.leadTimeThresholdM",
@@ -5914,7 +8020,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.pooledBackupRisk",
@@ -5925,7 +8035,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Client-perceived risk of backup pooled across the campus (OPEN-QUESTIONS 48, 2026-10-22): by default the same penalty as a minor permitting flag; the engineer can raise it to major for a project.",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.siteFitPenalty",
@@ -5936,7 +8050,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Off by default: the site-fit status has no effect on the deliverability or weighted score. On: the axis is labelled \"Deliverability (incl. site fit)\".",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.siteFitFlagsPenalty",
@@ -5947,7 +8065,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Applies only when the site-fit penalty is on.",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "deliverability.siteFitNoFitPenalty",
@@ -5958,7 +8080,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Applies only when the site-fit penalty is on.",
-  "briefRef": "§9.9"
+  "briefRef": "§9.9",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.generationCap",
@@ -5969,7 +8095,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§7.2"
+  "briefRef": "§7.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.sampleAboveCap",
@@ -5980,7 +8110,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§7.2"
+  "briefRef": "§7.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.gridHandling",
@@ -5991,7 +8125,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Show unmet load",
-  "briefRef": "§9.4"
+  "briefRef": "§9.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.runHourHandling",
@@ -6002,7 +8140,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Flag only",
-  "briefRef": "§9.4"
+  "briefRef": "§9.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.costMetric",
@@ -6013,7 +8155,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§11"
+  "briefRef": "§11",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.carbonMetric",
@@ -6024,7 +8170,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.6"
+  "briefRef": "§9.6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.absoluteScaling",
@@ -6035,7 +8185,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "Hook only in this slice.",
-  "briefRef": "§11"
+  "briefRef": "§11",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.rankCompliantFirst",
@@ -6046,7 +8200,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "On: options whose resilience status is \"Does not meet\" rank after the others; scores do not change. Site fit does not count while the Site tab is Beta (AC 27, 2026-10-22).",
-  "briefRef": "§11"
+  "briefRef": "§11",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.hideDominated",
@@ -6057,7 +8215,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§7.2 step 6"
+  "briefRef": "§7.2 step 6",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.windSiteThresholdHa",
@@ -6068,7 +8230,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§8 C11"
+  "briefRef": "§8 C11",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.bridgeBessHours",
@@ -6079,7 +8245,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.2"
+  "briefRef": "§9.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.timelineMonths",
@@ -6090,7 +8260,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "Time-to-power horizon.",
-  "briefRef": "§9.8"
+  "briefRef": "§9.8",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.maxDispatchYears",
@@ -6101,7 +8275,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "Distinct 8760-h dispatch years before steady state is assumed.",
-  "briefRef": "§9.1"
+  "briefRef": "§9.1",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.screeningModel",
@@ -6111,8 +8289,27 @@
   "high": null,
   "basis": "run setting",
   "sourceToVerify": "",
-  "note": "OPEN-QUESTIONS 23: full-year hourly for every option by default; representative days (design day, dearest day and a typical day per month) as an optional faster screening.",
-  "briefRef": "§9.1"
+  "note": "OPEN-QUESTIONS 23: full-year hourly for every option by default; representative days (the design day, the dearest day and three clustered typical days per month, about 50 days) as an optional faster screening.",
+  "briefRef": "§9.1",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
+ },
+ {
+  "path": "settings.repDaysPerMonth",
+  "value": 3,
+  "unit": "typical days a month (plus the dearest day and the design day)",
+  "low": 1,
+  "high": 6,
+  "basis": "run setting",
+  "sourceToVerify": "",
+  "note": "Screening model: the days of each month are grouped into this many clusters on price, solar, wind, grid carbon and temperature; each cluster is represented by its most central day, weighted by its size.",
+  "briefRef": "§9.1",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.verifyTop",
@@ -6123,7 +8320,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "OPEN-QUESTIONS 23: the best-ranked options re-run hour by hour when the screening model is on.",
-  "briefRef": "§9.1"
+  "briefRef": "§9.1",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.autonomyBasis",
@@ -6134,7 +8335,11 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§9.2"
+  "briefRef": "§9.2",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.layoutCellM",
@@ -6145,7 +8350,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "Auto-layout raster cell size; chosen for the §17 layout timing, not from a source.",
-  "briefRef": "§10.4"
+  "briefRef": "§10.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.layoutCellLargeM",
@@ -6156,7 +8365,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§10.4"
+  "briefRef": "§10.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "settings.layoutLargeSiteHa",
@@ -6167,7 +8380,11 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "",
-  "briefRef": "§10.4"
+  "briefRef": "§10.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  },
  {
   "path": "load.phases",
@@ -6178,6 +8395,10 @@
   "basis": "judgement",
   "sourceToVerify": "",
   "note": "null = 1 phase, 100 % of IT at the grid full-connection date",
-  "briefRef": "§5.3"
+  "briefRef": "§5.3",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
  }
 ]

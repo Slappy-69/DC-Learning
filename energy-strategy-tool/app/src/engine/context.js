@@ -6,7 +6,7 @@ import { getProfiles, coolingProfile, nearestCountry, H } from './profiles.js';
 import { monthsBetween, yearOf, parseYM } from './dates.js';
 import { mulberry32, subSeed } from './prng.js';
 import { buildSiteModel } from './site.js';
-import { countryAtPoint } from './geocountry.js';
+import { countryAtPoint, nearestOutline } from './geocountry.js';
 
 export function resolveCountry(inputs) {
   const c = inputs.project.country;
@@ -17,9 +17,7 @@ export function resolveCountry(inputs) {
 // Country from the pin (work package 1, AC 17): the built-in country whose outline contains the pin; otherwise
 // (sea, or a country without a profile) the nearest country reference point, flagged on every option (assumed.js).
 export function countryFromPin(lat, lon) {
-  const hit = countryAtPoint(lat, lon);
-  if (hit && hit.iso2 && COUNTRIES[hit.iso2]) return hit.iso2;
-  return nearestCountry(lat, lon);
+  return pinCountryInfo(lat, lon).code;
 }
 // Display currency code for the inputs: the entered code, or the country's currency for 'by country'; euro when no
 // release rate exists for it.
@@ -28,9 +26,24 @@ export function displayCurrencyCode(inputs) {
   const code = !c || c === 'by country' ? COUNTRIES[resolveCountry(inputs)].currency : c;
   return FX[code] ? code : 'EUR';
 }
+// How the pin's country was found: inside a built-in outline; else (a coastal pin left in the sea by the simplified
+// outline) the nearest built-in outline within 25 km; else the nearest reference point (flagged).
+// A pin within BORDER_KM of another country's outline is flagged: the 1:50m outlines are simplified to about 1–2 km.
+export const BORDER_KM = 3;
 export function pinCountryInfo(lat, lon) {
   const hit = countryAtPoint(lat, lon);
-  return { inside: !!(hit && hit.iso2 && COUNTRIES[hit.iso2]), mapName: hit ? hit.name : null, code: countryFromPin(lat, lon) };
+  let out;
+  if (hit && hit.iso2 && COUNTRIES[hit.iso2]) out = { inside: true, mapName: hit.name, code: hit.iso2, via: 'outline' };
+  else {
+    // Sea (a coastal pin outside the simplified coast): nearest built-in outline within 25 km. Inside a country without
+    // a profile: a built-in outline within the border tolerance (a border town such as Narva).
+    const near = nearestOutline(lat, lon, hit ? BORDER_KM : 25);
+    if (near && COUNTRIES[near.iso2]) out = { inside: true, mapName: near.name, code: near.iso2, via: hit ? 'border' : 'coast', km: near.km };
+    else out = { inside: false, mapName: hit ? hit.name : null, code: nearestCountry(lat, lon), via: 'reference point' };
+  }
+  const other = nearestOutline(lat, lon, BORDER_KM, false, out.code);
+  if (other && other.name !== out.mapName) out.nearBorder = { name: other.name, iso2: other.iso2, km: other.km };
+  return out;
 }
 
 export function monthOf(inputs, ym) {

@@ -83,3 +83,14 @@ Detailed reports from 2026-10-16 onwards are in the per-slice folders next to th
 |---|---|---|
 | Revision 5 and handoff documents | Opus | The owner's walkthrough of 2026-10-21 folded into the brief; `docs/BUILD-PLAN.md`, `docs/KNOWN-ISSUES.md`, the decision log, the user guide and `CLAUDE.md` added; `STATUS.md` brought up to date. The guide's tools rebuilt the EPUB (EPUBCheck: no messages) and the PDF (171 pages), and every generator reproduced its stored files |
 | Haiku check 1 | Haiku | 12 findings (2 high, 8 medium, 2 low). High: the O1 interim rule was weaker than the decision and the demotion option clashed with principle 5; the tornado's built drivers were listed wrongly. All 12 confirmed against the code and fixed (`brief-v2/CHANGELOG.md`, "Verifier findings (Haiku check, 2026-10-22)") |
+
+## Walkthrough build: work packages 0–10 (2026-10-23)
+
+Reports in `verification/walkthrough-build/`. The owner asked for Haiku checks only, to save usage ("You can run haiku model checks, to save credits"), and waived the Opus review that would follow three Haiku checks ("Don't bother with opus review", 2026-10-23).
+
+| Step | Model | Result |
+|---|---|---|
+| H1, engine (packages 3b, 4, 5) | Haiku | 1 high, 1 medium, 5 low. High: decision 43 (every technology for bridging) not met by the default C2 set. Medium: CFE in exceedance mode. Fixed on `feature/verification-fixes`; L1 (Seveso store) and L2 (recovery after a natural end) left for the owner |
+| H2, inputs, grid, screening, defaults (packages 0, 2, 3, 8) | Haiku | 1 high, 4 medium, 10 low. High: screening carbon outside ±5 % (AC 4). All fixed except L6 (no Grid + export contract input, disclosed) |
+| H3, results, PDF, map, currency (packages 1, 6, 7, 9, 10) | Haiku | 2 high, 4 medium, 6 low. High: Russia's outline across 180°; coastal pins. All fixed except L5 (tornado observations, for the owner) |
+| Opus review | — | Waived by the owner for this round |

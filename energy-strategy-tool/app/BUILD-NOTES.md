@@ -1448,6 +1448,8 @@ Test run (solar areas, 2026-10-22): `npm test` 46/46; `npm run build`; `npm run 
 
 ## Slice: power adequacy first (work package 3b, part 1; 2026-10-23)
 
+*T1 figures in the slice and package notes below (adequate counts, leaders, scores, removals) are as measured when each slice was built. Later slices, batch 2 and the verification fixes changed them; they are kept as a record, not as current values. The current T1 figures are in "Verification fixes after Haiku checks H1–H3" at the end of these notes (Haiku check H1, L-5).*
+
 Branch `feature/adequacy-first` (from `feature/solar-areas`). The owner's decisions of 2026-10-22, OPEN-QUESTIONS 37–41 (38: power adequacy first, a deliberate exception to principle 5). Built when the owner asked to go back to the app.
 
 What changed:
@@ -1643,7 +1645,7 @@ What changed:
 
 Interpretations (reversible): pros = best 10 % of the run, cons = worse half; the assumed-defaults list on each card waits for work package 2; "same results as" compares nine figures plus resilience and adequacy, to ten significant figures.
 
-T1: cards #1, #2, #3, #4, #6 (#5 repeats a strategy); 64 options marked "same results as".
+T1 at the time: cards #1, #2, #3, #4, #6 (#5 repeats a strategy); 64 options marked "same results as". *Superseded*: the run checked by Haiku (H3) gave #1, #2, #3, #5, #6; the current figures are under "Verification fixes" below.
 
 ## Work package 9: tornado drivers and measures (2026-10-23)
 
@@ -1671,7 +1673,7 @@ Tests: 13a (rows sorted by the LCOE swing; score sort still checked), 13d (each 
 Branch `feature/results-cards`, with packages 6, 7 and 9 (the edits shared files with them). OPEN-QUESTIONS 32 answered with Claude's recommendation, accepted in advance by the owner (2026-10-23).
 
 What changed:
-- **`src/report/pdf.js`** (pure, no dependency): a small PDF 1.4 writer. A4 pages; Helvetica and Helvetica-Bold (two of the 14 standard fonts every reader has, so nothing is embedded); WinAnsi text, with characters outside it replaced (≥ → ">=", CO₂ → "CO2", → → "->"); headings, paragraphs, bullets, tables that repeat their header on a new page, and vector shapes for charts; "Page n of N" and a footer on every page; bookmarks for the sections. Not compressed (about 600 kB for T1).
+- **`src/report/pdf.js`** (pure, no dependency): a small PDF 1.4 writer. A4 pages; Helvetica and Helvetica-Bold (two of the 14 standard fonts every reader has, so nothing is embedded); WinAnsi text, with characters outside it replaced (≥ → ">=", CO₂ → "CO2", → → "->"); headings, paragraphs, bullets, tables that repeat their header on a new page, and vector shapes for charts; "Page n of N" and a footer on every page; bookmarks for the sections. Not compressed (about 680 kB for T1 (681,831 bytes when Haiku check H3 ran)).
 - **`src/report/report.js`** (pure): `buildReport(run, { compareIds, sensitivity, sensitivityMeasure, created })` writes the nine sections listed in the user guide (chapter 29). `inputRows` marks every input "Entered", "Entered (required)" or "Default: <label> (<basis>)" by comparing it with its registry record. Site geometry, site-fit flags and the site plan are left out.
 - **App:** "Save PDF report" in the top bar once a run exists (`src/saveFile.js`, same download path as the run log); the status line says how many pages and whether the sensitivity test is included. The last finished tornado is offered to the report (`latestSensitivity` in `SensitivityView.jsx`) when it belongs to the run on screen.
 - **Windows program:** the save dialog has a "PDF report" filter and the title "Save PDF report" (`packaging/desktop/app/lib/guards.js`). No network: the report code imports only app modules (test 30 checks).
@@ -1704,10 +1706,10 @@ Branch `feature/input-model` (from `feature/grid-contract`). OPEN-QUESTIONS 21, 
 
 What changed:
 - **Only the location and the site area are required.** `load.itMW` and the three grid values default to blank ("Not known"), each a record. `resolveUnknowns` (in `normalizeInputs`) fills them and writes `inputs.assumedInputs` (path → how it was set):
-  - IT load: the sum of the phases if phases were entered; otherwise the massing rule inverted (OPEN-QUESTIONS 26): area × `load.estimateCoverage` (35 %) × storeys ÷ gross-up × whitespace density of the cooling type (air when open). T1's 15 ha → 71.6 MW.
+  - IT load: the sum of the phases if phases were entered; otherwise the massing rule inverted (OPEN-QUESTIONS 26): area × `load.estimateCoverage` (35 %) × storeys ÷ gross-up × whitespace density of the cooling type (air when open). T1's 15 ha → 71.6 MW. The estimate has a floor of 1 MW (`Math.max(1, …)`), reached only by sites under about 0.2 ha (Haiku check H2, L8).
   - Grid: now `grid.unknownNowMW` (0), full `grid.unknownFullPerITMW` (1.4) × IT, date start + `grid.unknownFullMonths` (48). One value for every country; country values to research.
   - The T1 example now enters 100 MW and 20 / 120 MW at month 30 explicitly (`T1_EXAMPLE`), so every T1 figure is unchanged.
-- **Assumed-default flags** (`src/engine/assumed.js`, AC 16): one info flag (category "Assumed default", `assumed: true`, `path`) per key input not entered that the option uses (24 key inputs, each with a rule for which options use it, for example the gas price only on gas-burning options, the grid values only on grid-connected ones), plus one flag counting the registry records. They are listed under "Assumed defaults" in the option detail, on the cards and in Compare, and kept out of the flag counts and the "Flags" sort.
+- **Assumed-default flags** (`src/engine/assumed.js`, AC 16): one info flag (category "Assumed default", `assumed: true`, `path`) per key input not entered that the option uses (25 key inputs, each with a rule for which options use it, for example the gas price only on gas-burning options, the grid values only on grid-connected ones), plus one flag counting the registry records. They are listed under "Assumed defaults" in the option detail, on the cards and in Compare, and kept out of the flag counts and the "Flags" sort.
 - **Cooling not chosen** (OPEN-QUESTIONS 28): the open choice compares all four types, flagged "assumed" on every option.
 - **Evaluation periods** (OPEN-QUESTIONS 21): `economics.displayPeriods` (10, 15); `eco.byPeriod` holds LCOE and NPV for each period and the scoring period (`economics.periodYears`), from the same ledger function; shown in the option detail. The context covers the longest period.
 - **Wind land** (OPEN-QUESTIONS 25): unchanged (net developable area of the site model, independent of the Beta tab); recorded as the answer.
@@ -1724,12 +1726,12 @@ Branch `feature/input-model`, committed with package 2 (the edits shared files).
 
 What changed:
 - **Run setting `settings.screeningModel`** ('full' by default, or 'repDays') and **`settings.verifyTop`** (10). Off by default: power adequacy needs every hour.
-- **Representative days** (`representativeHours` in `dispatch.js`, cached on the context): per month the design day (if in that month), the day with the highest mean grid price and the most typical day (smallest standardised distance to the month's mean price, solar and wind); weights add to 8,760 h. Chosen from the country profiles, so every option uses the same days (T1: 25 days).
+- **Representative days** (`representativeHours` in `dispatch.js`, cached on the context): per month the design day (if in that month), the day with the highest mean grid price and the most typical day (smallest standardised distance to the month's mean price, solar and wind); weights add to 8,760 h. Chosen from the country profiles, so every option uses the same days (T1: 25 days). *Replaced after Haiku check H2*: three clusters a month (k-medoids, `settings.repDaysPerMonth`), see "Verification fixes" below.
 - **Weighted dispatch:** `dispatchYear(..., rep)` loops over the representative hours with each hour's weight on every annual total (energy, cost, carbon, hours, plant output and fuel, flexibility budget). With `rep = null` every weight is 1, so the full-year arithmetic is unchanged (all earlier tests pass unchanged).
 - **Verification** (`src/engine/verify.js`): after scoring, the best `verifyTop` options are re-run with `evaluateOption` (full year), their figures replaced (`model: "Full-year hourly (8760 h), verified"`, `screening` keeps the screening figures), and every option re-scored. In the browser's worker pool this runs on the main thread after the merge, in time slices, with a notice; `refreshAdequacyFlag` recounts adequacy.
 - **Screens:** "Dispatch model" in Run and dispatch settings; the header strip and each option's detail say which model produced the figures; the Dispatch tab offers only verified options in a screening run, and **any period** (start day, 1–31 days) beside the weeks.
 
-T1 result (test 33): LCOE within 3.8 % of the full year for every option (AC 4 target ±5 %); location carbon within about 12.5 %; adequacy count unchanged (1,566); 9 of the top 10 the same; leader unchanged; about 9 s against 15 s.
+T1 result (test 33) at the time: LCOE within 3.8 % of the full year for every option (AC 4 target ±5 %); location carbon within about 12.5 %; adequacy count unchanged (1,566); 9 of the top 10 the same; leader unchanged; about 9 s against 15 s. *Superseded*: see "Verification fixes" below (0.77 % and 3.40 %).
 
 Interpretations (reversible): battery charge carries from one representative day to the next; the longest unmet event is counted within representative days only; carbon is not part of the ±5 % check.
 
@@ -1740,7 +1742,7 @@ Tests: 33, browser B35.
 Branch `feature/input-model`, committed with packages 2 and 8 (the edits shared files). OPEN-QUESTIONS 63 (map data), 64 (ASHRAE) and 65 (weather processing) — the build plan's "ask the owner" items for this package — answered with Claude's recommendations, accepted in advance by the owner (2026-10-23).
 
 What changed:
-- **Map data** (`src/data/europe-map.js`, generated by `tools/make-map-data.mjs` from world-atlas 2.0.2 `countries-50m.json`, Natural Earth 1:50m, public domain): 67 country outlines reaching 32°W–46°E, 33°N–72°N, rounded to 0.01°, 330 kB. Run `npm run make:map` at each release (needs the dev dependencies world-atlas and topojson-client); the program never fetches map data.
+- **Map data** (`src/data/europe-map.js`, generated by `tools/make-map-data.mjs` from world-atlas 2.0.2 `countries-50m.json`, Natural Earth 1:50m, public domain): 67 country outlines (31 of them the built-in countries; the rest, such as Russia, Ukraine, Serbia, Turkey, Morocco and Greenland, have no profile), every country that has land in the window 32°W–46°E, 33°N–72°N, kept whole (so the data reaches about 73°W–190°E, 19°N–84°N; Russia's outline is unwrapped across 180°, Haiku check H3), rounded to 0.01°, 336 kB. Run `npm run make:map` at each release (needs the dev dependencies world-atlas and topojson-client); the program never fetches map data.
 - **Map pin** (`src/components/MapPicker.jsx`): an SVG map in section 1; click or tap places the pin, arrow keys move it (0.1°, Shift 1°), + and − zoom; the country under the pin is named in a live region; the 31 built-in countries are shaded.
 - **Country from the pin** (`geocountry.js` `countryAtPoint`; `context.js` `countryFromPin`, `pinCountryInfo`): the built-in country whose outline contains the pin (even-odd rule); otherwise the nearest reference point, flagged "assumed" on every option (assumed.js). `resolveCountry` uses it when the country is not chosen. T1 stays United Kingdom.
 - **Design temperatures**: no ASHRAE data (licensed); an "assumed" flag on every option says they come from the synthetic profile.
@@ -1757,17 +1759,47 @@ Approved under the owner's standing instruction of 2026-10-23 to follow Claude's
 | Default | Was | Now | Source |
 |---|---|---|---|
 | Grid carbon, 31 countries | various | Ember 2025 life-cycle (GB 200 → 217 g/kWh) | Ember via Our World in Data (accessed 2026-10-21 for the guide, Appendix B3) |
-| Wholesale price FR, FI, NO, PT | 85, 55, 50, 75 | 62, 41, 44, 66 €/MWh | Electricity Maps, Grid Review 2025 (AT, CZ, SI checked, unchanged) |
+| Wholesale price FR, FI, NO, PT | 85, 55, 50, 75 | 62, 41, 44, 66 €/MWh | Electricity Maps, Grid Review 2025 (AT checked, unchanged) |
 | Roof / ground PV O&M | 14 / 12 | 21.5 / 13.3 €/kWp a year | Fraunhofer ISE 2024 |
 | Wind O&M | 35 | 50 €/kW a year (fixed + variable) | Fraunhofer ISE 2024 |
-| Battery capex | €250/kWh + €150/kW | €125/kWh + €135/kW | BNEF 2025 Europe turnkey $177/kWh |
-| Gas turbine capex | €750/kW | €1,100/kW | EIA AEO2025 |
+| Battery capex | €250/kWh + €150/kW | €125/kWh + €135/kW (€158.75/kWh at 4 h) | BNEF 2025 Europe turnkey $177/kWh |
+| Gas turbine capex | €750/kW | €1,100/kW, then €1,450/kW (range €750–1,650) after Haiku check H2 | EIA AEO2025 aeroderivative US$1,606/kW |
 | Gas engine unit | 4.5 MW | 10 MW | Wärtsilä, 16 Apr 2026 |
 | Gas engine capex | €900/kW | €900/kW (sourced) | Datacentres.com 2026, $800–1,200/kW |
 | SMR capex | €7,000/kW | €8,000/kW | EIA AEO2025 (Darlington noted) |
 | Standby genset procurement | 12 months | 15 months | Global Power Supply, May 2026 |
+| HVO-diesel prime procurement (added after Haiku check H1) | 9 months | 15 months | as standby (same machines) |
+| Roof PV, ground PV, wind capex (labelled sourced, values kept; Haiku check H2, L10) | 900, 700, 1,350 €/kW | unchanged | Fraunhofer ISE 2024 (roof €900–1,600, ground €700–900, wind €1,300–1,900: the European low end) |
+| Wholesale price CZ, SI (after Haiku check H2, L2) | 95, 105 | 96, 106 €/MWh | Electricity Maps 2025 (95.5, 106.0) |
 | PPA solar / wind | 55 / 65 | 57 / 86 €/MWh | LevelTen Q2 2026 via PV Tech |
 
-USD converted at the ECB reference rate of 12 Oct 2026 (1.1181 $/€); 2023-dollar EIA figures are not escalated.
+USD converted at the ECB reference rate of 12 Oct 2026 (1.1181 $/€), used only to convert sources at release (US dollars are not a display currency, so USD is not in `project.fx`, whose rates are of 22 Oct 2026); 2023-dollar EIA figures are not escalated.
 
 T1 after batch 2: the leader is unchanged (O1W8C9Z9, score 92.69, LCOE €153.1/MWh); its location-based carbon rises from 113 to 123 g/kWh with the UK grid at 217 g/kWh; 1,566 options adequate (unchanged).
+
+## Verification fixes after Haiku checks H1–H3 (2026-10-23)
+
+Branch `feature/verification-fixes` (from `feature/defaults-batch2`). Three Haiku checks covered the walkthrough build (reports in `verification/walkthrough-build/`). The owner waived the Opus review for this round ("Don't bother with opus review", 2026-10-23). Every fix below follows Claude's recommendation, accepted in advance by the owner.
+
+| Finding | Fix |
+|---|---|
+| H1 High: decision 43 (every technology considered for bridging) not met by C2's default set | C2 default open set: gas engines, gas turbines, fuel cells, HVO-diesel prime, rented (BESS + solar stays opt-in). HVO-diesel prime procurement 9 → 15 months (same machines as standby) |
+| H1 M1: in exceedance mode, CFE counted import above the connection as grid energy | Hourly CFE counts grid energy only up to the physical capacity left after the PPA |
+| H1 L3, L4, L5 | Known issue 13 figures corrected; AC 21 note in the brief; per-slice T1 figures marked as historical |
+| H2 High: AC 4 carbon within 13 %, not 5 % | Representative days by k-medoids, three clusters a month on price, solar, wind, carbon and temperature, plus the dearest day and the design day (49 days on T1) |
+| H2 M1: options not yet verified could sit in the final top 10 | Verification repeats until the final top K are all verified (at most five rounds) |
+| H2 M2, L7: the expected connection charge differed between two places; a 0 MW contract still paid it | One function (`expectedConnectionCharge(inputs, C1)`); no charge, cable route or flag when the contract is 0 MW |
+| H2 M3: PDF left out the further evaluation periods | PDF table "Top five by evaluation period" |
+| H2 M4: turbine €1,100 was a judgement labelled sourced | €1,450/kW (EIA aeroderivative, range €750–1,650) |
+| H2 L2, L3, L5, L8, L9, L10, L1 | CZ 96, SI 106 €/MWh; battery €158.75 wording; guide Appendix B2 rechecked against 2025 figures; the 1 MW IT floor and 25 key inputs noted; stale figures marked; PV and wind capex added to the batch table |
+| H3 High H1: Russia's outline crosses 180°, so northern Scandinavia resolved to Finland | Rings that cross 180° are unwrapped when the map data is made (`tools/make-map-data.mjs`) |
+| H3 High H2: coastal pins missed their own outline and took a distant reference point | Pins outside every outline take the nearest built-in outline within 25 km ("nearest coast"); `pinCountryInfo` says how the country was found |
+| H3 M1, M2: PDF label counts; Site content in the PDF | Counts by label; site-fit records and Site tab sentences left out of the PDF |
+| H3 M4: pins near a border can take the neighbour (outlines to about 1 km) | Flag on every option when the pin is within 3 km of another country, naming it; 1:10m outlines rejected (1.9 MB) |
+| H3 M3, L1–L4 | Card note marked superseded; cons never read "worse than 100 %"; map extent and PDF size corrected; stale tornado note fixed |
+
+Left for the owner (not changed): H1 L1, the Seveso liquid-fuel test reads only the backup store (no effect on T1; matters for HVO bridging under the IED threshold); H1 L2, the flexibility recovery period also follows events that end naturally (removes 28 % of trigger hours at €190/MWh; the 100-hour cap binds anyway); H2 L6, no input for a Grid + export contract (disclosed); H3 L5, tornado observations (PUE moves LCOE against cost because LCOE divides by gross demand; grid connection capex barely moves LCOE while the charge defaults to 0).
+
+Current T1 (2,000 options, full year): 1,537 adequate; leader OUK8E73 "Grid + HVO-diesel prime bridge → retain as backup · retained-plant backup · immersion · BESS 2 h · PPA hybrid 100 %", score 93.78, LCOE €158.3/MWh, 122 g/kWh location-based; cards #1, #2, #3, #6, #7; 37 options marked "same results as"; 24 sourced records. The leader changed from O1W8C9Z9 because turbines and HVO-diesel prime joined the default bridging set and the turbine capex rose.
+
+Tests: 33 (49 days, top 10 all verified, LCOE ≤ 0.77 %, carbon ≤ 3.40 %), 34 (coast, border, Russia), 30 (PDF counts, no Site content, period table), 31 (0 MW contract), 65/65 Node tests passed.
