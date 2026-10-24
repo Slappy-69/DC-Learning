@@ -1907,3 +1907,14 @@ Report: `verification/engine-fixes/H4-packages-11-15.md` (33 verified, 15 failed
 
 Not verified by the check and left as they are: OQ74 (kept as built), the old-code hour counts (printed by tests 36 and 38), `asGoodShare` (test 37 checks it), the Beta Site tab rules (browser checks B21–B27 and AC 27).
 
+
+## Investigation: a search around the best options (2026-10-24, not built)
+
+Question: with sampling (2,000 of 48,000–120,000 combinations), can the run miss a better option next to its leader? A prototype (scratch script, not in the app) took the best 10 options, evaluated every option one choice away from them that the sample had not screened (choices that become applicable expanded over their open values), re-scored, and repeated three times.
+
+| Case | Neighbours evaluated | Leader before | Leader after | Time added |
+|---|---|---|---|---|
+| T1 | 353 (168 + 123 + 62) | OP13Y1Y, 94.15, €151.9/MWh | unchanged; the next nine places filled by close variants (other PV sizes, split instead of prime) within 0.02 points | about 7 s |
+| Pego on the product (`pego-product.study.json`) | 196 (127 + 62 + 7) | rent, grid, existing CCGT top-up, 50 % PPA: 86.24, €144.2/MWh | unchanged; the same plan without the PPA was found at €141.0/MWh, rank 4 (lower score: more carbon) | about 20 minutes here, because each extra option was laid out on the site |
+
+Conclusion: in both cases the sampled leader held; the search added near-variants, not better strategies. The €141.1 against €144.2 difference seen for Pego is the PPA trade-off on the score, not a missed option. Not built; the top-five cards already show distinct strategies. If wanted later, it would need the layout skipped for large campuses and the pool's post-merge slicing (as the screening verification uses).
