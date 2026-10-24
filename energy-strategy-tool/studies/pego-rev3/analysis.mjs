@@ -1,4 +1,4 @@
-// Pego study, revision 3: tornado for the study's #1, the app's own PDF report of the study run, hourly series for the
+// Pego study, revision 3.1: tornado for the study's #1, the app's own PDF report of the study run, hourly series for the
 // charts, monthly supply against design load, and the site layouts (plans and massing renders).
 import fs from 'node:fs';
 const E = new URL('./app/src/engine/', import.meta.url).href;
@@ -41,8 +41,10 @@ const ctx = buildContext(D.normalizeInputs(inp));
 const daily = (arr) => { const out = []; for (let d = 0; d < 365; d++) { let s = 0, mn = Infinity, mx = -Infinity; for (let h = 0; h < 24; h++) { const x = arr[d * 24 + h]; s += x; mn = Math.min(mn, x); mx = Math.max(mx, x); } out.push([s / 24, mn, mx]); } return out; };
 const ev1 = evaluateOption(ctx, optionV('v1'), { recordYears: [2] });
 const y29 = ev1.disp.years[2].hourly;
-const evL = evaluateOption(ctx, lead.v, { recordYears: [2, 9] });
-const yss = evL.disp.years[9].hourly;
+const nE = evaluateOption(ctx, lead.v).disp.nExplicit; // revision 3.1: the steady year is the last dispatched one
+const evL = evaluateOption(ctx, lead.v, { recordYears: [2, nE - 1] });
+const yss = evL.disp.years[nE - 1].hourly;
+log('steady year', nE - 1, 2027 + nE - 1);
 // peak-demand week of the steady-state year
 let hMax = 0; for (let h = 0; h < yss.demand.length; h++) if (yss.demand[h] > yss.demand[hMax]) hMax = h;
 const w0 = Math.max(0, Math.min(8760 - 168, Math.floor(hMax / 24) * 24 - 72));

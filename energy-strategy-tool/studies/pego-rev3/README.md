@@ -1,6 +1,12 @@
-# Pego data centre campus, feasibility study revision 3 (24 October 2026)
+# Pego data centre campus, feasibility study revision 3.1 (24 October 2026)
 
-The scripts that produced revision 3 of the Pego study with the current app. The report itself (a PDF) and the app's own PDF
+Revision 3.1 re-runs revision 3 on the fixed engine (`feature/engine-fixes`, work package 11). The scripts here are the 3.1 versions;
+revision 3's are in the git history (commit ddf0dad). Differences: the study build no longer sets ten dispatch years or a time-to-power
+weight of 0 (both fixed in the tool); `analysis.mjs` takes the last dispatched year as the steady year; `charts3.py` reads the hire month
+and the rented MW; `build3.py` adds the page "Revision 3.1: what was corrected" and reads revision 3's outputs from `../pego3/out/` for
+it; `compare31.py` writes the comparison (`out/compare31.json`). The run "defaults without time-to-power" is no longer made.
+
+The scripts that produce the Pego study with the current app. The report itself (a PDF) and the app's own PDF
 report of the main run were delivered to the owner in the Claude session; they are not stored here.
 
 ## The study build
@@ -28,10 +34,12 @@ cp -r <repo>/energy-strategy-tool/app/src app/src && cp <repo>/energy-strategy-t
 ln -s <repo>/energy-strategy-tool/app/node_modules app/node_modules
 python3 patch.py app
 node runs.mjs base full            # 2,000 options, about 15 s; also market, crisis, gridLate, grid600, eight, six
+node runs.mjs base repDays          # the screening check
 STUDY=0 TAG=tool node runs.mjs base full   # the tool's default settings
 node strategies.mjs                 # named strategies on equal terms, every case (see the file for the case list)
 node analysis.mjs                   # tornado, the app's PDF, hourly series, site layouts and massing renders
 (cd app && node build.mjs) && python3 shots3.py   # screenshots of the study build in Chromium
+python3 svg2png.py out/iso-*.svg && python3 compare31.py   # needs revision 3's out/ in ../pego3/out
 python3 chart_market.py && python3 charts3.py && python3 diagrams3.py && python3 build3.py
 ```
 
@@ -39,5 +47,6 @@ python3 chart_market.py && python3 charts3.py && python3 diagrams3.py && python3
 
 ## Findings about the tool
 
-Recorded as KNOWN-ISSUES 14–17 for the owner's decision: the time-to-power metric, rented plant paid from availability, retained
-bridging plant bought all at once, and the eight-year dispatch cap.
+Revision 3 found KNOWN-ISSUES 14–18 (the time-to-power metric, rented plant paid from availability, retained bridging plant bought all
+at once, the eight-year dispatch cap, an entered grid adder ignored); all are fixed in work package 11. Revision 3.1 found KNOWN-ISSUES 19
+(PPA energy not turned down when firm plant runs at its minimum), open.

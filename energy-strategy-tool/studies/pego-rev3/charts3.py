@@ -29,10 +29,11 @@ save(fig,'it-capacity')
 
 # 2. Supply stack against design load, recommended plan
 m=np.arange(120); yrs=2027+m/12
-rented=np.where((m>=10)&(m<36),186,0); grid=np.where(m>=36,400,0); ccgt=np.where(m>=48,855,0)
+B=S['base']['rented']; hireM=B['bridge']['avail']; rentMW=B['bridge']['mw']
+rented=np.where((m>=hireM)&(m<36),rentMW,0); grid=np.where(m>=36,400,0); ccgt=np.where(m>=48,855,0)
 d=np.array(SER['lead_months']['design'])[:120]
 fig,ax=plt.subplots(figsize=(7.6,3.4))
-ax.stackplot(yrs,rented,grid,ccgt,colors=[AMB,GRIDC,GAS],alpha=0.55,labels=['Rented gas gensets (on hire 2027–2029 in the tool)','Grid 400 MW (study assumption, from 2030)','Existing CCGT, 2 × 427.5 MW (lease from 2031)'],step='post')
+ax.stackplot(yrs,rented,grid,ccgt,colors=[AMB,GRIDC,GAS],alpha=0.55,labels=[f'Rented gas gensets, {rentMW:.0f} MW (on hire Dec 2028 – Dec 2029)','Grid 400 MW (study assumption, from 2030)','Existing CCGT, 2 × 427.5 MW (lease from 2031)'],step='post')
 ax.plot(yrs,d,color=INK,lw=2,label='Design load, 9 buildings (34 °C)')
 ax.plot(yrs,d*per45/per34,color=INK,lw=1.2,ls='--',label='Design load at 45 °C')
 ax.axhline(400+855*0.87,color=RED,lw=1,ls=':'); ax.text(2027.1,400+855*0.87+15,'grid + CCGT at 45 °C (13 % lower) = 1,144 MW',fontsize=8,color=RED)
@@ -50,7 +51,7 @@ ax.fill_between(days,dd[:,0],ff[:,0],color=RED,alpha=0.10,lw=0,label='surplus: g
 ax.plot(days,ff[:,0],color=RED,lw=2.2,label='CCGT output in the tool: one unit at its minimum, 192 MW')
 ax.set_xlim(0,364); ax.set_ylim(0,260); ax.set_ylabel('MW')
 ax.set_xticks([0,59,120,181,243,304]); ax.set_xticklabels(['Jan','Mar','May','Jul','Sep','Nov'])
-ax.yaxis.grid(True,color=LG); ax.set_axisbelow(True); ax.legend(loc='upper left',bbox_to_anchor=(0,0.98),fontsize=8,frameon=False)
+ax.yaxis.grid(True,color=LG); ax.set_axisbelow(True); ax.legend(loc='upper left',bbox_to_anchor=(0,-0.1),ncol=2,fontsize=8,frameon=False)
 v1=S['base']['v1']; y29=[y for y in v1['years'] if y['demandGWh']>0][0]
 c29=[p for p in y29['plants'] if p['tech']=='ccgt'][0]
 title(ax,f"In 2029 the CCGT burns gas for {c29['curtGWh']:,.0f} GWh nobody uses",f"CCGT leased from mid-2028: {y29['demandGWh']:,.0f} GWh of demand in 2029, {c29['gwh']:,.0f} GWh generated at minimum load")
@@ -65,11 +66,12 @@ for i,(k,l) in enumerate(keys):
     vals=[S[s][k]['lcoe'] for s,_,_,_ in sc]
     ax.plot([min(vals),max(vals)],[y,y],color=LG,lw=5,solid_capstyle='round',zorder=1)
     for (s,lab,c,mk),v in zip(sc,vals): ax.scatter(v,y,color=c,marker=mk,s=34,zorder=3,label=lab if i==0 else None)
-    ax.text(118,y,l,ha='right',va='center',fontsize=8.8,color=INK)
-ax.set_yticks([]); ax.set_xlim(120,265); ax.spines['left'].set_visible(False); ax.xaxis.grid(True,color=LG); ax.set_axisbelow(True)
+    ax.text(113,y,l,ha='right',va='center',fontsize=8.8,color=INK)
+ax.set_yticks([]); ax.set_xlim(115,265); ax.spines['left'].set_visible(False); ax.xaxis.grid(True,color=LG); ax.set_axisbelow(True)
 ax.set_xlabel('LCOE, €/MWh (nine buildings, 50 % PPA, HVO standby, 20 years at 7 % real)')
-ax.legend(loc='lower right',fontsize=8,frameon=False)
-title(ax,'The 2031 CCGT plans stay cheapest in every case but one','LCOE of nine-building strategies under five price and grid cases; with the grid late, the CCGT from 2028 wins by €1/MWh')
+ax.legend(loc='upper right',fontsize=8,frameon=False)
+gl=S['gridLate']; dgl=round(gl['v1']['lcoe'],1)-round(gl['rented']['lcoe'],1)
+title(ax,'Renting for 2029, then the CCGT from 2031, is cheapest in every case' if dgl>0 else 'The 2031 CCGT plans stay cheapest in every case but one',f'LCOE of nine-building strategies under five price and grid cases; with the grid two years late, the CCGT from 2028 is €{abs(dgl):.1f}/MWh ' + ('dearer' if dgl>0 else 'cheaper'))
 fig.subplots_adjust(left=0.36)
 save(fig,'lcoe')
 

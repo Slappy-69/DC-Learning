@@ -1,10 +1,12 @@
-# Pego data centre campus: feasibility study, revision 3 (HTML -> PDF with Chromium).
+# Pego data centre campus: feasibility study, revision 3.1 (HTML -> PDF with Chromium).
 import json, asyncio, pathlib, html
 from playwright.async_api import async_playwright
 HERE = pathlib.Path(__file__).resolve().parent
 J = lambda p: json.load(open(HERE / p))
 S = J('out/strategies.json'); L = J('out/lead.json'); T = J('out/tornado.json'); P = J('out/plans.json'); M = J('market.json')
-RB = J('out/base-full.json'); RS = J('out/base-repDays.json'); RT = J('out/base-full-tool.json'); RTN = J('out/base-full-tool-nottp.json')
+RB = J('out/base-full.json'); RS = J('out/base-repDays.json'); RT = J('out/base-full-tool.json')
+C31 = J('out/compare31.json'); OLD = lambda p: json.load(open(HERE.parent / 'pego3' / 'out' / p))
+SO = OLD('strategies.json'); RBO = OLD('base-full.json')
 D3 = J('diagrams3.json')
 CSS = open(HERE / 'css2.css').read() + """
 img.shot.half { width: 49%; display:inline-block; vertical-align: top; }
@@ -61,21 +63,58 @@ rec = B['rented']
 per = {p['years']: p['lcoe'] for p in lead['eco']['byPeriod']}
 top5 = RB['cards']
 fwd = M['omipPtBase']['cal']; fwdMean = sum(fwd[y] for y in ['2029', '2030', '2031', '2032', '2033', '2034', '2035', '2036']) / 8
+# Revision 3.1 figures
+hvoT = rec['backup']['fuelM3'] * 0.84
+hvoTr = f"{round(hvoT, -3):,.0f}"
+rentMW = rec['bridge']['mw']; nBackup = rec['backup']['units']
+hireM = next(int(x.split('hired from month ')[1].split(',')[0]) for x in lead['sentences'] if 'hired from month' in x)
+hire0 = next(int(x.split('could be on site from month ')[1].split(';')[0]) for x in lead['sentences'] if 'could be on site from month' in x)
+hot45short = S['base:hot45']['rented']['design'] - 1144
+OLDL = C31['lead']['old']; NEWL = C31['lead']['new']
+so = lambda c, k: SO[c][k]['lcoe']
+gl = S['gridLate']
 
 # ------------------------------------------------------------------ pages
 cover = f"""
 <section class="cover"><div>
-<div class="kicker">Concept-stage feasibility study · Revision 3</div>
+<div class="kicker">Concept-stage feasibility study · Revision 3.1</div>
 <h1>Pego data centre campus:<br>feasibility study</h1>
-<p class="lead">A 900 MW IT campus on the Pego power complex at Abrantes, Portugal. Revision 3 re-runs the whole study in the current
-energy strategy tool, with its new ranking that puts power adequacy first, and refreshes the research on the site, the grid and the
-2026 energy market.</p>
+<p class="lead">A 900 MW IT campus on the Pego power complex at Abrantes, Portugal. Revision 3 re-ran the whole study in the current
+energy strategy tool and refreshed the research on the site, the grid and the 2026 energy market. Revision 3.1 corrects it: the tool
+ignored the network charges entered for the two market cases, and five tool defects that revision 3 found are now fixed. The
+recommendation stands.</p>
 <div class="kpis">{kpi('900 MW', 'IT load, nine 100 MW buildings; eight if a 45 °C day must be met without help')}{kpi('Jan 2029', 'first building energised, on rented gas gensets')}{kpi(f'€{lcoeL:,.0f}/MWh', 'energy cost (LCOE), indicative, tool prices')}{kpi(m(capexL), 'energy-plant capex, indicative')}</div>
 </div>
-<div class="meta">Prepared by Zé · revision 3, 24 October 2026 (revision 2: 22 October 2026). Figures from the energy strategy tool
-(development build of 24 October 2026, branch <code>feature/verification-fixes</code>, run as a study build for the existing CCGT, page §basis§) and the
+<div class="meta">Prepared by Zé · revision 3.1, 24 October 2026 (revision 3: earlier the same day; revision 2: 22 October 2026). Figures from the energy strategy tool
+(development build of 24 October 2026, branch <code>feature/engine-fixes</code>, run as a study build for the existing CCGT, page §basis§) and the
 public sources on the last page, opened on 23 and 24 October 2026. Every cost is an indicative default, not a quote. The tool's own PDF
 report of the main run comes with this study as a separate file.</div></section>
+"""
+
+rev31 = f"""
+<section class="page"><h2>Revision 3.1: what was corrected</h2>
+<p>Running revision 3 exposed faults in the tool. They are fixed, and every case is re-run with the fixed tool; the inputs, prices and cases are unchanged.</p>
+{table(['What was wrong in revision 3', 'What the tool does now', 'Effect on this study'], [
+ ['The €15/MWh network charges of the market cases were ignored (the tool used €40)', 'An entered figure replaces the default',
+  f"The two market cases were €{so('market','rented')-S['market']['rented']['lcoe']:.0f}–{so('crisis','rented')-S['crisis']['rented']['lcoe']:.0f}/MWh too dear for the recommended plan: forwards €{so('market','rented'):.1f} → <b>€{S['market']['rented']['lcoe']:.1f}</b>, gas crisis €{so('crisis','rented'):.1f} → <b>€{S['crisis']['rented']['lcoe']:.1f}</b>/MWh"],
+ ['Rented gensets paid from November 2027, when they could first arrive', 'Hired a month before they are first needed', f"On hire from {mon(hireM)}, {hireM - hire0} months less rental"],
+ ['A CCGT unit below its minimum load wasted output while the grid still imported', 'Runs at its minimum; the grid import backs off', f"The study’s #1 wastes nothing after 2031 (revision 3: {SO['base']['rented']['years'][5]['plants'][0]['curtGWh']:,.0f} GWh in 2032 with the PPA)"],
+ ['Bridging plant kept as standby bought all at once', 'Bought building by building', f"“Buy HVO gensets, keep as standby” €{so('base','hvoKeep'):.1f} → <b>€{S['base']['hvoKeep']['lcoe']:.1f}</b>; gas engines as prime and backup €{so('base','enginesAll'):.1f} → €{S['base']['enginesAll']['lcoe']:.1f}/MWh"],
+ ['Time-to-power counted months until the whole campus could be supplied', 'Months late against each building’s date', 'Weight back at the default (25); the top strategies are all on time'],
+ ['Dispatch stopped at year 8 unless overridden', 'Until nothing changes, with a warning', 'No override needed (revision 3 set 10 years)'],
+], 'chg')}
+<h3>The headline figures</h3>
+{table(['Figure', 'Revision 3', 'Revision 3.1'], [
+ ['The study’s #1 (rent, grid, CCGT 2031; no PPA), LCOE', f"€{OLDL['lcoe']:.1f}/MWh", f"<b>€{NEWL['lcoe']:.1f}/MWh</b>"],
+ ['The same with a 50 % PPA', f"€{so('base','rented'):.1f}", f"€{rec['lcoe']:.1f}"],
+ ['Net cost (present value); capex; carbon', f"{bn(OLDL['npv'])}; {m(OLDL['capex'])}; {OLDL['loc']:.0f} g/kWh", f"{bn(NEWL['npv'])}; {m(NEWL['capex'])}; {NEWL['loc']:.0f} g/kWh"],
+ ['Portuguese forwards / gas crisis, recommended plan', f"€{so('market','rented'):.1f} / €{so('crisis','rented'):.1f}", f"€{S['market']['rented']['lcoe']:.1f} / €{S['crisis']['rented']['lcoe']:.1f}"],
+ ['Grid two years late: renting against the CCGT from 2028', f"€{so('gridLate','rented'):.1f} against €{so('gridLate','v1'):.1f} (the CCGT wins)", f"€{gl['rented']['lcoe']:.1f} against €{gl['v1']['lcoe']:.1f} ({'renting still wins, narrowly' if gl['rented']['lcoe'] < gl['v1']['lcoe'] else 'the CCGT wins'})"],
+ ['Six buildings: best plan', f"new gas engines €{so('six','enginesAll'):.1f}, renting €{so('six','rented'):.1f}", f"new gas engines €{S['six']['enginesAll']['lcoe']:.1f}, renting €{S['six']['rented']['lcoe']:.1f}"],
+])}
+<p><b>Unchanged:</b> the recommended plan and the tool’s #1; {RB['adequate']:,} of 2,000 strategies adequate; about {hot45short:.0f} MW short on a 45 °C day; the capex.
+<b>New:</b> renting beats the 2028 CCGT start even with the grid late; at forward prices with the real network tariff the CCGT runs mostly above the grid, and carbon falls to {S['market']['rented']['loc']:.0f} g/kWh.</p>
+</section>
 """
 
 glance = f"""
@@ -85,10 +124,10 @@ glance = f"""
 both units of the existing CCGT from 2031. Two things have changed: the gas market, and the evidence that Pego gets 45 °C days.</p>
 {fig('it-capacity')}
 <div class="steps">
-<div><span class="y">Late 2028 – 2029</span><b>Rented gas gensets</b>186 MW carry buildings 1 and 2 until the grid arrives.</div>
+<div><span class="y">{mon(hireM)} – 2029</span><b>Rented gas gensets</b>{rentMW:.0f} MW carry buildings 1 and 2 until the grid arrives.</div>
 <div><span class="y">January 2030</span><b>Grid, 400 MW</b>A study assumption, not an offer. Carries buildings 1–3 alone.</div>
 <div><span class="y">January 2031</span><b>Existing CCGT, leased</b>Both units, 855 MW, cover everything above the grid.</div>
-<div><span class="y">Always</span><b>HVO standby gensets</b>441 units cover a grid failure or a CCGT unit trip.</div>
+<div><span class="y">Always</span><b>HVO standby gensets</b>{nBackup} units cover a grid failure or a CCGT unit trip.</div>
 </div>
 <div class="kpis small">{kpi(f'€{lcoeL:.1f}/MWh', 'LCOE over 20 years at 7 % real; €{:.0f} with a 50 % renewable PPA'.format(rec['lcoe']))}{kpi(bn(npvL), 'net cost, present value')}{kpi(f"{lead['carbon']['locationG']:.0f} g", 'CO₂e per kWh, location-based (grid 2025: 128 g)')}{kpi(f"{P['lead']['landTakeHa']:.0f} ha", f"of {P['lead']['netHa']:.0f} ha net developable land")}</div>
 <h3>Decisions for the client</h3>
@@ -96,7 +135,7 @@ both units of the existing CCGT from 2031. Two things have changed: the gas mark
 <li><b>Heads of terms with Endesa.</b> Endesa owns half of the CCGT, buys all its output under a 25-year contract, holds the old coal
 connection right and is building 600 MW of renewables next door. One counterparty can unlock firm power, a PPA and perhaps a private wire.</li>
 <li><b>Nine buildings or eight.</b> Alvega, beside the site, reached 45.4 °C in June 2025. On such a day the CCGT gives less power
-and the buildings need more. Nine buildings then need about 70 MW of extra help for the hottest hours (page §size§).</li>
+and the buildings need more. Nine buildings then need about {hot45short:.0f} MW of extra help for the hottest hours (page §size§).</li>
 <li><b>Fix the gas price, not just the plant.</b> Iberian gas trades at €89/MWh today and €34 for 2029. A gas plan is a bet on that
 fall; index the lease and hedge (page §market§).</li>
 <li><b>Apply to REN now.</b> The new Abrantes switching station has its environmental approval (May 2026). The two neighbouring campuses
@@ -107,7 +146,7 @@ have already asked for more capacity there.</li>
 chg_rows = [
  ['Ranking', 'Options that fail to power any hour go to the bottom (adequacy first).', f"{RB['adequate']:,} of 2,000 strategies power every hour; grid only fails by 11 TWh over 20 years."],
  ['Bridging plant', 'Can be rented and returned, bought and sold on, or bought and kept as standby.', 'All three tested for 2029 (pages §ways§–§ways2§). Renting stays cheapest by €1–5/MWh.'],
- ['Minimum load', 'Firm plant below its minimum load is now run at its minimum, and the surplus is wasted and costed.', 'The 2029 CCGT problem of revision 2 is now in the tool’s own numbers (page §minload§).'],
+ ['Minimum load', 'Firm plant needed below its minimum load runs at its minimum; the grid import backs off, and only output above the whole demand is wasted and costed (3.1).', 'The 2029 CCGT problem of revision 2 is in the tool’s own numbers (page §minload§).'],
  ['Grid contract', 'Contracted capacity per strategy and one grid connection charge.', 'The expected charge, €48 m for 400 MW, is entered for every option.'],
  ['Results', 'Top-five cards, Compare, a 16-driver tornado, the PDF report.', 'Used throughout; screens in the appendix.'],
  ['Defaults', 'Batch 2 of the source research: gas turbines €1,450/kW, batteries, PPA prices, grid carbon (Ember 2025).', 'Portugal’s grid is now 128 g/kWh (life-cycle) and €66/MWh.'],
@@ -118,7 +157,7 @@ fact_rows = [
  ['Neighbours', 'EDC One (300 MW, 2028) and Hyperion (200 MVA, 2029) both asked REN for more capacity; the minister said a decision is “near”.', 'The 400 MW for this campus remains an assumption.'],
  ['Gas market', 'Hormuz closed since March 2026; 17 % of Qatar’s LNG damaged. Iberian gas €89/MWh spot; €73 for 2027, €34 for 2029.', 'A new “gas crisis persists” case (page §market§).'],
  ['Power market', 'Portuguese base-load futures €117/MWh for 2027 and €53–66 for 2029–2036.', 'A new “Portuguese forwards” case.'],
- ['Network tariff', 'ERSE proposes €11.1/MWh for very high voltage in 2027, €9.0 for electro-intensive users.', 'Used in the forwards case (€15/MWh in all).'],
+ ['Network tariff', 'ERSE proposes €11.1/MWh for very high voltage in 2027, €9.0 for electro-intensive users.', 'Used in the forwards and crisis cases (€15/MWh in all); applied since revision 3.1.'],
  ['Heat', 'Alvega 45.4 °C on 28 June 2025; Mora 46.6 °C, a June record.', 'The tool’s design day is 34.2 °C. Tested at 45 °C.'],
  ['Emissions rules', 'Decree-Law 124/2026 tightens the medium combustion plant rules: logged running hours for the 500 h exemption.', 'Limits how often standby gensets can cover a CCGT trip.'],
  ['The CCGT', '2 × Siemens SGT5-4000F, December 2010. Endesa 50 %, ENGIE 25 %, Marubeni 25 %; output sold to Endesa under a 25-year PPA.', 'Endesa must agree to any lease.'],
@@ -228,19 +267,18 @@ its compatibility rules. It then screens 2,000 of them, each sized from first pr
 <h3>Settings for this study</h3>
 <ul>
 <li><b>Standby: HVO gensets required</b>, as in revisions 1 and 2. The client’s standby specification is the backup basis; gas-fired backup is shown as an alternative, not ranked.</li>
-<li><b>Time-to-power weight 0.</b> The tool scores “months until the supply could carry the whole campus”. Here every adequate strategy meets
-every building’s date; the score would only reward having all 1,145 MW in place years before 2035. The other weights stay at the tool’s
-defaults: cost 35, carbon 25, deliverability 15.</li>
+<li><b>Weights at the tool’s defaults:</b> cost 35, carbon 25, time-to-power 25, deliverability 15. Revision 3 set time-to-power to 0, because
+the tool then rewarded having all 1,145 MW in place years before 2035. It now counts months late against each building’s date; every top strategy
+is on time and scores the same.</li>
 <li><b>Fixed:</b> liquid cooling, roof solar only, no wind, no demand flexibility, a 50 % hybrid PPA offered as a choice, the expected grid charge entered.</li>
 </ul>
 <h3>What the tool picks under its own default settings</h3>
 {table(['Settings', 'The tool’s #1', 'LCOE', 'Why'], [
- ['Tool defaults (time-to-power 25, any backup)', 'Rented gensets kept for 20 years as the backup; CCGT from 2031', f"€{RT['top'][0]['lcoe']:.1f}", 'Full capacity early (month 10) and no Seveso fuel store; renting for 20 years is dear'],
- ['Defaults without time-to-power', 'New gas engines bought for 2029, kept for grid services and as backup; CCGT from 2031', f"€{RTN['top'][0]['lcoe']:.1f}", 'No liquid fuel, so no Seveso flag: higher deliverability'],
- ['<b>This study (HVO standby, no time-to-power)</b>', '<b>Rented gensets 2029, grid 2030, CCGT from 2031</b>', f"<b>€{RB['top'][0]['lcoe']:.1f}</b>", 'Cheapest adequate option; ranked first on score too'],
+ ['Tool defaults (any backup)', 'New gas engines bought for 2029, kept for grid services and as the backup; CCGT from 2031', f"€{RT['top'][0]['lcoe']:.1f}", f"No liquid fuel, so no Seveso flag: deliverability {RT['top'][0]['deliv']:.0f} points against {RB['top'][0]['deliv']:.0f}"],
+ ['<b>This study (HVO standby required)</b>', '<b>Rented gensets 2029, grid 2030, CCGT from 2031</b>', f"<b>€{RB['top'][0]['lcoe']:.1f}</b>", 'Cheapest adequate option; ranked first on score too'],
 ])}
 <p>Every one of these, and every top-five card below, uses the existing CCGT from 2031. What moves between settings is the bridge and the backup.
-Gas-fired backup avoids 11,000 t of HVO and the Seveso permit, but leaves the campus dependent on the gas network in a grid failure, and costs
+Gas-fired backup avoids {hvoTr} t of HVO and the Seveso permit, but leaves the campus dependent on the gas network in a grid failure, and costs
 €{S['base']['enginesAll']['lcoe'] - rec['lcoe']:.0f}/MWh more (page §ways2§).</p>
 <h3>Two checks on the run</h3>
 <p><b>Screening.</b> The tool’s faster model (49 representative days, the best 20 verified hour by hour) gives the same 20 best and the same
@@ -260,7 +298,7 @@ All five lease the existing CCGT from 2031 and keep HVO standby gensets; they di
 option with a large HVO store needs; “Assumed defaults (1)” is the design temperature, which comes from the synthetic weather year.</p>
 {table(['Card', 'Bridge for 2029', 'After 2030', 'LCOE', 'Capex', 'Carbon'], [[f"#{c['rank']}", BR.get(c['summary']['v']['C2'], c['summary']['v']['C2']), ('returned' if '→ remove' in c['summary']['name'] else 'kept for grid services' if 'grid services' in c['summary']['name'] else 'kept'), f"€{c['summary']['lcoe']:.1f}", m(c['summary']['capex']), f"{c['summary']['loc']:.0f} g"] for c in top5])}
 <p>The differences are small: €{min(c['summary']['lcoe'] for c in top5):.0f}–{max(c['summary']['lcoe'] for c in top5):.0f}/MWh. Renting wins because it pays
-only for the months the plant is needed. The next three buy plant for 2029 and then find it a job (grid services or sale); their
+only for the months the plant is needed. The other four buy plant for 2029 and then find it a job (grid services) or sell it; their
 case improves if the grid is late and the plant runs longer.</p>
 </section>
 """
@@ -277,14 +315,14 @@ a 50 % hybrid PPA and HVO standby gensets unless stated; figures at the tool’s
 {card('grid3', 'Grid only', '300 MW IT', [('IT load', '300 MW'), ('first IT', 'Jan 2030'), ('LCOE', f"€{g3['lcoe']:.1f}/MWh"), ('capex', m(g3['capex'])), ('carbon', f"{g3['loc']:.0f} g/kWh"), ('adequate', 'yes')],
  f"The cheapest and cleanest per MWh, but a third of the campus and a year later. Nine buildings on the grid alone would leave {mm('gridOnly')['unmet']['mwh']/1e6:.0f} TWh unmet over 20 years.")}
 {card('rec', 'Rent, then grid, then the CCGT from 2031', 'recommended', cardm('rented'), f"The tool’s #1 (without the PPA: €{lcoeL:.1f}/MWh). Rented gensets carry 2029; the grid carries 2030; the CCGT lease starts when the campus outgrows the grid. Nothing is bought that is used for a year.", rec=True)}
-{card('v1', 'CCGT from mid-2028 (revision 1)', 'grid late?', cardm('v1'), f"Firm power six months before the first building, but a year below the CCGT’s minimum load (page §minload§). €{mm('v1')['lcoe']-rec['lcoe']:.1f}/MWh dearer, unless the grid is two years late: then it is the cheapest (page §cost§).")}
+{card('v1', 'CCGT from mid-2028 (revision 1)', 'grid late?', cardm('v1'), f"Firm power six months before the first building, but a year below the CCGT’s minimum load (page §minload§). €{mm('v1')['lcoe']-rec['lcoe']:.1f}/MWh dearer; even with the grid two years late it is €{round(gl['v1']['lcoe'],1)-round(gl['rented']['lcoe'],1):.1f}/MWh dearer (page §cost§).")}
 </section>
 """
 strat2 = f"""
 <section class="page">
-{card('sell', 'Buy gas engines for 2029, sell them on', 'close second', cardm('enginesSell'), f"Nineteen 10 MW engines from late 2028, resold in 2030 at half their book value (a tool judgement). €{mm('enginesSell')['lcoe']-rec['lcoe']:.1f}/MWh dearer than renting, but owned plant: no rental market risk.")}
-{card('keep', 'Buy HVO gensets for 2029, keep them as standby', 'new in the tool', cardm('hvoKeep'), f"The standby fleet you need anyway, bought early and run as prime in 2029. €{mm('hvoKeep')['lcoe']-rec['lcoe']:.1f}/MWh dearer because the tool buys all 431 units in 2028 instead of one building at a time; bought in step with the buildings it would be close to renting.")}
-{card('engines', 'New gas engines, prime and backup', 'tool default #1 type', cardm('enginesAll'), f"119 engines carry everything above the grid and are also the backup: no HVO, no Seveso store. €{mm('enginesAll')['lcoe']-rec['lcoe']:.0f}/MWh dearer, backup depends on the gas network, and it needs {P['enginesAll']['landTakeHa']:.0f} ha.")}
+{card('sell', 'Buy gas engines for 2029, sell them on', 'close second', cardm('enginesSell'), f"{mm('enginesSell')['bridge']['units']} 10 MW engines from late 2028, resold in 2030 at half their book value (a tool judgement). €{mm('enginesSell')['lcoe']-rec['lcoe']:.1f}/MWh dearer than renting, but owned plant: no rental market risk.")}
+{card('keep', 'Buy HVO gensets for 2029, keep them as standby', 'new in the tool', cardm('hvoKeep'), f"The standby fleet you need anyway: the first buildings’ gensets bought for 2029 and run as prime, the rest bought building by building. €{mm('hvoKeep')['lcoe']-rec['lcoe']:.1f}/MWh dearer than renting (revision 3, which bought all {mm('hvoKeep')['bridge']['units']} units in 2028: €{so('base','hvoKeep')-so('base','rented'):.1f}).")}
+{card('engines', 'New gas engines, prime and backup', 'tool default #1 type', cardm('enginesAll'), f"{mm('enginesAll')['bridge']['units']} engines carry everything above the grid and are also the backup: no HVO, no Seveso store. €{mm('enginesAll')['lcoe']-rec['lcoe']:.0f}/MWh dearer, backup depends on the gas network, and it needs {P['enginesAll']['landTakeHa']:.0f} ha.")}
 </section><section class="page"><h2>Side by side</h2>
 {table(['Strategy', 'Adequate', 'LCOE €/MWh', 'NPV', 'Capex', 'Carbon g/kWh (loc. / market)'],
  [[n, '<span class="badge">yes</span>' if S['base'][k]['adequate'] else '<span class="badge no">no</span>', f"{S['base'][k]['lcoe']:.1f}", bn(S['base'][k]['npv']), m(S['base'][k]['capex']), f"{S['base'][k]['loc']:.0f} / {S['base'][k]['mkt']:.0f}"] for k, n in [
@@ -301,22 +339,23 @@ minload = f"""
 <section class="page"><h2>The CCGT’s minimum load, and when to start the lease</h2>
 <p>A data centre needs power every hour; a CCGT unit cannot run steadily below about 45 % of its output, roughly 192 MW (a typical value for
 this class; to confirm with Elecgás). Revision 2 had to work this out by hand. The tool now does it: when firm plant must run below its
-minimum, it runs at its minimum, and the surplus is wasted and paid for.</p>
+minimum, it runs at its minimum, the grid import backs off, and only output above the whole demand is wasted and paid for. In 2029 there is no grid yet.</p>
 {fig('min-load-2029')}
 <p>With the CCGT leased from mid-2028, 2029 needs {y29['demandGWh']:,.0f} GWh; the CCGT makes {c29['gwh']:,.0f} GWh, of which {c29['curtGWh']:,.0f} GWh is
 surplus. The tool counts the gas burnt for it. This is the main reason the 2028 start costs €{v1['lcoe']-rec['lcoe']:.1f}/MWh more than renting for 2029.</p>
-<h3>After 2031 the tool is cautious</h3>
-<p>From 2032 the tool also runs the CCGT at its minimum when the campus needs a little more than the grid can give, and wastes the
-surplus ({[p for p in rec['years'][5]['plants'] if p['tech']=='ccgtTop'][0]['curtGWh']:,.0f} GWh in 2032). In reality the campus would take that much less from
-the grid. The tool cannot do that yet (known issue 11). With the minimum load set to zero, the recommended plan costs
-€{S['base:msl0']['rented']['lcoe']:.1f}/MWh instead of €{rec['lcoe']:.1f}: the truth lies between.</p>
+<h3>After 2031 the grid backs off</h3>
+<p>From 2032 the campus sometimes needs a little more than the grid can give. Revision 3’s tool then ran a CCGT unit at its minimum and wasted the
+surplus ({[p for p in SO['base']['rented']['years'][5]['plants'] if p['tech']=='ccgtTop'][0]['curtGWh']:,.0f} GWh in 2032 with the PPA). The fixed tool takes that much less from the grid:
+the study’s #1, without a PPA, wastes nothing. With the 50 % PPA some surplus remains ({[p for p in rec['years'][5]['plants'] if p['tech']=='ccgtTop'][0]['curtGWh']:,.0f} GWh in 2032),
+in hours when PPA energy already fills the grid connection: the tool does not yet turn PPA energy down (recorded as a tool issue). With the minimum load
+set to zero, the plan with the PPA costs €{S['base:msl0']['rented']['lcoe']:.1f}/MWh instead of €{rec['lcoe']:.1f}.</p>
 {table(['Lease start', 'How 2029 is powered', 'LCOE', 'Verdict'], [
- ['Mid-2028', 'One CCGT unit at its minimum, most of it wasted', f"€{v1['lcoe']:.1f}", 'Only if the grid is late'],
- ['2031', 'Rented gas gensets, 186 MW', f"€{rec['lcoe']:.1f}", '<b>Recommended</b>'],
+ ['Mid-2028', 'One CCGT unit at its minimum, most of it wasted', f"€{v1['lcoe']:.1f}", 'Close second if the grid is late'],
+ ['2031', f'Rented gas gensets, {rentMW:.0f} MW', f"€{rec['lcoe']:.1f}", '<b>Recommended</b>'],
  ['2031', 'Gas engines bought and sold on', f"€{mm('enginesSell')['lcoe']:.1f}", 'Fallback if rental capacity is short'],
 ])}
-<p>One more caution in the tool’s favour of renting: it hires the gensets from the month they could first arrive (November 2027), 14 months
-before the first building. Hiring them only from late 2028 saves about €24 m in present value (€0.5/MWh): renting is slightly better than shown.</p>
+<p>Revision 3 also paid for the gensets from the month they could first arrive (November 2027), 14 months before the first building. The tool now
+hires them a month before they are first needed ({mon(hireM)}), as a rental contract would.</p>
 </section>
 """
 
@@ -329,8 +368,8 @@ prog = f"""
 {table(['Item', '2026', '2027', '2028', '2029', '2030', '2031', '2032–2036'], [
  ['Heads of terms: Endesa / Elecgás (lease, PPA)', '■', '■', '', '', '', '', ''],
  ['Grid application to REN; national-interest status', '■', '■', '', '', '', '', ''],
- ['Permits: IED for gensets, Seveso for 11,000 t HVO', '', '■', '■', '', '', '', ''],
- ['Rented gas gensets on site (186 MW)', '', '', '■ (late)', '■', '', '', ''],
+ ['Permits: IED for gensets, Seveso for ' + hvoTr + ' t HVO', '', '■', '■', '', '', '', ''],
+ [f'Rented gas gensets on site ({rentMW:.0f} MW)', '', '', '■ (Dec)', '■', '', '', ''],
  ['Grid 400 MW (assumed)', '', '', '', '', '■', '■', '■'],
  ['400 kV link to the CCGT built', '', '', '', '■', '■', '', ''],
  ['CCGT lease (both units)', '', '', '', '', '', '■', '■'],
@@ -349,14 +388,15 @@ cost = f"""
 {fig('lcoe')}
 <p>Three things move the answer most. <b>Gas price:</b> if today’s €89/MWh gas and €117/MWh power persisted, every gas strategy rises by
 about €{S['crisis']['rented']['lcoe']-rec['lcoe']:.0f}/MWh, to €{S['crisis']['rented']['lcoe']:.0f} for the recommended plan; the forwards instead bring it down to
-€{S['market']['rented']['lcoe']:.0f}. <b>The grid date:</b> two years late adds €{S['gridLate']['rented']['lcoe']-rec['lcoe']:.1f}/MWh, and then the 2028 CCGT
-start is €{S['gridLate']['rented']['lcoe']-S['gridLate']['v1']['lcoe']:.1f}/MWh cheaper. <b>More grid:</b> 600 MW lowers carbon by about
+€{S['market']['rented']['lcoe']:.0f}. <b>The grid date:</b> two years late adds €{S['gridLate']['rented']['lcoe']-rec['lcoe']:.1f}/MWh, and the 2028 CCGT
+start comes within €{round(S['gridLate']['v1']['lcoe'],1)-round(S['gridLate']['rented']['lcoe'],1):.1f}/MWh of renting (in revision 3 it won, because rental was paid from 2027). <b>More grid:</b> 600 MW lowers carbon by about
 {rec['loc']-S['grid600']['rented']['loc']:.0f} g/kWh and cost by €{rec['lcoe']-S['grid600']['rented']['lcoe']:.1f}/MWh.</p>
 {table(['Strategy'] + [l for _, l in sc], [[n] + [f"{S[s][k]['lcoe']:.1f}" for s, _ in sc] for k, n in [('rented', 'Recommended'), ('enginesSell', 'Buy engines, sell on'), ('v1', 'CCGT from 2028'), ('hvoKeep', 'Buy HVO, keep'), ('enginesAll', 'Gas engines, prime and backup')]], 'sbs')}
 </section><section class="page"><h2>Carbon</h2>
 {fig('carbon')}
 <p>Gas makes the campus about twice as carbon-intensive as the Portuguese grid. Four levers reduce it: run the CCGT only above what the grid can carry
-(a clause in the lease; the tool runs it whenever it is cheaper than the grid at its prices); more grid when REN can give it; a larger
+(a clause in the lease; the tool runs it whenever it is cheaper than the grid: at forward prices with Portugal’s real network tariff the grid is
+cheaper most hours, and carbon falls to {S['market']['rented']['loc']:.0f} g/kWh); more grid when REN can give it; a larger
 PPA, which lowers market-based carbon; and, in time, renewable power from Endesa’s plant next door by private wire.</p>
 </section>
 """
@@ -409,18 +449,18 @@ zone and REN’s new station still have to be drawn in (page §risks§). The Sit
 </section>
 """
 
-ideas = """
+ideas = f"""
 <section class="page"><h2>Thinking outside the box</h2>
 <div class="ideas">
 <div><b>1. One counterparty: Endesa</b>Endesa owns half the CCGT, buys its output until about 2035, holds the old connection right and is building 600 MW of
 renewables next door. A single heads of terms could cover the lease, a PPA and a private wire.<span class="st">Commercial · start now</span></div>
 <div><b>2. Inlet cooling for the CCGT</b>Evaporative coolers or chillers on the gas turbine inlets recover most of the hot-day loss and may keep the
 ninth building without new plant.<span class="st">Ask Elecgás and Siemens Energy · price it</span></div>
-<div><b>3. Hire the gensets late</b>Rent from late 2028, not from when they could first arrive. The tool shows about €24 m saved.<span class="st">Modelled</span></div>
+<div><b>3. Hire the gensets late</b>Rent from late 2028, not from when they could first arrive. The tool now does this (revision 3.1).<span class="st">Modelled</span></div>
 <div><b>4. Buy the standby fleet early, use it first</b>Buy the first two buildings’ HVO gensets in 2028 and run them as prime in 2029: no rental, and
-they become standby. Worth it if rental capacity is short.<span class="st">Modelled (the tool buys the whole fleet at once)</span></div>
-<div><b>5. Hedge the gas</b>The lease should index gas to PVB and allow hedging; at today’s prices every gas plan costs about €50/MWh more.<span class="st">For the heads of terms</span></div>
-<div><b>6. A grid-first lease clause</b>Run the CCGT only for the load above the grid. At Portuguese prices the tool does this already.<span class="st">Modelled</span></div>
+they become standby; buy the rest building by building. €{mm('hvoKeep')['lcoe']-rec['lcoe']:.1f}/MWh more than renting; worth it if rental capacity is short.<span class="st">Modelled</span></div>
+<div><b>5. Hedge the gas</b>The lease should index gas to PVB and allow hedging; at today’s prices every gas plan costs about €{S['crisis']['rented']['lcoe']-rec['lcoe']:.0f}/MWh more.<span class="st">For the heads of terms</span></div>
+<div><b>6. A grid-first lease clause</b>Run the CCGT only for the load above the grid. At forward prices with the real network tariff the tool does this most hours.<span class="st">Modelled</span></div>
 <div><b>7. A lower standby specification</b>With a firm, diverse main supply the client may accept N rather than N+1 standby. Standby gensets are more than half the capex.<span class="st">Client decision · tens of millions</span></div>
 <div><b>8. Dry cooling as a planning asset</b>The campus would use about 126,000 m³ of water a year, a small fraction of an evaporative design. Say so early in the
 Tagus debate.<span class="st">Planning strategy</span></div>
@@ -434,9 +474,9 @@ risks = f"""
  ['Gas price', f"Today’s prices add about €{S['crisis']['rented']['lcoe']-rec['lcoe']:.0f}/MWh", 'Index to PVB, hedge, grid-first clause'],
  ['Hot-day output', f"Nine buildings are {hot['rented']['design'] - 1144:.0f} MW short at 45 °C with a 13 % CCGT loss", 'Elecgás’s output curves; inlet cooling; or plan eight buildings'],
  ['Grid late, smaller or contested', '400 MW by 2030 is an assumption; two neighbours want more of the same station', 'Apply now; national-interest status; lease option to start in 2029'],
- ['Rental capacity in 2028–2029', '186 MW of rented gas gensets in Portugal', 'Early reservation; fallback: buy engines and sell on (+€1/MWh)'],
+ ['Rental capacity in 2028–2029', f'{rentMW:.0f} MW of rented gas gensets in Portugal', f"Early reservation; fallback: buy engines and sell on (+€{mm('enginesSell')['lcoe']-rec['lcoe']:.1f}/MWh)"],
  ['Genset running hours', 'Gensets cover CCGT trips; Decree-Law 124/2026 logs hours for the 500 h exemption', 'Get the CCGT outage record; size the hot-day help so gensets are not it'],
- ['Permits for standby plant and fuel', 'IED for the genset fleet; 11,000 t of HVO is a lower-tier Seveso site', 'Start with the planning application; consider 24 h with firm refuelling'],
+ ['Permits for standby plant and fuel', f'IED for the genset fleet; {hvoTr} t of HVO is a lower-tier Seveso site', 'Start with the planning application; consider 24 h with firm refuelling'],
  ['Carbon targets', f"{lead['carbon']['locationG']:.0f} g/kWh against the grid’s 128 g", 'PPA, grid-first operation, private wire, more grid later'],
  ['Water and local opposition', 'Tagus water stress; joint assessment requested for the neighbours', 'Dry cooling; early engagement'],
  ['Demolition and ground', 'Towers and chimney come down last, to about 2029', 'First buildings on land cleared first; confirm title; ground survey'],
@@ -455,25 +495,24 @@ risks = f"""
 assumed = [f['path'] for f in lead['flags'] if f.get('assumed') and f.get('path')]
 basis = f"""
 <section class="page tight"><h2>Basis and limits</h2>
-<p><b>Tool.</b> Energy strategy tool for data centre campuses, development build of 24 October 2026 (branch <code>feature/verification-fixes</code>,
-all Node and screen tests passing, GitHub checks green). An hour-by-hour model for every year to full build, repeated to 20 years, with synthetic
+<p><b>Tool.</b> Energy strategy tool for data centre campuses, development build of 24 October 2026 (branch <code>feature/engine-fixes</code>, with the
+fixes this study prompted; all 68 Node and 36 screen tests passing). An hour-by-hour model for every year to full build, repeated to 20 years, with synthetic
 weather and price profiles for Portugal. 24 defaults now carry a published source (labelled “sourced — not independently checked”); the rest are
 indicative and unverified.</p>
 <p><b>Inputs set for this study.</b> 150 ha at 39.468° N, 8.109° W; nine buildings of 100 MW IT every nine months from January 2029; liquid cooling with
 dry coolers; no grid until January 2030, then 400 MW (tested: 600 MW; January 2032); gas on site; roof solar only; no wind; hybrid PPA at 50 % offered;
-grid connection charge €48 m (the tool’s expected figure); ten dispatch years (the default eight would stop in 2034, before the campus is full);
-HVO standby required and time-to-power weight 0 (page §search§).</p>
+grid connection charge €48 m (the tool’s expected figure); HVO standby required; every weight at the tool’s default (page §search§).</p>
 <p><b>The study build.</b> The tool has no “existing plant” type (known issue 12), so a copy of the tool was given two records for the Elecgás CCGT:
 leased from mid-2028 (as bridging plant) or from 2031 (as firm top-up); lease €6/kW a month as fixed cost; €3/MWh variable; 56 % efficiency;
 45 % minimum load; exactly two 427.5 MW units, no N+1 (the HVO gensets cover a unit trip); its own consent; not drawn on the campus; the 400 kV link
 €62 m as its capex. Two rules keep the records sensible. The run’s site-layout stage was skipped (site fit is outside the ranking; on this machine it took
 over an hour); the best 24 options and the plans shown were laid out in full. None of the CCGT figures comes from Elecgás.</p>
 <p><b>Defaults this study relies on, not entered</b> (flagged by the tool on the recommended option): {', '.join(f'<code>{a}</code>' for a in assumed)}.</p>
-<p><b>Tool defects found in this study</b> (to record in the repository’s known issues for the owner’s decision): time-to-power scores months until
-the whole campus could be supplied, even when no building waits; rented plant is paid from the month it could first arrive, not from when it is needed
-(€24 m here); retained bridging plant is bought all at once, not per building; the eight-year dispatch default silently repeats a part-built year
-for long programmes. Known issues 10 (gas-dependency flag), 11 (minimum load wastes surplus instead of backing off the grid) and 12 (no existing-plant
-type) remain open.</p>
+<p><b>Tool defects.</b> Revision 3 found five: time-to-power rewarded plant in place years early; rented plant was paid from the month it could first
+arrive; retained bridging plant was bought all at once; the eight-year dispatch default repeated a part-built year; an entered network charge was
+ignored. All five are fixed in the build used here (known issues 14–18), with known issues 10 (gas-dependency flag) and 11 (minimum load wasted
+surplus instead of backing off the grid). Still open: no existing-plant type (12), and PPA energy is not turned down when firm plant runs at its
+minimum (19, found in this revision).</p>
 <p><b>Not modelled.</b> CCGT hot-day output (a 13 % judgement) and forced outages; gas network capacity at Pego; the private wire; buying the CCGT;
 building shell and IT costs; the real site boundary.</p>
 </section>
@@ -494,7 +533,7 @@ appx = f"""
 <section class="page"><h2>Appendix B: the tool’s own PDF report</h2>
 <p>The tool’s “Save PDF report” button writes a report of the run: inputs first (entered or default, with each default’s basis), assumptions, the top five,
 the top 20, trade-offs, Compare, the energy balance, the tornado, flags and the method. The report for this study’s main run comes with this document as
-a separate file: <i>energy-strategy-report-Pego-data-centre-campus-study-revision-3-2026-10-24.pdf</i>. It leaves out the Site tab, as agreed.</p>
+a separate file: <i>energy-strategy-report-Pego-data-centre-campus-study-revision-3-1-2026-10-24.pdf</i>. It leaves out the Site tab, as agreed.</p>
 </section>
 """
 
@@ -534,16 +573,16 @@ sources in its registry (Electricity Maps 2025 for prices, Ember 2025 for grid c
 </section>
 """
 
-body = cover + glance + changes + site + market + size + search + top5page + strat1 + strat2 + minload + prog + cost + sens + capex + siteplans + ideas + risks + basis + appx + sources
+body = cover + rev31 + glance + changes + site + market + size + search + top5page + strat1 + strat2 + minload + prog + cost + sens + capex + siteplans + ideas + risks + basis + appx + sources
 import re, pypdf
-PDF = HERE / 'Pego-data-centre-campus-feasibility-study-rev3.pdf'
+PDF = HERE / 'Pego-data-centre-campus-feasibility-study-rev3-1.pdf'
 async def render(html_text):
     (HERE / 'study3.html').write_text(html_text)
     async with async_playwright() as p:
         b = await p.chromium.launch(args=['--no-sandbox'])
         pg = await b.new_page()
         await pg.goto((HERE / 'study3.html').as_uri()); await pg.wait_for_timeout(1500)
-        foot = "<div style='font-family:Arial;font-size:7pt;color:#77756e;width:100%;padding:0 17mm;display:flex;justify-content:space-between'><span>Pego data centre campus: feasibility study · revision 3</span><span><span class='pageNumber'></span> / <span class='totalPages'></span></span></div>"
+        foot = "<div style='font-family:Arial;font-size:7pt;color:#77756e;width:100%;padding:0 17mm;display:flex;justify-content:space-between'><span>Pego data centre campus: feasibility study · revision 3.1</span><span><span class='pageNumber'></span> / <span class='totalPages'></span></span></div>"
         await pg.pdf(path=str(PDF), format='A4', print_background=True, display_header_footer=True, header_template='<div></div>', footer_template=foot, margin={'top': '16mm', 'bottom': '18mm', 'left': '17mm', 'right': '17mm'})
         await b.close()
 def page_map():
@@ -556,7 +595,7 @@ def page_map():
     out['ways2'] = out['ways'] + 1 if out['ways'] else None
     return out, len(texts)
 def fill(text, pm): return re.sub('§(\\w+)§', lambda mo: str(pm.get(mo.group(1)) or '?'), text)
-doc0 = f'<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><title>Pego data centre campus: feasibility study, revision 3</title><style>{CSS}</style></head><body>{body}</body></html>'
+doc0 = f'<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><title>Pego data centre campus: feasibility study, revision 3.1</title><style>{CSS}</style></head><body>{body}</body></html>'
 asyncio.run(render(fill(doc0, {})))
 pm, n = page_map(); print('pass 1', n, 'pages', pm)
 asyncio.run(render(fill(doc0, pm)))

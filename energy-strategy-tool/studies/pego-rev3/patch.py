@@ -48,7 +48,7 @@ export function referencePego(opts = {}) {
   const inputs = buildDefaultInputs({ analysisStart: '2027-01', ...opts });
   const s = inputs.project.analysisStart;
   const P = { ...PEGO, ...(opts.pego || {}) };
-  inputs.project.name = 'Pego data centre campus (study, revision 3)';
+  inputs.project.name = 'Pego data centre campus (study, revision 3.1)';
   inputs.project.lat = 39.468; inputs.project.lon = -8.109;
   inputs.site.areaHa = 150;
   inputs.load.itMW = P.buildings * P.itPerBuilding;
@@ -57,9 +57,8 @@ export function referencePego(opts = {}) {
   inputs.grid.nowMW = 0; inputs.grid.fullMW = P.gridFullMW; inputs.grid.fullDate = addMonths(s, P.gridFullMonth);
   inputs.utilities.gasAvailable = 'Yes'; inputs.utilities.gasDateMonths = 0;
   inputs.utilities.ppaInclude = true; inputs.utilities.ppaType = 'hybrid'; inputs.utilities.ppaCoverage = 50;
-  // Nine buildings to January 2035 plus the 12-month ramp: full load in 2036 (model year 9), so ten explicit dispatch
-  // years are needed (the default 8 would repeat 2034, a part-built year, as the steady state).
-  inputs.settings.maxDispatchYears = 10;
+  // Revision 3.1: the tool now dispatches every year until nothing changes (up to 15; known issue 17 fixed), so the
+  // revision 3 override (ten years) is no longer needed.
   // Grid connection charge: the tool's expected figure for 400 MW at extra-high voltage (EUR 120k/MW), entered with
   // "Use the expected figure" (indicative; REN's offer will replace it).
   inputs.grid.connectionCharge = (opts.pego && opts.pego.gridFullMW ? opts.pego.gridFullMW : 400) * 120000;
@@ -67,12 +66,11 @@ export function referencePego(opts = {}) {
   inputs.choices.C4 = { state: 'open', values: ['none', 'ccgt', 'gasRecip', 'chp', 'fuelCell'] };
   inputs.choices.C10 = { state: 'locked', values: ['roof'] };
   inputs.choices.C11 = { state: 'locked', values: ['none'] };
-  // Study settings (report, "Settings for this study"): HVO standby gensets required, as in revision 2; time-to-power
-  // weight 0, because every adequate option meets every building's date and the metric counts months until the whole
-  // campus could be supplied (2035 here). opts.study === false gives the tool's own defaults.
+  // Study settings (report, "Settings for this study"): HVO standby gensets required, as in revision 2. Revision 3.1: the
+  // time-to-power weight is back at the tool's default, because the metric now counts months late against the phasing
+  // plan (known issue 14 fixed). opts.study === false gives the tool's own defaults.
   if (opts.study !== false) {
     inputs.choices.C5 = { state: 'locked', values: ['hvo'] };
-    inputs.weights.ttp = 0;
   }
   return inputs;
 }

@@ -132,7 +132,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 
 Ask the owner before starting any of these:
 
-- Known issues still open: 4 (archetype defaults), 5 (identical options, partly handled by the "same results as" marks), 12 (an "existing plant" type; recommended as the next package).
+- Known issues still open: 4 (archetype defaults), 5 (identical options, partly handled by the "same results as" marks), 12 (an "existing plant" type; recommended as the next package), 19 (PPA energy not turned down when firm plant runs at its minimum; found in the Pego study, revision 3.1).
 - Saving and reopening a study (OPEN-QUESTIONS 27).
 - The plain-English summary (§14; OPEN-QUESTIONS 12).
 - Ranges, Monte Carlo, robust pick, breakevens and scenarios (§13).
