@@ -146,11 +146,20 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **User guide:** chapters 19, 28 and 36.
 - **Progress:** built 2026-10-24 on `feature/engine-fixes`, not merged.
 
+### 14. Archetypes and identical options (added 2026-10-24)
+
+- **Why:** known issues 4 and 5: archetypes took air cooling when cooling was open, and 37 T1 options repeated another option's results.
+- **Decisions:** OPEN-QUESTIONS 84 and 85, Claude's recommendations accepted in advance by the owner (2026-10-24).
+- **What:** archetypes take the engineer's cooling, or the open type with the lowest design load; rule (o), heat rejection location only with rooftop solar; "Retain for grid services" out of the default C3 set while its revenue is not modelled.
+- **Acceptance tests:** Node test 41 (`app/tests/archetype-tests.mjs`); test 9c sizes its air-cooled reference explicitly.
+- **User guide:** chapters 22, 34 and 47.
+- **Progress:** built 2026-10-24 on `feature/engine-fixes`, not merged.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:
 
-- Known issues still open: 4 (archetype defaults), 5 (identical options, partly handled by the "same results as" marks).
+- Known issues: none open (all 20 resolved by 2026-10-24).
 - Saving and reopening a study (OPEN-QUESTIONS 27).
 - The plain-English summary (§14; OPEN-QUESTIONS 12).
 - Ranges, Monte Carlo, robust pick, breakevens and scenarios (§13).

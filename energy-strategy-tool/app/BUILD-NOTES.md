@@ -1864,3 +1864,12 @@ Known issue 20, OPEN-QUESTIONS 83 (Claude's recommendation accepted in advance b
 - **Unchanged:** scores, ranks, LCOE, deliverability, adequacy and main-flow flags (test 40 compares all 2,000 T1 options with the limit forced down). Pego on the product with the existing-plant input: 16 s, leader "rent, grid, existing CCGT top-up" at €141.1/MWh (study build, revision 3.1: €141.3; the lease now starts when needed, month 51, rather than at the study's January 2031).
 - **For the owner (not decided):** skipping the layout in every run while the Site tab is off would make T1 run in about 8 s instead of 17 s.
 - Tests: test 40; 71/71 Node tests.
+
+## Work package 14: archetypes and identical options (2026-10-24)
+
+Known issues 4 and 5, OPEN-QUESTIONS 84 and 85 (Claude's recommendations accepted in advance by the owner).
+
+- **Archetypes** (`archetypeVector`, `lowestDesignCooling` in `generator.js`): unnamed choices take the first open value as before, except cooling: when C8 is open, the open type with the lowest design facility load (from `shortfallAnalysis`, once per inputs). T1: immersion (111.0 MW against air 136.7 MW); 2 of 11 archetypes adequate (A5 gas bridging rank 217, A8 fuel cells), the grid-only ones still fall short in months 23–29 because the 20 MW grid cannot carry phase 1's ramp.
+- **Identical options:** an analysis of T1's 37 "same results as" marks found C9 (27, all without rooftop solar), C3 backup against grid services (4) and both together (6). Rule (o): without rooftop solar only the first open heat rejection location is generated (24,168 combinations removed in T1). C3 default set: Remove, Retain as backup, Retain as prime, Split; "Retain for grid services" stays available with a "values not generated" note. T1 now: 4 marks (C3 split and prime coinciding).
+- **T1 after the change:** 48,340 combinations; 1,604 of 2,000 adequate; leader OP13Y1Y "Grid + HVO-diesel prime bridge → retain as prime · retained-plant backup · Evaporative-adiabatic · PV 5.6 MWp · PPA hybrid 100 %", score 94.15, LCOE €151.9/MWh, capex €85 m, 121 g/kWh.
+- Tests: test 41; test 9c builds its air-cooled A1 reference explicitly; 72/72 Node tests.

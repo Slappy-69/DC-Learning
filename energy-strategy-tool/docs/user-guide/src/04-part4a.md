@@ -227,6 +227,9 @@ Only logically impossible combinations are removed, each by a named rule:
 - **(l)** Existing plant (C2 or C4 "Existing plant (lease)") needs an existing plant entered with its units and unit size, and is used in one role per option (built 24 October 2026).
 - **(m)** Existing plant as bridging plant is handed back when the grid arrives (C3 "Remove") or kept running (C3 "Retain as prime"), and is never the campus's standby (C5 "Retained bridging plant").
 - **(n)** Existing plant as firm plant is the units offered whatever the sizing rule, so it is generated with one C4 sizing: "Permanent shortfall" where there is one, otherwise "Average load".
+- **(o)** Without rooftop solar (C10 "None") the heat rejection location changes no result outside the Site tab: only the first open location is generated (built 24 October 2026, OPEN-QUESTIONS 85). In T1 it removes 24,168 combinations that would have repeated others.
+
+"Retain for grid services" (C3) is no longer in the default set: grid-service revenue is not modelled, so it repeated "Retain as backup", and revenue options are off by default. It can be ticked in the choices (built 24 October 2026).
 T1: rule (e) removes 5,184; the others none. **57,024** valid combinations remain.
 
 ## Step 4. Archetypes
@@ -247,7 +250,7 @@ Eleven reference strategies are always generated, whatever the choice settings, 
 | A10a Nascent firm (SMR) | SMR prime |
 | A10b Nascent firm (hydrogen) | hydrogen prime |
 
-Choices an archetype does not specify take the **first open value** of that choice. With the T1 defaults that makes every archetype air-cooled with roof heat rejection, which matters for the results (chapter 47). Archetypes that fall outside the open choices (T1: four of them) are added to the count: **57,028** combinations.
+Choices an archetype does not specify take the **first open value** of that choice, except cooling (built 24 October 2026, OPEN-QUESTIONS 84): the engineer's cooling type when it is set, and when it is left open the open type with the lowest design facility load (immersion in T1: 111 MW against 137 MW for air). Before, every T1 archetype was air-cooled and most could never reach full load (chapter 47). Archetypes that fall outside the open choices (T1: four of them) are added to the count: **57,028** combinations.
 
 ## Step 5. The cap and sampling
 

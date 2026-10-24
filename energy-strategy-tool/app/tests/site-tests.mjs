@@ -341,7 +341,10 @@ export async function blockTests(test, { runT1 }) {
     const inputs = runT1.inputs;
     const site = buildSiteModel(inputs);
     const ctx = lightContext(inputs, site);
-    const A1 = runT1.options.find((o) => o.archetype === 'A1'); // air cooling, diesel gensets, roof heat rejection
+    // Archetype A1 (grid only, diesel gensets, roof heat rejection) with air cooling: since work package 14 the archetypes take
+    // the open cooling type with the lowest design load, so the air-cooled variant is sized here.
+    const A1run = runT1.options.find((o) => o.archetype === 'A1');
+    const A1 = { archetype: 'A1', v: { ...A1run.v, C8: 'air' }, sizing: sizeOption(runT1.ctx, { ...A1run.v, C8: 'air' }) };
     const bs = buildBlocks(ctx, A1.v, A1.sizing);
     // Air: whitespace 100,000 kW ÷ 1.5 kW/m² = 66,667 m²; GFA × 2.2 = 146,667 m²; ÷ 2 storeys = 73,333 m²;
     // 4 phases of 25 MW → 4 halls of 18,333 m², 1.5 : 1 → 165.8 × 110.6 m; height 2 × 6 + 4 = 16 m.

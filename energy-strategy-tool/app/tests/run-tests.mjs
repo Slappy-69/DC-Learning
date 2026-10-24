@@ -83,6 +83,7 @@ import { locationTests } from './location-tests.mjs';
 import { engineFixesTests } from './engine-fixes-tests.mjs';
 import { existingPlantTests } from './existing-plant-tests.mjs';
 import { layoutScopeTests } from './layout-scope-tests.mjs';
+import { archetypeTests } from './archetype-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1232,6 +1233,9 @@ await existingPlantTests(test, siteRuns);
 
 // 40. Work package 13: site layout in the run (tests/layout-scope-tests.mjs)
 await layoutScopeTests(test, siteRuns);
+
+// 41. Work package 14: archetypes and identical options (tests/archetype-tests.mjs)
+await archetypeTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

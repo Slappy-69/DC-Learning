@@ -201,7 +201,9 @@ export function defaultChoiceState(id, inputs) {
     // OPEN-QUESTIONS 43 (2026-10-22): every technology is considered for bridging, gas turbines included; turbines and
     // HVO-diesel prime added to the default set after Haiku check H1 (2026-10-23). BESS + solar stays opt-in.
     case 'C2': return { state: 'open', values: ['gasRecip', 'gasTurbine', 'fuelCell', 'dieselPrime', 'rented', ...(existingEntered(inputs) ? ['existing'] : [])] };
-    case 'C3': return { state: 'open', values: ['remove', 'backup', 'prime', 'gridServices', 'split'] };
+    // Retain for grid services is out of the default set (work package 14, OPEN-QUESTIONS 85): with grid-service revenue not
+    // modelled it repeats Retain as backup, and revenue options are off by default (walkthrough 2026-10-21).
+    case 'C3': return { state: 'open', values: ['remove', 'backup', 'prime', 'split'] };
     case 'C4': return { state: 'open', values: ['none', 'chp', 'fuelCell', ...(existingEntered(inputs) ? ['existing'] : [])] };
     case 'C5': return { state: 'open', values: ['hvo', 'diesel', 'retained'] };
     case 'C5a': return { state: 'open', values: ['perBuilding', 'pooled'] };

@@ -124,7 +124,6 @@
     "remove",
     "backup",
     "prime",
-    "gridServices",
     "split"
    ]
   },
