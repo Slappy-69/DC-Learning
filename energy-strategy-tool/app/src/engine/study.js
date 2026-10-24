@@ -42,9 +42,10 @@ export function studyFile(inputs, run = null, { savedAt = new Date(), appVersion
   return out;
 }
 
+// Accents are dropped: combining marks (code points 0x300 to 0x36f) are filtered by code, so the build stays ASCII (test 14).
 export function studyFileName(inputs, date = new Date()) {
   const name = (inputs.project && inputs.project.name) || 'study';
-  const slug = String(name).normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'study';
+  const slug = String(name).normalize('NFKD').split('').filter((c) => c.charCodeAt(0) < 0x300 || c.charCodeAt(0) > 0x36f).join('').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'study';
   return `${slug}-study-${date.toISOString().slice(0, 10)}.json`;
 }
 
