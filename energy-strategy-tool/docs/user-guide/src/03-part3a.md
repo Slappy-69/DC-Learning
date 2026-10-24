@@ -148,6 +148,9 @@ Site coverage 35 % (the walkthrough's figure), the storeys and the gross-up are 
 | Gas commodity price | country default | €/MWh of gas; the transport adder (€4) is added either way |
 | Hydrogen availability | No | Hydrogen plant runs only if Yes |
 | District heating offtake nearby | No | Allows heat-reuse values of C15 (not costed) |
+| Existing plant near the site (lease) | off | A plant beside the site whose owner would lease it to the campus (built 24 October 2026); see below |
+
+**Existing plant near the site** (built 24 October 2026, work package 12). Tick it when a power plant next to the site could be leased, as the Elecgás CCGT at Pego. Enter its name, type (combined-cycle gas turbine, open-cycle gas turbines or gas engines), the **units offered** and the **net output per unit** (both required: there is no default), the month it could be available (empty: from the analysis start), and the lease in € per kW a month (default €6, a judgement from the Pego study). Efficiency, minimum stable load and variable O&M follow the type unless you enter them (CCGT: 56 %, 45 % of a unit, €3/MWh, all judgement; the other two types use the gas turbine and gas engine records). A one-off cost for the connection from the plant to the campus can be added. The tool then offers the plant as bridging plant and as firm plant (chapters 34 and 35), with exactly the units offered, and pays the lease only from a month before the plant is first needed (chapter 39). The plant stands outside the campus: it has its own consent and gas supply, is not part of the campus's emissions permit and is not drawn on the plan. Ticked but without units or unit size, the plant is not used and the run says so.
 
 Two inputs exist in the engine but are not on screen in the current version: **grid steps** (intermediate capacities between "now" and "full", each from a date) and **water available** (m³ a day, for the water flag).
 

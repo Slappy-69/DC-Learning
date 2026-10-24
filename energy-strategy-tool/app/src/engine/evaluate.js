@@ -159,6 +159,8 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   if (sz.prime) {
     const t = TECH[sz.prime.tech];
     addCapex(`${t.name} (prime)`, yearOfMonth(sz.prime.availMonth), sz.prime.mw * 1000 * t.p.capexPerKW, t.p.life);
+    // Existing plant (work package 12): the one-off connection to the campus, when the lease starts.
+    if (t.p.linkCapex) addCapex(`${t.name}: connection to the campus`, yearOfMonth(sz.prime.availMonth), t.p.linkCapex, t.p.life);
     if (t.p.stackLife) assets.push({ item: `${t.name} stack replacement`, year: yearOfMonth(sz.prime.availMonth), amount: sz.prime.mw * 1000 * t.p.capexPerKW * t.p.stackFraction, life: t.p.stackLife, stackOnly: true });
   }
   // Bridging plant
@@ -180,7 +182,9 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   const bridgeBuys = bridgeSteps.map((b) => ({ ...b, year: yearOfMonth(b.month) }));
   const bridgeOwnedMW = (y) => bridgeBuys.reduce((a, b) => a + (b.year <= y ? b.units : 0), 0) * (sz.bridge ? sz.bridge.unitMW : 0);
   const bridgeMWAtMonth = (m) => bridgeSteps.reduce((a, b) => a + (b.month <= m ? b.units : 0), 0) * (sz.bridge ? sz.bridge.unitMW : 0);
-  if (sz.bridge && sz.bridge.tech !== 'rented') {
+  // Existing plant as bridging plant (work package 12): its connection to the campus, no resale value if the lease ends.
+  if (sz.bridge && TECH[sz.bridge.tech].p.linkCapex) addCapex(`${TECH[sz.bridge.tech].name}: connection to the campus`, yearOfMonth(sz.bridge.availMonth), TECH[sz.bridge.tech].p.linkCapex, bridgeRemoveYear === null ? TECH[sz.bridge.tech].p.life : 0);
+  if (sz.bridge && !TECH[sz.bridge.tech].lease) {
     const t = TECH[sz.bridge.tech];
     if (rp) bridgeBuys.forEach((b) => addCapex(`${t.name} (${b.label})`, b.year, b.units * sz.bridge.unitMW * 1000 * t.p.capexPerKW, t.p.life, { removeYear: bridgeRemoveYear }));
     else addCapex(`${t.name} (bridging)`, yearOfMonth(sz.bridge.availMonth), sz.bridge.mw * 1000 * t.p.capexPerKW, t.p.life, { removeYear: bridgeRemoveYear });
@@ -189,7 +193,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   // Gas connection pipe from the gas main (§5.2), for options that burn gas on site and only when a gas main
   // location is given (sizing.js): booked when the first gas plant is available (gas gensets only: phase 1).
   if (sz.gasConnection && sz.gasConnection.km > 0) {
-    const gasMonths = [sz.prime, sz.bridge].filter((p) => p && TECH[p.tech].fuel === 'gas').map((p) => p.availMonth);
+    const gasMonths = [sz.prime, sz.bridge].filter((p) => p && TECH[p.tech].fuel === 'gas' && !TECH[p.tech].offsite).map((p) => p.availMonth);
     const gasYear = gasMonths.length ? yearOfMonth(Math.min(...gasMonths)) : (phaseShares.length ? phaseShares[0].year : 0);
     addCapex('Gas connection pipe', gasYear, sz.gasConnection.km * sz.gasConnection.perKm, 40);
   }
@@ -250,20 +254,26 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     if (y >= bessYear) L.fom += bessCapex(sz.storage.mw, sz.storage.mwh) * bp.fomPct;
     if (sz.reserve && sz.reserve.mwh > 0) L.fom += itShareYear(y) * sz.reserve.mwh * 1000 * ur.capexPerKWh * ur.fomPct;
     if (sz.prime && y >= yearOfMonth(sz.prime.availMonth)) L.fom += sz.prime.mw * 1000 * TECH[sz.prime.tech].p.fomPerKW;
-    if (sz.bridge && sz.bridge.tech !== 'rented' && y >= yearOfMonth(sz.bridge.availMonth) && (bridgeRemoveYear === null || y < bridgeRemoveYear)) L.fom += bridgeOwnedMW(y) * 1000 * TECH[sz.bridge.tech].p.fomPerKW;
+    if (sz.bridge && !TECH[sz.bridge.tech].lease && y >= yearOfMonth(sz.bridge.availMonth) && (bridgeRemoveYear === null || y < bridgeRemoveYear)) L.fom += bridgeOwnedMW(y) * 1000 * TECH[sz.bridge.tech].p.fomPerKW;
     if (sz.backup.tech) {
       L.fom += itShareYear(y) * sz.backup.mw * 1000 * TECH[sz.backup.tech].p.fomPerKW;
       if (sz.backup.bessMW > 0) L.fom += itShareYear(y) * bessCapex(sz.backup.bessMW, sz.backup.bessMWh) * bp.fomPct;
     }
-    // Rented bridging: rental for each month it is on site (from availability while active or retained)
-    if (sz.bridge && sz.bridge.tech === 'rented') {
+    // Rented or leased bridging plant: paid for each month it is on site (from its hire month while active or retained)
+    if (sz.bridge && TECH[sz.bridge.tech].lease) {
       let rentedMWMonths = 0;
       for (let m = y * 12; m < y * 12 + 12; m++) {
         if (m < sz.bridge.availMonth) continue;
         const onSite = v.C1 === 'islanded' || m < T || v.C3 !== 'remove';
         if (onSite) rentedMWMonths += rp ? bridgeMWAtMonth(m) : sz.bridge.mw; // hired in step with the buildings when retained (known issue 16)
       }
-      L.rental += rentedMWMonths * 1000 * TECH.rented.p.rentalPerKWMonth;
+      L.rental += rentedMWMonths * 1000 * TECH[sz.bridge.tech].p.rentalPerKWMonth;
+    }
+    // Leased existing plant as firm plant (work package 12): the lease for each month from its start.
+    if (sz.prime && TECH[sz.prime.tech].lease) {
+      let months = 0;
+      for (let m = y * 12; m < y * 12 + 12; m++) if (m >= sz.prime.availMonth) months++;
+      L.rental += months * sz.prime.mw * 1000 * TECH[sz.prime.tech].p.rentalPerKWMonth;
     }
   }
 
@@ -608,7 +618,7 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   if (runOver) flags.push(flag('permit-runhours', 'minor', 'Permitting', `Run-hours above limit (${req.maxRunHours} h/yr).${permitSuffix}`, { permitting: true }));
 
   // Fuel and utilities
-  const usesGas = [sz.prime, sz.bridge].some((p) => p && TECH[p.tech].fuel === 'gas') || (sz.backup.tech && TECH[sz.backup.tech].fuel === 'gas');
+  const usesGas = [sz.prime, sz.bridge].some((p) => p && TECH[p.tech].fuel === 'gas' && !TECH[p.tech].offsite) || (sz.backup.tech && TECH[sz.backup.tech].fuel === 'gas');
   if (usesGas && inputs.utilities.gasAvailable === 'Unknown') flags.push(flag('fuel-gas-unknown', 'minor', 'Fuel and utilities', 'Gas connection unconfirmed (gas availability "Unknown")'));
   if (usesGas && inputs.utilities.gasAvailable !== 'No') flags.push(flag('fuel-gas-assumed', 'info', 'Fuel and utilities', 'Gas capacity and date assumed, not confirmed'));
   if (usesGas && inputs.utilities.gasAvailable === 'No') flags.push(flag('fuel-gas-none', 'major', 'Fuel and utilities', 'Gas-using plant with gas availability "No": the plant does not run'));
@@ -688,7 +698,7 @@ export function deliverability(ctx, v, sz, disp, flags, siteFit = null) {
   const majors = flags.filter((f) => f.permitting && f.severity === 'major').length;
   const minors = flags.filter((f) => f.permitting && f.severity === 'minor').length;
   items.push({ item: `Permitting flags: ${majors} major, ${minors} minor`, value: majors + minors, points: -P.majorFlagPenalty * majors - P.minorFlagPenalty * minors });
-  const usesGas = [sz.prime, sz.bridge].some((p) => p && TECH[p.tech].fuel === 'gas') || (sz.backup.tech && TECH[sz.backup.tech].fuel === 'gas');
+  const usesGas = [sz.prime, sz.bridge].some((p) => p && TECH[p.tech].fuel === 'gas' && !TECH[p.tech].offsite) || (sz.backup.tech && TECH[sz.backup.tech].fuel === 'gas');
   if (usesGas && ctx.inputs.utilities.gasAvailable === 'Unknown') items.push({ item: 'Gas used with availability "Unknown"', value: 1, points: -P.gasUnknownPenalty });
   if (sz.prime && sz.prime.tech === 'hydrogen') items.push({ item: 'Hydrogen fuel dependency', value: 1, points: -P.hydrogenPenalty });
   const techIds = new Set(cap.map((c) => c[0]).filter((id) => TECH[id] && TECH[id].p.procM !== undefined));

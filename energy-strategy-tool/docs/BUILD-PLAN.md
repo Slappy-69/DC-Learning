@@ -128,11 +128,20 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **User guide:** chapters 9, 17, 19, 22, 23, 33, 35, 37, 38, 39, 41, 54 and 56.
 - **Progress:** built 2026-10-24 on `feature/engine-fixes` (from `feature/verification-fixes`), not merged.
 
+### 12. Existing plant near the site, leased (added 2026-10-24)
+
+- **Why:** known issue 12. The Pego study needed a study build of the tool for the Elecgás CCGT next to the site; the library had no existing plant and sized bridging plant N+1, so two offered units became three.
+- **Decisions:** OPEN-QUESTIONS 78–82, Claude's recommendations accepted in advance by the owner (2026-10-24).
+- **What:** an input group in section 4; C2 and C4 value "Existing plant (lease)"; rules (l)–(n); exactly the units offered; the lease by the month from a month before first need; a connection-to-the-campus capex line; outside the campus (own consent, own gas supply, not in the IED aggregation, not on the plan); a run flag when ticked but incomplete; the PDF lists the inputs.
+- **Acceptance tests:** Node test 39 (`app/tests/existing-plant-tests.mjs`).
+- **User guide:** chapters 17, 34, 35, 39 and 56.
+- **Progress:** built 2026-10-24 on `feature/engine-fixes`, not merged.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:
 
-- Known issues still open: 4 (archetype defaults), 5 (identical options, partly handled by the "same results as" marks), 12 (an "existing plant" type; recommended as the next package).
+- Known issues still open: 4 (archetype defaults), 5 (identical options, partly handled by the "same results as" marks).
 - Saving and reopening a study (OPEN-QUESTIONS 27).
 - The plain-English summary (§14; OPEN-QUESTIONS 12).
 - Ranges, Monte Carlo, robust pick, breakevens and scenarios (§13).

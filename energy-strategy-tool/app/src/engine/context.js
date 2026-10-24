@@ -1,7 +1,7 @@
 // Run context: everything shared by all options in one run (BRIEF §4 incremental recompute:
 // these arrays depend only on inputs, not on the option's choices).
 
-import { COUNTRIES, COOLING, TECH, FUEL, FX } from './defaults.js';
+import { COUNTRIES, COOLING, TECH, FUEL, FX, applyExistingPlant } from './defaults.js';
 import { getProfiles, coolingProfile, nearestCountry, H } from './profiles.js';
 import { monthsBetween, yearOf, parseYM } from './dates.js';
 import { mulberry32, subSeed } from './prng.js';
@@ -171,6 +171,8 @@ export function buildContext(inputs, opts = {}) {
   const gridFullM0 = inputs.grid.fullDate ? monthOf(inputs, inputs.grid.fullDate) : 0;
   const needM = Math.max(phaseMs.length ? Math.max(...phaseMs) + (inputs.load.rampMonths || 0) : 0, Number.isFinite(gridFullM0) ? gridFullM0 : 0) + 12;
   const nMonthsTimeline = Math.max(inputs.settings.timelineMonths, Math.ceil(needM / 12) * 12);
+  // Existing plant near the site (work package 12): its technology record follows this run's inputs.
+  const existing = applyExistingPlant(inputs, (d) => monthOf(inputs, d));
   const dp = Array.isArray(inputs.economics.displayPeriods) ? inputs.economics.displayPeriods.map(Number).filter((n) => Number.isInteger(n) && n <= 60) : [];
   const maxYears = Math.max(inputs.economics.periodYears, ...dp, Math.ceil(nMonthsTimeline / 12));
   const nMonths = Math.max(nMonthsTimeline, maxYears * 12) + 12;
@@ -210,7 +212,7 @@ export function buildContext(inputs, opts = {}) {
   const gasM = inputs.utilities.gasDateMonths;
 
   const ctx = {
-    inputs, country, cdata, prof, seed, nMonths, nMonthsTimeline, gridCap, itInst, shape, baseYear, startMonth,
+    inputs, country, cdata, prof, seed, nMonths, nMonthsTimeline, existing, gridCap, itInst, shape, baseYear, startMonth,
     cooling, gasCommodity, gasPrice, priceMult, priceAdder, carbonMult, carbonPrice, phases, firstPhaseM, lastPhaseM, fullGridM, gasM,
     demandCache: new Map(),
     demandStats: { hits: 0, misses: 0 }, // run-log counters for the hourly demand cache

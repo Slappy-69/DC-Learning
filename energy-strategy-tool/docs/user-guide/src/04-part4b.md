@@ -18,7 +18,8 @@ Each line is booked in the year its plant can first supply power (or, for per-ph
 | Battery | MWh × €250/kWh + MW × €150/kW (× 1,000) | availability | 15 |
 | Firm prime plant | MW × €/kW × 1,000 | availability | by technology |
 | Bridging plant (not rented) | MW × €/kW × 1,000 | availability; plant kept as the backup: the bridging units at availability, then each building's units at its date (lines "(bridging)" and "(retained as backup)", built 24 October 2026) | by technology |
-| Gas connection pipe | km × €0.8 m | first gas plant | 40 |
+| Existing plant: connection to the campus (built 24 October 2026) | the amount entered; no plant capex (the plant is leased) | when the lease starts | 25 (none if handed back when the grid arrives) |
+| Gas connection pipe | km × €0.8 m; existing plant outside the campus does not need it | first gas plant on the campus | 40 |
 | Backup gensets | MW × €/kW × 1,000, split by phase | each phase | 25 |
 | Battery for UPS augmentation | as battery, split by phase | each phase | 15 |
 | Bulk fuel storage | m³ × €1,200, split by phase | each phase | 30 |
@@ -43,7 +44,7 @@ For each item with a life:
 
 ## Fixed operating costs
 
-Each year, from each item's availability: fixed O&M per kW (solar €12–15/kWp, wind €35/kW, firm plant €10–40/kW and the SMR €120/kW, backup gensets €8–9/kW), the battery at 1.5 % of its capex a year, and rented bridging plant at **€12 per kW per month** for every month it is on site, from one month before it is first needed (built 24 October 2026; before, from the month it could first arrive), and, when kept as the backup, for the units on hire that month. Fixed O&M of owned plant kept as the backup follows the units owned. Backup genset O&M scales with the share of the IT installed in the middle of that year.
+Each year, from each item's availability: fixed O&M per kW (solar €12–15/kWp, wind €35/kW, firm plant €10–40/kW and the SMR €120/kW, backup gensets €8–9/kW), the battery at 1.5 % of its capex a year, and rented bridging plant at **€12 per kW per month** for every month it is on site, from one month before it is first needed (built 24 October 2026; before, from the month it could first arrive), and, when kept as the backup, for the units on hire that month. Leased existing plant is paid the same way, at its lease rate, for every month from a month before it is first needed (as bridging plant until the grid arrives if handed back). Fixed O&M of owned plant kept as the backup follows the units owned. Backup genset O&M scales with the share of the IT installed in the middle of that year.
 
 ## Energy, fuel and carbon costs
 

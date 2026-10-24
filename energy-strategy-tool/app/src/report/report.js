@@ -14,7 +14,7 @@ import { GUARDRAIL, sig, money, monthLabel, pct, perMWh, cur, displayCurrency } 
 
 // Input sections in the order of the inputs panel; site geometry belongs to the Site tab (Beta) and is left out.
 const SECTIONS = [
-  ['project', 'Project'], ['site', 'Site (area and land)'], ['load', 'Load'], ['grid', 'Grid'], ['utilities', 'Utilities and PPA'],
+  ['project', 'Project'], ['site', 'Site (area and land)'], ['load', 'Load'], ['grid', 'Grid'], ['utilities', 'Utilities and PPA'], ['existing', 'Existing plant near the site (lease)'],
   ['requirements', 'Requirements'], ['economics', 'Economics'], ['weights', 'Weights'], ['deliverability', 'Deliverability'], ['settings', 'Run settings'],
 ];
 export const SITE_BETA_KEYS = ['site.boundary', 'site.setbackByEdge', 'site.heightZones', 'site.exclusions', 'site.poc', 'site.gasMain', 'site.access', 'site.receptors',

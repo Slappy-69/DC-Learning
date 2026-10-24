@@ -318,4 +318,4 @@ No change to the agreed design; the brief records what the program now does wher
 1. §11: the time-to-power axis counts months late against the phasing plan (first power against phase 1, full load against the last phase) plus half the power gap; supply ready early earns nothing.
 2. §9.8: rented bridging plant is hired one month before it is first needed; bridging plant kept as the backup is bought (or hired) in step with the buildings; dispatch runs to the first year that starts after the last change (limit 15 years, with a run flag); firm plant needed below its minimum stable load runs at its minimum while the grid import backs off; first power is the later of the phase 1 date and the month the supply is ready.
 3. §5.4: an entered network charge and levy figure replaces the country default.
-
+4. §5.4, §7.2, §8: existing plant near the site, leased (work package 12, OPEN-QUESTIONS 78–82): an input group, C2 and C4 value "Existing plant (lease)", generator rules (l)–(n). Firm plant needed at its minimum stable load displaces PPA energy before its output is wasted (OPEN-QUESTIONS 77).

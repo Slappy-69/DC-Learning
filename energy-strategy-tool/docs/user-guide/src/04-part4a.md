@@ -223,6 +223,10 @@ Only logically impossible combinations are removed, each by a named rule:
 - **(g)** A top-up firm plant (C4 sizing "Permanent shortfall") needs a permanent shortfall for the option's cooling type: the design load above the full grid capacity after the full grid date. Islanded options always have one. Otherwise it would repeat C4 "None" (built 23 October 2026).
 - **(h)** Splitting bridging plant (C3 "Keep shortfall share as prime, rest as backup") needs generating plant and a permanent shortfall for the option's cooling type (built 23 October 2026).
 - **(i)** A battery sized to the permanent shortfall (C12) needs a grid to recharge from (not islanded), a permanent shortfall for the cooling type and the peak-shave role (built 23 October 2026).
+- **(j)**, **(k)**: the trigger-hours battery needs flexibility and trigger hours; a PPA needs a grid to deliver it (built 23 October 2026).
+- **(l)** Existing plant (C2 or C4 "Existing plant (lease)") needs an existing plant entered with its units and unit size, and is used in one role per option (built 24 October 2026).
+- **(m)** Existing plant as bridging plant is handed back when the grid arrives (C3 "Remove") or kept running (C3 "Retain as prime"), and is never the campus's standby (C5 "Retained bridging plant").
+- **(n)** Existing plant as firm plant is the units offered whatever the sizing rule, so it is generated with one C4 sizing: "Permanent shortfall" where there is one, otherwise "Average load".
 T1: rule (e) removes 5,184; the others none. **57,024** valid combinations remain.
 
 ## Step 4. Archetypes
@@ -386,6 +390,8 @@ With "BESS + solar only" bridging, the battery is S MW for 24 hours. After the f
 
 - **Rented plant** is hired one month (`settings.rentalLeadMonths`, judgement, 0–6) before the first month of shortfall (islanded: before the first load), not from the month it could first arrive. Dispatch, time-to-power and the rental all start then; the sizing sentence gives both months. In T1, all 350 rented options are hired later than they could arrive.
 - **Plant kept as the backup** (C5 "retained") is bought in step with the buildings: the bridging units at the bridging date, then the units each later building's critical load needs, with its redundancy, at that building's date. Fixed O&M follows the units owned; rented plant kept as the backup is hired in the same steps. Dispatch still counts the whole kept fleet from its first date, because after the grid arrives it serves only as backup or above-grid prime.
+
+**Existing plant near the site** (built 24 October 2026, work package 12) is sized differently: as bridging plant or as firm plant it is exactly the units offered, with no N+1 added (the standby gensets cover a unit trip), and the sentence says if it falls short of the need. It is available from the month entered, with no permitting allowance, and its lease starts a month before it is first needed: as bridging plant, before the first month of shortfall; as firm plant, before the first month the design load exceeds the grid and any bridging plant still on site (as baseload, before the first load).
 
 In T1, for example, a rented bridge of 7 × 2 MW keeps 6 units (12 MW) for the 9.0 MW permanent shortfall of evaporative cooling and retires 1 into backup. Rule (h) generates the split only with generating plant (not "BESS + solar only") and where there is a permanent shortfall; otherwise it would repeat "Retain as backup".
 

@@ -81,6 +81,7 @@ import { inputModelTests } from './input-model-tests.mjs';
 import { screeningTests } from './screening-tests.mjs';
 import { locationTests } from './location-tests.mjs';
 import { engineFixesTests } from './engine-fixes-tests.mjs';
+import { existingPlantTests } from './existing-plant-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1224,6 +1225,9 @@ await locationTests(test, siteRuns);
 
 // 35–37. Work package 11: engine fixes from the Haiku checks and the Pego study (tests/engine-fixes-tests.mjs)
 await engineFixesTests(test, siteRuns);
+
+// 39. Work package 12: existing plant near the site, leased (tests/existing-plant-tests.mjs)
+await existingPlantTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

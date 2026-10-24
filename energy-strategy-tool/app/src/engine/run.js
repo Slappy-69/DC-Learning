@@ -288,6 +288,8 @@ export function* runModelSteps(rawInputs, opts = {}) {
   const windNote = s.valuesNotGenerated.find((x) => x.id === 'C11' && x.note);
   if (windNote) runFlags.push(flag('tech-wind-default', 'info', 'Technology', windNote.note));
   if (inputs.load.workload === 'ai-training') runFlags.push(flag('load-ai', 'info', 'Load', 'AI training transient load not modelled'));
+  // Existing plant ticked but incomplete (work package 12): not generated, and the run says why.
+  if (ctx.existing && ctx.existing.include && !ctx.existing.entered) runFlags.push(flag('existing-incomplete', 'minor', 'Technology', `Existing plant near the site is ticked but not generated: enter its ${ctx.existing.missing.join(' and ')}`));
   if (truncated.length) {
     const maxNeed = Math.max(...truncated.map((t) => t.needY)), ex = truncated[0].explicit;
     runFlags.push(flag('dispatch-truncated', 'minor', 'Model', `Dispatch covers only the first ${ex} model years (the run setting "Most dispatch years") for ${truncated.length.toLocaleString('en-GB')} configuration${truncated.length === 1 ? '' : 's'} that need up to ${maxNeed} before nothing changes: the later years repeat a year that is not yet steady (load, grid or plant still changing). Raise the setting to ${maxNeed}`));

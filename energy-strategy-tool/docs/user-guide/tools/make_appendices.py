@@ -49,7 +49,7 @@ def fmt_val(v):
 
 GROUP_TITLES = collections.OrderedDict([
     ("project", "Project"), ("country", "Country data (values in Appendix B)"), ("profiles", "Country profiles"), ("site", "Site"), ("load", "Load and building"),
-    ("grid", "Grid"), ("utilities", "Utilities"), ("requirements", "Requirements"), ("economics", "Economics"),
+    ("grid", "Grid"), ("utilities", "Utilities"), ("existing", "Existing plant near the site (lease)"), ("requirements", "Requirements"), ("economics", "Economics"),
     ("weights", "Weights"), ("deliverability", "Deliverability"), ("settings", "Run settings"), ("choices", "Choice default states"),
     ("fuel", "Fuels and emission factors"), ("ppa", "PPA prices"), ("cooling", "Cooling approaches"), ("tech", "Technology library"),
     ("spatial", "Spatial library (site layout)"), ("view", "View settings"), ("sensitivity", "Sensitivity (tornado)"),

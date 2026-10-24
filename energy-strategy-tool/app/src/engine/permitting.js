@@ -12,10 +12,11 @@
 import { TECH, PERMIT_OUTLOOK, PERMIT_OUTLOOK_COUNTRY } from './defaults.js';
 
 // Combustion plant of an option, as the IED aggregation counts it: prime, bridging and backup units.
+// Existing plant near the site is a separate installation with its own permit (work package 12): not counted.
 export function combustionPlant(sz, v) {
   const out = [];
-  if (sz.prime && TECH[sz.prime.tech].combustion) out.push({ role: 'prime', name: TECH[sz.prime.tech].name, mw: sz.prime.mw, unitMW: sz.prime.unitMW, eff: TECH[sz.prime.tech].p.eff });
-  if (sz.bridge && TECH[sz.bridge.tech].combustion) out.push({ role: 'bridge', name: TECH[sz.bridge.tech].name, mw: sz.bridge.mw, unitMW: sz.bridge.unitMW, eff: TECH[sz.bridge.tech].p.eff });
+  if (sz.prime && TECH[sz.prime.tech].combustion && !TECH[sz.prime.tech].offsite) out.push({ role: 'prime', name: TECH[sz.prime.tech].name, mw: sz.prime.mw, unitMW: sz.prime.unitMW, eff: TECH[sz.prime.tech].p.eff });
+  if (sz.bridge && TECH[sz.bridge.tech].combustion && !TECH[sz.bridge.tech].offsite) out.push({ role: 'bridge', name: TECH[sz.bridge.tech].name, mw: sz.bridge.mw, unitMW: sz.bridge.unitMW, eff: TECH[sz.bridge.tech].p.eff });
   if (sz.backup && sz.backup.tech) {
     const t = TECH[sz.backup.tech];
     out.push({ role: 'backup', name: t.name, mw: (v.C5 === 'bessUps' ? sz.backup.nUnits : sz.backup.units) * t.p.unitMW, unitMW: t.p.unitMW, eff: t.p.eff });

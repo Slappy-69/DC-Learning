@@ -55,13 +55,14 @@ function arrayBlock(base, unitArea, unitLw, arr) {
   return { ...base, w, h, areaM2: w * h, units: arr.units, rows: arr.rows, cols: arr.cols, unitL: uL, unitW: uW, unitAreaM2: unitArea, isArray: true };
 }
 
-const BRIDGE_TYPE = { gasRecip: 'gasEngine', chp: 'gasEngine', rented: 'gasEngine', dieselPrime: 'gasEngine', gasTurbine: 'turbine', fuelCell: 'fuelCell', hydrogen: 'hydrogen' };
+const BRIDGE_TYPE = { existing: 'turbine', gasRecip: 'gasEngine', chp: 'gasEngine', rented: 'gasEngine', dieselPrime: 'gasEngine', gasTurbine: 'turbine', fuelCell: 'fuelCell', hydrogen: 'hydrogen' };
 // Technology → energy-source key; also used by the Dispatch tab so firm plant draws in the same colour as on the plan.
-export const SOURCE_OF_TECH = { gasRecip: 'gas', chp: 'gas', rented: 'gas', gasTurbine: 'gas', dieselPrime: 'diesel', fuelCell: 'fuelCell', hydrogen: 'hydrogen', smr: 'nuclear', backupDiesel: 'diesel', backupHvo: 'diesel', backupGas: 'gas' };
+export const SOURCE_OF_TECH = { existing: 'gas', gasRecip: 'gas', chp: 'gas', rented: 'gas', gasTurbine: 'gas', dieselPrime: 'diesel', fuelCell: 'fuelCell', hydrogen: 'hydrogen', smr: 'nuclear', backupDiesel: 'diesel', backupHvo: 'diesel', backupGas: 'gas' };
 
 // Firm plant (prime or bridging) as unit arrays.
 function plantBlocks(plant, roleLabel, sp, push) {
   const t = TECH[plant.tech];
+  if (t.offsite) return; // existing plant stands beside the campus, not on it (work package 12)
   const type = BRIDGE_TYPE[plant.tech];
   const P = S(type);
   const unitArea = plant.unitMW * t.p.m2PerMW;

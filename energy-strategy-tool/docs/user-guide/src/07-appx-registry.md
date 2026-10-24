@@ -1,6 +1,6 @@
 # Appendix A. The full defaults register {#appA}
 
-Every default value in the current version: **547 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. **24 records** carry a published source and the label "sourced — not independently checked" (work package 0, batches 1 and 2; the source, year and access date follow the entry). The other 523 are labelled "indicative — unverified" (confidence C, not verified). None is verified. Chapter 50 compares the important values with published sources.
+Every default value in the current version: **561 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. **24 records** carry a published source and the label "sourced — not independently checked" (work package 0, batches 1 and 2; the source, year and access date follow the entry). The other 537 are labelled "indicative — unverified" (confidence C, not verified). None is verified. Chapter 50 compares the important values with published sources.
 
 Abbreviations: **src** = basis "source" (should come from a published source); **judg** = judgement; **run** = run setting.
 
@@ -126,6 +126,23 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **utilities.ppaInclude**: off; judg. Owner, 2026-10-22: off unless the engineer ticks it. Options without a PPA use the national grid's standard price and carbon.
 - **utilities.ppaType**: hybrid (solar / wind / hybrid / baseload / cfe247); judg.
 - **utilities.ppaCoverage**: 100 % of each year's facility consumption; range 25–100; judg. One coverage, set by the engineer (OPEN-QUESTIONS 49).
+
+## Existing plant near the site (lease)
+
+- **existing.types.ccgt.eff**: 0.56 electrical efficiency (LHV), with a part-load allowance; range 0.5–0.6; judg. Modern F-class CCGT about 58 % at full load; 56 % allows for part load (Pego study, 2026-10-24).
+- **existing.types.ccgt.msl**: 0.45 minimum stable load, fraction of one unit; range 0.35–0.5; judg. Typical for single-shaft F-class blocks; confirm with the owner of the plant.
+- **existing.types.ccgt.vomPerMWh**: 3 €/MWh; range 2–5; judg.
+- **existing.include**: off; judg. Off unless the engineer enters an existing plant near the site (work package 12).
+- **existing.name**: Existing plant; judg.
+- **existing.type**: ccgt (ccgt / ocgt / engines); judg. Sets the efficiency, minimum stable load and variable O&M unless entered.
+- **existing.units**: none (units); judg. No default: enter the units the owner offers. Used exactly, with no redundancy added.
+- **existing.unitMW**: none (MW per unit); judg. No default: net output per unit at site conditions.
+- **existing.availableDate**: none (YYYY-MM); judg. Empty = available from the analysis start (the plant exists). The month the lease and the connection to the campus can be ready.
+- **existing.eff**: none (electrical efficiency); judg. Empty = by type.
+- **existing.msl**: none (fraction of one unit); judg. Empty = by type.
+- **existing.vomPerMWh**: none (€/MWh); judg. Empty = by type.
+- **existing.leasePerKWMonth**: 6 €/kW/month; range 3–9; judg. Capacity payment for the lease, paid from a month before the plant is first needed (settings.rentalLeadMonths). Assumed in the Pego study (2026-10-24); replace with the owner's offer.
+- **existing.linkCapex**: 0 €; judg. One-off: the connection from the plant to the campus (lines, bays). Booked when the lease starts.
 
 ## Requirements
 

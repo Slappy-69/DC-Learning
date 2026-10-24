@@ -191,6 +191,31 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           <SelectField label="PPA coverage" value={String(inputs.utilities.ppaCoverage)} onCommit={(v) => { update('utilities.ppaCoverage', Number(v)); update('choices.C14', null); }} path="utilities.ppaCoverage" inputs={inputs}
             options={[['25', '25 %'], ['50', '50 %'], ['75', '75 %'], ['80', '80 %'], ['100', '100 %']]} />
         </div> : null}
+        <ToggleField label="Existing plant near the site (lease)" checked={!!(inputs.existing && inputs.existing.include)} onCommit={(v) => { update('existing.include', v); update('choices.C2', null); update('choices.C4', null); }} path="existing.include" inputs={inputs}
+          hint="A power plant beside the site whose owner would lease it to the campus (work package 12). On: it is offered as bridging plant (handed back when the grid arrives, or kept running) and as firm plant, with exactly the units entered and the lease paid from a month before it is first needed. It stands outside the campus: not on the site plan, not in the campus's emissions permit." />
+        {inputs.existing && inputs.existing.include ? <>
+          <div className="row2">
+            <TextField label="Plant name" value={inputs.existing.name} onCommit={set('existing.name')} path="existing.name" inputs={inputs} />
+            <SelectField label="Plant type" value={inputs.existing.type} onCommit={set('existing.type')} path="existing.type" inputs={inputs}
+              options={[['ccgt', 'Combined-cycle gas turbine (CCGT)'], ['ocgt', 'Open-cycle gas turbines'], ['engines', 'Gas engines']]} />
+          </div>
+          <div className="row2">
+            <NumberField label="Units offered" unit="units" value={inputs.existing.units} onCommit={(v) => update('existing.units', v == null ? null : Math.max(1, Math.round(v)))} path="existing.units" inputs={inputs} nullable min={1} step={1} placeholder="Required" />
+            <NumberField label="Net output per unit" unit="MW" value={inputs.existing.unitMW} onCommit={set('existing.unitMW')} path="existing.unitMW" inputs={inputs} nullable min={0} placeholder="Required" />
+          </div>
+          <div className="row2">
+            <TextField label="Available from (YYYY-MM)" value={inputs.existing.availableDate} onCommit={set('existing.availableDate')} pattern={YM} path="existing.availableDate" inputs={inputs} nullable placeholder="The analysis start" />
+            <NumberField label="Lease" unit="€/kW/month" value={inputs.existing.leasePerKWMonth} onCommit={set('existing.leasePerKWMonth')} path="existing.leasePerKWMonth" inputs={inputs} min={0} />
+          </div>
+          <div className="row2">
+            <NumberField label="Efficiency" unit="fraction" value={inputs.existing.eff} onCommit={set('existing.eff')} path="existing.eff" inputs={inputs} nullable min={0.1} max={0.7} step={0.01} placeholder="By type" />
+            <NumberField label="Minimum stable load" unit="fraction of a unit" value={inputs.existing.msl} onCommit={set('existing.msl')} path="existing.msl" inputs={inputs} nullable min={0} max={1} step={0.05} placeholder="By type" />
+          </div>
+          <div className="row2">
+            <NumberField label="Variable O&M" unit="€/MWh" value={inputs.existing.vomPerMWh} onCommit={set('existing.vomPerMWh')} path="existing.vomPerMWh" inputs={inputs} nullable min={0} placeholder="By type" />
+            <NumberField label="Connection to the campus" unit="€" value={inputs.existing.linkCapex} onCommit={set('existing.linkCapex')} path="existing.linkCapex" inputs={inputs} min={0} step={100000} />
+          </div>
+        </> : null}
         <SelectField label="District heating offtake nearby" value={inputs.utilities.districtHeating} onCommit={(v) => { update('utilities.districtHeating', v); update('choices.C15', null); }} path="utilities.districtHeating" inputs={inputs}
           options={[['No', 'No'], ['Yes', 'Yes']]} hint="Heat reuse is not costed in this slice." />
       </Section>

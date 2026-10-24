@@ -145,13 +145,16 @@ export const CHOICES = [
     ['wait', 'Wait for grid'], ['bridge', 'Bridge until grid'], ['islanded', 'Islanded'], ['export', 'Grid + export']] },
   { id: 'C2', name: 'Bridging supply', values: [
     ['gasRecip', 'Gas recips'], ['gasTurbine', 'Gas turbines'], ['fuelCell', 'Fuel cells'], ['dieselPrime', 'HVO-diesel prime'],
-    ['bessSolar', 'BESS + solar only'], ['rented', 'Rented temporary generation']] },
+    ['bessSolar', 'BESS + solar only'], ['rented', 'Rented temporary generation'],
+    // Work package 12 (OPEN-QUESTIONS 78–82, 2026-10-24): existing plant near the site, leased; generated only when entered.
+    ['existing', 'Existing plant (lease)']] },
   { id: 'C3', name: 'Bridging plant after grid arrives', values: [
     ['remove', 'Remove'], ['backup', 'Retain as backup'], ['prime', 'Retain as prime'], ['gridServices', 'Retain for grid services'],
     // OPEN-QUESTIONS 59 (2026-10-23): the owner's alternative (b) of OPEN-QUESTIONS 42.
     ['split', 'Keep shortfall share as prime, rest as backup']] },
   { id: 'C4', name: 'Primary firm on-site generation', values: [
-    ['none', 'None'], ['chp', 'Gas CHP-trigen'], ['gasRecip', 'Gas recips'], ['fuelCell', 'Fuel cells'], ['smr', 'SMR'], ['hydrogen', 'Hydrogen']] },
+    ['none', 'None'], ['chp', 'Gas CHP-trigen'], ['gasRecip', 'Gas recips'], ['fuelCell', 'Fuel cells'], ['smr', 'SMR'], ['hydrogen', 'Hydrogen'],
+    ['existing', 'Existing plant (lease)']] },
   // OPEN-QUESTIONS 58 (2026-10-23): each C4 technology sized two ways, so the ranking compares a baseload plant with
   // a top-up plant that closes the permanent shortfall.
   { id: 'C4s', name: 'Firm generation sizing', values: [['average', 'Average load (baseload)'], ['shortfall', 'Permanent shortfall (top-up)']] },
@@ -197,9 +200,9 @@ export function defaultChoiceState(id, inputs) {
     case 'C1': return { state: 'open', values: ['wait', 'bridge', 'islanded'] };
     // OPEN-QUESTIONS 43 (2026-10-22): every technology is considered for bridging, gas turbines included; turbines and
     // HVO-diesel prime added to the default set after Haiku check H1 (2026-10-23). BESS + solar stays opt-in.
-    case 'C2': return { state: 'open', values: ['gasRecip', 'gasTurbine', 'fuelCell', 'dieselPrime', 'rented'] };
+    case 'C2': return { state: 'open', values: ['gasRecip', 'gasTurbine', 'fuelCell', 'dieselPrime', 'rented', ...(existingEntered(inputs) ? ['existing'] : [])] };
     case 'C3': return { state: 'open', values: ['remove', 'backup', 'prime', 'gridServices', 'split'] };
-    case 'C4': return { state: 'open', values: ['none', 'chp', 'fuelCell'] };
+    case 'C4': return { state: 'open', values: ['none', 'chp', 'fuelCell', ...(existingEntered(inputs) ? ['existing'] : [])] };
     case 'C5': return { state: 'open', values: ['hvo', 'diesel', 'retained'] };
     case 'C5a': return { state: 'open', values: ['perBuilding', 'pooled'] };
     case 'C6': return { state: 'locked', values: [inputs ? inputs.requirements.topology : 'N+1'] };
@@ -317,6 +320,57 @@ tech('hydrogen', { name: 'Hydrogen gensets / fuel cells', role: 'firm', maturity
   msl: [0.2, 'min stable load fraction', 0.1, 0.3], unitMW: [1, 'MW', 0.5, 2], life: [15, 'yr', 10, 20], m2PerMW: [300, 'm²/MW + storage', 200, 450],
   storageHours: [24, 'h of full output stored on site', 12, 48],
   procM: [18, 'months', 12, 30], buildM: [9, 'months', 6, 12] });
+// Rented plant is hired, not bought: paid by the month from a month before it is first needed (known issue 15).
+TECH.rented.lease = true;
+
+// Existing plant near the site, leased (work package 12, OPEN-QUESTIONS 78–82, 2026-10-24; known issue 12). One plant
+// per study, entered by the engineer in section 4 (inputs.existing). Its record is set from the inputs for every run
+// (applyExistingPlant, called by buildContext): exactly the units entered (no N+1; the standby gensets cover a unit
+// trip), available from the date entered, its own consent (no permitting allowance), a separate installation (not in
+// the campus's IED aggregation), not drawn on the campus plan, paid by the month as a lease from a month before it is
+// first needed, plus a one-off connection to the campus. Performance by type unless entered.
+export const EXISTING_TYPES = {
+  ccgt: { label: 'Combined-cycle gas turbine (CCGT)',
+    eff: rec('existing.types.ccgt.eff', 0.56, 'electrical efficiency (LHV), with a part-load allowance', { low: 0.5, high: 0.6, basis: 'judgement', ref: '§6', note: 'Modern F-class CCGT about 58 % at full load; 56 % allows for part load (Pego study, 2026-10-24).' }),
+    msl: rec('existing.types.ccgt.msl', 0.45, 'minimum stable load, fraction of one unit', { low: 0.35, high: 0.5, basis: 'judgement', ref: '§6', note: 'Typical for single-shaft F-class blocks; confirm with the owner of the plant.' }),
+    vomPerMWh: rec('existing.types.ccgt.vomPerMWh', 3, '€/MWh', { low: 2, high: 5, basis: 'judgement', ref: '§6' }) },
+  ocgt: { label: 'Open-cycle gas turbines', eff: TECH.gasTurbine.p.eff, msl: TECH.gasTurbine.p.msl, vomPerMWh: TECH.gasTurbine.p.vomPerMWh },
+  engines: { label: 'Gas engines', eff: TECH.gasRecip.p.eff, msl: TECH.gasRecip.p.msl, vomPerMWh: TECH.gasRecip.p.vomPerMWh },
+};
+TECH.existing = {
+  id: 'existing', name: 'Existing plant (lease)', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true,
+  ownConsent: true, offsite: true, lease: true, fixedUnits: 1, verify: 'The plant owner',
+  p: { unitMW: 100, eff: 0.56, msl: 0.45, vomPerMWh: 3, rentalPerKWMonth: 6, capexPerKW: 0, fomPerKW: 0, life: 25, planM: 0, procM: 0, buildM: 0, m2PerMW: 0, stackM: 0 },
+};
+// True when an existing plant is entered completely enough to generate options with it.
+export function existingEntered(inputs) {
+  const x = inputs && inputs.existing;
+  return !!(x && x.include && Number(x.units) >= 1 && Number(x.unitMW) > 0);
+}
+// Sets TECH.existing from the inputs (every run). Returns what is missing when the plant is ticked but incomplete.
+export function applyExistingPlant(inputs, monthOfDate) {
+  const x = (inputs && inputs.existing) || {};
+  const ty = EXISTING_TYPES[x.type] || EXISTING_TYPES.ccgt;
+  const num = (v, d) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? d : Number(v));
+  const t = TECH.existing;
+  t.name = `${x.name && String(x.name).trim() ? String(x.name).trim() : 'Existing plant'} (lease)`;
+  t.fixedUnits = Math.max(1, Math.round(num(x.units, 1)));
+  t.p.unitMW = num(x.unitMW, 100);
+  t.p.eff = num(x.eff, ty.eff);
+  t.p.msl = num(x.msl, ty.msl);
+  t.p.vomPerMWh = num(x.vomPerMWh, ty.vomPerMWh);
+  t.p.rentalPerKWMonth = num(x.leasePerKWMonth, 6);
+  t.p.linkCapex = num(x.linkCapex, 0);
+  t.p.planM = x.availableDate && monthOfDate ? Math.max(0, monthOfDate(x.availableDate)) : 0;
+  t.typeLabel = ty.label;
+  const missing = [];
+  if (x.include) {
+    if (!(Number(x.units) >= 1)) missing.push('number of units');
+    if (!(Number(x.unitMW) > 0)) missing.push('unit size');
+  }
+  return { include: !!x.include, entered: existingEntered(inputs), missing };
+}
+
 tech('backupDiesel', { name: 'Diesel standby gensets', role: 'backup', maturity: 'Commercial', fuel: 'diesel', combustion: true, verify: 'Manufacturer datasheets' }, {
   capexPerKW: [450, '€/kW', 350, 550], fomPerKW: [8, '€/kW/yr', 5, 12], unitMW: [2.75, 'MW', 2.5, 3.0], eff: [0.38, 'electrical efficiency', 0.35, 0.42],
   life: [25, 'yr', 20, 30], m2PerUnit: [100, 'm² per unit incl. access', 70, 140], stackM: [10, 'm', 8, 12],
@@ -860,6 +914,21 @@ export function buildDefaultInputs(opts = {}) {
     },
   };
   // Phasing default: 1 phase, 100 % at grid full-connection date (§5.3). null = follow the rule.
+  // Existing plant near the site, leased (work package 12, OPEN-QUESTIONS 78–82): off unless ticked; the plant's size
+  // and date have no default and must be entered.
+  inputs.existing = {
+    include: rec('existing.include', false, 'toggle', { basis: 'judgement', ref: '§5.4', note: 'Off unless the engineer enters an existing plant near the site (work package 12).' }),
+    name: rec('existing.name', 'Existing plant', '', { basis: 'judgement', ref: '§5.4' }),
+    type: rec('existing.type', 'ccgt', 'ccgt / ocgt / engines', { basis: 'judgement', ref: '§5.4', note: 'Sets the efficiency, minimum stable load and variable O&M unless entered.' }),
+    units: rec('existing.units', null, 'units', { basis: 'judgement', ref: '§5.4', note: 'No default: enter the units the owner offers. Used exactly, with no redundancy added.' }),
+    unitMW: rec('existing.unitMW', null, 'MW per unit', { basis: 'judgement', ref: '§5.4', note: 'No default: net output per unit at site conditions.' }),
+    availableDate: rec('existing.availableDate', null, 'YYYY-MM', { basis: 'judgement', ref: '§5.4', note: 'Empty = available from the analysis start (the plant exists). The month the lease and the connection to the campus can be ready.' }),
+    eff: rec('existing.eff', null, 'electrical efficiency', { basis: 'judgement', ref: '§5.4', note: 'Empty = by type.' }),
+    msl: rec('existing.msl', null, 'fraction of one unit', { basis: 'judgement', ref: '§5.4', note: 'Empty = by type.' }),
+    vomPerMWh: rec('existing.vomPerMWh', null, '€/MWh', { basis: 'judgement', ref: '§5.4', note: 'Empty = by type.' }),
+    leasePerKWMonth: rec('existing.leasePerKWMonth', 6, '€/kW/month', { low: 3, high: 9, basis: 'judgement', ref: '§5.4', note: 'Capacity payment for the lease, paid from a month before the plant is first needed (settings.rentalLeadMonths). Assumed in the Pego study (2026-10-24); replace with the owner\'s offer.' }),
+    linkCapex: rec('existing.linkCapex', 0, '€', { basis: 'judgement', ref: '§5.4', note: 'One-off: the connection from the plant to the campus (lines, bays). Booked when the lease starts.' }),
+  };
   inputs.load.phases = rec('load.phases', null, 'list of {itMW, date}', { basis: 'judgement', derived: true, ref: '§5.3', note: 'null = 1 phase, 100 % of IT at the grid full-connection date' });
   // Choice states: null = default state (§8 table), which may follow other inputs (C6, C7, C8, C11, C15).
   inputs.choices = {};
@@ -882,6 +951,8 @@ export function normalizeInputs(inputs) {
   const b = boundaryAreaHa(out.site.boundary);
   if (b != null) { out.site.areaHa = b; out.site.areaFromBoundary = true; }
   out.requirements.landTakeCeilingHa = out.requirements.landTakeCeilingHa ?? null;
+  // Inputs saved before work package 12 have no existing plant.
+  out.existing = { include: false, name: 'Existing plant', type: 'ccgt', units: null, unitMW: null, availableDate: null, eff: null, msl: null, vomPerMWh: null, leasePerKWMonth: 6, linkCapex: 0, ...(out.existing || {}) };
   out.choices = out.choices || {};
   for (const c of CHOICES) {
     if (!out.choices[c.id]) out.choices[c.id] = defaultChoiceState(c.id, out);
