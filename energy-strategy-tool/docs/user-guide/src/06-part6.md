@@ -45,18 +45,20 @@
 
 ## Findings while writing this guide
 
-These were found while checking the guide against the code and the T1 run. None has been fixed; each needs a decision before any change.
+These were found while checking the guide against the code and the T1 run. Items 1–3, 6–9 have since been fixed or resolved, as marked; the full list, with items found later, is `docs/KNOWN-ISSUES.md`.
 
-1. **Repeated year not fully steady.** When the last change falls mid-year, that year is repeated to the end of the evaluation period although it is still ramping. For T1 this undercounts facility energy in 2033–2046 by about 1.8 % (chapter 37).
-2. **Network charge on PPA energy is not escalated.** The electricity escalation multiplies grid energy cost but not the adder on PPA energy. No effect at the default escalation of 0 %.
-3. **Export income ignores the price multiplier.** Export is valued at 90 % of the unscaled wholesale price.
+1. **Repeated year not fully steady.** When the last change falls mid-year, that year is repeated to the end of the evaluation period although it is still ramping. For T1 this undercounts facility energy in 2033–2046 by about 1.8 % (chapter 37). Fixed 24 October 2026: the first year that starts after the last change repeats.
+2. **Network charge on PPA energy is not escalated.** The electricity escalation multiplies grid energy cost but not the adder on PPA energy. No effect at the default escalation of 0 %. Fixed 24 October 2026.
+3. **Export income ignores the price multiplier.** Export is valued at 90 % of the unscaled wholesale price. Fixed 24 October 2026.
 4. **Archetypes take the first open value of every unspecified choice.** With the defaults that makes every archetype air-cooled with roof heat rejection, which in T1 puts most of them out of reach of full load (chapter 47).
 5. **Identical options.** Options that differ only in choices that change no number appear as separate rows with identical results (T1 ranks 10 and 11).
 6. **Two density rules disagree** (resolved 23 October 2026: the IT estimate now uses the building massing rule). The agreed IT estimate from area (5.5 kW/m² of floor) and the building massing (0.7–1.8 kW/m² of floor) differ by a factor of three to eight (chapter 16).
 7. **Grid connection cost on islanded options.** Every option pays for the full offered connection, including islanded options that never use it. Resolved on 23 October 2026: the charge is one lump sum, default 0, and islanded options do not pay it.
-8. **"Opex year 1"** in the option detail is the first year of the analysis (2027 for T1), which has no load, so it shows €0.
-9. **"First power"** can be month 0, before any phase exists, because it measures when the supply could energise phase 1.
-10. **The status file's run time** (9–10 s) is out of date; the owner's figure is 15–20 s.
+8. **"Opex year 1"** in the option detail is the first year of the analysis (2027 for T1), which has no load, so it shows €0. Fixed 24 October 2026: "Opex, first year with load".
+9. **"First power"** can be month 0, before any phase exists, because it measures when the supply could energise phase 1. Fixed 24 October 2026: the later of phase 1's date and the month the supply is ready.
+10. **The status file's run time** (9–10 s) is out of date; the owner's figure is 15–20 s. Corrected 22 October 2026.
+
+Found later and fixed on 24 October 2026 (work package 11): the gas-dependency flag raised when liquid-fuel gensets alone cover the critical load (chapter 41); a plant held at its minimum stable load did not back off the grid import (chapter 37); time-to-power rewarded plant bought long before it was needed; rented plant paid from the month it could arrive; plant kept as the backup bought all at once (chapter 35); long programmes dispatched only to year 8 with no flag (chapter 37); an entered grid adder ignored (chapter 39); fuel for running HVO-diesel plant left out of the Seveso test (chapter 35). Still open: archetype values (4), identical options (5), and existing plant under lease, whose bridging is sized N+1 per block (KNOWN-ISSUES 12).
 
 # 55. Verification and quality checks {#ch55}
 
@@ -146,6 +148,7 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Plain-English summary of the result | Not built; in the brief, not discussed in the walkthrough | — |
 | Parallel coordinates, choice-impact chart | Not built; in the brief, not discussed in the walkthrough | — |
 | Monte Carlo ranges, robust pick, breakevens, scenarios | Not built; in the brief, not discussed in the walkthrough | 13 |
+| Work package 11: engine fixes (time-to-power in months late, first power from phase 1, rented plant hired when needed, plant kept as the backup bought building by building, dispatch to the first steady year with a run flag, minimum stable load backs off the grid, gas flag, Seveso running store, grid adder field, opex in the first year with load) | Built (24 Oct 2026) | 17, 19, 22, 23, 35, 37, 38, 39, 41 |
 
 ## Open points
 

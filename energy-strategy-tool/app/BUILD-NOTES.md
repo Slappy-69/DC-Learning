@@ -1803,3 +1803,31 @@ Left for the owner (not changed): H1 L1, the Seveso liquid-fuel test reads only 
 Current T1 (2,000 options, full year): 1,537 adequate; leader OUK8E73 "Grid + HVO-diesel prime bridge → retain as backup · retained-plant backup · immersion · BESS 2 h · PPA hybrid 100 %", score 93.78, LCOE €158.3/MWh, 122 g/kWh location-based; cards #1, #2, #3, #6, #7; 37 options marked "same results as"; 24 sourced records. The leader changed from O1W8C9Z9 because turbines and HVO-diesel prime joined the default bridging set and the turbine capex rose.
 
 Tests: 33 (49 days, top 10 all verified, LCOE ≤ 0.77 %, carbon ≤ 3.40 %), 34 (coast, border, Russia), 30 (PDF counts, no Site content, period table), 31 (0 MW contract), 65/65 Node tests passed.
+
+## Work package 11: engine fixes from the Haiku checks and the Pego study (2026-10-24)
+
+Branch `feature/engine-fixes` (from `feature/verification-fixes`). The owner asked to continue the app development; every decision follows Claude's recommendation, accepted in advance by the owner (OPEN-QUESTIONS 68–76, build plan package 11). Known issues 1–3, 8–11 and 14–18 are fixed; 4, 5 and 12 stay open.
+
+| Known issue | Fix | Where |
+|---|---|---|
+| 18 Entered grid price adder ignored | `grid.priceAdder`, when entered, replaces the country value; field "Network charges and levies on grid energy" in section 4 (country value as placeholder) | `context.js`, `InputsPanel.jsx` |
+| 17 Dispatch stops before full load | `settings.maxDispatchYears` 8 → 15 (field "Most dispatch years" in the run settings); run flag `dispatch-truncated` (minor) when a configuration needs more years than the cap; the timeline grows to cover the last phase, its ramp and the full grid date plus a year | `defaults.js`, `dispatch.js` (`dispatchYearsNeeded`), `run.js`, `context.js` |
+| 1 Repeated year still ramping | The first year that starts after the last change is the one repeated (`ceil`, was `floor`) | `dispatch.js`, `dispatchYears` |
+| 2 PPA network charge not escalated | Escalated with grid energy | `evaluate.js`, ledger |
+| 3 Export income ignores the price multiplier | Export price × multiplier | `dispatch.js` |
+| 11 Plant below its minimum stable load | Runs at its minimum and serves up to the whole remaining demand; the grid import backs off; only output above demand is surplus. On the old code, 24 sampled T1 options had 1,176 hours importing while curtailing; now none | `dispatch.js`, firm plant loop |
+| 15 Rented plant paid from availability | Hired `settings.rentalLeadMonths` (1, judgement, 0–6) before the first month of shortfall (islanded: of load). `bridge.earliestMonth` keeps the programme month; dispatch, time-to-power and rental start at the hire month; a sizing sentence says so | `sizing.js`, `defaults.js` |
+| 16 Retained plant bought at once | Bought in step with the buildings: the bridging units at the bridging date, then each building's critical-load units with redundancy at its date (capex lines "(bridging)" and "(retained as backup)"); fixed O&M follows the units owned; retained rented plant is hired in the same steps. Dispatch still counts the whole retained fleet from its first date (it serves only as backup or above-grid prime) | `sizing.js` (`retainedPhasing`), `evaluate.js` |
+| 10 Gas flag with liquid-fuel backup | `res-gas` only when plant that does not burn gas covers less than the critical load (message gives both MW); resilience status "Meets with flags" follows the same rule; `resilience()` returns `nonGasFirmMW` and `gasDependent` | `evaluate.js`, `resilience` |
+| H1 L-1 Seveso reads only the backup store | Liquid fuel for running HVO-diesel prime or bridging plant (autonomy hours at full output) counts; retained plant that is the backup is already in the backup store | `permitting.js` (`runFuelM3`) |
+| 14 Time-to-power rewards early plant | Axis = months late (first power against phase 1 + full load against the last phase) + half the power gap in months of design load; labels "months late". Card pros need no more than 10 % of the run as good or better | `evaluate.js`, `pareto.js`, `cards.js`, `ParetoTable.jsx`, `OptionDetail.jsx` |
+| 9 First power at month 0 | First power = the later of the phase 1 date and the month the supply is ready (`supplyReadyM` keeps the latter) | `evaluate.js`, `timeToPower` |
+| 8 Opex year 1 = €0 | "Opex, first year with load" (`opexYear1Index`) | `evaluate.js`, `OptionDetail.jsx` |
+
+OPEN-QUESTIONS 74 (the flexibility recovery period also follows events that end on their own) is kept as built.
+
+New defaults: `settings.rentalLeadMonths` 1 month (judgement, 0–6). Changed: `settings.maxDispatchYears` 8 → 15 (run setting, 1–30).
+
+T1 after the fixes (2,000 options, full year): 1,537 adequate; leader O7PMBVU "Grid + HVO-diesel prime bridge → retain as prime · HVO N+1 · DLC · PPA hybrid 100 %", score 93.89, LCOE €153.5/MWh, capex €100 m, 122 g/kWh location-based; first power month 18 (phase 1), opex in the first year with load (2028) €5.8 m. 1,537 options are on time with no gap (time-to-power 0), so the axis now separates only options that are late. `res-gas` on 501 options (1,246 options with gas plant are not flagged because plant that does not burn gas covers the critical load). The leader changed from OUK8E73 because the retained fleet is no longer bought at once and rented plant is no longer paid from availability.
+
+Tests: new module `tests/engine-fixes-tests.mjs`, tests 35–37 (adder, timeline, repeated year, truncation flag; minimum stable load, export, PPA escalation, rented hire month, retained phasing and rental, gas flag, Seveso store; time-to-power metric, first power, opex year, pros). Tests 18 and 21 now compare rented plant's `earliestMonth` with the programme rule. Tests 1 and 2 record 30 years. 68/68 Node tests passed.

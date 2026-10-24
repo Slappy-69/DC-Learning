@@ -165,7 +165,12 @@ export function buildContext(inputs, opts = {}) {
   const cdata = COUNTRIES[country];
   const seed = inputs.project.seed;
   const prof = getProfiles(country, seed, inputs.project.lat);
-  const nMonthsTimeline = inputs.settings.timelineMonths;
+  // Timeline: the run setting (120 months), extended so it always covers full load (the last phase plus its ramp) and the
+  // full grid date with a year to spare (known issue 17, work package 11, 2026-10-24).
+  const phaseMs = (inputs.load.phases || []).map((p) => monthOf(inputs, p.date)).filter(Number.isFinite);
+  const gridFullM0 = inputs.grid.fullDate ? monthOf(inputs, inputs.grid.fullDate) : 0;
+  const needM = Math.max(phaseMs.length ? Math.max(...phaseMs) + (inputs.load.rampMonths || 0) : 0, Number.isFinite(gridFullM0) ? gridFullM0 : 0) + 12;
+  const nMonthsTimeline = Math.max(inputs.settings.timelineMonths, Math.ceil(needM / 12) * 12);
   const dp = Array.isArray(inputs.economics.displayPeriods) ? inputs.economics.displayPeriods.map(Number).filter((n) => Number.isInteger(n) && n <= 60) : [];
   const maxYears = Math.max(inputs.economics.periodYears, ...dp, Math.ceil(nMonthsTimeline / 12));
   const nMonths = Math.max(nMonthsTimeline, maxYears * 12) + 12;
@@ -190,7 +195,10 @@ export function buildContext(inputs, opts = {}) {
   const gasCommodity = Number.isFinite(inputs.utilities.gasPrice) ? inputs.utilities.gasPrice : cdata.gas;
   const gasPrice = gasCommodity + FUEL.gasTransportAdder;
   const priceMult = inputs.grid.priceMultiplier;
-  const priceAdder = cdata.adder;
+  // Grid non-commodity adder (network charges and levies, €/MWh): a number entered for grid.priceAdder replaces the
+  // country default (the record's value is "by country"). Before work package 11 the entered value was ignored (found in
+  // the Pego study, revision 3, 2026-10-24).
+  const priceAdder = Number.isFinite(inputs.grid.priceAdder) ? inputs.grid.priceAdder : cdata.adder;
   const carbonMult = inputs.grid.carbonMultiplier;
   const carbonPrice = Number.isFinite(inputs.economics.carbonPrice) ? inputs.economics.carbonPrice : cdata.carbonPrice;
 

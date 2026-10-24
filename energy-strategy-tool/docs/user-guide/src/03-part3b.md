@@ -8,7 +8,7 @@
 - the weighted score and the four axis scores;
 - LCOE, location-based carbon, capex, resilience status and power adequacy;
 - the main (major) flags;
-- up to **three pros and three cons**, judged **against every option in the run** (the card says so): a pro is a figure in the best 10 % of the run, a con one in the worse half, among LCOE, capex, carbon, hourly carbon-free energy, time-to-power and deliverability;
+- up to **three pros and three cons**, judged **against every option in the run** (the card says so): a pro is a figure in the best 10 % of the run that sets the option apart (no more than 10 % of the run as good or better, so a value most options share, such as no delay, is not a pro; 24 October 2026), a con one in the worse half, among LCOE, capex, carbon, hourly carbon-free energy, time-to-power and deliverability;
 - a **Compare** tick box (chapter 25).
 
 The list of assumed defaults on each card arrives with work package 2. Options whose every figure equals a better-ranked option's are marked **"Same results as #k"** in the options table and never take a card (KNOWN-ISSUES item 5).
@@ -80,7 +80,7 @@ Selecting an option's name opens its detail. It is the most useful single view i
 
 - LCOE and NPV of net cost (chapter 39).
 - Capex including contingency, with the Class 5 range (−30 % to +50 %).
-- Opex in the first year of the analysis and in the steady-state year. For T1 the first is €0, because 2027 has no load yet.
+- Opex in the first year with load and in the steady-state year (since 24 October 2026; before, the first year of the analysis, which showed €0 for T1 because 2027 has no load).
 - Capex share of the present-value cost: how much of the NPV is capital (10 % for the T1 leader: its cost is mostly energy).
 - **PPA hedge (not counted)**: the settlement of contracted PPA volume that was not delivered (chapter 39), reported but outside the ledger.
 
@@ -90,7 +90,7 @@ The note under the table restates the capex scope: energy, backup, grid connecti
 
 **Steady-state year energy.** Where the energy comes from in the last simulated year: facility demand; on-site renewables used; PPA delivered; firm on-site generation; grid import; battery charge, discharge and losses; curtailment; and unmet load over all simulated years.
 
-**Time-to-power.** First power, full load, the power gap in MW-months, and the axis metric (chapter 38). A link opens the option on the Dispatch tab.
+**Time-to-power.** First power, full load, the power gap in MW-months, and the axis metric in months late (chapter 38). A link opens the option on the Dispatch tab.
 
 **Permitting outlook** (built 23 October 2026). For plant held by the IED or Seveso: the outlook (likely, uncertain, unlikely) with its reason, and the month it is ready against the month it is first needed, with the float or the months late (chapter 8).
 

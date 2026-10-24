@@ -52,13 +52,21 @@ export function timeToPower(ctx, v, sz) {
   }
   const reachedFull = fullLoadM !== null;
   const monthsToFull = reachedFull ? fullLoadM : n;
-  const metric = monthsToFull + (0.5 * gapMWm) / Math.max(1e-9, sz.designMW);
   const firstTarget = ctx.firstPhaseM;
   const fullTarget = ctx.lastPhaseM;
   const delayFirst = firstPowerM === null ? n - firstTarget : Math.max(0, firstPowerM - firstTarget);
+  // First power is when phase 1 is energised: the later of its planned date and the month the supply could carry it
+  // (known issue 9, work package 11, 2026-10-24); supplyReadyM keeps the month the supply was ready.
+  const supplyReadyM = firstPowerM;
+  if (firstPowerM !== null) firstPowerM = Math.max(firstPowerM, firstTarget);
   const delayFull = Math.max(0, monthsToFull - fullTarget);
+  // Axis metric (§11): months late against the phasing plan, first power and full load, plus half the power gap in
+  // months of design load (OPEN-QUESTIONS 68, work package 11, 2026-10-24; known issue 14). Supply that is ready before a
+  // building needs it earns nothing: before, the metric counted the months until the supply could carry the whole
+  // campus, so plant bought years early ranked better on a phased campus.
+  const metric = delayFirst + delayFull + (0.5 * gapMWm) / Math.max(1e-9, sz.designMW);
   void cp;
-  return { firstPowerM, fullLoadM, reachedFull, monthsToFull, gapMWm, gapMonths, metric, delayFirst, delayFull, supplyByMonth: supply };
+  return { firstPowerM, supplyReadyM, fullLoadM, reachedFull, monthsToFull, gapMWm, gapMonths, metric, delayFirst, delayFull, supplyByMonth: supply };
 }
 
 // ---------------------------------------------------------------------------
@@ -156,9 +164,26 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   // Bridging plant
   const T = sz.T;
   const bridgeRemoveYear = v.C1 === 'bridge' && v.C3 === 'remove' ? yearOfMonth(T) : null;
+  // Retained bridging plant bought (or, when rented, hired) in step with the buildings (known issue 16): the bridging
+  // units at the bridging date, then the units each later building's critical load needs at that building's date.
+  const rp = sz.bridge && sz.bridge.retainedPhasing;
+  const bridgeSteps = []; // { month, units, label }
+  if (sz.bridge) {
+    const mA = sz.bridge.availMonth;
+    if (rp) {
+      if (rp.bridgingUnits > 0) bridgeSteps.push({ month: mA, units: rp.bridgingUnits, label: 'bridging' });
+      let owned = rp.bridgingUnits;
+      rp.cumUnitsByPhase.forEach((cu, k) => { const add = Math.max(0, cu - owned); if (add > 0) { bridgeSteps.push({ month: Math.max(mA, rp.phaseMonths[k]), units: add, label: 'retained as backup' }); owned += add; } });
+      if (owned < sz.bridge.units) bridgeSteps.push({ month: mA, units: sz.bridge.units - owned, label: 'retained as backup' });
+    } else bridgeSteps.push({ month: mA, units: sz.bridge.units, label: 'bridging' });
+  }
+  const bridgeBuys = bridgeSteps.map((b) => ({ ...b, year: yearOfMonth(b.month) }));
+  const bridgeOwnedMW = (y) => bridgeBuys.reduce((a, b) => a + (b.year <= y ? b.units : 0), 0) * (sz.bridge ? sz.bridge.unitMW : 0);
+  const bridgeMWAtMonth = (m) => bridgeSteps.reduce((a, b) => a + (b.month <= m ? b.units : 0), 0) * (sz.bridge ? sz.bridge.unitMW : 0);
   if (sz.bridge && sz.bridge.tech !== 'rented') {
     const t = TECH[sz.bridge.tech];
-    addCapex(`${t.name} (bridging)`, yearOfMonth(sz.bridge.availMonth), sz.bridge.mw * 1000 * t.p.capexPerKW, t.p.life, { removeYear: bridgeRemoveYear });
+    if (rp) bridgeBuys.forEach((b) => addCapex(`${t.name} (${b.label})`, b.year, b.units * sz.bridge.unitMW * 1000 * t.p.capexPerKW, t.p.life, { removeYear: bridgeRemoveYear }));
+    else addCapex(`${t.name} (bridging)`, yearOfMonth(sz.bridge.availMonth), sz.bridge.mw * 1000 * t.p.capexPerKW, t.p.life, { removeYear: bridgeRemoveYear });
     if (t.p.stackLife && bridgeRemoveYear === null) assets.push({ item: `${t.name} stack replacement`, year: yearOfMonth(sz.bridge.availMonth), amount: sz.bridge.mw * 1000 * t.p.capexPerKW * t.p.stackFraction, life: t.p.stackLife, stackOnly: true });
   }
   // Gas connection pipe from the gas main (§5.2), for options that burn gas on site and only when a gas main
@@ -225,20 +250,20 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     if (y >= bessYear) L.fom += bessCapex(sz.storage.mw, sz.storage.mwh) * bp.fomPct;
     if (sz.reserve && sz.reserve.mwh > 0) L.fom += itShareYear(y) * sz.reserve.mwh * 1000 * ur.capexPerKWh * ur.fomPct;
     if (sz.prime && y >= yearOfMonth(sz.prime.availMonth)) L.fom += sz.prime.mw * 1000 * TECH[sz.prime.tech].p.fomPerKW;
-    if (sz.bridge && sz.bridge.tech !== 'rented' && y >= yearOfMonth(sz.bridge.availMonth) && (bridgeRemoveYear === null || y < bridgeRemoveYear)) L.fom += sz.bridge.mw * 1000 * TECH[sz.bridge.tech].p.fomPerKW;
+    if (sz.bridge && sz.bridge.tech !== 'rented' && y >= yearOfMonth(sz.bridge.availMonth) && (bridgeRemoveYear === null || y < bridgeRemoveYear)) L.fom += bridgeOwnedMW(y) * 1000 * TECH[sz.bridge.tech].p.fomPerKW;
     if (sz.backup.tech) {
       L.fom += itShareYear(y) * sz.backup.mw * 1000 * TECH[sz.backup.tech].p.fomPerKW;
       if (sz.backup.bessMW > 0) L.fom += itShareYear(y) * bessCapex(sz.backup.bessMW, sz.backup.bessMWh) * bp.fomPct;
     }
     // Rented bridging: rental for each month it is on site (from availability while active or retained)
     if (sz.bridge && sz.bridge.tech === 'rented') {
-      let months = 0;
+      let rentedMWMonths = 0;
       for (let m = y * 12; m < y * 12 + 12; m++) {
         if (m < sz.bridge.availMonth) continue;
         const onSite = v.C1 === 'islanded' || m < T || v.C3 !== 'remove';
-        if (onSite) months++;
+        if (onSite) rentedMWMonths += rp ? bridgeMWAtMonth(m) : sz.bridge.mw; // hired in step with the buildings when retained (known issue 16)
       }
-      L.rental += months * sz.bridge.mw * 1000 * TECH.rented.p.rentalPerKWMonth;
+      L.rental += rentedMWMonths * 1000 * TECH.rented.p.rentalPerKWMonth;
     }
   }
 
@@ -283,7 +308,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
       L.testRun += sh * testRun.fuelMWhTh * fuelPrice(ctx, testRun.fuel);
       scope1 += sh * testRun.fuelMWhTh * fuelEF(testRun.fuel);
     }
-    L.grid += d.gridCost * elecEsc + d.ppaNetworkCost; // network/non-commodity adder also applies to PPA energy over the grid
+    L.grid += (d.gridCost + d.ppaNetworkCost) * elecEsc; // network/non-commodity adder also applies to PPA energy over the grid, escalated the same way (known issue 2, work package 11)
     if (sz.ppa) {
       L.ppa += d.ppaDeliveredMWh * ppaPrice;
       const hv = d.ppaUndeliveredSpotValue * elecEsc - d.ppaUndeliveredMWh * ppaPrice;
@@ -327,7 +352,9 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   pvCost = pvCapex + pvOpex;
   const lcoe = pvEnergy > 0 ? pvCost / pvEnergy : Infinity;
   const ssY = Math.min(N - 1, nExp - 1);
-  const year1 = ledger[0];
+  // "Opex, first year with load" (known issue 8, work package 11): the first ledger year with facility energy.
+  const y1 = Math.max(0, ledger.findIndex((r) => r.netDemandMWh > 0));
+  const year1 = ledger[y1];
   const ss = ledger[Math.max(0, ssY)];
   const capexInitial = capexTotal + contTotal;
   return {
@@ -336,7 +363,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     capex: capexInitial, capexExContingency: capexTotal, contingency: contTotal,
     capexLow: capexInitial * (1 + E.capexLow), capexHigh: capexInitial * (1 + E.capexHigh),
     capexPerMWIT: capexInitial / Math.max(1e-9, sz.itMW),
-    opexYear1: year1.opex, opexSteady: ss.opex,
+    opexYear1: year1.opex, opexYear1Index: y1, opexSteady: ss.opex,
     capexShare: pvCost !== 0 ? pvCapex / pvCost : 0,
     reconciliation: { lcoeTimesEnergy: lcoe * pvEnergy, npv: pvCost, pvEnergy },
     ppaHedge: hedge, // outside the ledger (see above); null without a PPA
@@ -382,6 +409,7 @@ export function resilience(ctx, v, sz) {
   let firmMW = 0;
   const parts = [];
   let gasDependent = false;
+  let nonGasFirm = 0; // firm capacity that does not burn gas (known issue 10)
   const bs = ctx.inputs.requirements.blockSize;
   // Backup gensets at topology after removing redundant units
   if (sz.backup.tech) {
@@ -389,7 +417,7 @@ export function resilience(ctx, v, sz) {
     const nCap = sz.backup.nUnits * t.p.unitMW;
     firmMW += nCap;
     parts.push(`${sz.backup.nUnits} × ${t.p.unitMW} MW ${choiceLabel('C5', v.C5)} = ${nCap.toFixed(1)} MW (redundant units removed)`);
-    if (t.fuel === 'gas') gasDependent = true;
+    if (t.fuel === 'gas') gasDependent = true; else nonGasFirm += nCap;
   }
   // Retained bridging plant (on site after grid arrives)
   const bridgeRetained = sz.bridge && (v.C1 === 'islanded' || (v.C1 === 'bridge' && v.C3 !== 'remove'));
@@ -397,7 +425,7 @@ export function resilience(ctx, v, sz) {
     const cap = sz.bridge.nUnits * sz.bridge.unitMW;
     firmMW += cap;
     parts.push(`retained bridging ${TECH[sz.bridge.tech].name} ${cap.toFixed(1)} MW (redundant units removed)`);
-    if (TECH[sz.bridge.tech].fuel === 'gas') gasDependent = true;
+    if (TECH[sz.bridge.tech].fuel === 'gas') gasDependent = true; else nonGasFirm += cap;
   }
   // Firm prime
   if (sz.prime && sz.prime.fuelMonth !== Infinity) {
@@ -405,7 +433,7 @@ export function resilience(ctx, v, sz) {
     const cap = n * sz.prime.unitMW;
     firmMW += cap;
     parts.push(`firm prime ${TECH[sz.prime.tech].name} ${cap.toFixed(1)} MW (redundant units removed)`);
-    if (TECH[sz.prime.tech].fuel === 'gas') gasDependent = true;
+    if (TECH[sz.prime.tech].fuel === 'gas') gasDependent = true; else nonGasFirm += cap;
   }
   // BESS energy for its duration (counted only against ride-through, see autonomy)
   const bessMW = sz.storage.mw + sz.backup.bessMW;
@@ -451,7 +479,10 @@ export function resilience(ctx, v, sz) {
     if (!ok) flags.push(flag('res-island', 'major', 'Resilience', 'Requirement not met: islanding'));
   }
 
-  if (gasDependent) flags.push(flag('res-gas', 'minor', 'Resilience', 'Backup depends on gas network availability during a grid outage'));
+  // Raised only when the critical load cannot be met without gas-fired plant (known issue 10, work package 11,
+  // 2026-10-24); before, any gas plant counted in the backed load raised it, even when liquid-fuel gensets alone covered it.
+  const gasFlag = gasDependent && nonGasFirm + 1e-9 < crit;
+  if (gasFlag) flags.push(flag('res-gas', 'minor', 'Resilience', `Backup depends on gas network availability during a grid outage: plant that does not burn gas covers ${nonGasFirm.toFixed(1)} of ${crit.toFixed(1)} MW critical load`));
   if (v.C5 === 'bessUps') flags.push(flag('res-bessups', 'minor', 'Resilience', 'BESS-augmented UPS is an emerging approach; redundancy covered by BESS for its duration only'));
   if (v.C5 === 'none') flags.push(flag('res-none', 'major', 'Resilience', 'No backup power technology selected'));
   if (v.C5 === 'dieselPrime') void 0;
@@ -461,9 +492,9 @@ export function resilience(ctx, v, sz) {
   if (v.C5 === 'none') items.push({ item: 'Backup technology', ok: false, text: 'none selected (C5 = None); on-site plant counted above is not a designated backup' });
 
   const fail = items.some((i) => !i.ok);
-  const status = fail ? 'Does not meet' : (gasDependent || v.C5 === 'bessUps') ? 'Meets with flags' : 'Meets';
+  const status = fail ? 'Does not meet' : (gasFlag || v.C5 === 'bessUps') ? 'Meets with flags' : 'Meets';
   const failing = items.filter((i) => !i.ok).map((i) => i.item);
-  return { status, items, flags, firmMW, autonomyH, failing };
+  return { status, items, flags, firmMW, nonGasFirmMW: nonGasFirm, gasDependent, autonomyH, failing };
 }
 
 // ---------------------------------------------------------------------------

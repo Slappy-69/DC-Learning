@@ -140,7 +140,8 @@ Site coverage 35 % (the walkthrough's figure), the storeys and the gross-up are 
 | Grid import at full connection | Not known: IT load × 1.4 (T1: 120 MW) | Import capacity from the full-connection date |
 | Full-connection date | Not known: start + 48 months (T1: 2029-07) | When the full capacity is available |
 | Grid export capacity | 0 MW | Used only by C1 "Grid + export" |
-| Grid price multiplier | × 1 | Scales the country's hourly wholesale prices |
+| Grid price multiplier | × 1 | Scales the country's hourly wholesale prices (import and, since 24 October 2026, export) |
+| Network charges and levies on grid energy | country default | €/MWh added to every MWh taken from the grid and to PPA energy carried over it; leave blank for the country value (built 24 October 2026; before, an entered value was ignored) |
 | Grid carbon multiplier | × 1 | Scales the country's hourly grid carbon |
 | Gas available | Unknown | Yes, No or Unknown |
 | Gas available from | 18 months after start | Gas supply date (unlimited from then) |
@@ -205,6 +206,8 @@ Since 23 October 2026 the economic inputs have their own section, **5 · Economi
 | Carbon axis metric | Location-based | Or market-based, or 1 − hourly CFE |
 | Rank requirement-compliant options first | off | Ranks failing options after the rest; scores unchanged |
 | Include site-fit penalty in deliverability | off | −10 for "Fits with flags", −25 for "Does not fit" |
+| Most dispatch years | 15 years | Upper limit on the years dispatched hour by hour before the last one repeats (chapter 37); a run flag says when an option needs more (built 24 October 2026; was 8 with no flag) |
+| Rented plant hired before it is needed | 1 month | Rented bridging plant arrives and is paid for this many months before the first month of shortfall (chapter 35; built 24 October 2026) |
 | Generation cap | 2,000 options | Maximum options screened |
 | Sample above cap | on | Samples down to the cap; off screens all |
 | Wind default site threshold | 20 ha | Wind not generated on smaller sites |

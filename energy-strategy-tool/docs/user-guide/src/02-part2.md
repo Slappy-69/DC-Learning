@@ -369,7 +369,7 @@ The band sets the connection and substation cost per MW and the substation footp
 
 ## Prices
 
-The hourly grid price is the wholesale price for that hour (from the country profile, times an optional multiplier) **plus a non-commodity adder**: the network charges, levies and other costs paid on every MWh taken from the grid. The adder is a single number per country (for example €55/MWh for the United Kingdom and Germany). PPA energy, which also travels over the grid, pays the adder too.
+The hourly grid price is the wholesale price for that hour (from the country profile, times an optional multiplier) **plus a non-commodity adder**: the network charges, levies and other costs paid on every MWh taken from the grid. The adder is a single number per country (for example €55/MWh for the United Kingdom and Germany), which you can replace with your own figure (field "Network charges and levies on grid energy", built 24 October 2026). PPA energy, which also travels over the grid, pays the adder too.
 
 ## Carbon
 

@@ -37,9 +37,17 @@ export const CARD_METRICS = [
   { id: 'capex', label: 'capex', get: (o) => o.eco.capex, fmt: (x) => money(x, 3) },
   { id: 'carbon', label: 'carbon (location-based)', get: (o) => o.carbon.locationG, fmt: (x) => `${Math.round(x).toLocaleString('en-GB')} g/kWh` },
   { id: 'cfe', label: 'hourly carbon-free energy', higher: true, get: (o) => o.carbon.cfePct, fmt: (x) => `${(x * 100).toFixed(0)} %` },
-  { id: 'ttp', label: 'time-to-power', get: (o) => o.ttp.metric, fmt: (x) => `${Number(x.toPrecision(3))} months` },
+  { id: 'ttp', label: 'time-to-power', get: (o) => o.ttp.metric, fmt: (x) => `${Number(x.toPrecision(3))} months late` },
   { id: 'deliverability', label: 'deliverability', higher: true, get: (o) => o.deliv.score, fmt: (x) => `${Math.round(x)} points` },
 ];
+
+// Share of the run that is as good as x or better (ties included).
+function asGoodShare(sorted, x, higher) {
+  let lo = 0, hi = sorted.length;
+  if (!higher) { while (lo < hi) { const mid = (lo + hi) >> 1; if (sorted[mid] <= x + 1e-12) lo = mid + 1; else hi = mid; } return lo / sorted.length; }
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (sorted[mid] < x - 1e-12) lo = mid + 1; else hi = mid; }
+  return (sorted.length - lo) / sorted.length;
+}
 
 // Share of the run that is strictly better than x on a metric (0 = best in the run).
 function betterShare(sorted, x, higher) {
@@ -62,7 +70,9 @@ export function prosCons(o, options, sortedCache = new Map()) {
     if (!Number.isFinite(x) || !s.length) continue;
     const share = betterShare(s, x, m.higher);
     const pct = Math.round(share * 100);
-    if (share <= PRO_SHARE) pros.push({ id: m.id, share, text: share === 0 ? `Best ${m.label} in the run (${m.fmt(x)})` : `${m.label[0].toUpperCase() + m.label.slice(1)} in the best ${Math.max(1, pct)} % (${m.fmt(x)})` });
+    // A pro must set the option apart: the share as good or better (ties included) is within the best 10 %. Without
+    // this, a value most options share (for example no delay at all) was a pro for every one of them.
+    if (share <= PRO_SHARE && asGoodShare(s, x, m.higher) <= PRO_SHARE) pros.push({ id: m.id, share, text: share === 0 ? `Best ${m.label} in the run (${m.fmt(x)})` : `${m.label[0].toUpperCase() + m.label.slice(1)} in the best ${Math.max(1, pct)} % (${m.fmt(x)})` });
     // Rounded down and capped at 99 %, so the worst option never reads "worse than 100 %" (Haiku check H3, L1).
     else if (share >= CON_SHARE) cons.push({ id: m.id, share, text: `${m.label[0].toUpperCase() + m.label.slice(1)} worse than ${Math.min(99, Math.floor(share * 100))} % of the run (${m.fmt(x)})` });
   }

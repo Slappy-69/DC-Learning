@@ -305,7 +305,7 @@ export function buildReport(run, view = {}) {
     'Sizing and dispatch: each option is sized from the design-day load and dispatched hour by hour (8,760 hours) for each year until its supply stops changing; later years repeat the last modelled year.',
     'Economics: one yearly cash-flow ledger per option gives the LCOE, the NPV and every cost breakdown (real terms, at the WACC).',
     'Carbon: location-based and market-based Scope 1 and 2, and hourly carbon-free energy (a PPA counts only against grid energy used in the same hour).',
-    'Time-to-power: first power and full load from the programme of each technology (ordered from day one, with a six-month permitting allowance for plant that needs significant environmental permitting).',
+    'Time-to-power: first power and full load from the programme of each technology (ordered from day one, with a six-month permitting allowance for plant that needs significant environmental permitting); the axis counts the months late against the phasing plan (first power against phase 1, full load against the last phase) plus half the power gap in months of design load. Rented bridging plant is hired a month before it is first needed.',
     'Ranking: power-adequate options first, then by the weighted score of the four axes, each scaled 0-100 across the run.',
     `Profiles: ${run.profileLabel || 'synthetic hourly profiles'}.`,
     `Run settings: generation cap ${I.settings.generationCap}; grid handling "${I.settings.gridHandling}"; run-hour handling "${I.settings.runHourHandling}"; evaluation period ${I.economics.periodYears} years; WACC ${pct(I.economics.wacc, 1)}.`,

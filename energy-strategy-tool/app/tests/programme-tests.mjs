@@ -46,9 +46,12 @@ export async function programmeTests(test, ctxRuns) {
           if (t.combustion && trig.ied && !t.ownConsent) assert.ok(regimes.includes('IED'));
           if (!t.combustion && !(trig.sevesoH2 && t.fuel === 'hydrogen')) assert.ok(!regimes.includes('IED'), `${label} ${o.id}: non-combustion plant held for the IED`);
           assert.equal(p.permitM, regimes.length ? req.permitAllowanceM : 0);
-          assert.equal(p.availMonth, techAvailMonth(ctx, t, p.permitM), `${label} ${o.id} ${p.role}: month`);
-          assert.ok(o.sizing.sentences.some((s) => s.startsWith(`${t.name} (${p.role === 'prime' ? (p.sizing === 'shortfall' ? 'firm top-up' : 'firm prime') : 'bridging'}) available from month ${p.availMonth}:`)), `${label} ${o.id}: programme sentence`);
-          const k = `${p.tech} ${regimes.join('+') || 'day one'} → month ${p.availMonth}`; seen[k] = (seen[k] || 0) + 1;
+          // Rented plant is hired later, a month before it is first needed (work package 11): earliestMonth keeps the rule's month.
+          const m0 = p.earliestMonth ?? p.availMonth;
+          assert.equal(m0, techAvailMonth(ctx, t, p.permitM), `${label} ${o.id} ${p.role}: month`);
+          if (p.earliestMonth != null) assert.ok(p.tech === 'rented' && p.availMonth > p.earliestMonth);
+          assert.ok(o.sizing.sentences.some((s) => s.startsWith(`${t.name} (${p.role === 'prime' ? (p.sizing === 'shortfall' ? 'firm top-up' : 'firm prime') : 'bridging'}) available from month ${m0}:`)), `${label} ${o.id}: programme sentence`);
+          const k = `${p.tech} ${regimes.join('+') || 'day one'} → month ${m0}`; seen[k] = (seen[k] || 0) + 1;
         }
       }
       out.push(`${label}: ${Object.entries(seen).map(([k, n]) => `${k} (${n})`).join('; ')}`);
@@ -56,7 +59,7 @@ export async function programmeTests(test, ctxRuns) {
 
     // (c) The allowance moves only the held plant, by exactly its length; fuel cells (not combustion) are never held.
     const run = ctxRuns.runT1;
-    const held = run.options.find((o) => o.sizing.bridge && o.sizing.bridge.permitM > 0);
+    const held = run.options.find((o) => o.sizing.bridge && o.sizing.bridge.permitM > 0 && o.sizing.bridge.tech !== 'rented'); // rented plant is hired when needed (work package 11)
     const fc = run.options.find((o) => o.sizing.bridge && o.sizing.bridge.tech === 'fuelCell');
     assert.ok(held && fc, 'T1 has a held bridge and a fuel-cell bridge');
     const in0 = referenceT1({ analysisStart: run.inputs.project.analysisStart });

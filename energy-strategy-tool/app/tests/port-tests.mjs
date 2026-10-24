@@ -25,7 +25,7 @@ import { getViewBundle } from './view-bundle.mjs';
 
 const relDiff = (a, b) => Math.abs(a - b) / Math.max(1, Math.abs(a), Math.abs(b));
 
-const ALL_YEARS = [0, 1, 2, 3, 4, 5, 6, 7];
+const ALL_YEARS = Array.from({ length: 30 }, (_, i) => i);
 const monthOfHour = (y, h) => y * 12 + (h < 8030 ? Math.floor(h / 730) : 11); // dispatch.js month of an hour
 
 // T1 with C2 = BESS + solar added to the default subset: the only way bridging batteries are generated.

@@ -26,7 +26,7 @@ const AXIS_LIST = [
   { id: 'location', group: 'carbon', label: 'Carbon, location-based', unit: 'gCO₂e/kWh', better: 'lower', get: (o) => o.carbon.locationG },
   { id: 'market', group: 'carbon', label: 'Carbon, market-based', unit: 'gCO₂e/kWh', better: 'lower', get: (o) => o.carbon.marketG },
   { id: 'cfe', group: 'carbon', label: 'Carbon, 1 − hourly CFE', unit: '%', better: 'lower', get: (o) => 1 - o.carbon.cfePct },
-  { id: 'ttp', group: 'time-to-power', label: 'Time-to-power', unit: 'months', better: 'lower', get: (o) => o.ttp.metric },
+  { id: 'ttp', group: 'time-to-power', label: 'Time-to-power (months late)', unit: 'months late', better: 'lower', get: (o) => o.ttp.metric },
   { id: 'deliverability', group: 'deliverability', label: 'Deliverability', unit: 'points', better: 'higher', get: (o) => o.deliv.score },
 ];
 const BY_ID = Object.freeze(Object.fromEntries(AXIS_LIST.map((a) => [a.id, Object.freeze(a)])));

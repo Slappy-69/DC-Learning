@@ -143,8 +143,16 @@ export function dispatchYears(ctx, cfg) {
   for (const p of cfg.plants) {
     for (let m = 1; m < p.mode.length; m++) if (p.mode[m] !== p.mode[m - 1]) lastChangeM = Math.max(lastChangeM, m);
   }
-  const lastYear = Math.floor(Math.max(0, lastChangeM) / 12);
+  // The first model year that starts after the last change is the steady one that repeats (known issue 1, work package 11):
+  // a change mid-year leaves that year still ramping.
+  const lastYear = Math.ceil(Math.max(0, lastChangeM) / 12);
   return Math.min(lastYear + 1, ctx.inputs.settings.maxDispatchYears, Math.floor(ctx.nMonths / 12));
+}
+// Model years an option needs dispatched before nothing changes (full load, grid steps, plant changes), whatever the
+// cap: compared with dispatchYears for the "dispatch stops early" flag (known issue 17).
+export function dispatchYearsNeeded(ctx, cfg) {
+  const settings = { ...ctx.inputs.settings, maxDispatchYears: Infinity };
+  return dispatchYears({ ...ctx, inputs: { ...ctx.inputs, settings } }, cfg);
 }
 
 function emptyYear() {
@@ -359,11 +367,17 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
         P = P1 > cap ? cap : P1;
         credit = P * kk < M[h] ? P * kk : M[h];
       } else if (P > cap) P = cap;
-      const served = P;
+      let served = P;
       let excess = 0;
       if (P < pMsl[i]) {
-        if (needed) { excess = pMsl[i] - P; P = pMsl[i]; }
-        else continue;
+        if (!needed) continue;
+        // Below its minimum stable load but needed: the plant runs at its minimum and the grid import that follows in the
+        // merit order backs off, so the plant serves up to the whole remaining demand; only output above that demand is
+        // surplus (curtailed or charging the battery). Known issue 11, work package 11 (2026-10-24); before, the output
+        // above the part the grid could not take was curtailed and the grid still imported its full capacity.
+        P = pMsl[i];
+        served = Math.min(P, Math.max(0, R - credit));
+        excess = P - served;
       }
       firm += P;
       chpCredit += credit;
@@ -418,7 +432,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
     let exp = 0;
     if (sur > 0 && exportMW > 0) {
       exp = sur < exportMW ? sur : exportMW;
-      exportRevenue += exp * pPrice[h] * exportFactor * w;
+      exportRevenue += exp * pPrice[h] * priceMult * exportFactor * w; // the price multiplier applies to export too (known issue 3, work package 11)
     }
     const curt = sur - exp;
 

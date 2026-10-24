@@ -161,12 +161,12 @@ The **annual** cooling fraction is the average over the year; the **peak** is th
 
 ## Timelines by month
 
-The context holds month-by-month arrays from the analysis start, long enough for the evaluation period and the 120-month time-to-power horizon:
+The context holds month-by-month arrays from the analysis start, long enough for the evaluation period and the time-to-power horizon. The horizon is 120 months, extended when the programme is longer so that it always reaches full load (the last phase plus its ramp) and the full grid date with a year to spare, in whole years (built 24 October 2026):
 
 - **Grid capacity**: grid import now, then each step from its date, then the full capacity from the full-connection date.
 - **Installed IT**: the sum over phases of phase IT × ramp factor, where the ramp factor is 0 before the phase, then rises from 0.5 to 1 over 12 months.
 - **Gas price** = gas commodity price (your value or the country's) + transport adder (€4/MWh).
-- **Carbon price**, **price multiplier**, **price adder** (country) and **carbon multiplier**.
+- **Carbon price**, **price multiplier**, **price adder** (your value, or the country's) and **carbon multiplier**.
 
 ## Hourly demand
 
@@ -316,6 +316,12 @@ Fuel storage is sized for the critical load the gensets back up, and genset cape
 
 Gas gensets: no storage, unlimited autonomy while the gas network stays up (flagged).
 
+For the Seveso test the store also counts the liquid fuel held for **running** HVO-diesel prime or bridging plant, by the same rule at that plant's full output (built 24 October 2026; before, only the standby store counted). Bridging plant kept as the backup is already in the standby store.
+
+::: formula
+| Seveso store (t) = (standby store m³ + running plant MW × 1,000 × autonomy hours × 0.26 L/kWh ÷ 1,000) × 0.84 t/m³
+:::
+
 ## Grid
 
 The grid connection is the offered capacity per month, the same for every option and never resized. The band (MV below 20 MW, HV up to 150 MW, EHV above) follows the full capacity.
@@ -375,6 +381,11 @@ With "BESS + solar only" bridging, the battery is S MW for 24 hours. After the f
 | kept units = ⌈SP ÷ unit size⌉ + N+1 per block;  bridging units = max(bridging units, kept units)
 | before the grid date: all units run;  from it: the kept units run as prime, the rest are backup
 :::
+
+**When bridging plant arrives and is paid for** (built 24 October 2026, OPEN-QUESTIONS 69 and 70):
+
+- **Rented plant** is hired one month (`settings.rentalLeadMonths`, judgement, 0–6) before the first month of shortfall (islanded: before the first load), not from the month it could first arrive. Dispatch, time-to-power and the rental all start then; the sizing sentence gives both months. In T1, all 350 rented options are hired later than they could arrive.
+- **Plant kept as the backup** (C5 "retained") is bought in step with the buildings: the bridging units at the bridging date, then the units each later building's critical load needs, with its redundancy, at that building's date. Fixed O&M follows the units owned; rented plant kept as the backup is hired in the same steps. Dispatch still counts the whole kept fleet from its first date, because after the grid arrives it serves only as backup or above-grid prime.
 
 In T1, for example, a rented bridge of 7 × 2 MW keeps 6 units (12 MW) for the 9.0 MW permanent shortfall of evaporative cooling and retires 1 into backup. Rule (h) generates the split only with generating plant (not "BESS + solar only") and where there is a permanent shortfall; otherwise it would repeat "Retain as backup".
 
@@ -554,7 +565,7 @@ The dearest hours are the day's 1, 2, 4 or 12 most expensive hours, matched to t
 | (SMR: fuel €9/MWh + variable O&M €3/MWh)
 :::
 
-A unit below its **minimum stable load** either does not run (if it was only economic) or runs at that load (if it was needed), and the excess output becomes surplus. **CHP-trigeneration** also displaces mechanical cooling: its recovered heat (1 MWth per MWe) drives absorption chillers (COP 0.7), which replace electric chillers with that hour's COP, up to the mechanical cooling load in that hour. That credit reduces the demand. If "Respect limit" is set, plant stops once it has run its maximum hours that year.
+A unit below its **minimum stable load** either does not run (if it was only economic) or runs at that load (if it was needed). When it runs at its minimum, it serves up to the whole remaining demand and the grid import that follows backs off; only output above the remaining demand becomes surplus (battery charging or curtailment). Built 24 October 2026 (OPEN-QUESTIONS 72); before, the plant's extra output was curtailed while the grid still imported, and where the grid was full the remainder showed as unmet load. **CHP-trigeneration** also displaces mechanical cooling: its recovered heat (1 MWth per MWe) drives absorption chillers (COP 0.7), which replace electric chillers with that hour's COP, up to the mechanical cooling load in that hour. That credit reduces the demand. If "Respect limit" is set, plant stops once it has run its maximum hours that year.
 
 **5. Grid import**: the remaining demand up to the remaining capacity ("Show unmet load"), or all of it ("Show exceedance").
 
@@ -589,10 +600,10 @@ Over 2029 the leader's energy balance is: demand 243,351 MWh = solar 7,355 + PPA
 
 ## Simulated years
 
-The engine simulates years in order, carrying the battery's charge, from year 0 to the year containing the last change: the last phase fully ramped, the full grid connection, any grid step, and the first month of solar, wind, battery and each plant mode. At most 8 years are simulated; the last one then repeats. For T1, the last change is month 66 (phase 4 fully ramped), in year 5, so years 0 to 5 (2027 to 2032) are simulated.
+The engine simulates years in order, carrying the battery's charge, from year 0 to the **first year that starts after the last change**: the last phase fully ramped, the full grid connection, any grid step, and the first month of solar, wind, battery and each plant mode. That year then repeats to the end of the evaluation period. At most 15 years are simulated (run setting "Most dispatch years", 1–30); if an option needs more, the run gets the minor flag "Dispatch covers only the first N model years …", which says how many years to set. For T1, the last change is month 66 (phase 4 fully ramped), in the middle of year 5, so years 0 to 6 (2027 to 2033) are simulated and 2033 repeats.
 
-::: {.callout .open}
-**Finding.** Because the last change (month 66) falls in the middle of year 5, that year is not fully steady: its first six months still have phase 4 ramping. Repeating it for 2033 to 2046 undercounts the facility energy of those years by about 1.8 % (777,471 MWh a year instead of 791,905). The sizing stage, which uses the first full year after the ramp, is not affected. Simulating one more year when the last change is not in month 0 of a year would fix it. The program has not been changed.
+::: {.callout .built}
+**Fixed 24 October 2026** (work package 11, OPEN-QUESTIONS 71 and 76). Before, the engine stopped at the year containing the last change, so a change in the middle of a year left that year still ramping when it repeated (for T1, facility energy in 2033–2046 was about 1.8 % low), and the limit was 8 years with no flag, which cut long programmes such as the nine-building Pego case short.
 :::
 
 # 38. Time-to-power {#ch38}
@@ -609,28 +620,36 @@ For every month of the 120-month horizon:
 
 ## The measures
 
-- **First power**: the first month in which the supply is positive and at least phase 1's initial load (phase 1 IT × ramp start × (peak PUE + ancillary); the T1 worked examples use the 50 % ramp start of 21 October 2026, now 25 %). It is when the site *could* be energised, not when phase 1 is built.
+- **First power**: when phase 1 can be energised: the later of phase 1's date and the first month in which the supply is positive and at least phase 1's initial load (phase 1 IT × ramp start × (peak PUE + ancillary); the T1 worked examples use the 50 % ramp start of 21 October 2026, now 25 %). Built 24 October 2026; before, first power was the month the supply was ready, which could be month 0, before any building existed. The month the supply was ready is kept as well.
 - **Full load**: the first month in which the supply is at least the full design load of the whole campus.
 - **Power gap**: the sum over months of (design load of the installed IT that month − supply), where positive, in MW-months; and the number of months with a gap.
 
 ## The axis metric
 
-::: formula
-| time-to-power metric = months to full load + 0.5 × power gap (MW-months) ÷ design load (MW)
-:::
-
-If full load is never reached within 120 months, the months to full load count as 120. The gap term breaks ties between options that reach full load at the same time but leave different gaps on the way.
-
-## T1 leader
-
-The grid gives 20 MW from month 0, which is more than phase 1's initial 14.1 MW, so first power is **month 0 (January 2027)**. The full 120 MW arrives in month 30 and exceeds the 113 MW design load, so full load is **month 30 (July 2029)**. Between, the installed load outgrows 20 MW in months 23 to 29: gaps of 0.02, 1.20, 2.38, 3.56, 4.74, 5.91 and 7.09 MW, **24.9 MW-months** over 7 months.
+The axis measures **months late against the phasing plan** (built 24 October 2026, OPEN-QUESTIONS 68):
 
 ::: formula
-| metric = 30 + 0.5 × 24.9 ÷ 113.07 = 30.11 months
+| delay to first power = max(0, first power − phase 1 month)
+| delay to full load = max(0, full load month − last phase month)
+| time-to-power metric = delay to first power + delay to full load + 0.5 × power gap (MW-months) ÷ design load (MW)
 :::
+
+Supply that is ready before a building needs it earns nothing, and an option that powers every building on its date with no gap scores 0. If full load is never reached within the horizon, the full-load month counts as the end of the horizon. The gap term separates options that are late by the same months but leave different gaps on the way.
+
+Before 24 October 2026 the metric was the months to full load + 0.5 × gap ÷ design load. On a phased campus that ranked plant bought years before the buildings above plant that arrives just in time (found in the Pego study, revision 3).
+
+## T1 leader (run of 21 October 2026)
+
+The grid gives 20 MW from month 0, which is more than phase 1's initial 14.1 MW, so the supply is ready from month 0 and first power is phase 1's date, **month 18 (July 2028)**. The full 120 MW arrives in month 30 and exceeds the 113 MW design load, so full load is **month 30 (July 2029)**, 24 months before the last phase (month 54). Between, the installed load outgrows 20 MW in months 23 to 29: gaps of 0.02, 1.20, 2.38, 3.56, 4.74, 5.91 and 7.09 MW, **24.9 MW-months** over 7 months.
+
+::: formula
+| metric = 0 + 0 + 0.5 × 24.9 ÷ 113.07 = 0.11 months late   (before 24 October 2026: 30.11 months)
+:::
+
+In the run after the fixes, 1,537 of T1's 2,000 options power every building on time with no gap and score 0; the axis separates only the options that are late.
 
 ## Targets
 
 The first phase's date and the last phase's date are the targets. If first power comes after the first phase, or full load after the last phase, the option gets the minor flag "Time-to-power target missed by N months".
 
-**What the metric does not say.** Full load means the supply could carry the full design load, not that the IT is installed: T1's IT reaches 100 MW only in 2032. An option whose design load exceeds the grid offer and has no firm plant never reaches full load, so its metric is about 120 and its time-to-power score falls to near zero, however well it does in the meantime. This cliff explains several T1 results (chapter 47).
+**What the metric does not say.** Full load means the supply could carry the full design load, not that the IT is installed. An option whose design load exceeds the grid offer and has no firm plant never reaches full load, so its delay to full load runs to the end of the horizon (66 months for T1) and its time-to-power score falls to near zero, however well it does in the meantime.

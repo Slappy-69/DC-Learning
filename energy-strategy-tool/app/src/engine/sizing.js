@@ -181,11 +181,25 @@ export function sizeOption(ctx, v) {
         if (!bridge) {
           bridge = { role: 'bridge', tech: t.id, mw: 0, units: 0, nUnits: 0, unitMW: t.p.unitMW, availMonth: techAvailMonth(ctx, t), fuelMonth: fuelAvailMonth(ctx, t.fuel), shortfallMW: 0, shortfallMonth: -1 };
         }
+        const bridgingUnits = bridge.units;
         if (red.total > bridge.units || nCrit > bridge.nUnits) {
+          // Bought in step with the buildings (known issue 16, work package 11, 2026-10-24): the bridging units first, then
+          // the units each later building's critical load needs, at that building's date.
+          const totIT = ctx.phases.reduce((a, p) => a + p.it, 0) || itMW;
+          let cumIT = 0;
+          const cumUnitsByPhase = [], phaseMonths = [];
+          for (const ph of ctx.phases) {
+            cumIT += ph.it;
+            const nK = Math.ceil((criticalMW * cumIT) / totIT / t.p.unitMW - 1e-9);
+            cumUnitsByPhase.push(unitsWithRedundancy(nK, topo, req.blockSize, req.catcherN).total);
+            phaseMonths.push(ph.m);
+          }
+          bridge.retainedPhasing = { bridgingUnits, cumUnitsByPhase, phaseMonths };
           sentences.push(`Retained ${t.name} as backup: ${r1(criticalMW)} MW critical load ÷ ${t.p.unitMW} MW = ${nCrit} units; ${topo} on blocks of ${req.blockSize} adds ${red.extra}; total ${red.total} units (${r1(red.total * t.p.unitMW)} MW), larger than the bridging size, so the retained plant is sized to it.`);
           bridge.units = Math.max(bridge.units, red.total);
           bridge.nUnits = Math.max(bridge.nUnits, nCrit);
           bridge.mw = bridge.units * t.p.unitMW;
+          sentences.push(`Bought in step with the buildings: ${bridgingUnits} units for bridging, then ${cumUnitsByPhase.map((u, k) => `${Math.max(0, u - Math.max(bridgingUnits, k ? cumUnitsByPhase[k - 1] : 0))} with building ${k + 1}`).filter((x) => !x.startsWith('0 ')).join(', ') || 'none later'}.`);
         }
         if (t.fuel === 'diesel') {
           const fs = TECH.fuelStorage.p;
@@ -373,6 +387,20 @@ export function sizeOption(ctx, v) {
   if (bridge) {
     const it = permitOutlookItem(bridge, ctx.country, v.C1 === 'islanded' ? loadM : (bridge.shortfallMW > 0 ? shortM(0) : shortM(T)));
     if (it) permitOutlook.push(it);
+  }
+  // Rented bridging plant is hired when it is needed, not when it could first arrive (known issue 15, work package 11,
+  // 2026-10-24): on site settings.rentalLeadMonths before the first month of shortfall (islanded: of load). Every reader
+  // of availMonth (dispatch, time-to-power, the rental in the ledger) then starts there.
+  if (bridge && bridge.tech === 'rented') {
+    const need = v.C1 === 'islanded' ? loadM : shortM(0);
+    if (need != null) {
+      const hire = Math.max(bridge.availMonth, need - (inputs.settings.rentalLeadMonths ?? 1));
+      if (hire > bridge.availMonth) {
+        sentences.push(`Rented generation could be on site from month ${bridge.availMonth}; it is hired from month ${hire}, ${inputs.settings.rentalLeadMonths ?? 1} month${(inputs.settings.rentalLeadMonths ?? 1) === 1 ? '' : 's'} before it is first needed (month ${need}).`);
+        bridge.earliestMonth = bridge.availMonth;
+        bridge.availMonth = hire;
+      }
+    }
   }
   // Standby gensets: held by the same test; needed when the first load is energised. Their month is reported here
   // only (the engine gives backup no availability month elsewhere).

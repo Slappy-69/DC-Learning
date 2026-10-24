@@ -174,6 +174,8 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           <NumberField label="Grid price multiplier" unit="×" value={inputs.grid.priceMultiplier} onCommit={set('grid.priceMultiplier')} path="grid.priceMultiplier" inputs={inputs} min={0} />
           <NumberField label="Grid carbon multiplier" unit="×" value={inputs.grid.carbonMultiplier} onCommit={set('grid.carbonMultiplier')} path="grid.carbonMultiplier" inputs={inputs} min={0} />
         </div>
+        <NumberField label="Network charges and levies on grid energy" unit="€/MWh" value={typeof inputs.grid.priceAdder === 'number' ? inputs.grid.priceAdder : null} onCommit={set('grid.priceAdder')} path="grid.priceAdder" inputs={inputs} nullable min={0}
+          placeholder={`${COUNTRIES[countryNow].adder} (country default)`} hint={`Added to every hour's wholesale price for grid energy (transmission and distribution charges, levies). Empty = the ${COUNTRIES[countryNow].name} default, ${COUNTRIES[countryNow].adder} €/MWh, a first-cut European figure; use the regulator's tariff for the connection voltage (for example ERSE in Portugal).`} />
         <SelectField label="Gas available" value={inputs.utilities.gasAvailable} onCommit={set('utilities.gasAvailable')} path="utilities.gasAvailable" inputs={inputs}
           options={[['Unknown', 'Unknown'], ['Yes', 'Yes'], ['No', 'No']]} />
         <NumberField label="Gas available from" unit="months after start" value={inputs.utilities.gasDateMonths} onCommit={set('utilities.gasDateMonths')} path="utilities.gasDateMonths" inputs={inputs} min={0} />
@@ -278,6 +280,10 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           options={[['full', 'Full year, every hour, every option (default)'], ['repDays', 'Screening: representative days, then verify the best']]}
           hint="Full year by default: power adequacy needs every hour (OPEN-QUESTIONS 23). Screening dispatches each option over about 50 representative days (three clustered days a month, the dearest day and the design day), then re-runs the best options hour by hour for the full year and re-scores; every figure says which model produced it." />
         {inputs.settings.screeningModel === 'repDays' ? <NumberField label="Options verified with the full year" unit="options" value={inputs.settings.verifyTop} onCommit={(v) => update('settings.verifyTop', Math.round(v))} path="settings.verifyTop" inputs={inputs} min={1} max={200} step={1} /> : null}
+        <NumberField label="Most dispatch years" unit="years" value={inputs.settings.maxDispatchYears} onCommit={(v) => update('settings.maxDispatchYears', Math.max(1, Math.round(v)))} path="settings.maxDispatchYears" inputs={inputs} min={1} max={30}
+          hint="Each option is run hour by hour for every year until nothing changes (full load after the last phase and its ramp), then the last year repeats. This is the upper limit; a run flag says if it cuts an option short." />
+        <NumberField label="Rented plant hired before it is needed" unit="months" value={inputs.settings.rentalLeadMonths} onCommit={(v) => update('settings.rentalLeadMonths', Math.max(0, Math.round(v)))} path="settings.rentalLeadMonths" inputs={inputs} min={0} max={6} step={1}
+          hint="Rented bridging plant arrives and is paid for this many months before the first month it is needed (installation and commissioning), not from the month it could first arrive." />
         <NumberField label="Generation cap" unit="options" value={inputs.settings.generationCap} onCommit={(v) => update('settings.generationCap', Math.round(v))} path="settings.generationCap" inputs={inputs} min={20} step={1} />
         <ToggleField label="Sample above cap" checked={inputs.settings.sampleAboveCap} onCommit={set('settings.sampleAboveCap')} path="settings.sampleAboveCap" inputs={inputs}
           hint="Off screens every combination (slow above the cap)." />

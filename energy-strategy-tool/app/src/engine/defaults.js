@@ -845,7 +845,8 @@ export function buildDefaultInputs(opts = {}) {
       windSiteThresholdHa: rec('settings.windSiteThresholdHa', 20, 'ha', { basis: 'judgement', ref: '§8 C11' }),
       bridgeBessHours: rec('settings.bridgeBessHours', 24, 'h', { basis: 'judgement', ref: '§9.2' }),
       timelineMonths: rec('settings.timelineMonths', 120, 'months', { basis: 'run setting', ref: '§9.8', note: 'Time-to-power horizon.' }),
-      maxDispatchYears: rec('settings.maxDispatchYears', 8, 'years', { basis: 'run setting', ref: '§9.1', note: 'Distinct 8760-h dispatch years before steady state is assumed.' }),
+      rentalLeadMonths: rec('settings.rentalLeadMonths', 1, 'months', { low: 0, high: 6, basis: 'judgement', ref: '§9.8', note: 'Rented bridging plant is hired this many months before it is first needed (installation and commissioning), not from the month it could first arrive (known issue 15, work package 11). No source.' }),
+      maxDispatchYears: rec('settings.maxDispatchYears', 15, 'years', { low: 1, high: 30, basis: 'run setting', ref: '§9.1', note: 'Upper limit on the distinct 8760-h dispatch years; each option is dispatched until nothing changes (full load after the last phase and its ramp, grid steps, plant changes) and the last year then repeats. Was 8 until work package 11 (known issue 17): a long programme repeated a part-built year. A run flag says when the limit cuts an option short.' }),
       // Work package 8 (OPEN-QUESTIONS 23, 2026-10-23): the screening tier is optional and off by default, because power
       // adequacy needs every hour. 'repDays' dispatches every option over representative days, then verifies the best
       // settings.verifyTop options with the full year and re-scores.

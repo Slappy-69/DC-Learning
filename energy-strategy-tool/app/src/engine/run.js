@@ -8,7 +8,7 @@ import { buildContext } from './context.js';
 import { normalizeInputs } from './defaults.js';
 import { generateOptions, optionName, RULES, RULE_D } from './generator.js';
 import { sizeOption } from './sizing.js';
-import { dispatchConfig, dispatchKey, dispatchAll, MERIT_ORDER, representativeHours } from './dispatch.js';
+import { dispatchConfig, dispatchKey, dispatchAll, dispatchYearsNeeded, MERIT_ORDER, representativeHours } from './dispatch.js';
 import { verifySteps, FULL_MODEL } from './verify.js';
 import { timeToPower, economics, carbon, resilience, allOptionFlags, unmetSummary, deliverability, flag } from './evaluate.js';
 import { scoreOptions } from './scoring.js';
@@ -177,6 +177,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
   let misses = 0;
   let yearsSimulated = 0;
   const unmetCfgs = new Set();
+  const truncated = []; // configurations dispatched for fewer years than they need (known issue 17)
   const exceedCfgs = new Set();
   // Screening model (work package 8): representative days when settings.screeningModel = 'repDays' (off by default).
   const rep = inputs.settings.screeningModel === 'repDays' ? representativeHours(ctx) : null;
@@ -190,6 +191,8 @@ export function* runModelSteps(rawInputs, opts = {}) {
     let c = dispCache.get(key);
     if (!c) {
       const disp = dispatchAll(ctx, cfg, opts.recordYears || null, rep);
+      const needY = dispatchYearsNeeded(ctx, cfg);
+      if (needY > disp.nExplicit) truncated.push({ id: r.id, needY, explicit: disp.nExplicit });
       c = { disp, first: r.id, short: shortHash(key) };
       dispCache.set(key, c);
       misses++;
@@ -285,6 +288,10 @@ export function* runModelSteps(rawInputs, opts = {}) {
   const windNote = s.valuesNotGenerated.find((x) => x.id === 'C11' && x.note);
   if (windNote) runFlags.push(flag('tech-wind-default', 'info', 'Technology', windNote.note));
   if (inputs.load.workload === 'ai-training') runFlags.push(flag('load-ai', 'info', 'Load', 'AI training transient load not modelled'));
+  if (truncated.length) {
+    const maxNeed = Math.max(...truncated.map((t) => t.needY)), ex = truncated[0].explicit;
+    runFlags.push(flag('dispatch-truncated', 'minor', 'Model', `Dispatch covers only the first ${ex} model years (the run setting "Most dispatch years") for ${truncated.length.toLocaleString('en-GB')} configuration${truncated.length === 1 ? '' : 's'} that need up to ${maxNeed} before nothing changes: the later years repeat a year that is not yet steady (load, grid or plant still changing). Raise the setting to ${maxNeed}`));
+  }
   runFlags.push(adequacyRunFlag(options));
   if (rep) runFlags.push(screeningRunFlag(inputs, rep));
   runFlags.push(flag('load-util', 'info', 'Load', `IT utilisation assumption ${(inputs.load.utilisation * 100).toFixed(0)} % of installed IT (energy); sizing uses 100 %`));

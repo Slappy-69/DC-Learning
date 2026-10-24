@@ -17,7 +17,7 @@ Each line is booked in the year its plant can first supply power (or, for per-ph
 | Wind | MW × €/kW × 1,000 | availability | 25 |
 | Battery | MWh × €250/kWh + MW × €150/kW (× 1,000) | availability | 15 |
 | Firm prime plant | MW × €/kW × 1,000 | availability | by technology |
-| Bridging plant (not rented) | MW × €/kW × 1,000 | availability | by technology |
+| Bridging plant (not rented) | MW × €/kW × 1,000 | availability; plant kept as the backup: the bridging units at availability, then each building's units at its date (lines "(bridging)" and "(retained as backup)", built 24 October 2026) | by technology |
 | Gas connection pipe | km × €0.8 m | first gas plant | 40 |
 | Backup gensets | MW × €/kW × 1,000, split by phase | each phase | 25 |
 | Battery for UPS augmentation | as battery, split by phase | each phase | 15 |
@@ -43,7 +43,7 @@ For each item with a life:
 
 ## Fixed operating costs
 
-Each year, from each item's availability: fixed O&M per kW (solar €12–15/kWp, wind €35/kW, firm plant €10–40/kW and the SMR €120/kW, backup gensets €8–9/kW), the battery at 1.5 % of its capex a year, and rented bridging plant at **€12 per kW per month** for every month it is on site. Backup genset O&M scales with the share of the IT installed in the middle of that year.
+Each year, from each item's availability: fixed O&M per kW (solar €12–15/kWp, wind €35/kW, firm plant €10–40/kW and the SMR €120/kW, backup gensets €8–9/kW), the battery at 1.5 % of its capex a year, and rented bridging plant at **€12 per kW per month** for every month it is on site, from one month before it is first needed (built 24 October 2026; before, from the month it could first arrive), and, when kept as the backup, for the units on hire that month. Fixed O&M of owned plant kept as the backup follows the units owned. Backup genset O&M scales with the share of the IT installed in the middle of that year.
 
 ## Energy, fuel and carbon costs
 
@@ -52,10 +52,10 @@ Each year uses its simulated year (or the last simulated year once they repeat):
 - **Variable O&M**: plant MWh × €/MWh (recips €8, turbines €6, CHP €10, fuel cells €5, HVO-diesel €12, rented €10, SMR €3, hydrogen €5).
 - **Fuel**: plant fuel MWh × fuel price (gas: the context gas price, escalated by the gas escalation; diesel €110, HVO €170, hydrogen €150 per MWh of fuel); SMR fuel €9 per MWh of electricity.
 - **Generator tests**: installed units × unit MW × test hours (12 a year) × test load (75 %) ÷ efficiency = MWh of fuel, times the fuel price, scaled by the IT share of the year.
-- **Grid**: the hourly grid energy times the hourly price (wholesale × multiplier + adder), escalated by the electricity escalation (0 % by default), **plus the adder on every MWh of PPA energy delivered** (the network charge on PPA energy).
+- **Grid**: the hourly grid energy times the hourly price (wholesale × multiplier + adder), **plus the adder on every MWh of PPA energy delivered** (the network charge on PPA energy), both escalated by the electricity escalation (0 % by default). The adder is your figure if you entered one, otherwise the country's. Built 24 October 2026: before, an entered adder was ignored and the network charge on PPA energy was not escalated.
 - **PPA**: PPA MWh delivered × (strike + €5 shaping).
 - **Carbon**: Scope 1 tonnes × carbon price × (1 + carbon escalation)^y (2 % a year real).
-- **Revenue**: export MWh × 90 % of the hourly wholesale price (only with C1 "Grid + export"), escalated like electricity.
+- **Revenue**: export MWh × 90 % of the hourly wholesale price × the price multiplier (only with C1 "Grid + export"), escalated like electricity. The multiplier applies since 24 October 2026.
 
 ## Totals and discounting
 
@@ -176,7 +176,7 @@ Redundant units are removed: the check asks whether the site can still carry the
 ## Status
 
 - **Does not meet**: any item fails (the failing items are listed, each with a major flag).
-- **Meets with flags**: all pass, but the backup depends on the gas network (minor flag), or uses BESS-augmented UPS (minor flag: an emerging approach whose redundancy lasts only as long as the battery).
+- **Meets with flags**: all pass, but the backup depends on the gas network (minor flag: raised only when plant that does not burn gas covers less than the critical load, with both figures in the message; built 24 October 2026, before it was raised whenever gas plant was counted), or uses BESS-augmented UPS (minor flag: an emerging approach whose redundancy lasts only as long as the battery).
 - **Meets**: otherwise.
 
 ## Worked example: the T1 leader
@@ -308,7 +308,7 @@ All the penalty values are judgements, labelled indicative, and on the research 
 |---|---|
 | Cost | LCOE; or NPV of net cost |
 | Carbon | location-based g/kWh; or market-based; or 1 − hourly CFE |
-| Time-to-power | the time-to-power metric (months) |
+| Time-to-power | the time-to-power metric (months late against the phasing plan, since 24 October 2026; chapter 38) |
 | Deliverability | the deliverability score (higher is better) |
 
 ## Axis scores
@@ -329,7 +329,7 @@ A non-finite value (for example the LCOE of an option that delivers nothing) sco
 | weighted score = sum over axes of effective weight × axis score
 :::
 
-**T1 leader.** Ranges over the 2,000 options: LCOE €151.83–286.04/MWh, carbon 112.18–532.68 g/kWh, time-to-power 18.00–123.85 months, deliverability 65.65–97.10. The leader's axis scores are 98.55, 99.77, 88.56 and 74.25, so:
+**T1 leader** (run of 21 October 2026, under the earlier time-to-power metric). Ranges over the 2,000 options: LCOE €151.83–286.04/MWh, carbon 112.18–532.68 g/kWh, time-to-power 18.00–123.85 months, deliverability 65.65–97.10. The leader's axis scores are 98.55, 99.77, 88.56 and 74.25, so:
 
 ::: formula
 | 0.35 × 98.55 + 0.25 × 99.77 + 0.25 × 88.56 + 0.15 × 74.25
@@ -430,7 +430,7 @@ Ranks 1 to 11 all wait for the grid. Ranks 10 and 11 have identical figures: the
 
 ## What the T1 run teaches
 
-1. **The cooling choice decides grid fit.** Every archetype took the first open cooling value, air, whose design load (136.7 MW) exceeds the 120 MW grid offer. Without firm plant they never reach full load, their time-to-power metric is about 124 months, and their time-to-power score is near zero. That alone costs them about 22 points. DLC (113 MW) fits under the offer, which is why it dominates the top of the ranking.
+1. **The cooling choice decides grid fit.** Every archetype took the first open cooling value, air, whose design load (136.7 MW) exceeds the 120 MW grid offer. Without firm plant they never reach full load, their time-to-power metric is about 124 months (run of 21 October 2026; under the metric since 24 October 2026, about 66 months late plus the gap term), and their time-to-power score is near zero. That alone costs them about 22 points. DLC (113 MW) fits under the offer, which is why it dominates the top of the ranking.
 2. **Cheapest per MWh is not best.** A2 (grid + PPA, air-cooled) has a lower LCOE than the leader (€153.1/MWh), but it cannot take the full load, and LCOE does not see that.
 3. **Bridging buys time, at a price.** Gas bridging (A5) reaches full load 6 months earlier than the grid, but costs more per MWh and does not fit the 15 ha site. Fuel-cell bridging (#12) almost removes the leader's 650 MWh of unmet load in 2029, for €28 m more capex.
 4. **Energy, not plant, is the cost.** The leader's capex is 10 % of its present-value cost; grid energy, the network adder and the PPA make up the rest. The grid price is the input that moves its LCOE most.

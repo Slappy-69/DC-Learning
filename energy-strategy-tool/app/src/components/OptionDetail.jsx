@@ -136,7 +136,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
               <tr><th scope="row">LCOE</th><td className="num">{perMWh(o.eco.lcoe)}</td></tr>
               <tr><th scope="row">NPV of net cost</th><td className="num">{money(o.eco.npvCost)}</td></tr>
               <tr><th scope="row">Capex (incl. contingency)</th><td className="num">{money(o.eco.capex)} <span className="range">({money(o.eco.capexLow, 2)}–{money(o.eco.capexHigh, 2)})</span></td></tr>
-              <tr><th scope="row">Opex year 1 / steady state</th><td className="num">{money(o.eco.opexYear1)} / {money(o.eco.opexSteady)}</td></tr>
+              <tr><th scope="row">Opex, first year with load / steady state</th><td className="num">{money(o.eco.opexYear1)} / {money(o.eco.opexSteady)}</td></tr>
               <tr><th scope="row">Capex share of PV cost</th><td className="num">{pct(o.eco.capexShare)}</td></tr>
               {o.eco.ppaHedge ? <PpaHedgeRow h={o.eco.ppaHedge} /> : null}
             </tbody>
@@ -182,7 +182,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
               <tr><th scope="row">First power</th><td>{monthLabel(start, o.ttp.firstPowerM)}</td></tr>
               <tr><th scope="row">Full load</th><td>{monthLabel(start, o.ttp.fullLoadM)}</td></tr>
               <tr><th scope="row">Power gap</th><td className="num">{sig(o.ttp.gapMWm)} MW-months</td></tr>
-              <tr><th scope="row">Axis metric</th><td className="num">{sig(o.ttp.metric)} months</td></tr>
+              <tr><th scope="row">Axis metric (months late against the phasing plan, plus half the power gap)</th><td className="num">{sig(o.ttp.metric)} months</td></tr>
             </tbody>
           </table>
           {onShowDispatch ? <button type="button" className="link-btn" onClick={() => onShowDispatch(o.id)}>Show this option's phasing and hourly dispatch on the Dispatch tab</button> : null}

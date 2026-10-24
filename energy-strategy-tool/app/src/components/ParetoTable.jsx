@@ -27,7 +27,7 @@ export default function ParetoTable({ model, page = 0, pageSize = 50, onOpen, op
           <th scope="col" className="num">Score</th>
           <th scope="col" className="num">{model.xAxis.label} ({curUnit(model.xAxis.unit)})</th>
           <th scope="col" className="num">{model.yAxis.label} ({curUnit(model.yAxis.unit)})</th>
-          <th scope="col" className="num">Time-to-power (months)</th>
+          <th scope="col" className="num">Time-to-power (months late)</th>
           <th scope="col" className="num">Capex</th>
           {model.showSiteFit !== false ? <th scope="col">Site fit (Beta)</th> : null}
           <th scope="col">Resilience</th>

@@ -80,6 +80,7 @@ import { gridContractTests } from './grid-contract-tests.mjs';
 import { inputModelTests } from './input-model-tests.mjs';
 import { screeningTests } from './screening-tests.mjs';
 import { locationTests } from './location-tests.mjs';
+import { engineFixesTests } from './engine-fixes-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -115,7 +116,7 @@ console.log(`T3 run: ${runT3.options.length} options in ${(runT3Ms / 1000).toFix
 // ---------------------------------------------------------------------------
 function checkHourlyBalance(ctx, opt) {
   const cfg = dispatchConfig(ctx, opt.v, sizeOption(ctx, opt.v));
-  const { years } = dispatchAll(ctx, cfg, [0, 1, 2, 3, 4, 5, 6, 7]);
+  const { years } = dispatchAll(ctx, cfg, Array.from({ length: 30 }, (_, i) => i));
   const eta = Math.sqrt(cfg.rte);
   let maxAbs = 0;
   let maxRel = 0;
@@ -214,7 +215,7 @@ await test('2. Grid connection equals the offered capacity on every option, neve
   const sample = runT1.options.filter((o) => o.archetype).concat(runT1.options.filter((o, i) => i % 50 === 0));
   for (const o of sample) {
     const cfg = dispatchConfig(ctx, o.v, sizeOption(ctx, o.v));
-    const { years } = dispatchAll(ctx, cfg, [0, 1, 2, 3, 4, 5, 6, 7]);
+    const { years } = dispatchAll(ctx, cfg, Array.from({ length: 30 }, (_, i) => i));
     years.forEach((y, yi) => {
       for (let h = 0; h < H; h++) {
         const m = yi * 12 + Math.min(11, Math.floor(h / 730));
@@ -1220,6 +1221,9 @@ await gridContractTests(test, siteRuns);
 await inputModelTests(test, siteRuns);
 await screeningTests(test, siteRuns);
 await locationTests(test, siteRuns);
+
+// 35–37. Work package 11: engine fixes from the Haiku checks and the Pego study (tests/engine-fixes-tests.mjs)
+await engineFixesTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

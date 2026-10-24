@@ -1,6 +1,6 @@
 # Appendix A. The full defaults register {#appA}
 
-Every default value in the current version: **546 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. **24 records** carry a published source and the label "sourced — not independently checked" (work package 0, batches 1 and 2; the source, year and access date follow the entry). The other 522 are labelled "indicative — unverified" (confidence C, not verified). None is verified. Chapter 50 compares the important values with published sources.
+Every default value in the current version: **547 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. **24 records** carry a published source and the label "sourced — not independently checked" (work package 0, batches 1 and 2; the source, year and access date follow the entry). The other 523 are labelled "indicative — unverified" (confidence C, not verified). None is verified. Chapter 50 compares the important values with published sources.
 
 Abbreviations: **src** = basis "source" (should come from a published source); **judg** = judgement; **run** = run setting.
 
@@ -207,7 +207,8 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **settings.windSiteThresholdHa**: 20 ha; judg.
 - **settings.bridgeBessHours**: 24 h; judg.
 - **settings.timelineMonths**: 120 months; run. Time-to-power horizon.
-- **settings.maxDispatchYears**: 8 years; run. Distinct 8760-h dispatch years before steady state is assumed.
+- **settings.rentalLeadMonths**: 1 months; range 0–6; judg. Rented bridging plant is hired this many months before it is first needed (installation and commissioning), not from the month it could first arrive (known issue 15, work package 11). No source.
+- **settings.maxDispatchYears**: 15 years; range 1–30; run. Upper limit on the distinct 8760-h dispatch years; each option is dispatched until nothing changes (full load after the last phase and its ramp, grid steps, plant changes) and the last year then repeats. Was 8 until work package 11 (known issue 17): a long programme repeated a part-built year. A run flag says when the limit cuts an option short.
 - **settings.screeningModel**: full ("full" | "repDays"); run. OPEN-QUESTIONS 23: full-year hourly for every option by default; representative days (the design day, the dearest day and three clustered typical days per month, about 50 days) as an optional faster screening.
 - **settings.repDaysPerMonth**: 3 typical days a month (plus the dearest day and the design day); range 1–6; run. Screening model: the days of each month are grouped into this many clusters on price, solar, wind, grid carbon and temperature; each cluster is represented by its most central day, weighted by its size.
 - **settings.verifyTop**: 10 options verified with the full year; range 1–50; run. OPEN-QUESTIONS 23: the best-ranked options re-run hour by hour when the screening model is on.

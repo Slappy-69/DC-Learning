@@ -22,7 +22,7 @@ export async function outlookTests(test, ctxRuns) {
       for (const o of run.options) {
         const held = [o.sizing.prime, o.sizing.bridge].filter((p) => p && p.permitRegimes && p.permitRegimes.length);
         const list = o.sizing.permitOutlook;
-        for (const p of held) assert.ok(list.some((x) => x.role === p.role && x.tech === p.tech && x.readyMonth === p.availMonth), `${label} ${o.id}: ${p.role} outlook missing`);
+        for (const p of held) assert.ok(list.some((x) => x.role === p.role && x.tech === p.tech && x.readyMonth === (p.earliestMonth ?? p.availMonth)), `${label} ${o.id}: ${p.role} outlook missing`);
         for (const x of list) {
           items++;
           assert.ok(PERMIT_OUTLOOKS.includes(x.outlook) && x.reason && x.regimes.length);

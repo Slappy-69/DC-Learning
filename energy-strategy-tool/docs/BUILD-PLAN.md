@@ -120,11 +120,19 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Mock-up:** `m09-pdf`. **Guide:** chapter 29.
 - **Progress:** built 2026-10-23 on `feature/results-cards`, not merged: OPEN-QUESTIONS 32 answered with Claude's recommendation; nine sections; written by the app (no library, no network); Windows save dialog with a PDF filter. Not built: the executive summary (§14).
 
+### 11. Engine fixes from the Haiku checks and the Pego study (added 2026-10-24)
+
+- **Why:** the Pego study (revision 3) and Haiku check H1 found defects that bent results: time-to-power rewarding early plant, rented plant paid early, retained plant bought at once, dispatch stopping before full load, plant at minimum load wasting fuel, a gas-dependency flag raised wrongly, running HVO stores missed by the Seveso test, and an ignored grid price adder. The small fixes 1, 2, 3, 8 and 9 were added.
+- **Decisions:** OPEN-QUESTIONS 68–76, Claude's recommendations accepted in advance by the owner (2026-10-24).
+- **Acceptance tests:** Node tests 35–37 (`app/tests/engine-fixes-tests.mjs`); on the old code the minimum-load check finds 1,176 hours importing while curtailing in 24 sampled T1 options, on the new code none.
+- **User guide:** chapters 9, 17, 19, 22, 23, 33, 35, 37, 38, 39, 41, 54 and 56.
+- **Progress:** built 2026-10-24 on `feature/engine-fixes` (from `feature/verification-fixes`), not merged.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:
 
-- Small fixes waiting for a decision: `KNOWN-ISSUES.md` items 1, 2, 3, 8 and 9 (each is small, with a test).
+- Known issues still open: 4 (archetype defaults), 5 (identical options, partly handled by the "same results as" marks), 12 (an "existing plant" type; recommended as the next package).
 - Saving and reopening a study (OPEN-QUESTIONS 27).
 - The plain-English summary (§14; OPEN-QUESTIONS 12).
 - Ranges, Monte Carlo, robust pick, breakevens and scenarios (§13).

@@ -30,10 +30,16 @@ export const hydrogenStoredT = (prime) => (prime && prime.tech === 'hydrogen' ? 
 export function permittingTriggers(sz, v, req) {
   const combustion = combustionPlant(sz, v);
   const thermal = combustion.reduce((s, c) => s + c.mw / c.eff, 0);
-  const fuelT = (sz.backup ? sz.backup.fuelM3 : 0) * TECH.fuelStorage.p.densityTPerM3;
+  // Liquid fuel held for running HVO-diesel prime or bridging plant counts too (Haiku check H1, L-1; work package 11,
+  // 2026-10-24): the same autonomy rule as the standby store (requirements.autonomyH at full output). Retained bridging
+  // plant that is the backup already has its store in backup.fuelM3.
+  const fs = TECH.fuelStorage.p;
+  const runM3 = [sz.prime, sz.bridge].filter((p) => p && TECH[p.tech] && TECH[p.tech].fuel === 'diesel' && !(p.role === 'bridge' && v.C5 === 'retained'))
+    .reduce((a, p) => a + p.mw * (req.autonomyH || 0) * fs.dieselLPerKWh, 0);
+  const fuelT = ((sz.backup ? sz.backup.fuelM3 : 0) + runM3) * fs.densityTPerM3;
   const h2t = hydrogenStoredT(sz.prime);
   return {
-    combustion, thermal, fuelT, h2t,
+    combustion, thermal, fuelT, runFuelM3: runM3, h2t,
     ied: thermal >= req.iedMWth,
     sevesoFuel: fuelT >= req.sevesoFuelT,
     sevesoH2: h2t >= req.sevesoH2t,
