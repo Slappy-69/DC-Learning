@@ -1,0 +1,737 @@
+{
+ "schema": "dc-energy-study/1",
+ "savedAt": "2026-10-24T20:11:41.257Z",
+ "engineVersion": "0.2.0-site",
+ "appVersion": "",
+ "name": "Pego data centre campus (product, existing-plant input)",
+ "inputs": {
+  "project": {
+   "name": "Pego data centre campus (product, existing-plant input)",
+   "lat": 39.468,
+   "lon": -8.109,
+   "country": null,
+   "currency": "by country",
+   "analysisStart": "2027-01",
+   "seed": 20261015
+  },
+  "site": {
+   "areaHa": 150,
+   "aspect": 1.5,
+   "boundary": null,
+   "setbackM": 10,
+   "setbackByEdge": null,
+   "heightLimitM": 25,
+   "heightZones": [],
+   "exclusions": [],
+   "softUsableBySolar": true,
+   "poc": null,
+   "gasMain": null,
+   "access": null,
+   "receptors": [],
+   "roadsFraction": 0.15,
+   "pvRoofM2": null,
+   "pvGroundHa": 0,
+   "offsiteLandHa": 0,
+   "offsiteDistanceKm": 2,
+   "groundConditions": "assumed suitable"
+  },
+  "load": {
+   "itMW": 900,
+   "estimateCoverage": 0.35,
+   "phases": [
+    {
+     "itMW": 100,
+     "date": "2029-01"
+    },
+    {
+     "itMW": 100,
+     "date": "2029-10"
+    },
+    {
+     "itMW": 100,
+     "date": "2030-07"
+    },
+    {
+     "itMW": 100,
+     "date": "2031-04"
+    },
+    {
+     "itMW": 100,
+     "date": "2032-01"
+    },
+    {
+     "itMW": 100,
+     "date": "2032-10"
+    },
+    {
+     "itMW": 100,
+     "date": "2033-07"
+    },
+    {
+     "itMW": 100,
+     "date": "2034-04"
+    },
+    {
+     "itMW": 100,
+     "date": "2035-01"
+    }
+   ],
+   "rampStart": 0.25,
+   "rampMonths": 12,
+   "utilisation": 0.8,
+   "workload": "cloud",
+   "shape": "daily",
+   "dailySwing": null,
+   "aiTrainUtil": 0.9,
+   "aiTrainDip": 0.55,
+   "aiTrainDipEveryH": 6,
+   "aiTrainDipH": 1,
+   "aiInfUtil": 0.7,
+   "aiInfTrough": 0.6,
+   "aiInfPeakHour": 15,
+   "aiInfWeekend": 0.9,
+   "coolingApproach": "dlc",
+   "grossUp": 2.2,
+   "storeys": 2,
+   "storeyHeightM": 6,
+   "roofZoneM": 4,
+   "coolingFactor": 1,
+   "ancillaryFrac": 0.02,
+   "flexMaxPct": 0.1,
+   "flexHours": 100,
+   "flexTrigger": "price",
+   "flexTriggerPrice": 250,
+   "flexTriggerCarbon": 400,
+   "flexTriggerTemp": 28,
+   "flexEventH": 4,
+   "flexNoticeH": 1,
+   "flexRecoveryH": 12,
+   "flexCostPerMWh": 500,
+   "flexBatteryFixed": "threshold",
+   "flexBatteryHours": 100,
+   "flexBatteryMW": null,
+   "flexBatteryMWh": null,
+   "flexBatteryResponse": true
+  },
+  "grid": {
+   "nowMW": 0,
+   "fullMW": 400,
+   "fullDate": "2030-01",
+   "unknownNowMW": 0,
+   "unknownFullPerITMW": 1.4,
+   "unknownFullMonths": 48,
+   "steps": [],
+   "exportMW": 0,
+   "exportFactor": 0.9,
+   "priceAdder": "by country",
+   "priceMultiplier": 1,
+   "carbonMultiplier": 1,
+   "contractWaitMW": null,
+   "contractBridgeMW": null,
+   "contractExportMW": null,
+   "connectionCharge": 48000000,
+   "dateUncertainty": [
+    -6,
+    24
+   ]
+  },
+  "utilities": {
+   "gasAvailable": "Yes",
+   "gasDateMonths": 0,
+   "gasPrice": "by country",
+   "hydrogenAvailable": "No",
+   "waterAvailable": "Unknown",
+   "districtHeating": "No",
+   "reYieldFactor": 1,
+   "ppaInclude": true,
+   "ppaType": "hybrid",
+   "ppaCoverage": 50
+  },
+  "requirements": {
+   "backedPct": 1,
+   "topology": "N+1",
+   "autonomyH": 48,
+   "islanding": "No",
+   "upsMin": 5,
+   "blockSize": 10,
+   "catcherN": 4,
+   "carbonTarget": null,
+   "capexCeiling": null,
+   "maxRunHours": null,
+   "iedMWth": 50,
+   "mcpMinMWth": 1,
+   "mcpMaxMWth": 50,
+   "sevesoH2t": 5,
+   "permitAllowanceM": 6,
+   "sevesoFuelT": 2500,
+   "testRunHours": 6,
+   "gensetPrimaryHours": 0,
+   "testRunLoad": 0.75,
+   "bessUpsGensetFraction": 1,
+   "landTakeCeilingHa": null,
+   "noiseNightDbA": 45
+  },
+  "economics": {
+   "periodYears": 20,
+   "wacc": 0.07,
+   "contingency": 0.1,
+   "capexLow": -0.3,
+   "capexHigh": 0.5,
+   "carbonPrice": "by country",
+   "carbonEscalation": 0.02,
+   "capexFactor": 1,
+   "bessCapexFactor": 1,
+   "gridCapexFactor": 1,
+   "elecEscalation": 0,
+   "gasEscalation": 0,
+   "salvageFraction": 0.5,
+   "revenueExport": false,
+   "displayPeriods": [
+    10,
+    15
+   ]
+  },
+  "weights": {
+   "cost": 35,
+   "carbon": 25,
+   "ttp": 25,
+   "deliverability": 15
+  },
+  "deliverability": {
+   "emergingPenalty": 15,
+   "nascentPenalty": 40,
+   "majorFlagPenalty": 8,
+   "minorFlagPenalty": 3,
+   "gasUnknownPenalty": 10,
+   "hydrogenPenalty": 10,
+   "leadTimePenalty": 5,
+   "leadTimeThresholdM": 24,
+   "pooledBackupRisk": "minor",
+   "siteFitPenalty": false,
+   "siteFitFlagsPenalty": 10,
+   "siteFitNoFitPenalty": 25
+  },
+  "settings": {
+   "generationCap": 2000,
+   "sampleAboveCap": true,
+   "gridHandling": "unmet",
+   "runHourHandling": "flag",
+   "costMetric": "lcoe",
+   "carbonMetric": "location",
+   "absoluteScaling": false,
+   "rankCompliantFirst": false,
+   "hideDominated": false,
+   "windSiteThresholdHa": 20,
+   "bridgeBessHours": 24,
+   "timelineMonths": 120,
+   "rentalLeadMonths": 1,
+   "maxDispatchYears": 15,
+   "screeningModel": "full",
+   "repDaysPerMonth": 3,
+   "verifyTop": 10,
+   "autonomyBasis": "critical load",
+   "layoutCellM": 2,
+   "layoutCellLargeM": 5,
+   "siteLayoutScope": "auto",
+   "siteLayoutWorkLimit": 20000000,
+   "layoutLargeSiteHa": 50
+  },
+  "existing": {
+   "include": true,
+   "name": "Elecgás CCGT",
+   "type": "ccgt",
+   "units": 2,
+   "unitMW": 427.5,
+   "availableDate": "2028-07",
+   "eff": null,
+   "msl": null,
+   "vomPerMWh": null,
+   "leasePerKWMonth": 6,
+   "linkCapex": 62000000
+  },
+  "choices": {
+   "C1": null,
+   "C2": {
+    "state": "open",
+    "values": [
+     "existing",
+     "rented",
+     "gasRecip",
+     "gasTurbine",
+     "fuelCell",
+     "dieselPrime"
+    ]
+   },
+   "C3": null,
+   "C4": {
+    "state": "open",
+    "values": [
+     "none",
+     "existing",
+     "gasRecip",
+     "chp",
+     "fuelCell"
+    ]
+   },
+   "C4s": null,
+   "C5": {
+    "state": "locked",
+    "values": [
+     "hvo"
+    ]
+   },
+   "C5a": null,
+   "C6": null,
+   "C7": null,
+   "C8": null,
+   "C9": null,
+   "C10": {
+    "state": "locked",
+    "values": [
+     "roof"
+    ]
+   },
+   "C11": {
+    "state": "locked",
+    "values": [
+     "none"
+    ]
+   },
+   "C12": null,
+   "C12r": null,
+   "C13": null,
+   "C14": null,
+   "C15": null,
+   "C16": null,
+   "C17": null,
+   "C18": null,
+   "C19": null,
+   "C20": null
+  }
+ },
+ "inputsAsRun": {
+  "project": {
+   "name": "Pego data centre campus (product, existing-plant input)",
+   "lat": 39.468,
+   "lon": -8.109,
+   "country": null,
+   "currency": "by country",
+   "analysisStart": "2027-01",
+   "seed": 20261015
+  },
+  "site": {
+   "areaHa": 150,
+   "aspect": 1.5,
+   "boundary": null,
+   "setbackM": 10,
+   "setbackByEdge": null,
+   "heightLimitM": 25,
+   "heightZones": [],
+   "exclusions": [],
+   "softUsableBySolar": true,
+   "poc": null,
+   "gasMain": null,
+   "access": null,
+   "receptors": [],
+   "roadsFraction": 0.15,
+   "pvRoofM2": null,
+   "pvGroundHa": 0,
+   "offsiteLandHa": 0,
+   "offsiteDistanceKm": 2,
+   "groundConditions": "assumed suitable",
+   "areaFromBoundary": false
+  },
+  "load": {
+   "itMW": 900,
+   "estimateCoverage": 0.35,
+   "phases": [
+    {
+     "itMW": 100,
+     "date": "2029-01"
+    },
+    {
+     "itMW": 100,
+     "date": "2029-10"
+    },
+    {
+     "itMW": 100,
+     "date": "2030-07"
+    },
+    {
+     "itMW": 100,
+     "date": "2031-04"
+    },
+    {
+     "itMW": 100,
+     "date": "2032-01"
+    },
+    {
+     "itMW": 100,
+     "date": "2032-10"
+    },
+    {
+     "itMW": 100,
+     "date": "2033-07"
+    },
+    {
+     "itMW": 100,
+     "date": "2034-04"
+    },
+    {
+     "itMW": 100,
+     "date": "2035-01"
+    }
+   ],
+   "rampStart": 0.25,
+   "rampMonths": 12,
+   "utilisation": 0.8,
+   "workload": "cloud",
+   "shape": "daily",
+   "dailySwing": null,
+   "aiTrainUtil": 0.9,
+   "aiTrainDip": 0.55,
+   "aiTrainDipEveryH": 6,
+   "aiTrainDipH": 1,
+   "aiInfUtil": 0.7,
+   "aiInfTrough": 0.6,
+   "aiInfPeakHour": 15,
+   "aiInfWeekend": 0.9,
+   "coolingApproach": "dlc",
+   "grossUp": 2.2,
+   "storeys": 2,
+   "storeyHeightM": 6,
+   "roofZoneM": 4,
+   "coolingFactor": 1,
+   "ancillaryFrac": 0.02,
+   "flexMaxPct": 0.1,
+   "flexHours": 100,
+   "flexTrigger": "price",
+   "flexTriggerPrice": 250,
+   "flexTriggerCarbon": 400,
+   "flexTriggerTemp": 28,
+   "flexEventH": 4,
+   "flexNoticeH": 1,
+   "flexRecoveryH": 12,
+   "flexCostPerMWh": 500,
+   "flexBatteryFixed": "threshold",
+   "flexBatteryHours": 100,
+   "flexBatteryMW": null,
+   "flexBatteryMWh": null,
+   "flexBatteryResponse": true
+  },
+  "grid": {
+   "nowMW": 0,
+   "fullMW": 400,
+   "fullDate": "2030-01",
+   "unknownNowMW": 0,
+   "unknownFullPerITMW": 1.4,
+   "unknownFullMonths": 48,
+   "steps": [],
+   "exportMW": 0,
+   "exportFactor": 0.9,
+   "priceAdder": "by country",
+   "priceMultiplier": 1,
+   "carbonMultiplier": 1,
+   "contractWaitMW": null,
+   "contractBridgeMW": null,
+   "contractExportMW": null,
+   "connectionCharge": 48000000,
+   "dateUncertainty": [
+    -6,
+    24
+   ]
+  },
+  "utilities": {
+   "gasAvailable": "Yes",
+   "gasDateMonths": 0,
+   "gasPrice": "by country",
+   "hydrogenAvailable": "No",
+   "waterAvailable": "Unknown",
+   "districtHeating": "No",
+   "reYieldFactor": 1,
+   "ppaInclude": true,
+   "ppaType": "hybrid",
+   "ppaCoverage": 50
+  },
+  "requirements": {
+   "backedPct": 1,
+   "topology": "N+1",
+   "autonomyH": 48,
+   "islanding": "No",
+   "upsMin": 5,
+   "blockSize": 10,
+   "catcherN": 4,
+   "carbonTarget": null,
+   "capexCeiling": null,
+   "maxRunHours": null,
+   "iedMWth": 50,
+   "mcpMinMWth": 1,
+   "mcpMaxMWth": 50,
+   "sevesoH2t": 5,
+   "permitAllowanceM": 6,
+   "sevesoFuelT": 2500,
+   "testRunHours": 6,
+   "gensetPrimaryHours": 0,
+   "testRunLoad": 0.75,
+   "bessUpsGensetFraction": 1,
+   "landTakeCeilingHa": null,
+   "noiseNightDbA": 45
+  },
+  "economics": {
+   "periodYears": 20,
+   "wacc": 0.07,
+   "contingency": 0.1,
+   "capexLow": -0.3,
+   "capexHigh": 0.5,
+   "carbonPrice": "by country",
+   "carbonEscalation": 0.02,
+   "capexFactor": 1,
+   "bessCapexFactor": 1,
+   "gridCapexFactor": 1,
+   "elecEscalation": 0,
+   "gasEscalation": 0,
+   "salvageFraction": 0.5,
+   "revenueExport": false,
+   "displayPeriods": [
+    10,
+    15
+   ]
+  },
+  "weights": {
+   "cost": 35,
+   "carbon": 25,
+   "ttp": 25,
+   "deliverability": 15
+  },
+  "deliverability": {
+   "emergingPenalty": 15,
+   "nascentPenalty": 40,
+   "majorFlagPenalty": 8,
+   "minorFlagPenalty": 3,
+   "gasUnknownPenalty": 10,
+   "hydrogenPenalty": 10,
+   "leadTimePenalty": 5,
+   "leadTimeThresholdM": 24,
+   "pooledBackupRisk": "minor",
+   "siteFitPenalty": false,
+   "siteFitFlagsPenalty": 10,
+   "siteFitNoFitPenalty": 25
+  },
+  "settings": {
+   "generationCap": 2000,
+   "sampleAboveCap": true,
+   "gridHandling": "unmet",
+   "runHourHandling": "flag",
+   "costMetric": "lcoe",
+   "carbonMetric": "location",
+   "absoluteScaling": false,
+   "rankCompliantFirst": false,
+   "hideDominated": false,
+   "windSiteThresholdHa": 20,
+   "bridgeBessHours": 24,
+   "timelineMonths": 120,
+   "rentalLeadMonths": 1,
+   "maxDispatchYears": 15,
+   "screeningModel": "full",
+   "repDaysPerMonth": 3,
+   "verifyTop": 10,
+   "autonomyBasis": "critical load",
+   "layoutCellM": 2,
+   "layoutCellLargeM": 5,
+   "siteLayoutScope": "auto",
+   "siteLayoutWorkLimit": 20000000,
+   "layoutLargeSiteHa": 50
+  },
+  "existing": {
+   "include": true,
+   "name": "Elecgás CCGT",
+   "type": "ccgt",
+   "units": 2,
+   "unitMW": 427.5,
+   "availableDate": "2028-07",
+   "eff": null,
+   "msl": null,
+   "vomPerMWh": null,
+   "leasePerKWMonth": 6,
+   "linkCapex": 62000000
+  },
+  "choices": {
+   "C1": {
+    "state": "open",
+    "values": [
+     "wait",
+     "bridge",
+     "islanded"
+    ]
+   },
+   "C2": {
+    "state": "open",
+    "values": [
+     "existing",
+     "rented",
+     "gasRecip",
+     "gasTurbine",
+     "fuelCell",
+     "dieselPrime"
+    ]
+   },
+   "C3": {
+    "state": "open",
+    "values": [
+     "remove",
+     "backup",
+     "prime",
+     "split"
+    ]
+   },
+   "C4": {
+    "state": "open",
+    "values": [
+     "none",
+     "existing",
+     "gasRecip",
+     "chp",
+     "fuelCell"
+    ]
+   },
+   "C4s": {
+    "state": "open",
+    "values": [
+     "average",
+     "shortfall"
+    ]
+   },
+   "C5": {
+    "state": "locked",
+    "values": [
+     "hvo"
+    ]
+   },
+   "C5a": {
+    "state": "open",
+    "values": [
+     "perBuilding",
+     "pooled"
+    ]
+   },
+   "C6": {
+    "state": "locked",
+    "values": [
+     "N+1"
+    ]
+   },
+   "C7": {
+    "state": "locked",
+    "values": [
+     "48"
+    ]
+   },
+   "C8": {
+    "state": "locked",
+    "values": [
+     "dlc"
+    ]
+   },
+   "C9": {
+    "state": "open",
+    "values": [
+     "roof",
+     "ground",
+     "split"
+    ]
+   },
+   "C10": {
+    "state": "locked",
+    "values": [
+     "roof"
+    ]
+   },
+   "C11": {
+    "state": "locked",
+    "values": [
+     "none"
+    ]
+   },
+   "C12": {
+    "state": "open",
+    "values": [
+     "none",
+     "2h25",
+     "4h50",
+     "shortfall",
+     "trigger"
+    ]
+   },
+   "C12r": {
+    "state": "locked",
+    "values": [
+     "peakShave"
+    ]
+   },
+   "C13": {
+    "state": "open",
+    "values": [
+     "none",
+     "hybrid"
+    ]
+   },
+   "C14": {
+    "state": "locked",
+    "values": [
+     "50"
+    ]
+   },
+   "C15": {
+    "state": "locked",
+    "values": [
+     "none"
+    ]
+   },
+   "C16": {
+    "state": "locked",
+    "values": [
+     "off"
+    ]
+   },
+   "C17": {
+    "state": "open",
+    "values": [
+     "AIS"
+    ]
+   },
+   "C18": {
+    "state": "open",
+    "values": [
+     "single"
+    ]
+   },
+   "C19": {
+    "state": "locked",
+    "values": [
+     "perPhase"
+    ]
+   },
+   "C20": {
+    "state": "locked",
+    "values": [
+     "none"
+    ]
+   }
+  },
+  "assumedInputs": {}
+ },
+ "inputHash": "f0c3dbdb2656a814",
+ "result": {
+  "inputHash": "f0c3dbdb2656a814",
+  "options": 2000,
+  "adequate": 1668,
+  "leader": {
+   "id": "O144JIWL",
+   "name": "Grid + rented temporary generation bridge → remove · Existing plant (lease) top-up · HVO N+1 · DLC · PV 23 MWp · PPA hybrid 50 %",
+   "score": 86.2356987894205,
+   "lcoe": 144.19498957793508,
+   "carbonG": 236.42967069482492,
+   "capex": 995174731.7480779
+  }
+ }
+}

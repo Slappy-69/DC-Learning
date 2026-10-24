@@ -1,8 +1,9 @@
 // Study files (work package 15, OPEN-QUESTIONS 27, answered 2026-10-24 with Claude's recommendation, accepted in advance
 // by the owner; BRIEF §4 "a project file (JSON) can be saved and reopened").
 //
-// A study file holds the engineer's inputs as entered (null = "at default", so a reopened study takes the tool's current
-// defaults for anything not entered), the inputs as they were run (every default resolved), and a short record of the
+// A study file holds the engineer's inputs as entered (inputs the engineer left blank keep their "derived" or "not known"
+// form, so a reopened study resolves them with the tool's current rules; inputs left at a plain default keep that value),
+// the inputs as they were run (every default resolved), and a short record of the
 // result: the input hash, the number of options and adequate options, and the leader. Reopening re-runs the study, which
 // is deterministic, and compares the new result with the record, so the engineer sees whether the tool's defaults or
 // engine have changed since the study was saved. Pure: no UI, no browser APIs.
@@ -49,13 +50,18 @@ export function studyFileName(inputs, date = new Date()) {
   return `${slug}-study-${date.toISOString().slice(0, 10)}.json`;
 }
 
-// Fills what the file lacks from the current defaults (inputs saved by an older version) and lists the paths filled.
-function fillFromDefaults(def, saved, path, added) {
-  const out = { ...saved };
+// Fills what the file lacks from the current defaults (inputs saved by an older version) and lists the paths filled;
+// drops inputs this version does not know and lists them (Haiku check H4, L-2: they would change the input hash).
+function fillFromDefaults(def, saved, path, added, dropped) {
+  const out = {};
+  for (const [k, sv] of Object.entries(saved)) {
+    if (k in def) out[k] = sv;
+    else dropped.push(path ? `${path}.${k}` : k);
+  }
   for (const [k, dv] of Object.entries(def)) {
     const p = path ? `${path}.${k}` : k;
     if (!(k in saved)) { out[k] = dv; added.push(p); }
-    else if (isObj(dv) && isObj(saved[k]) && k !== 'choices') out[k] = fillFromDefaults(dv, saved[k], p, added);
+    else if (isObj(dv) && isObj(saved[k]) && k !== 'choices') out[k] = fillFromDefaults(dv, saved[k], p, added, dropped);
   }
   return out;
 }
@@ -70,14 +76,22 @@ export function readStudyFile(text) {
   const ver = Number(m[1]);
   if (ver > 1) return { ok: false, error: `This study was saved by a newer version of the tool (schema version ${ver}); this version reads version 1.` };
   if (!isObj(f.inputs) || !isObj(f.inputs.project)) return { ok: false, error: 'This study file has no inputs.' };
-  const added = [];
   const def = buildDefaultInputs({ analysisStart: f.inputs.project.analysisStart || undefined });
-  const inputs = fillFromDefaults(def, f.inputs, '', added);
-  inputs.choices = { ...def.choices, ...(isObj(f.inputs.choices) ? f.inputs.choices : {}) };
+  // Every input section must be an object (Haiku check H4, L-3): a damaged file is refused with the section named.
+  for (const [k, dv] of Object.entries(def)) {
+    if (isObj(dv) && k in f.inputs && !isObj(f.inputs[k]) && k !== 'choices') return { ok: false, error: `This study file is damaged: the input section "${k}" is ${f.inputs[k] === null ? 'empty (null)' : `a ${Array.isArray(f.inputs[k]) ? 'list' : typeof f.inputs[k]}`}, not a set of inputs.` };
+  }
+  if ('choices' in f.inputs && f.inputs.choices !== null && !isObj(f.inputs.choices)) return { ok: false, error: 'This study file is damaged: the choices are not a set of choices.' };
+  const added = [], dropped = [];
+  const inputs = fillFromDefaults(def, f.inputs, '', added, dropped);
+  const savedChoices = isObj(f.inputs.choices) ? f.inputs.choices : {};
+  for (const k of Object.keys(savedChoices)) if (!(k in def.choices)) dropped.push(`choices.${k}`);
+  inputs.choices = { ...def.choices, ...Object.fromEntries(Object.entries(savedChoices).filter(([k]) => k in def.choices)) };
   const warnings = [];
   if (added.length) warnings.push(`Saved by an earlier version: ${added.length} input${added.length === 1 ? '' : 's'} not in the file take${added.length === 1 ? 's' : ''} today's defaults (${added.slice(0, 6).join(', ')}${added.length > 6 ? ', …' : ''}).`);
+  if (dropped.length) warnings.push(`${dropped.length} input${dropped.length === 1 ? '' : 's'} in the file ${dropped.length === 1 ? 'is' : 'are'} not known to this version and ${dropped.length === 1 ? 'was' : 'were'} left out (${dropped.slice(0, 6).join(', ')}${dropped.length > 6 ? ', …' : ''}).`);
   if (f.engineVersion && f.engineVersion !== ENGINE_VERSION) warnings.push(`Saved with engine ${f.engineVersion}; this is engine ${ENGINE_VERSION}.`);
-  return { ok: true, inputs, file: f, added, warnings };
+  return { ok: true, inputs, file: f, added, dropped, warnings };
 }
 
 // After the reopened study has run: does the result match the saved record?

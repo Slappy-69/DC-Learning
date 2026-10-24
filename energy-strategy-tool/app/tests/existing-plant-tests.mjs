@@ -8,6 +8,7 @@ import { buildContext } from '../src/engine/context.js';
 import { evaluateOption } from '../src/engine/option.js';
 import { combustionPlant } from '../src/engine/permitting.js';
 import { NA } from '../src/engine/generator.js';
+import { permanentShortfallCoolings } from '../src/engine/adequacy.js';
 
 const near = (a, b, tol = 1e-9) => Math.abs(a - b) <= tol * Math.max(1, Math.abs(a), Math.abs(b));
 
@@ -32,6 +33,9 @@ export async function existingPlantTests(test, ctxRuns) {
     const perm = new Set(['air', 'evap', 'dlc', 'immersion'].filter((c) => asFirm.some((o) => o.v.C8 === c && o.v.C4s === 'shortfall' && o.v.C1 !== 'islanded')));
     assert.ok(asFirm.every((o) => o.v.C4s === 'shortfall' || o.v.C1 !== 'islanded'), 'islanded firm plant sized twice');
     assert.ok(asFirm.every((o) => !(o.v.C4s === 'average' && perm.has(o.v.C8) && o.v.C1 !== 'islanded')), 'rule (n): two sizings for one cooling type');
+    // Every cooling type (Haiku check H4, L-10): shortfall sizing exactly where the cooling type has a permanent shortfall.
+    const permAll = permanentShortfallCoolings(normalizeInputs(inp));
+    for (const o of asFirm) assert.equal(o.v.C4s, o.v.C1 === 'islanded' || permAll.has(o.v.C8) ? 'shortfall' : 'average', `${o.id}: rule (n) sizing for ${o.v.C8}`);
     const rate = 6 * 1000;
     let checked = 0;
     for (const o of ex) {

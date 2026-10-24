@@ -15,8 +15,8 @@
 //     ceiling, land take above the net developable area coincides with "Does not fit").
 //  5. A block placed only by relaxing a soft rule goes in at the first level that works (LEVELS below) and
 //     every rule it breaks at its position is named; the option "Fits with flags".
-//  Iteration with sizing (§10.4): "fill residual" solar is sized from the area it fills after the other
-//  blocks are placed. No other sizing depends on the layout.
+//  Ground PV that fills the area left after the other blocks are placed is reported in the site fit only; since
+//  OPEN-QUESTIONS 53–54 the PV size comes from the areas entered, and no sizing depends on the layout.
 //
 // Occupancy grid: for each block and relaxation level a forbidden mask is painted (envelope, soft
 // exclusions, boundary separation, height zones, and every placed block dilated by the required

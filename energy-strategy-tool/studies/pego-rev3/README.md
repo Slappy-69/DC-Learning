@@ -11,7 +11,7 @@ report of the main run were delivered to the owner in the Claude session; they a
 
 ## The study build
 
-The app has no "existing plant" type (KNOWN-ISSUES 12), so `patch.py` makes a study build: a copy of `app/src` with
+When revision 3 was made the app had no "existing plant" type (KNOWN-ISSUES 12, since built as work package 12), so `patch.py` makes a study build: a copy of `app/src` with
 
 - two technology records for the Elecgás CCGT (2 × 427.5 MW): leased from mid-2028 as bridging plant, or from 2031 as firm top-up;
   lease €6/kW a month as fixed O&M, €3/MWh, 56 %, 45 % minimum load, exactly two units (no N+1), own consent, not drawn on the campus,
@@ -50,3 +50,13 @@ python3 chart_market.py && python3 charts3.py && python3 diagrams3.py && python3
 Revision 3 found KNOWN-ISSUES 14–18 (the time-to-power metric, rented plant paid from availability, retained bridging plant bought all
 at once, the eight-year dispatch cap, an entered grid adder ignored); all are fixed in work package 11. Revision 3.1 found KNOWN-ISSUES 19
 (PPA energy not turned down when firm plant runs at its minimum), open.
+
+## On the product (since work package 12)
+
+`pego-product.mjs` runs Pego on the product itself, with the existing-plant input instead of the study build's CCGT records, and
+`pego-product.study.json` holds its inputs as a study file (work package 15; the app's "Open study…" reads it too). Differences
+from the study build: one availability date for the CCGT in both roles (the lease rule starts the top-up lease when it is needed,
+month 51, rather than the study's January 2031), the C4 choice includes gas engines, and the run samples a different 2,000 options.
+Result on 24 October 2026: 14.4 s; leader "rent, grid, existing CCGT top-up, 50 % PPA" at €144.2/MWh. The delivered report's figures
+come from the study build.
+

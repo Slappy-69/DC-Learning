@@ -123,8 +123,8 @@ export function* runModelSteps(rawInputs, opts = {}) {
   let layoutSummary = null;
   // ---- 5. Site layout (§10.3 blocks, §10.4 auto-layout, §10.6 site fit), cached by block-set key ----
   // Blocks are built per option; options with the same block set share one layout, and the distinct sets
-  // are laid out as one batch that places shared leading blocks once (layout.js). "Fill residual" solar is
-  // sized from the layout here, before dispatch (the only sizing that depends on the layout).
+  // are laid out as one batch that places shared leading blocks once (layout.js). Ground PV that fills the space left
+  // feeds the site fit only; no sizing depends on the layout (Haiku check H4, L-12).
   {
     const site = ctx.site;
     log.start(STAGE.layout, n, { cache: 'layout block-set key', cellM: site.grid.cell, nx: site.grid.nx, ny: site.grid.ny, envelopeM2: Math.round(site.areas.envelopeM2), netM2: Math.round(site.areas.netM2) });
@@ -143,9 +143,17 @@ export function* runModelSteps(rawInputs, opts = {}) {
     log.progress(STAGE.layout, n, n, { step: 'blocks', options: n, distinctLayouts: misses, cacheHits: hits, cacheMisses: misses });
     // Work package 13 (OPEN-QUESTIONS 83): lay out every option only when the run can afford it or site fit can change the
     // ranking; otherwise the Site tab (Beta) lays out the options it shows, when it shows them.
-    // Layout work: ground blocks squared, summed over every option of the run (a worker scales its interleaved slice
-    // to the whole list, so every worker of a pool takes the same decision).
-    const work = Math.round((recs.reduce((a, r) => a + r.bs.ground.length * r.bs.ground.length, 0) * gen.options.length) / Math.max(1, n));
+    // Layout work: ground blocks squared, summed over the options of the run, estimated from the same fixed sample of the
+    // whole generated list (every k-th option, about 200) in every source, so all the workers of a pool and a one-thread
+    // run take the same decision (Haiku check H4, L-1; before, each worker scaled its own slice).
+    const kS = Math.max(1, Math.ceil(gen.options.length / 200));
+    let sW = 0, sN = 0;
+    for (let i = 0; i < gen.options.length; i += kS) {
+      const g = gen.options[i];
+      const bs = buildBlocks(ctx, g.v, sizeOption(ctx, g.v));
+      sW += bs.ground.length * bs.ground.length; sN++;
+    }
+    const work = Math.round((sW * gen.options.length) / Math.max(1, sN));
     const fitRanks = !!(inputs.deliverability.siteFitPenalty || inputs.settings.rankCompliantFirst);
     const layAll = inputs.settings.siteLayoutScope === 'all' || fitRanks || work <= (inputs.settings.siteLayoutWorkLimit ?? 2e7);
     if (!layAll) {

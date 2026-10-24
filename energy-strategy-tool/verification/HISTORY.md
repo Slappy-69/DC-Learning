@@ -94,3 +94,10 @@ Reports in `verification/walkthrough-build/`. The owner asked for Haiku checks o
 | H2, inputs, grid, screening, defaults (packages 0, 2, 3, 8) | Haiku | 1 high, 4 medium, 10 low. High: screening carbon outside ±5 % (AC 4). All fixed except L6 (no Grid + export contract input, disclosed) |
 | H3, results, PDF, map, currency (packages 1, 6, 7, 9, 10) | Haiku | 2 high, 4 medium, 6 low. High: Russia's outline across 180°; coastal pins. All fixed except L5 (tornado observations, for the owner) |
 | Opus review | — | Waived by the owner for this round |
+
+## Engine fixes and new packages: work packages 11–15 (2026-10-24, branch feature/engine-fixes)
+
+| Check | Model | Result |
+|---|---|---|
+| H4, packages 11–15 (engine fixes, PPA displacement, existing plant, layout scope, archetypes, study files) | Haiku | 0 high, 4 medium, 12 low (33 verified, 15 failed, 7 not verified). Medium: a land-take ceiling hid not-laid-out options; rule (o) wording; stale figures in the guide; Pego product figures not reproducible from the repository. All fixed (`app/BUILD-NOTES.md`, "Fixes after Haiku check H4") |
+| Opus review | — | Waived by the owner ("Don't bother with opus review", 2026-10-23) |

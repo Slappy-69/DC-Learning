@@ -114,7 +114,7 @@ export const RULES = [
   // Work package 14 (OPEN-QUESTIONS 85, 2026-10-24; known issue 5): a rule rather than an n/a collapse, because C9 comes
   // before C10 in the choice order and the Site tab (Beta) still needs a location to draw.
   { id: 'o', name: '(o) Heat rejection location matters only with rooftop solar',
-    detail: 'Without rooftop solar (C10 = None) the heat rejection location changes no result outside the Site tab (Beta): it only frees roof area for PV. Only the first open location is generated then; the others would repeat it.',
+    detail: 'Without rooftop solar (C10 = None) the heat rejection location changes no cost, carbon, time-to-power, deliverability or flag (only the Site tab drawing): it only frees roof area for PV. Only the first open location is generated then; the others would repeat it (scores can differ by a few hundredths of a point through the run\'s axis ranges).',
     fails: (v, inputs) => v.C10 === 'none' && v.C9 !== NA && v.C9 !== openValues(inputs, 'C9')[0] },
   { id: 'n', name: '(n) Existing plant as firm plant is sized once',
     detail: 'C4 = Existing plant is the units offered whatever the sizing rule, so only one C4 sizing is generated: Permanent shortfall where there is one (islanded included), otherwise Average load.',

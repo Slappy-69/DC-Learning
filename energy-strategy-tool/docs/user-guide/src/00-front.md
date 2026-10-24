@@ -90,7 +90,7 @@ Every screenshot and worked example comes from one run of the **T1 reference pro
 | Gas available | Yes, from 18 months after the start |
 | Everything else | Program defaults |
 
-The run screened **2,000 options** out of 57,028 possible combinations. The leader (rank 1) was:
+The run screened **2,000 options** out of 57,028 possible combinations (run of 21 October 2026; 48,340 after the changes of 24 October 2026). The leader (rank 1) was:
 
 > **Grid · Diesel N+1 · DLC · PV 7.7 MWp · PPA hybrid 100 %**: wait for the grid connection; diesel backup generators with one spare per block of ten; direct liquid cooling; 7.7 MWp of solar on the roof and the spare ground; and a power purchase agreement for wind and solar energy covering all the site's consumption. Weighted score 92.71 out of 100; levelised cost €153.8/MWh; carbon 113 g/kWh (location-based).
 

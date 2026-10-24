@@ -189,6 +189,12 @@ export async function engineFixesTests(test, ctxRuns) {
       if (flagged) assert.ok(r.status !== 'Meets');
     }
     assert.ok(gasOK > 0 && gasFlagged > 0);
+    // A constructed pair (Haiku check H4, L-10): gas CHP with HVO standby covering the critical load is not flagged; the same
+    // option with gas standby gensets is.
+    const chpHvo = opts.find((o) => o.v.C4 === 'chp' && o.v.C5 === 'hvo' && o.v.C1 === 'wait');
+    const eH = evaluateOption(ctx, chpHvo.v), eG = evaluateOption(ctx, { ...chpHvo.v, C5: 'gas' });
+    assert.ok(eH.res.gasDependent && !eH.flags.some((f) => f.id === 'res-gas'), 'gas CHP with HVO standby flagged');
+    assert.ok(eG.flags.some((f) => f.id === 'res-gas' && /plant that does not burn gas covers 0\.0 of/.test(f.message)), 'gas standby not flagged');
     out.push(`gas flag: ${gasFlagged} options flagged, ${gasOK} with gas plant not flagged because plant that does not burn gas covers the critical load`);
     // H1 L-1: liquid fuel held for running HVO-diesel prime or bridging plant counts towards Seveso (retained plant that
     // is the backup already has its store in the backup's fuel).

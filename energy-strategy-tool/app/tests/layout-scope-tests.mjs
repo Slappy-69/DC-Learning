@@ -8,6 +8,7 @@ import { runModel } from '../src/engine/run.js';
 import { inspectOption, compareWithRun } from '../src/engine/inspect.js';
 import { layoutForOption } from '../src/engine/siteapi.js';
 import { normalizeInputs } from '../src/engine/defaults.js';
+import { applyView } from '../src/engine/scoring.js';
 
 export async function layoutScopeTests(test, ctxRuns) {
   await test('40. Site layout in the run (work package 13): T1 is laid out in full (layout work below the limit); above the limit every option is "Not laid out" with a run flag, and scores, ranks and every main-flow figure are unchanged; with the site-fit penalty, compliant-first ranking or "every option" the run lays out every option; the Site tab and the inspector lay out on demand', () => {
@@ -34,6 +35,12 @@ export async function layoutScopeTests(test, ctxRuns) {
       assert.deepEqual(o.flags.filter((g) => !/^site-/.test(g.id)).map((g) => g.id), x.flags.filter((g) => !/^site-/.test(g.id)).map((g) => g.id));
     }
     out.push(`T1 layout work ${(run.layoutSummary.work / 1e6).toFixed(2)} million block² (limit 20 million: laid out in full); with the limit at 1,000 every option is "Not laid out", the run takes ${(ms / 1000).toFixed(1)} s and all ${run.options.length} ranks, scores, LCOEs, deliverability, adequacy and main-flow flags equal the full run`);
+    // Filters (Haiku check H4, M-1): options not laid out stay in view under a land-take ceiling or a site-fit filter.
+    for (const view of [{ landTakeCeilingHa: 1 }, { siteFit: ['Fits'] }]) {
+      const v = applyView(run.options, view);
+      assert.equal(v.list.length, run.options.length, `${JSON.stringify(view)} hid options not laid out`);
+      assert.ok(v.chips.some((c) => /2,000 not laid out, kept|2000 not laid out, kept/.test(c)), v.chips.join(' | '));
+    }
     // On demand: the Site tab's layout and the inspector.
     const lead = run.options.find((o) => o.rank === 1);
     const L = layoutForOption(run.ctx.site, normalizeInputs(run.inputs), lead);

@@ -1848,7 +1848,7 @@ Branch `feature/engine-fixes` (continued). Known issue 12, found in the Pego stu
 - **Outside the campus:** not in the IED / MCP aggregation (`combustionPlant`), not a reason for the campus gas pipe or the gas-unknown deliverability item, not drawn on the plan (`plantBlocks`).
 - **Report:** the PDF lists the existing-plant inputs as their own section.
 
-T1 with an example plant (2 × 40 MW CCGT from January 2028, €6/kW a month, €8 m connection): 112 options use it as bridging plant and 311 as firm plant out of 2,000; the cheapest of them, "Grid · Existing plant (lease) top-up · Diesel N+1 · Evaporative-adiabatic · PV 5.6 MWp · PPA hybrid 100 %", costs €142.7/MWh against the leader's €152.3 but ranks 25th on carbon (188 g/kWh against 122). Test 39; 70/70 Node tests.
+T1 with an example plant (2 × 40 MW CCGT from January 2028, €6/kW a month, €8 m connection), before work package 14 (superseded; after it, 141 and 305 options, cheapest €139.2/MWh, Haiku check H4): 112 options use it as bridging plant and 311 as firm plant out of 2,000; the cheapest of them, "Grid · Existing plant (lease) top-up · Diesel N+1 · Evaporative-adiabatic · PV 5.6 MWp · PPA hybrid 100 %", costs €142.7/MWh against the leader's €152.3 but ranks 25th on carbon (188 g/kWh against 122). Test 39; 70/70 Node tests.
 
 ## Work package 13: site layout in the run (2026-10-24)
 
@@ -1857,11 +1857,11 @@ Known issue 20, OPEN-QUESTIONS 83 (Claude's recommendation accepted in advance b
 | Case | Options | Distinct block sets | Blocks per set | Grid cells | Layout per set | All sets |
 |---|---|---|---|---|---|---|
 | T1 | 2,000 | 1,650 | 21.3 | 238 × 159 (2 m) | 14 ms (alone; 5.4 s as one shared batch) | 22 s alone, 5–10 s in the run |
-| Pego (product inputs) | 2,000 | 1,433 | 229.2 | 300 × 200 (5 m) | 364 ms | about 9 minutes on one core |
+| Pego (product inputs, before work package 14) | 2,000 | 1,433 | 229.2 | 300 × 200 (5 m) | 364 ms (one set alone) | about 9 minutes on one core (estimate: sets × time per set) |
 
 - **Rule:** layout work = ground blocks squared, summed over the options of the run (a pool worker scales its interleaved slice to the whole list, so every worker decides alike). Above `settings.siteLayoutWorkLimit` (20 million, judgement; T1 0.94 million, Pego about 105 million), and when site fit cannot change the ranking (deliverability site-fit penalty off, compliant-first ranking off) and `settings.siteLayoutScope` is "auto", every option gets the site fit "Not laid out" (`notLaidOut()` in `run.js`, `skipped: true`), the layout stage logs `onDemand`, and an info run flag `site-layout-on-demand` explains it.
 - **On demand:** the Site tab already laid out the option it shows (`layoutForOption`); it now takes that layout's site fit for options the run skipped, in the plan and in the small multiples. The option detail says "Not laid out in the run" with a link to the Site tab; the ranked list shows "Not laid out" and no land take; land-take sorting and the land-take ceiling filter treat such options as unknown. The inspector does not compare site fit for them.
-- **Unchanged:** scores, ranks, LCOE, deliverability, adequacy and main-flow flags (test 40 compares all 2,000 T1 options with the limit forced down). Pego on the product with the existing-plant input: 16 s, leader "rent, grid, existing CCGT top-up" at €141.1/MWh (study build, revision 3.1: €141.3; the lease now starts when needed, month 51, rather than at the study's January 2031).
+- **Unchanged:** scores, ranks, LCOE, deliverability, adequacy and main-flow flags (test 40 compares all 2,000 T1 options with the limit forced down). Pego on the product with the existing-plant input, before work package 14: 16 s, leader "rent, grid, existing CCGT top-up" (no PPA) at €141.1/MWh. After work package 14 the sampled 2,000 options differ (the combination space changed), and the stored study `studies/pego-rev3/pego-product.study.json` (run with `pego-product.mjs`) gives 14.4 s and the leader "rent, grid, existing CCGT top-up, 50 % PPA" at €144.2/MWh; the Haiku check (H4) reproduced €144.19 with its own rebuilt inputs. The study build of revision 3.1 (€141.3/MWh without a PPA) remains the basis of the delivered report.
 - **For the owner (not decided):** skipping the layout in every run while the Site tab is off would make T1 run in about 8 s instead of 17 s.
 - Tests: test 40; 71/71 Node tests.
 
@@ -1883,3 +1883,27 @@ OPEN-QUESTIONS 27 (Claude's recommendation accepted in advance by the owner). `s
 - `compareWithSaved(file, run)`: same inputs (hash) and the same leader, score and LCOE → "Re-run matches the saved study"; otherwise names the saved and current leaders and says whether the inputs (defaults) or the engine changed.
 - App: "Save study" (not in the hosted page: no downloads there) and "Open study…" (a hidden file input; the desktop program's file dialog), with a status line under the header. The desktop save dialog keeps its generic title for study files ("Save file"); the packaging was not changed, to avoid a Windows build for a title.
 - Tests: Node test 42 (round trip of T1, an older file with three inputs and a choice removed, a changed-default comparison, five refused files, a study without a run); browser check B37 (save, reopen with the same result, a JSON file without a schema refused).
+
+## Fixes after Haiku check H4 (2026-10-24)
+
+Report: `verification/engine-fixes/H4-packages-11-15.md` (33 verified, 15 failed, 7 not verified; 0 high, 4 medium, 12 low). The engine, the energy balance, the ledger and the flag-only rule held; the failures were claims, figures and edge cases.
+
+| Finding | Fix |
+|---|---|
+| M-1: a land-take ceiling (or a site-fit filter) hid every option of a large campus that was not laid out | Options not laid out stay in view under both filters; the chip says how many ("N not laid out, kept"). Land-take sorting keeps them last as a group (L-5, no change) |
+| M-2: rule (o) "changes no result" not exact: scores move by up to 0.065 points through the axis ranges | Reworded in the rule, the guide, KNOWN-ISSUES 5 and OPEN-QUESTIONS 85: no cost, carbon, time, deliverability or flag changes; scores can move by hundredths of a point |
+| M-3, L-7: stale figures (57,028 combinations, 1,537 on time, 350 rented, 105 million, Pego 16 s and €141.1) | The guide's figures are dated (21 or 24 October 2026) or made general; superseded figures in these notes are marked; current T1: 48,340 combinations, 1,604 adequate |
+| M-4: the Pego product figures could not be rerun from the repository | `studies/pego-rev3/pego-product.mjs` and the study file `pego-product.study.json` hold the product inputs; current result 14.4 s, €144.2/MWh (with the 50 % PPA); the delivered study's figures come from the study build, as its report says |
+| L-1: pool workers could take different layout decisions near the limit | The layout work is estimated from the same sample of the whole generated list (every k-th option, about 200) in every worker and in a one-thread run |
+| L-2: unknown keys in a study file changed the hash | Inputs and choices unknown to this version are left out, with a warning naming them |
+| L-3: a study file with a section set to null failed later | Refused on reading, with the section named |
+| L-4: the "null = at default" comment | Reworded in `study.js` |
+| L-6: connection capex wording | The guide says the capex is still paid when the plant is handed back, with no life or residual value (judgement) |
+| L-8: the study README said the app had no existing-plant type | Updated |
+| L-9: one availability date for both roles of the existing plant | Recorded as a limit in the guide (chapter 35); the lease rule starts the firm lease when it is needed |
+| L-10: weak tests | Test 42 uses a real second run with another WACC, checks unknown inputs and a damaged section; test 39 checks rule (n) for every cooling type; test 36 adds a constructed gas-flag pair (gas CHP with HVO standby: no flag; with gas standby: flagged) |
+| L-11: the belly-tank allowance left out of the running fuel store | No effect: the allowance is 0 m³ since belly tanks were removed (OPEN-QUESTIONS 52–54) |
+| L-12: two comments said fill solar is sized from the layout | Corrected in `layout.js` and `run.js` |
+
+Not verified by the check and left as they are: OQ74 (kept as built), the old-code hour counts (printed by tests 36 and 38), `asGoodShare` (test 37 checks it), the Beta Site tab rules (browser checks B21–B27 and AC 27).
+

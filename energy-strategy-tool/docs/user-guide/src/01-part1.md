@@ -127,7 +127,7 @@ Some changes do not need a new run. Changing the **weights**, the cost or carbon
 
 The header strip at the top of the results summarises the run: how many options were shown, screened and possible; the leader and its score; the site-fit counts; the model; key settings; the weights; and the count of unverified defaults.
 
-![Current version: the header strip after the T1 run. 2,000 options screened from 57,028 combinations; the leader scores 92.7.](img/s01-header-strip.png)
+![Current version: the header strip after the T1 run. 2,000 options screened from 57,028 combinations; the leader scores 92.7 (run of 21 October 2026).](img/s01-header-strip.png)
 
 ## Step 5. Look at the best options
 

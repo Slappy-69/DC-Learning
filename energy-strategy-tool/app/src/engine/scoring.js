@@ -152,11 +152,15 @@ export function applyView(options, view) {
   const chips = [];
   let list = options;
   if (v.resilience.length) { list = list.filter((o) => v.resilience.includes(o.resilience.status)); chips.push(`Resilience: ${v.resilience.join(', ')}`); }
-  if (v.siteFit.length) { list = list.filter((o) => o.siteFit && v.siteFit.includes(o.siteFit.status)); chips.push(`Site fit: ${v.siteFit.join(', ')}`); }
+  // Options the run did not lay out (a large campus, work package 13) cannot be judged by site fit or land take: they stay
+  // visible, and the chip says how many (Haiku check H4, M-1).
+  const notLaid = (o) => !!(o.siteFit && o.siteFit.skipped);
+  const nNotLaid = (l) => l.filter(notLaid).length;
+  if (v.siteFit.length) { list = list.filter((o) => notLaid(o) || (o.siteFit && v.siteFit.includes(o.siteFit.status))); const k = nNotLaid(list); chips.push(`Site fit: ${v.siteFit.join(', ')}${k ? ` (${k} not laid out, kept)` : ''}`); }
   if (v.flagIds.length) { list = list.filter((o) => o.flags.some((f) => v.flagIds.includes(f.id))); chips.push(`Has flag: ${v.flagIds.join(', ')}`); }
   if (v.hideFlagIds.length) { list = list.filter((o) => !o.flags.some((f) => v.hideFlagIds.includes(f.id))); chips.push(`Without flag: ${v.hideFlagIds.join(', ')}`); }
   if (v.capexCeiling != null) { list = list.filter((o) => o.eco.capex <= v.capexCeiling); chips.push(`Capex ≤ ${v.capexCeiling}`); }
-  if (v.landTakeCeilingHa != null) { list = list.filter((o) => o.siteFit && !o.siteFit.skipped && o.siteFit.landTakeHa <= v.landTakeCeilingHa + 1e-9); chips.push(`Land take ≤ ${v.landTakeCeilingHa} ha`); }
+  if (v.landTakeCeilingHa != null) { list = list.filter((o) => notLaid(o) || (o.siteFit && o.siteFit.landTakeHa <= v.landTakeCeilingHa + 1e-9)); const k = nNotLaid(list); chips.push(`Land take ≤ ${v.landTakeCeilingHa} ha${k ? ` (${k} not laid out, kept)` : ''}`); }
   if (v.dominated === 'only') { list = list.filter((o) => o.dominatedBy); chips.push('Dominated only'); }
   if (v.dominated === 'non') { list = list.filter((o) => !o.dominatedBy); chips.push('Non-dominated only'); }
   if (v.archetypesOnly) { list = list.filter((o) => o.archetype); chips.push('Archetypes only'); }

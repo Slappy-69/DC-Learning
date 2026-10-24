@@ -227,10 +227,10 @@ Only logically impossible combinations are removed, each by a named rule:
 - **(l)** Existing plant (C2 or C4 "Existing plant (lease)") needs an existing plant entered with its units and unit size, and is used in one role per option (built 24 October 2026).
 - **(m)** Existing plant as bridging plant is handed back when the grid arrives (C3 "Remove") or kept running (C3 "Retain as prime"), and is never the campus's standby (C5 "Retained bridging plant").
 - **(n)** Existing plant as firm plant is the units offered whatever the sizing rule, so it is generated with one C4 sizing: "Permanent shortfall" where there is one, otherwise "Average load".
-- **(o)** Without rooftop solar (C10 "None") the heat rejection location changes no result outside the Site tab: only the first open location is generated (built 24 October 2026, OPEN-QUESTIONS 85). In T1 it removes 24,168 combinations that would have repeated others.
+- **(o)** Without rooftop solar (C10 "None") the heat rejection location changes no cost, carbon, time-to-power, deliverability or flag of the option (only the Site tab drawing): only the first open location is generated (built 24 October 2026, OPEN-QUESTIONS 85). Scores can move by a few hundredths of a point, because the run's axis ranges include options with rooftop solar whose PV size depends on it. In T1 it removes 24,168 combinations that would have repeated others.
 
 "Retain for grid services" (C3) is no longer in the default set: grid-service revenue is not modelled, so it repeated "Retain as backup", and revenue options are off by default. It can be ticked in the choices (built 24 October 2026).
-T1: rule (e) removes 5,184; the others none. **57,024** valid combinations remain.
+T1 (run of 21 October 2026): rule (e) removes 5,184; the others none. **57,024** valid combinations remain. On 24 October 2026, with rules (l)–(o) and the smaller C3 default set, T1 has 48,340 combinations; rule (o) removes 24,168.
 
 ## Step 4. Archetypes
 
@@ -391,10 +391,10 @@ With "BESS + solar only" bridging, the battery is S MW for 24 hours. After the f
 
 **When bridging plant arrives and is paid for** (built 24 October 2026, OPEN-QUESTIONS 69 and 70):
 
-- **Rented plant** is hired one month (`settings.rentalLeadMonths`, judgement, 0–6) before the first month of shortfall (islanded: before the first load), not from the month it could first arrive. Dispatch, time-to-power and the rental all start then; the sizing sentence gives both months. In T1, all 350 rented options are hired later than they could arrive.
+- **Rented plant** is hired one month (`settings.rentalLeadMonths`, judgement, 0–6) before the first month of shortfall (islanded: before the first load), not from the month it could first arrive. Dispatch, time-to-power and the rental all start then; the sizing sentence gives both months. In T1 every rented option is hired later than it could arrive (test 36 checks each one).
 - **Plant kept as the backup** (C5 "retained") is bought in step with the buildings: the bridging units at the bridging date, then the units each later building's critical load needs, with its redundancy, at that building's date. Fixed O&M follows the units owned; rented plant kept as the backup is hired in the same steps. Dispatch still counts the whole kept fleet from its first date, because after the grid arrives it serves only as backup or above-grid prime.
 
-**Existing plant near the site** (built 24 October 2026, work package 12) is sized differently: as bridging plant or as firm plant it is exactly the units offered, with no N+1 added (the standby gensets cover a unit trip), and the sentence says if it falls short of the need. It is available from the month entered, with no permitting allowance, and its lease starts a month before it is first needed: as bridging plant, before the first month of shortfall; as firm plant, before the first month the design load exceeds the grid and any bridging plant still on site (as baseload, before the first load).
+**Existing plant near the site** (built 24 October 2026, work package 12) is sized differently: as bridging plant or as firm plant it is exactly the units offered, with no N+1 added (the standby gensets cover a unit trip), and the sentence says if it falls short of the need. It is available from the month entered, with no permitting allowance, and its lease starts a month before it is first needed: as bridging plant, before the first month of shortfall; as firm plant, before the first month the design load exceeds the grid and any bridging plant still on site (as baseload, before the first load). One availability date covers both roles: a study that needs the plant later as firm plant than as bridging plant relies on the lease rule, which starts the firm lease only when it is needed.
 
 In T1, for example, a rented bridge of 7 × 2 MW keeps 6 units (12 MW) for the 9.0 MW permanent shortfall of evaporative cooling and retires 1 into backup. Rule (h) generates the split only with generating plant (not "BESS + solar only") and where there is a permanent shortfall; otherwise it would repeat "Retain as backup".
 
@@ -504,7 +504,7 @@ Blocks are placed in priority order:
 
 Each block goes to the feasible position with the lowest cost for its rule (ties to the lower row, then column, then unrotated). A position is feasible if every cell is buildable and every separation is met: each block type's clearance to others, specific pairs (for example fuel storage 6 m from halls and 10 m from the boundary; batteries 10 m from occupied buildings), height limits and exclusions.
 
-**When the run lays out** (built 24 October 2026, work package 13): every option, unless the layout work (ground blocks squared, summed over the options) is above `settings.siteLayoutWorkLimit` (20 million, judgement) and site fit cannot change the ranking. T1's work is about 1 million; the Pego campus about 105 million, which took about 9 minutes on one core. Above the limit, options are "Not laid out" and the Site tab lays out on demand.
+**When the run lays out** (built 24 October 2026, work package 13): every option, unless the layout work (ground blocks squared, summed over the options, estimated from about 200 of them) is above `settings.siteLayoutWorkLimit` (20 million, judgement) and site fit cannot change the ranking. T1's work is about 1 million; the Pego campus, with about 230 blocks an option, about 105–135 million depending on the options sampled, which would take several minutes on one core. Above the limit, options are "Not laid out" and the Site tab lays out on demand; the site-fit and land-take filters keep such options in view and say how many.
 
 ## Relaxation
 
@@ -657,7 +657,7 @@ The grid gives 20 MW from month 0, which is more than phase 1's initial 14.1 MW,
 | metric = 0 + 0 + 0.5 × 24.9 ÷ 113.07 = 0.11 months late   (before 24 October 2026: 30.11 months)
 :::
 
-In the run after the fixes, 1,537 of T1's 2,000 options power every building on time with no gap and score 0; the axis separates only the options that are late.
+In the T1 run of 24 October 2026, most options (1,604 of 2,000 after work package 14) power every building on time with no gap and score 0; the axis separates only the options that are late.
 
 ## Targets
 

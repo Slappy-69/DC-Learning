@@ -18,7 +18,7 @@ Each line is booked in the year its plant can first supply power (or, for per-ph
 | Battery | MWh × €250/kWh + MW × €150/kW (× 1,000) | availability | 15 |
 | Firm prime plant | MW × €/kW × 1,000 | availability | by technology |
 | Bridging plant (not rented) | MW × €/kW × 1,000 | availability; plant kept as the backup: the bridging units at availability, then each building's units at its date (lines "(bridging)" and "(retained as backup)", built 24 October 2026) | by technology |
-| Existing plant: connection to the campus (built 24 October 2026) | the amount entered; no plant capex (the plant is leased) | when the lease starts | 25 (none if handed back when the grid arrives) |
+| Existing plant: connection to the campus (built 24 October 2026) | the amount entered; no plant capex (the plant is leased) | when the lease starts | 25; when the plant is handed back at the grid date the capex is still paid but has no life or residual value (judgement) |
 | Gas connection pipe | km × €0.8 m; existing plant outside the campus does not need it | first gas plant on the campus | 40 |
 | Backup gensets | MW × €/kW × 1,000, split by phase | each phase | 25 |
 | Battery for UPS augmentation | as battery, split by phase | each phase | 15 |
@@ -392,7 +392,7 @@ The T1 results are in chapter 27.
 
 ## Generation
 
-209,952 raw combinations; 147,744 collapsed as not applicable; 5,184 removed by rule (e); 57,024 valid; 4 archetypes outside the open choices; 57,028 combinations; 2,000 screened (11 archetypes + 1,989 sampled, 364 repaired). 1,769 distinct dispatch configurations; 1,324 distinct layouts.
+(Run of 21 October 2026; 48,340 combinations on 24 October 2026.) 209,952 raw combinations; 147,744 collapsed as not applicable; 5,184 removed by rule (e); 57,024 valid; 4 archetypes outside the open choices; 57,028 combinations; 2,000 screened (11 archetypes + 1,989 sampled, 364 repaired). 1,769 distinct dispatch configurations; 1,324 distinct layouts.
 
 ## The top twelve
 
