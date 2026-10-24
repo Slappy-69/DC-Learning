@@ -1,0 +1,14 @@
+{
+  "accessed": "2026-10-24",
+  "omipPtBase": {"settled": "2026-10-21", "source": "OMIP, Portuguese base-load futures (reference prices)", "url": "https://www.omip.pt/en/plazo-hoy",
+    "cal": {"2027": 116.97, "2028": 70.40, "2029": 65.95, "2030": 60.40, "2031": 59.10, "2032": 57.90, "2033": 55.40, "2034": 54.00, "2035": 53.50, "2036": 53.15}},
+  "ptSpot": {"date": "2026-10-24", "index": 137.19, "nextDay": 110.09, "week44": 194.25, "source": "OMIP, Portugal base spot index and settlement 22 Oct 2026", "url": "https://www.omip.pt/en"},
+  "pvbGas": {"settled": "2026-10-22", "source": "OMIP, PVB-ES natural gas futures", "url": "https://www.omip.pt/en",
+    "spot": 89.18, "yr": {"2027": 72.93, "2028": 46.40, "2029": 33.82, "2030": 27.80}},
+  "pvbTtfSpread": {"date": "2026-10-22", "yr2027": -0.825, "yr2028": -0.804, "source": "MIBGAS, PVB-TTF products", "url": "https://www.mibgas.es/en/market-results/daily-price/pvb-ttf"},
+  "ttf": {"date": "2026-10-02", "nov26": 76.14, "source": "Soldionline, TTF November 2026 future", "url": "https://www.soldionline.it/notizie/forex-commodities/gas-perche-e-tornato-sopra-76-euro-il-future-ttf-novembre-298"},
+  "cause": {"date": "2026-03-19", "text": "Strait of Hormuz effectively closed since 2 March 2026; Iranian attack damaged about 17 % of Qatar's Ras Laffan LNG capacity, repairs three to five years (QatarEnergy)", "source": "Argus", "url": "https://www.argusmedia.com/en/news-and-insights/latest-market-news/2803352-ttf-gas-price-spike-spills-into-2027-and-beyond"},
+  "eua": {"date": "2026-10-12", "dec26": 88.3, "source": "GMK Center", "url": "https://gmk.center/en/news/european-carbon-prices-rose-to-e88-t-in-october/amp/"},
+  "ptYtd2026": {"price": 57.3, "period": "Jan-Jul 2026", "renewable": 0.75, "source": "APREN, Boletim Eletricidade Renovável, July 2026", "url": "https://www.apren.pt/wp-content/uploads/2026/08/Jul2026_Boletim-PT.pdf"},
+  "erse2027": {"mat": 11.1, "matElectroIntensive": 9.0, "at": 17.0, "date": "2026-10-15", "source": "ERSE, proposta de tarifas 2027, perguntas e respostas", "url": "https://www.erse.pt/media/tjni5wea/perguntas_e_respostas_proposta_tse_2027.pdf"}
+}

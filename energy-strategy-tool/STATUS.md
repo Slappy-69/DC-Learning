@@ -119,6 +119,7 @@ Interpretations taken without asking (reversible, recorded in `app/BUILD-NOTES.m
 - Stage 2 gaps deferred: roads allowance driven by access points, image underlay, footprint override, heat-reuse blocks. The gas-pipe rate (€0.8 m/km) is a judgement value.
 - Some core run constants have no §18 default record yet.
 - No default has a verified source. 24 records carry a source and the label "sourced — not independently checked" (package 0, batches 1 and 2); the rest are "indicative — unverified".
+- Pego case study, revision 3 (2026-10-24), run with a study build of the current app (`studies/pego-rev3/`): it found four new defects, KNOWN-ISSUES 14–17 (time-to-power rewards full capacity long before it is needed; rented plant paid from availability; retained bridging plant bought all at once; the eight-year dispatch cap). Each needs the owner's decision.
 - Left for the owner from the Haiku checks: the Seveso liquid-fuel test reads only the backup store; the flexibility recovery period follows natural event ends; no Grid + export contract input; two tornado observations (`app/BUILD-NOTES.md`, "Verification fixes").
 
 ## How to run
