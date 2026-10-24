@@ -18,12 +18,13 @@ export async function programmeTests(test, ctxRuns) {
     assert.equal(reg['requirements.permitAllowanceM'].value, 6);
     for (const [id, t] of Object.entries(TECH)) {
       if (!t.p || t.p.procM == null) continue;
+      if (id === 'existing') continue; // existing plant: available from the date entered (existing.availableDate, work package 12)
       assert.equal(reg[`tech.${id}.planM`] != null, !!t.ownConsent, `${id}: planning months record`);
       const want = (t.ownConsent ? t.p.planM : 0) + t.p.procM + t.p.buildM;
       assert.equal(programmeMonths(t), want, `${id}: programme months`);
       if (!t.ownConsent) assert.equal(programmeMonths(t, 6), want + 6, `${id}: with the allowance`);
     }
-    assert.deepEqual(Object.keys(TECH).filter((k) => TECH[k].ownConsent).sort(), ['smr', 'solarGround', 'wind']);
+    assert.deepEqual(Object.keys(TECH).filter((k) => TECH[k].ownConsent).sort(), ['existing', 'smr', 'solarGround', 'wind']);
     assert.equal(programmeMonths(TECH.gasTurbine, 6), 24, "the owner's gas turbine example: 6 + 12 + 6 = 24 months");
     assert.equal(programmeMonths(TECH.wind), 54, 'wind keeps 24 + 18 + 12');
     out.push(`records: permitAllowanceM 6; planM kept only for wind, ground solar and SMR; gas turbine with the allowance 24 months; wind 54`);
