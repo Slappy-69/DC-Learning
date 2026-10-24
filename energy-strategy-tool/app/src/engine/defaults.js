@@ -910,6 +910,10 @@ export function buildDefaultInputs(opts = {}) {
       autonomyBasis: rec('settings.autonomyBasis', 'critical load', '', { basis: 'judgement', ref: '§9.2' }),
       layoutCellM: rec('settings.layoutCellM', 2, 'm raster cell', { basis: 'run setting', ref: '§10.4', note: 'Auto-layout raster cell size; chosen for the §17 layout timing, not from a source.' }),
       layoutCellLargeM: rec('settings.layoutCellLargeM', 5, 'm raster cell (large sites)', { basis: 'run setting', ref: '§10.4' }),
+      // Work package 13 (OPEN-QUESTIONS 83, 2026-10-24): the Site tab is Beta and out of the ranking, so a large campus is not
+      // laid out option by option in the run unless site fit can change the ranking; the Site tab lays out on demand.
+      siteLayoutScope: rec('settings.siteLayoutScope', 'auto', '"auto" | "all"', { basis: 'run setting', ref: '§10.4', note: 'auto: every option is laid out unless the layout work is above settings.siteLayoutWorkLimit and site fit cannot change the ranking (site-fit penalty and compliant-first ranking off); then options are laid out when the Site tab shows them. all: every option, always.' }),
+      siteLayoutWorkLimit: rec('settings.siteLayoutWorkLimit', 20000000, 'block² (ground blocks squared, summed over the options)', { low: 1000000, high: 100000000, basis: 'judgement', ref: '§10.4', note: 'T1 (14 ha, 25 MW buildings, about 21 blocks an option): about 1 million, laid out in 5 s. Pego (150 ha, nine 100 MW buildings, about 230 blocks an option): about 105 million, 9 minutes on one core (2026-10-24).' }),
       layoutLargeSiteHa: rec('settings.layoutLargeSiteHa', 50, 'ha gross site area above which the large cell is used', { basis: 'run setting', ref: '§10.4' }),
     },
   };

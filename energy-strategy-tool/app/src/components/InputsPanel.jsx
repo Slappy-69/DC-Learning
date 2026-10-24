@@ -309,6 +309,9 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           hint="Each option is run hour by hour for every year until nothing changes (full load after the last phase and its ramp), then the last year repeats. This is the upper limit; a run flag says if it cuts an option short." />
         <NumberField label="Rented plant hired before it is needed" unit="months" value={inputs.settings.rentalLeadMonths} onCommit={(v) => update('settings.rentalLeadMonths', Math.max(0, Math.round(v)))} path="settings.rentalLeadMonths" inputs={inputs} min={0} max={6} step={1}
           hint="Rented bridging plant arrives and is paid for this many months before the first month it is needed (installation and commissioning), not from the month it could first arrive." />
+        {siteBeta ? <SelectField label="Site layout in the run (Site tab, Beta)" value={inputs.settings.siteLayoutScope || 'auto'} onCommit={set('settings.siteLayoutScope')} path="settings.siteLayoutScope" inputs={inputs}
+          options={[['auto', 'Every option, unless the campus is large (default)'], ['all', 'Every option, always']]}
+          hint="A large campus (hundreds of genset blocks) can take minutes to lay out option by option. By default the run then skips it, because site fit does not change the ranking, and the Site tab lays out each option it shows. With the site-fit penalty or compliant-first ranking on, every option is always laid out." /> : null}
         <NumberField label="Generation cap" unit="options" value={inputs.settings.generationCap} onCommit={(v) => update('settings.generationCap', Math.round(v))} path="settings.generationCap" inputs={inputs} min={20} step={1} />
         <ToggleField label="Sample above cap" checked={inputs.settings.sampleAboveCap} onCommit={set('settings.sampleAboveCap')} path="settings.sampleAboveCap" inputs={inputs}
           hint="Off screens every combination (slow above the cap)." />

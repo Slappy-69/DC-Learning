@@ -156,7 +156,7 @@ export function applyView(options, view) {
   if (v.flagIds.length) { list = list.filter((o) => o.flags.some((f) => v.flagIds.includes(f.id))); chips.push(`Has flag: ${v.flagIds.join(', ')}`); }
   if (v.hideFlagIds.length) { list = list.filter((o) => !o.flags.some((f) => v.hideFlagIds.includes(f.id))); chips.push(`Without flag: ${v.hideFlagIds.join(', ')}`); }
   if (v.capexCeiling != null) { list = list.filter((o) => o.eco.capex <= v.capexCeiling); chips.push(`Capex ≤ ${v.capexCeiling}`); }
-  if (v.landTakeCeilingHa != null) { list = list.filter((o) => o.siteFit && o.siteFit.landTakeHa <= v.landTakeCeilingHa + 1e-9); chips.push(`Land take ≤ ${v.landTakeCeilingHa} ha`); }
+  if (v.landTakeCeilingHa != null) { list = list.filter((o) => o.siteFit && !o.siteFit.skipped && o.siteFit.landTakeHa <= v.landTakeCeilingHa + 1e-9); chips.push(`Land take ≤ ${v.landTakeCeilingHa} ha`); }
   if (v.dominated === 'only') { list = list.filter((o) => o.dominatedBy); chips.push('Dominated only'); }
   if (v.dominated === 'non') { list = list.filter((o) => !o.dominatedBy); chips.push('Non-dominated only'); }
   if (v.archetypesOnly) { list = list.filter((o) => o.archetype); chips.push('Archetypes only'); }
@@ -189,8 +189,8 @@ const SORTERS = {
   ttp: (o) => o.ttp.metric,
   deliverability: (o) => -o.deliv.score,
   unmet: (o) => o.unmet.mwh,
-  landTake: (o) => (o.siteFit ? o.siteFit.landTakeM2 : Infinity),
-  siteFit: (o) => (o.siteFit ? ['Fits', 'Fits with flags', 'Does not fit'].indexOf(o.siteFit.status) : 3),
+  landTake: (o) => (o.siteFit && !o.siteFit.skipped ? o.siteFit.landTakeM2 : Infinity),
+  siteFit: (o) => (o.siteFit && !o.siteFit.skipped ? ['Fits', 'Fits with flags', 'Does not fit'].indexOf(o.siteFit.status) : 3),
   flags: (o) => o.flags.filter((f) => !f.assumed).length, // assumed-default flags are listed apart (work package 2)
   name: (o) => o.name,
 };

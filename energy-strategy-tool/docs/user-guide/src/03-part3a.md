@@ -215,6 +215,7 @@ Since 23 October 2026 the economic inputs have their own section, **5 · Economi
 | Sample above cap | on | Samples down to the cap; off screens all |
 | Wind default site threshold | 20 ha | Wind not generated on smaller sites |
 | Layout raster cell / large-site cell / threshold | 2 m / 5 m / 50 ha | Resolution of the auto-layout |
+| Site layout in the run (shown with the Site tab on) | Every option, unless the campus is large | A large campus (layout work above 20 million block²) is not laid out option by option unless the site-fit penalty or compliant-first ranking is on; the Site tab lays out what it shows (built 24 October 2026). "Every option, always" forces the full layout |
 
 
 **Rank requirement-compliant options first.** Off by default (flag, don't enforce). When on, options whose resilience is "Does not meet" or whose site fit is "Does not fit" are ranked after all the others. Their scores do not change. The setting is shown in the header.

@@ -203,6 +203,7 @@ export function compareWithRun(I, o) {
   cmp('NPV of net cost', I.eco.npvCost, o.eco.npvCost);
   cmp('solar MWp', I.solarMWp, o.sizing.solarMWp);
   cmp('deliverability', I.delivScore, o.deliv.score);
-  if (I.siteFitStatus !== (o.siteFit ? o.siteFit.status : null)) diffs.push({ label: 'site-fit status', inspector: I.siteFitStatus, run: o.siteFit ? o.siteFit.status : null });
+  // A run that did not lay the option out (large campus, work package 13) has no site fit to compare.
+  if (!(o.siteFit && o.siteFit.skipped) && I.siteFitStatus !== (o.siteFit ? o.siteFit.status : null)) diffs.push({ label: 'site-fit status', inspector: I.siteFitStatus, run: o.siteFit ? o.siteFit.status : null });
   return { worst, diffs, matches: diffs.length === 0 };
 }

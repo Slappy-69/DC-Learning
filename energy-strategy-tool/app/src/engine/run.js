@@ -36,6 +36,12 @@ const YIELD_EVERY = 25;
 // (main-thread fallback with a live progress panel). runModel() drains it synchronously.
 // Stages run as passes over the option list in the order of STAGES (runlog.js), so the event log
 // has one start and one end per stage per source.
+// Site fit of an option the run did not lay out (work package 13): the Site tab lays it out when it shows it.
+export function notLaidOut(netM2) {
+  return { status: 'Not laid out', skipped: true, reasons: ['Not laid out in the run: a large campus whose site fit cannot change the ranking. The Site tab (Beta) lays the option out when it shows it.'],
+    flags: [], unplaced: [], unplacedM2: 0, relaxed: [], landTakeM2: null, landTakeHa: null, placedM2: 0, fillM2: 0, fillMWp: 0, netM2, budgetShortfallM2: 0, residualM2: null,
+    offsite: [], offsiteHa: 0, roof: { roofM2: 0, plantM2: 0, pvM2: 0, edgeM2: 0, freeM2: 0, overAllocated: false }, expansionMW: 0, heightsExceeded: 0, blocks: 0, placedBlocks: 0 };
+}
 export function* runModelSteps(rawInputs, opts = {}) {
   const log = opts.log || createRunLog({ source: opts.source || 'main', t0Abs: opts.t0Abs ?? null, onEvent: opts.onEvent || null });
   const t0 = nowMs();
@@ -135,6 +141,19 @@ export function* runModelSteps(rawInputs, opts = {}) {
     }
     const misses = sets.length, hits = n - misses;
     log.progress(STAGE.layout, n, n, { step: 'blocks', options: n, distinctLayouts: misses, cacheHits: hits, cacheMisses: misses });
+    // Work package 13 (OPEN-QUESTIONS 83): lay out every option only when the run can afford it or site fit can change the
+    // ranking; otherwise the Site tab (Beta) lays out the options it shows, when it shows them.
+    // Layout work: ground blocks squared, summed over every option of the run (a worker scales its interleaved slice
+    // to the whole list, so every worker of a pool takes the same decision).
+    const work = Math.round((recs.reduce((a, r) => a + r.bs.ground.length * r.bs.ground.length, 0) * gen.options.length) / Math.max(1, n));
+    const fitRanks = !!(inputs.deliverability.siteFitPenalty || inputs.settings.rankCompliantFirst);
+    const layAll = inputs.settings.siteLayoutScope === 'all' || fitRanks || work <= (inputs.settings.siteLayoutWorkLimit ?? 2e7);
+    if (!layAll) {
+      const netM2 = Math.round(site.areas.netM2 || 0);
+      for (let i = 0; i < n; i++) recs[i].siteFit = notLaidOut(netM2);
+      layoutSummary = { cacheHits: hits, cacheMisses: misses, distinctLayouts: misses, placements: 0, searches: 0, maskBuilds: 0, solarFills: 0, unplacedBlocks: 0, relaxedRules: 0, cellM: site.grid.cell, onDemand: true, work };
+      log.end(STAGE.layout, n, n, { onDemand: true, work, workLimit: inputs.settings.siteLayoutWorkLimit, distinctLayouts: misses, cellM: site.grid.cell });
+    } else {
     let lastReported = 0;
     const layouts = yield* layoutManySteps(site, sets, {
       yieldEvery: 5,
@@ -168,6 +187,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
       cacheHits: hits, cacheMisses: misses, distinctLayouts: misses, placements: st.placements, searches: st.searches, maskBuilds: st.maskBuilds, solarFills: st.fills,
       statuses: { ...statuses }, unplacedBlocks, relaxedRules, cellM: site.grid.cell,
     });
+    }
   }
   yield;
 
@@ -288,6 +308,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
   const windNote = s.valuesNotGenerated.find((x) => x.id === 'C11' && x.note);
   if (windNote) runFlags.push(flag('tech-wind-default', 'info', 'Technology', windNote.note));
   if (inputs.load.workload === 'ai-training') runFlags.push(flag('load-ai', 'info', 'Load', 'AI training transient load not modelled'));
+  if (layoutSummary && layoutSummary.onDemand) runFlags.push(flag('site-layout-on-demand', 'info', 'Site', `Site layout (Beta): this large campus was not laid out option by option in the run (layout work ${(layoutSummary.work / 1e6).toFixed(1)} million block², limit ${Number(((inputs.settings.siteLayoutWorkLimit ?? 2e7) / 1e6).toPrecision(3)).toLocaleString('en-GB')} million), because site fit does not change the ranking. The Site tab lays out each option it shows. To lay out every option in the run, set "Site layout in the run" to every option`));
   // Existing plant ticked but incomplete (work package 12): not generated, and the run says why.
   if (ctx.existing && ctx.existing.include && !ctx.existing.entered) runFlags.push(flag('existing-incomplete', 'minor', 'Technology', `Existing plant near the site is ticked but not generated: enter its ${ctx.existing.missing.join(' and ')}`));
   if (truncated.length) {

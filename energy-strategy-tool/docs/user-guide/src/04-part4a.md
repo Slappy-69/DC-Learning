@@ -501,6 +501,8 @@ Blocks are placed in priority order:
 
 Each block goes to the feasible position with the lowest cost for its rule (ties to the lower row, then column, then unrotated). A position is feasible if every cell is buildable and every separation is met: each block type's clearance to others, specific pairs (for example fuel storage 6 m from halls and 10 m from the boundary; batteries 10 m from occupied buildings), height limits and exclusions.
 
+**When the run lays out** (built 24 October 2026, work package 13): every option, unless the layout work (ground blocks squared, summed over the options) is above `settings.siteLayoutWorkLimit` (20 million, judgement) and site fit cannot change the ranking. T1's work is about 1 million; the Pego campus about 105 million, which took about 9 minutes on one core. Above the limit, options are "Not laid out" and the Site tab lays out on demand.
+
 ## Relaxation
 
 If a block cannot be placed with the default rules, the engine tries again at relaxation levels, and names every rule it breaks:

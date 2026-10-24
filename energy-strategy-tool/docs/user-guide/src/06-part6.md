@@ -148,6 +148,7 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Plain-English summary of the result | Not built; in the brief, not discussed in the walkthrough | — |
 | Parallel coordinates, choice-impact chart | Not built; in the brief, not discussed in the walkthrough | — |
 | Monte Carlo ranges, robust pick, breakevens, scenarios | Not built; in the brief, not discussed in the walkthrough | 13 |
+| Work package 13: a large campus is laid out on demand on the Site tab, not option by option in the run | Built (24 Oct 2026) | 19, 28, 36 |
 | Work package 12: existing plant near the site, leased (exactly the units offered, lease from a month before first need, outside the campus) | Built (24 Oct 2026) | 17, 34, 35, 39 |
 | Work package 11: engine fixes (time-to-power in months late, first power from phase 1, rented plant hired when needed, plant kept as the backup bought building by building, dispatch to the first steady year with a run flag, minimum stable load backs off the grid, gas flag, Seveso running store, grid adder field, opex in the first year with load) | Built (24 Oct 2026) | 17, 19, 22, 23, 35, 37, 38, 39, 41 |
 

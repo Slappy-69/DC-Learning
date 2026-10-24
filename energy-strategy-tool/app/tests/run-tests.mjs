@@ -82,6 +82,7 @@ import { screeningTests } from './screening-tests.mjs';
 import { locationTests } from './location-tests.mjs';
 import { engineFixesTests } from './engine-fixes-tests.mjs';
 import { existingPlantTests } from './existing-plant-tests.mjs';
+import { layoutScopeTests } from './layout-scope-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1228,6 +1229,9 @@ await engineFixesTests(test, siteRuns);
 
 // 39. Work package 12: existing plant near the site, leased (tests/existing-plant-tests.mjs)
 await existingPlantTests(test, siteRuns);
+
+// 40. Work package 13: site layout in the run (tests/layout-scope-tests.mjs)
+await layoutScopeTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

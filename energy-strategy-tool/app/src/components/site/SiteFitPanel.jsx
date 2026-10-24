@@ -8,8 +8,8 @@ const ha = (m2) => (Number.isFinite(m2) ? (m2 / 10000).toFixed(2) : '—');
 const m1 = (x) => (x == null || !Number.isFinite(x) ? '—' : Number(x.toFixed(1)).toLocaleString('en-GB'));
 
 export function FitBadge({ s }) {
-  const cls = s === 'Fits' ? 'ok' : s === 'Fits with flags' ? 'warn' : 'bad';
-  const icon = s === 'Fits' ? '✓' : s === 'Fits with flags' ? '!' : '✗';
+  const cls = s === 'Fits' ? 'ok' : s === 'Fits with flags' ? 'warn' : s === 'Not laid out' ? 'arch' : 'bad';
+  const icon = s === 'Fits' ? '✓' : s === 'Fits with flags' ? '!' : s === 'Not laid out' ? '–' : '✗';
   return <span className={`badge badge-${cls}`}><span aria-hidden="true">{icon}</span> {s}</span>;
 }
 

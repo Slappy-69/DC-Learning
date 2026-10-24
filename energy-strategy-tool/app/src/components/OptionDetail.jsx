@@ -6,8 +6,8 @@ import { visibleFlags } from '../engine/view.js';
 import { adequacyText } from '../engine/adequacy.js';
 
 function FitBadge({ s }) {
-  const cls = s === 'Fits' ? 'ok' : s === 'Fits with flags' ? 'warn' : 'bad';
-  const icon = s === 'Fits' ? '✓' : s === 'Fits with flags' ? '!' : '✗';
+  const cls = s === 'Fits' ? 'ok' : s === 'Fits with flags' ? 'warn' : s === 'Not laid out' ? 'arch' : 'bad';
+  const icon = s === 'Fits' ? '✓' : s === 'Fits with flags' ? '!' : s === 'Not laid out' ? '–' : '✗';
   return <span className={`badge badge-${cls}`}><span aria-hidden="true">{icon}</span> {s}</span>;
 }
 
@@ -15,6 +15,15 @@ function FitBadge({ s }) {
 function SiteFitSummary({ o, onShowSite }) {
   const f = o.siteFit;
   if (!f) return null;
+  if (f.skipped) {
+    return (
+      <div className="detail-site">
+        <h4>Site fit <span className="beta-badge">Beta</span> <FitBadge s={f.status} /></h4>
+        <p className="small">Not laid out in the run: a large campus, and site fit does not change the ranking. The Site tab lays this option out when it shows it.</p>
+        {onShowSite ? <button type="button" className="link-btn" onClick={() => onShowSite(o.id)}>Lay out this option on the Site tab</button> : null}
+      </div>
+    );
+  }
   return (
     <div className="detail-site">
       <h4>Site fit <span className="beta-badge">Beta</span> <FitBadge s={f.status} /></h4>

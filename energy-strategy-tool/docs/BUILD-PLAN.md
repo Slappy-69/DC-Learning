@@ -137,6 +137,15 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **User guide:** chapters 17, 34, 35, 39 and 56.
 - **Progress:** built 2026-10-24 on `feature/engine-fixes`, not merged.
 
+### 13. Site layout in the run (added 2026-10-24)
+
+- **Why:** known issue 20, found when Pego was run on the product with the existing-plant input: the site-layout stage took minutes to hours on a large campus although site fit (Beta) does not change the ranking.
+- **Decision:** OPEN-QUESTIONS 83, Claude's recommendation accepted in advance by the owner (2026-10-24).
+- **What:** `settings.siteLayoutScope` (auto / all) and `settings.siteLayoutWorkLimit` (20 million block²); above the limit, with the site-fit penalty and compliant-first ranking off, options are "Not laid out" and the Site tab lays out what it shows; an info run flag; the screens show "Not laid out" without figures; the inspector does not compare site fit for such options.
+- **Acceptance tests:** Node test 40 (`app/tests/layout-scope-tests.mjs`).
+- **User guide:** chapters 19, 28 and 36.
+- **Progress:** built 2026-10-24 on `feature/engine-fixes`, not merged.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:

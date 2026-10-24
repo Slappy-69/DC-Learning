@@ -1849,3 +1849,18 @@ Branch `feature/engine-fixes` (continued). Known issue 12, found in the Pego stu
 - **Report:** the PDF lists the existing-plant inputs as their own section.
 
 T1 with an example plant (2 × 40 MW CCGT from January 2028, €6/kW a month, €8 m connection): 112 options use it as bridging plant and 311 as firm plant out of 2,000; the cheapest of them, "Grid · Existing plant (lease) top-up · Diesel N+1 · Evaporative-adiabatic · PV 5.6 MWp · PPA hybrid 100 %", costs €142.7/MWh against the leader's €152.3 but ranks 25th on carbon (188 g/kWh against 122). Test 39; 70/70 Node tests.
+
+## Work package 13: site layout in the run (2026-10-24)
+
+Known issue 20, OPEN-QUESTIONS 83 (Claude's recommendation accepted in advance by the owner). Found by running Pego on the product with the new existing-plant input: the site-layout stage dominated the run (about 230 ground blocks an option, hundreds of them genset blocks; the per-set cost grows roughly with the square of the blocks).
+
+| Case | Options | Distinct block sets | Blocks per set | Grid cells | Layout per set | All sets |
+|---|---|---|---|---|---|---|
+| T1 | 2,000 | 1,650 | 21.3 | 238 × 159 (2 m) | 14 ms (alone; 5.4 s as one shared batch) | 22 s alone, 5–10 s in the run |
+| Pego (product inputs) | 2,000 | 1,433 | 229.2 | 300 × 200 (5 m) | 364 ms | about 9 minutes on one core |
+
+- **Rule:** layout work = ground blocks squared, summed over the options of the run (a pool worker scales its interleaved slice to the whole list, so every worker decides alike). Above `settings.siteLayoutWorkLimit` (20 million, judgement; T1 0.94 million, Pego about 105 million), and when site fit cannot change the ranking (deliverability site-fit penalty off, compliant-first ranking off) and `settings.siteLayoutScope` is "auto", every option gets the site fit "Not laid out" (`notLaidOut()` in `run.js`, `skipped: true`), the layout stage logs `onDemand`, and an info run flag `site-layout-on-demand` explains it.
+- **On demand:** the Site tab already laid out the option it shows (`layoutForOption`); it now takes that layout's site fit for options the run skipped, in the plan and in the small multiples. The option detail says "Not laid out in the run" with a link to the Site tab; the ranked list shows "Not laid out" and no land take; land-take sorting and the land-take ceiling filter treat such options as unknown. The inspector does not compare site fit for them.
+- **Unchanged:** scores, ranks, LCOE, deliverability, adequacy and main-flow flags (test 40 compares all 2,000 T1 options with the limit forced down). Pego on the product with the existing-plant input: 16 s, leader "rent, grid, existing CCGT top-up" at €141.1/MWh (study build, revision 3.1: €141.3; the lease now starts when needed, month 51, rather than at the study's January 2031).
+- **For the owner (not decided):** skipping the layout in every run while the Site tab is off would make T1 run in about 8 s instead of 17 s.
+- Tests: test 40; 71/71 Node tests.

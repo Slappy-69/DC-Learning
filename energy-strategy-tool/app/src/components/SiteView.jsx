@@ -109,12 +109,13 @@ function SmallMultiples({ run, site, items, selectedId, onSelect }) {
       <div className="multiples">
         {items.map((o, i) => {
           const r = cachedLayout(run, site, o);
-          const lt = o.siteFit ? o.siteFit.landTakeHa : null;
+          const sf = o.siteFit && o.siteFit.skipped && r ? r.siteFit : o.siteFit;
+          const lt = sf && !sf.skipped ? sf.landTakeHa : null;
           return (
             <button key={o.id} type="button" className="multiple" aria-pressed={o.id === selectedId} onClick={() => onSelect(o.id)} data-id={o.id}>
               {r ? <SitePlan site={site} res={r} small extent={ext} initialWidth={240} svgId={`mult-${i}`} /> : <span className="mult-wait" aria-hidden="true">Laying out…</span>}
               <span className="mt">#{o.rank} {o.name}</span>
-              <span className="mt">{o.siteFit ? <FitBadge s={o.siteFit.status} /> : null}{lt != null ? ` ${lt.toFixed(2)} ha on site` : ''}</span>
+              <span className="mt">{sf ? <FitBadge s={sf.status} /> : null}{lt != null ? ` ${lt.toFixed(2)} ha on site` : ''}</span>
             </button>
           );
         })}
@@ -191,7 +192,8 @@ export default function SiteView({ run, inputs, update, optionId, setOptionId, c
   const onTyped = (ll) => { if (edit) endEdit(commitShape({ ...edit, typed: true }, ll)); };
 
   if (!option) return <section className="site"><h2>Site</h2><p className="empty">No options to lay out. Site fit needs a site boundary or an area.</p></section>;
-  const f = option.siteFit;
+  // An option the run did not lay out (large campus, work package 13) takes the site fit of its on-demand layout.
+  const f = option.siteFit && option.siteFit.skipped && res ? res.siteFit : option.siteFit;
   const placedN = res ? res.layout.placed.length : 0;
   const planLabel = edit ? `Site plan, ${edit.shape === 'polygon' ? 'drawing' : 'placing'} ${edit.label}` : `Site plan of #${option.rank} ${option.name}: ${f ? f.status : ''}${res ? `, ${placedN} blocks placed${res.layout.unplaced.length ? `, ${res.layout.unplaced.length} not placed` : ''}` : ''}`;
 

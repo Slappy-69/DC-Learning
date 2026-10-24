@@ -35,8 +35,8 @@ function LandTakeFilter({ value, onCommit }) {
 
 export function SiteFitBadge({ s }) {
   if (!s) return <span className="badge badge-arch">not assessed</span>;
-  const cls = s === 'Fits' ? 'ok' : s === 'Fits with flags' ? 'warn' : 'bad';
-  const icon = s === 'Fits' ? '✓' : s === 'Fits with flags' ? '!' : '✗';
+  const cls = s === 'Fits' ? 'ok' : s === 'Fits with flags' ? 'warn' : s === 'Not laid out' ? 'arch' : 'bad';
+  const icon = s === 'Fits' ? '✓' : s === 'Fits with flags' ? '!' : s === 'Not laid out' ? '–' : '✗';
   return <span className={`badge badge-${cls}`}><span aria-hidden="true">{icon}</span> {s}</span>;
 }
 
@@ -223,7 +223,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
                     <td>{monthLabel(start, o.ttp.fullLoadM)}</td>
                     <td><AdequacyBadge a={o.adequacy} />{o.adequacy && !o.adequacy.adequate ? <div className="sub">{adequacyReasons(o.adequacy)}</div> : null}</td>
                     <td className={`num ${o.unmet.mwh > 0 ? 'flag-text' : ''}`}>{o.unmet.mwh > 0 ? sig(o.unmet.mwh, 2) : '0'}{o.unmet.hours ? <div className="sub">{o.unmet.hours.toLocaleString('en-GB')} h</div> : null}</td>
-                    {siteBeta ? <td className="num">{o.siteFit ? sig(o.siteFit.landTakeHa, 3) : '—'}{o.siteFit && o.siteFit.offsiteHa > 0 ? <div className="sub">+{sig(o.siteFit.offsiteHa, 2)} off site</div> : null}</td> : null}
+                    {siteBeta ? <td className="num">{o.siteFit && !o.siteFit.skipped ? sig(o.siteFit.landTakeHa, 3) : '—'}{o.siteFit && o.siteFit.offsiteHa > 0 ? <div className="sub">+{sig(o.siteFit.offsiteHa, 2)} off site</div> : null}</td> : null}
                     {siteBeta ? <td><SiteFitBadge s={o.siteFit ? o.siteFit.status : null} />{o.siteFit && o.siteFit.status === 'Does not fit' ? <div className="sub">{o.siteFit.unplacedM2.toLocaleString('en-GB')} m² short</div> : null}</td> : null}
                     <td><ResBadge s={o.resilience.status} /></td>
                     <td className="num"><span className="flag-counts" title={`${c.major} major, ${c.minor} minor, ${c.info} info`}>{c.major ? <span className="fc fc-major">{c.major}</span> : null}{c.minor ? <span className="fc fc-minor">{c.minor}</span> : null}<span className="fc fc-info">{c.info}</span></span></td>

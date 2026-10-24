@@ -8432,6 +8432,36 @@
   "accessed": ""
  },
  {
+  "path": "settings.siteLayoutScope",
+  "value": "auto",
+  "unit": "\"auto\" | \"all\"",
+  "low": null,
+  "high": null,
+  "basis": "run setting",
+  "sourceToVerify": "",
+  "note": "auto: every option is laid out unless the layout work is above settings.siteLayoutWorkLimit and site fit cannot change the ranking (site-fit penalty and compliant-first ranking off); then options are laid out when the Site tab shows them. all: every option, always.",
+  "briefRef": "§10.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
+ },
+ {
+  "path": "settings.siteLayoutWorkLimit",
+  "value": 20000000,
+  "unit": "block² (ground blocks squared, summed over the options)",
+  "low": 1000000,
+  "high": 100000000,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "T1 (14 ha, 25 MW buildings, about 21 blocks an option): about 1 million, laid out in 5 s. Pego (150 ha, nine 100 MW buildings, about 230 blocks an option): about 105 million, 9 minutes on one core (2026-10-24).",
+  "briefRef": "§10.4",
+  "label": "indicative — unverified",
+  "year": "",
+  "url": "",
+  "accessed": ""
+ },
+ {
   "path": "settings.layoutLargeSiteHa",
   "value": 50,
   "unit": "ha gross site area above which the large cell is used",

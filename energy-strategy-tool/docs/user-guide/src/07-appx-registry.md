@@ -1,6 +1,6 @@
 # Appendix A. The full defaults register {#appA}
 
-Every default value in the current version: **561 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. **24 records** carry a published source and the label "sourced — not independently checked" (work package 0, batches 1 and 2; the source, year and access date follow the entry). The other 537 are labelled "indicative — unverified" (confidence C, not verified). None is verified. Chapter 50 compares the important values with published sources.
+Every default value in the current version: **563 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. **24 records** carry a published source and the label "sourced — not independently checked" (work package 0, batches 1 and 2; the source, year and access date follow the entry). The other 539 are labelled "indicative — unverified" (confidence C, not verified). None is verified. Chapter 50 compares the important values with published sources.
 
 Abbreviations: **src** = basis "source" (should come from a published source); **judg** = judgement; **run** = run setting.
 
@@ -232,6 +232,8 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **settings.autonomyBasis**: critical load; judg.
 - **settings.layoutCellM**: 2 m raster cell; run. Auto-layout raster cell size; chosen for the §17 layout timing, not from a source.
 - **settings.layoutCellLargeM**: 5 m raster cell (large sites); run.
+- **settings.siteLayoutScope**: auto ("auto" | "all"); run. auto: every option is laid out unless the layout work is above settings.siteLayoutWorkLimit and site fit cannot change the ranking (site-fit penalty and compliant-first ranking off); then options are laid out when the Site tab shows them. all: every option, always.
+- **settings.siteLayoutWorkLimit**: 20,000,000 block² (ground blocks squared, summed over the options); range 1,000,000–100,000,000; judg. T1 (14 ha, 25 MW buildings, about 21 blocks an option): about 1 million, laid out in 5 s. Pego (150 ha, nine 100 MW buildings, about 230 blocks an option): about 105 million, 9 minutes on one core (2026-10-24).
 - **settings.layoutLargeSiteHa**: 50 ha gross site area above which the large cell is used; run.
 
 ## Choice default states
