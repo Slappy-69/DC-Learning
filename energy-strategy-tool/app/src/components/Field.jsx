@@ -87,12 +87,13 @@ export function NumberField({ label, unit, value, onCommit, path, inputs, requir
   );
 }
 
-export function TextField({ label, value, onCommit, path, inputs, required, pattern, hint, placeholder }) {
+export function TextField({ label, value, onCommit, path, inputs, required, pattern, hint, placeholder, nullable }) {
   const id = useId();
   const atDefault = path && inputs ? isAtDefault(inputs, path) : false;
   const [draft, setDraft] = useState(value ?? '');
   useEffect(() => setDraft(value ?? ''), [value]);
   const commit = () => {
+    if (nullable && draft.trim() === '') { if (value != null && value !== '') onCommit(null); return; }
     if (pattern && !new RegExp(pattern).test(draft)) { setDraft(value ?? ''); return; }
     if (draft !== value) onCommit(draft);
   };

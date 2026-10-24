@@ -600,12 +600,15 @@ rec('sensitivity.flexTriggerFactor', 1, '× flexibility trigger level', { low: 0
 rec('sensitivity.defaultMeasure', 'lcoe', 'lcoe / npv / carbon / score', { basis: 'judgement', ref: '§13.3', dist: 'fixed', note: 'Walkthrough 2026-10-21: the tornado measures LCOE by default.' });
 rec('sensitivity.topDrivers', 12, 'drivers shown', { basis: 'run setting', ref: '§13.3', dist: 'fixed', note: 'Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). This slice has 7 drivers and no control for this setting yet; the code clamps it to 1–30.' });
 
-// Required inputs: no default in the brief. The app pre-fills the T1 reference example
-// so it can run on load; these are marked "example value — replace" in the UI, not defaults.
+// Required inputs (walkthrough 2026-10-21, knowledge levels): only the location and the site area. The app
+// pre-fills the T1 reference example so it can run on load; these are marked "example value — replace" in the UI.
+// The IT load and the three grid values have defaults since work package 2 (blank = "Not known").
 export const REQUIRED_EXAMPLE = {
   'project.lat': 52.29, 'project.lon': -1.53,
-  'site.areaHa': 15, 'load.itMW': 100, 'grid.nowMW': 20, 'grid.fullMW': 120, 'grid.fullMonthsFromStart': 30,
+  'site.areaHa': 15,
 };
+// The T1 values that were required before work package 2 (referenceT1 sets them).
+export const T1_EXAMPLE = { itMW: 100, gridNowMW: 20, gridFullMW: 120, gridFullMonthsFromStart: 30 };
 
 export function buildDefaultInputs(opts = {}) {
   const start = opts.analysisStart || defaultAnalysisStart(opts.today);
@@ -615,7 +618,9 @@ export function buildDefaultInputs(opts = {}) {
       lat: REQUIRED_EXAMPLE['project.lat'],
       lon: REQUIRED_EXAMPLE['project.lon'],
       country: rec('project.country', null, '', { basis: 'judgement', derived: true, note: 'null = derived from location (nearest built-in country centroid); overridable.', ref: '§5.1' }),
-      currency: rec('project.currency', 'by country', '', { basis: 'judgement', derived: true, ref: '§5.1' }),
+      // Display currency (work package 1): results shown in this currency at the fixed release rate (project.fx); the
+      // engine and the inputs work in euro. 'by country' = the country's currency.
+      currency: rec('project.currency', 'by country', 'by country / EUR / GBP / CHF / NOK / SEK / DKK / ISK', { basis: 'judgement', derived: true, ref: '§5.1', note: 'Display only; converted at the ECB reference rates of the release (project.fx). Inputs stay in euro.' }),
       analysisStart: rec('project.analysisStart', start, 'YYYY-MM', { basis: 'judgement', note: 'Today + 3 months. No source; replace with the client programme start.', ref: '§5.1' }),
       seed: rec('project.seed', 20261015, 'integer', { basis: 'run setting', ref: '§4' }),
     },
@@ -641,7 +646,10 @@ export function buildDefaultInputs(opts = {}) {
       groundConditions: rec('site.groundConditions', 'assumed suitable', 'free text', { basis: 'judgement', ref: '§5.2', note: 'Note only; no geotechnical modelling (flat site, §10.1).' }),
     },
     load: {
-      itMW: REQUIRED_EXAMPLE['load.itMW'],
+      // Work package 2 (knowledge levels; OPEN-QUESTIONS 26 answered 2026-10-23 with Claude's recommendation, accepted
+      // in advance by the owner): blank = estimated from the site area with the building massing rule inverted.
+      itMW: rec('load.itMW', null, 'MW IT at full build (blank = estimated from the site area)', { basis: 'judgement', derived: true, ref: '§5.3', note: 'Blank: site area × building coverage × storeys ÷ gross-up × whitespace density of the cooling type (air when the cooling is an open choice), the same rule the building massing uses (OPEN-QUESTIONS 26).' }),
+      estimateCoverage: rec('load.estimateCoverage', 0.35, 'fraction of the site area covered by data halls', { low: 0.2, high: 0.5, basis: 'judgement', ref: '§5.3', note: 'Walkthrough 2026-10-21: 35 % site coverage for the IT estimate from area. To research.' }),
       phases: null, // set below
       rampStart: rec('load.rampStart', 0.25, 'fraction of phase IT at energisation', { low: 0.1, high: 0.5, basis: 'judgement', ref: '§5.3', note: "The owner's judgement (2026-10-22, OPEN-QUESTIONS 51; was 50 %). No source; replace with the client's fit-out programme." }),
       rampMonths: rec('load.rampMonths', 12, 'months', { low: 6, high: 24, basis: 'judgement', ref: '§5.3' }),
@@ -684,9 +692,14 @@ export function buildDefaultInputs(opts = {}) {
       flexBatteryResponse: rec('load.flexBatteryResponse', true, 'toggle', { basis: 'judgement', ref: '§5.3', note: 'Walkthrough 2026-10-21: the economic battery runs the site in trigger hours before any curtailment.' }),
     },
     grid: {
-      nowMW: REQUIRED_EXAMPLE['grid.nowMW'],
-      fullMW: REQUIRED_EXAMPLE['grid.fullMW'],
-      fullDate: addMonths(start, REQUIRED_EXAMPLE['grid.fullMonthsFromStart']),
+      // Work package 2: the three grid values can be "Not known" (blank); the tool then assumes the defaults below,
+      // labelled indicative, and flags them on every grid-connected option (§5.4, §15).
+      nowMW: rec('grid.nowMW', null, 'MW import available now (blank = not known: 0 MW)', { basis: 'judgement', derived: true, ref: '§5.4', note: 'Blank = not known: no import before the full connection (grid.unknownNowMW).' }),
+      fullMW: rec('grid.fullMW', null, 'MW import at full connection (blank = not known)', { basis: 'judgement', derived: true, ref: '§5.4', note: 'Blank = not known: the IT load × grid.unknownFullPerITMW, about the design facility load.' }),
+      fullDate: rec('grid.fullDate', null, 'YYYY-MM (blank = not known)', { basis: 'judgement', derived: true, ref: '§5.4', note: 'Blank = not known: the analysis start + grid.unknownFullMonths.' }),
+      unknownNowMW: rec('grid.unknownNowMW', 0, 'MW now when not known', { basis: 'judgement', ref: '§5.4', note: 'No source. Country values to research (package 0).' }),
+      unknownFullPerITMW: rec('grid.unknownFullPerITMW', 1.4, 'MW of grid per MW of IT when not known', { low: 1.1, high: 1.6, basis: 'judgement', ref: '§5.4', note: 'About the design facility load (IT × design-day PUE + ancillary). No source; country values to research.' }),
+      unknownFullMonths: rec('grid.unknownFullMonths', 48, 'months from the analysis start when not known', { low: 24, high: 96, basis: 'judgement', ref: '§5.4', note: 'No source; country connection lead times to research (package 0).' }),
       steps: rec('grid.steps', [], 'list of {date, MW}', { basis: 'judgement', ref: '§5.4' }),
       exportMW: rec('grid.exportMW', 0, 'MW', { basis: 'judgement', ref: '§5.4' }),
       exportFactor: rec('grid.exportFactor', 0.9, '× hourly price', { low: 0.7, high: 1, basis: 'judgement', ref: '§5.4' }),
@@ -754,6 +767,9 @@ export function buildDefaultInputs(opts = {}) {
       gasEscalation: rec('economics.gasEscalation', 0, 'real per yr', { low: -0.02, high: 0.02, basis: 'source', verify: 'TTF/NBP forward curves', ref: '§5.6' }),
       salvageFraction: rec('economics.salvageFraction', 0.5, 'of remaining book value when removed', { low: 0.2, high: 0.7, basis: 'judgement', ref: '§9.5' }),
       revenueExport: rec('economics.revenueExport', false, 'toggle', { basis: 'judgement', ref: '§5.6' }),
+      // Work package 2 (OPEN-QUESTIONS 21 answered 2026-10-23 with Claude's recommendation): the evaluation period above
+      // sets the score; these further periods are shown beside it (LCOE and NPV), from the same ledger rule.
+      displayPeriods: rec('economics.displayPeriods', [10, 15], 'years, shown beside the scoring period', { basis: 'judgement', ref: '§5.6', note: 'Walkthrough 2026-10-21: several evaluation periods at once (for example 10, 15 and 20 years). The scoring period (economics.periodYears) sets the cost axis.' }),
     },
     weights: {
       cost: rec('weights.cost', 35, 'raw 0–100', { basis: 'judgement', ref: '§5.7' }),
@@ -789,6 +805,11 @@ export function buildDefaultInputs(opts = {}) {
       bridgeBessHours: rec('settings.bridgeBessHours', 24, 'h', { basis: 'judgement', ref: '§9.2' }),
       timelineMonths: rec('settings.timelineMonths', 120, 'months', { basis: 'run setting', ref: '§9.8', note: 'Time-to-power horizon.' }),
       maxDispatchYears: rec('settings.maxDispatchYears', 8, 'years', { basis: 'run setting', ref: '§9.1', note: 'Distinct 8760-h dispatch years before steady state is assumed.' }),
+      // Work package 8 (OPEN-QUESTIONS 23, 2026-10-23): the screening tier is optional and off by default, because power
+      // adequacy needs every hour. 'repDays' dispatches every option over representative days, then verifies the best
+      // settings.verifyTop options with the full year and re-scores.
+      screeningModel: rec('settings.screeningModel', 'full', '"full" | "repDays"', { basis: 'run setting', ref: '§9.1', note: 'OPEN-QUESTIONS 23: full-year hourly for every option by default; representative days (design day, dearest day and a typical day per month) as an optional faster screening.' }),
+      verifyTop: rec('settings.verifyTop', 10, 'options verified with the full year', { low: 1, high: 50, basis: 'run setting', ref: '§9.1', note: 'OPEN-QUESTIONS 23: the best-ranked options re-run hour by hour when the screening model is on.' }),
       autonomyBasis: rec('settings.autonomyBasis', 'critical load', '', { basis: 'judgement', ref: '§9.2' }),
       layoutCellM: rec('settings.layoutCellM', 2, 'm raster cell', { basis: 'run setting', ref: '§10.4', note: 'Auto-layout raster cell size; chosen for the §17 layout timing, not from a source.' }),
       layoutCellLargeM: rec('settings.layoutCellLargeM', 5, 'm raster cell (large sites)', { basis: 'run setting', ref: '§10.4' }),
@@ -807,6 +828,7 @@ export function buildDefaultInputs(opts = {}) {
 // The engine always runs on normalised inputs; the UI keeps null for "at default".
 export function normalizeInputs(inputs) {
   const out = JSON.parse(JSON.stringify(inputs));
+  resolveUnknowns(out);
   if (!Array.isArray(out.load.phases) || out.load.phases.length === 0) {
     out.load.phases = [{ itMW: out.load.itMW, date: out.grid.fullDate }];
   }
@@ -823,6 +845,38 @@ export function normalizeInputs(inputs) {
   }
   return out;
 }
+
+// Knowledge levels (work package 2, §5): fill the IT load and the grid values the engineer left blank, and record
+// each one, with how it was set, in out.assumedInputs (path → sentence) for the "assumed default" flags. Idempotent:
+// a second pass sees the filled values and keeps the record of the first.
+export function resolveUnknowns(out) {
+  const A = { ...(out.assumedInputs || {}) };
+  const L = out.load, G = out.grid;
+  const areaHa = boundaryAreaHa(out.site.boundary) ?? Number(out.site.areaHa);
+  const blank = (x) => x == null || x === '' || (typeof x === 'number' && !Number.isFinite(x));
+  if (blank(L.itMW)) {
+    const sumPh = Array.isArray(L.phases) && L.phases.length ? L.phases.reduce((s, p) => s + (Number(p.itMW) || 0), 0) : 0;
+    if (sumPh > 0) {
+      L.itMW = sumPh;
+      A['load.itMW'] = `the sum of the phases entered, ${round1(sumPh)} MW`;
+    } else {
+      const cool = COOLING[L.coolingApproach] ? L.coolingApproach : 'air';
+      const dens = COOLING[cool].p.densityKWm2;
+      const cov = L.estimateCoverage ?? 0.35, storeys = L.storeys || 1, gu = L.grossUp || 1;
+      const mw = Math.max(1, (areaHa * 10000 * cov * storeys / gu) * dens / 1000);
+      L.itMW = Math.round(mw * 10) / 10;
+      A['load.itMW'] = `estimated from the site area: ${round1(areaHa)} ha × ${Math.round(cov * 100)} % coverage × ${storeys} storey${storeys === 1 ? '' : 's'} ÷ gross-up ${gu} × ${dens} kW/m² (${COOLING[cool].name}${L.coolingApproach === cool ? '' : ', cooling open'}) = ${L.itMW} MW`;
+    }
+  }
+  const start = out.project.analysisStart;
+  if (blank(G.fullDate)) { G.fullDate = addMonths(start, G.unknownFullMonths ?? 48); A['grid.fullDate'] = `not known: analysis start + ${G.unknownFullMonths ?? 48} months = ${G.fullDate}`; }
+  if (blank(G.fullMW)) { G.fullMW = Math.round(L.itMW * (G.unknownFullPerITMW ?? 1.4) * 10) / 10; A['grid.fullMW'] = `not known: IT load ${round1(L.itMW)} MW × ${G.unknownFullPerITMW ?? 1.4} = ${G.fullMW} MW`; }
+  if (blank(G.nowMW)) { G.nowMW = G.unknownNowMW ?? 0; A['grid.nowMW'] = `not known: ${G.nowMW} MW before the full connection`; }
+  if (!Array.isArray(L.phases) || L.phases.length === 0) A['load.phases'] = `one phase, ${round1(L.itMW)} MW at the grid full-connection date ${G.fullDate}`;
+  out.assumedInputs = A;
+  return out;
+}
+const round1 = (x) => Math.round(Number(x) * 10) / 10;
 
 // Area (ha) of a site boundary given as { points: [[lat, lon], …] }, or null if it is missing or invalid.
 export function boundaryAreaHa(boundary) {
@@ -841,6 +895,11 @@ export function referenceT1(opts = {}) {
   const inputs = buildDefaultInputs(opts);
   const s = inputs.project.analysisStart;
   inputs.project.name = 'T1 reference (example)';
+  // Entered values of the T1 example (required before work package 2).
+  inputs.load.itMW = T1_EXAMPLE.itMW;
+  inputs.grid.nowMW = T1_EXAMPLE.gridNowMW;
+  inputs.grid.fullMW = T1_EXAMPLE.gridFullMW;
+  inputs.grid.fullDate = addMonths(s, T1_EXAMPLE.gridFullMonthsFromStart);
   inputs.utilities.gasAvailable = 'Yes';
   inputs.load.phases = [18, 30, 42, 54].map((m) => ({ itMW: 25, date: addMonths(s, m) }));
   // The T1 example ticks a hybrid PPA at 100 % (OPEN-QUESTIONS 49), so the PPA rules stay exercised.

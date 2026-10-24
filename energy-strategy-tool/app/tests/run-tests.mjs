@@ -77,6 +77,9 @@ import { ppaRuleTests } from './ppa-tests.mjs';
 import { cardsTests } from './cards-tests.mjs';
 import { reportTests } from './report-tests.mjs';
 import { gridContractTests } from './grid-contract-tests.mjs';
+import { inputModelTests } from './input-model-tests.mjs';
+import { screeningTests } from './screening-tests.mjs';
+import { locationTests } from './location-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1214,6 +1217,9 @@ await ppaRuleTests(test, siteRuns);
 await cardsTests(test, siteRuns);
 await reportTests(test, siteRuns);
 await gridContractTests(test, siteRuns);
+await inputModelTests(test, siteRuns);
+await screeningTests(test, siteRuns);
+await locationTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

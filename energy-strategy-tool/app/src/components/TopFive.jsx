@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { topCards } from '../engine/cards.js';
-import { sig, money } from '../format.js';
+import { sig, money, perMWh } from '../format.js';
 import { LABEL } from '../engine/defaults.js';
 
 // Top five cards (BRIEF §12; work package 6; OPEN-QUESTIONS 24): five distinct strategies, the best-ranked option of
@@ -26,7 +26,7 @@ export default function TopFive({ run, onOpen, onCompare, compareIds = [] }) {
               <span>Cost {o.axisScores.cost.toFixed(0)}</span><span>Carbon {o.axisScores.carbon.toFixed(0)}</span><span>Time-to-power {o.axisScores.ttp.toFixed(0)}</span><span>Deliverability {o.axisScores.deliverability.toFixed(0)}</span>
             </div>
             <dl className="tc-figs">
-              <div><dt>LCOE</dt><dd>€{sig(o.eco.lcoe)}/MWh</dd></div>
+              <div><dt>LCOE</dt><dd>{perMWh(o.eco.lcoe)}</dd></div>
               <div><dt>Carbon</dt><dd>{sig(o.carbon.locationG)} g/kWh</dd></div>
               <div><dt>Capex</dt><dd>{money(o.eco.capex, 3)}</dd></div>
               <div><dt>Resilience</dt><dd><span className={`badge badge-${resCls(o.resilience.status)}`}>{o.resilience.status}</span></dd></div>
@@ -37,6 +37,10 @@ export default function TopFive({ run, onOpen, onCompare, compareIds = [] }) {
               <ul className="plain small tc-cons" aria-label="Cons">{cons.length ? cons.map((p) => <li key={p.id}><span aria-hidden="true">−</span> {p.text}</li>) : <li><span aria-hidden="true">−</span> n/a: not in the worse half of the run on any listed figure</li>}</ul>
             </div>
             {majorFlags.length ? <p className="small flag-text">Main flags: {majorFlags.slice(0, 3).map((f) => f.message.split(':')[0].split('.')[0]).join(' · ')}{majorFlags.length > 3 ? ` · +${majorFlags.length - 3} more` : ''}</p> : <p className="small">No major flags.</p>}
+            {(() => {
+              const as = o.flags.filter((f) => f.assumed && f.path);
+              return as.length ? <p className="small top5-assumed" title={as.map((f) => f.message).join('\n')}>Assumed defaults ({as.length}): {as.slice(0, 4).map((f) => f.message.replace(/^Assumed /, '').split(':')[0]).join(' · ')}{as.length > 4 ? ` · +${as.length - 4} more (option detail)` : ''}</p> : <p className="small">No key input assumed.</p>;
+            })()}
             {onCompare ? <label className="inline-check small"><input type="checkbox" checked={compareIds.includes(o.id)} onChange={() => onCompare(o.id)} /> <span>Compare</span></label> : null}
           </li>
         ))}

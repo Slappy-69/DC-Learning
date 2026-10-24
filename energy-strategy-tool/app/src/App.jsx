@@ -17,7 +17,8 @@ import { viewSetting, withoutSiteFilters } from './engine/view.js';
 import { UnverifiedTag } from './components/Field.jsx';
 import { scoreOptions, effectiveWeights, applyView } from './engine/scoring.js';
 import { describeWeightChange } from './engine/cards.js';
-import { GUARDRAIL, sig } from './format.js';
+import { GUARDRAIL, sig, setDisplayCurrency } from './format.js';
+import { displayCurrencyCode, FX } from './engine/index.js';
 
 // Inputs that only affect scoring/ranking: changing them re-scores without re-running dispatch (§4).
 const SCORE_ONLY = new Set(['weights', 'settings.costMetric', 'settings.carbonMetric', 'settings.rankCompliantFirst', 'settings.absoluteScaling']);
@@ -41,7 +42,10 @@ function computeKeyOf(inputs) {
   const { weights, ...rest } = inputs;
   const s = { ...rest.settings };
   delete s.costMetric; delete s.carbonMetric; delete s.rankCompliantFirst; delete s.absoluteScaling; delete s.hideDominated;
-  return JSON.stringify({ ...rest, settings: s });
+  // The display currency (work package 1) converts the figures shown; it never needs a re-run.
+  const p = { ...rest.project };
+  delete p.currency;
+  return JSON.stringify({ ...rest, project: p, settings: s });
 }
 
 // Media query state (phone layout, §16 "Phone (360–767 px)"). Re-renders when the viewport crosses the query.
@@ -85,6 +89,9 @@ export default function App() {
   const narrow = useMediaQuery('(max-width: 767px)');
   const [detailsOpen, setDetailsOpen] = useState(false);
   const computeKey = useMemo(() => computeKeyOf(inputs), [inputs]);
+  // Display currency for every figure on screen and in the PDF (work package 1); set before the children render.
+  const curCode = displayCurrencyCode(inputs);
+  setDisplayCurrency(curCode, FX[curCode]);
   const compute = useCompute(inputs, computeKey);
   const prevLeader = useRef(null);
   const prevRunRules = useRef(null);
@@ -255,7 +262,7 @@ export default function App() {
             <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">Rank probability not available in this slice (no Monte Carlo)</span></div>
             <div className="hs-item"><span className="hs-k">Power adequacy</span><span className="hs-v">{run ? <>✓ {adequate.toLocaleString('en-GB')} adequate · ✗ {(run.options.length - adequate).toLocaleString('en-GB')} not adequate</> : '—'}</span><span className="hs-sub">Adequate options rank first; none is hidden.</span></div>
             {siteBeta ? <div className="hs-item"><span className="hs-k">Site fit (Beta)</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit.' : 'Status only: it changes no score or rank.'} Site inputs set the POC and gas-main route costs.</span></div> : null}
-            <div className="hs-item"><span className="hs-k">Model</span><span className="hs-v">Full-year hourly (8760 h)</span><span className="hs-sub">Synthetic profiles · {run ? COUNTRIES[run.country].name : ''}</span></div>
+            <div className="hs-item"><span className="hs-k">Model</span><span className="hs-v">{run && run.verification ? `Screening (representative days); best ${run.verification.verified} verified with the full year` : 'Full-year hourly (8760 h)'}</span><span className="hs-sub">Synthetic profiles · {run ? COUNTRIES[run.country].name : ''}</span></div>
             <div className="hs-item"><span className="hs-k">Settings</span><span className="hs-v">
               Sample above cap: {inputs.settings.sampleAboveCap ? 'On' : 'Off'} · Hide dominated: {view.hideDominated ? 'On' : 'Off'} · View filters: {viewFilterCount}
               {inputs.settings.gridHandling === 'exceedance' ? <> · <strong className="warn-text">Grid capacity: exceedance mode</strong></> : null}

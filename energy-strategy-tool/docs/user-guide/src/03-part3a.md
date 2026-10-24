@@ -4,8 +4,8 @@ This part goes through every input and every results view. For each, it says wha
 
 **How defaults are shown in the current version.** Every field still at its default carries a yellow **unverified** tag (in full: "indicative — unverified"). Hover over the tag to see the basis of the value (source, judgement or run setting), the source it should be checked against, and any note. Required fields show a grey **required · example value** tag: the program has filled them with the T1 example so it can run, but they are not defaults and you should replace them.
 
-::: {.callout .agreed}
-**Agreed, not built yet.** Every input says whether you entered it or the tool is assuming it. Assumed values are flagged on **every option that uses them, with their source** (for example "ASSUMED Grid full connection 120 MW in 48 months: country default, indicative — unverified"), not only in a global count.
+::: {.callout .built}
+**Built (23 October 2026, work package 2).** Only the **location** and the **site area** are required. The IT load and the three grid values can be left blank ("Not known"): the tool assumes a value, shows it in the field as "Not known (…)", and says how it was made. Every key input you did not enter is flagged on **every option that uses it, with its source**, for example "Assumed IT load at full build: estimated from the site area: 15 ha × 35 % coverage × 2 storeys ÷ gross-up 2.2 × 1.5 kW/m² = 71.6 MW (indicative — unverified)". The flags are listed under **Assumed defaults** in each option's detail, counted on the top-five cards and in Compare, and printed in the PDF; they are kept out of the flag counts. Entering a value removes its flag from every option. One further flag on each option counts the technology, cost and carbon records, all indicative — unverified. The key inputs flagged are: IT load, phasing, the three grid values, analysis start, utilisation, ramp, load shape, cooling type, grid non-commodity adder, electricity escalation, gas availability, date and price (gas-burning options), carbon price (options that burn fuel), WACC, evaluation period, backup autonomy and test hours (options with backup generation), UPS ride-through, PPA type (PPA options) and the flexibility settings (options with flexibility).
 :::
 
 # 14. Inputs: project and location {#ch14}
@@ -15,24 +15,24 @@ This part goes through every input and every results view. For each, it says wha
 | Field | Default | What it does |
 |---|---|---|
 | Project name | Untitled project | A label only |
-| Latitude, longitude | required (T1: 52.29, −1.53) | Picks the country when "Country profile" is "From location"; sets the latitude used for the solar profile |
+| Map pin, latitude, longitude | required (T1: 52.29, −1.53) | Picks the country whose outline contains the pin when "Country profile" is "From location"; sets the latitude used for the solar profile |
 | Country profile | From location | Selects the country's hourly profiles and its price, network-charge, carbon, gas and carbon-price defaults |
 | Analysis start | today + 3 months | Month 0 of every timeline; the base year for prices and discounting |
 | Seed | 20261015 | Starting number for the synthetic profiles and the sampling of options |
 
-**Country from location.** The current version picks the built-in country whose reference point (a single latitude and longitude per country) is closest to your location. Near a border this can pick the wrong country, so check the label "From location (…)" and override it if needed. The 31 built-in countries are the 27 EU member states plus the United Kingdom, Norway, Switzerland and Iceland.
+**Country from location.** Since 23 October 2026 the tool picks the built-in country whose outline contains the pin (before, the nearest reference point, which could be wrong near a border). Check the label "From location (…)" and override it if needed. The 31 built-in countries are the 27 EU member states plus the United Kingdom, Norway, Switzerland and Iceland.
 
 **Analysis start.** All dates (phases, grid steps, plant availability) are counted in months from this month. It also sets the price base year: all money is in real terms of that year.
 
 **Seed.** The synthetic profiles and the sampling of options use a seeded random-number generator. The same inputs and seed always give exactly the same results. Change the seed to see how much the results depend on the particular synthetic year.
 
-::: {.callout .agreed}
-**Agreed, not built yet.**
+::: {.callout .built}
+**Built (23 October 2026, work package 1; OPEN-QUESTIONS 63–65).**
 
-- **Map pin.** The location is set by clicking a map. The map is bundled with the program (OpenStreetMap data in Protomaps "PMTiles" format, all of Europe, to roads level) so the program stays offline. The licence terms and the file size still have to be checked.
-- **Country from the pin**, shown and editable.
-- **Currency** per site, from a fixed list; exchange rates fixed at each release.
-- **Climate data**: the nearest ASHRAE design station and its distance are shown, with a flag that design temperatures come from that station, not the site; an EPW weather file can be uploaded instead.
+- **Map pin.** Section 1 opens with a map of Europe. Click or tap to place the pin; with the map focused, the arrow keys move it by 0.1° (with Shift by 1°), and + and − zoom. The map is **Natural Earth 1:50m country outlines** (public domain), bundled with the program (about 330 kB), so it works offline. It shows countries only, no roads or place names: type the coordinates for a precise site. OpenStreetMap roads were not bundled: Europe to roads level is several gigabytes and its licence (ODbL) asks for attribution and share-alike.
+- **Country from the pin**: the built-in country whose outline contains the pin, named under the map and in the Country profile hint, and editable. This replaces the nearest-reference-point rule, which picked the wrong country near borders (Strasbourg came out as Luxembourg). A pin at sea or in a country without a built-in profile (for example Serbia) uses the nearest built-in country and is flagged on every option.
+- **Currency shown**: by country (default), or euro, pound, Swiss franc, Norwegian, Swedish or Danish krone, or Icelandic króna. Every result and the PDF are converted at the fixed ECB reference rate of the release (22 October 2026). The engine and the inputs stay in euro.
+- **Climate data**: ASHRAE design-station data is licensed and cannot be bundled, so the design day stays the hottest hour of the country profile, flagged on every option ("design temperatures from the synthetic profile"). Hourly weather from NOAA records or an uploaded EPW file moves to package 0, with the profile research.
 :::
 
 ![MOCK-UP of the agreed project and location section: the map pin, country from the pin, currency, analysis start, the single site-area number and the nearest climate station flag.](img/m01-location.png)
@@ -82,7 +82,7 @@ The net developable area is the land budget for every block of plant and the dat
 
 | Field | Default | What it does |
 |---|---|---|
-| IT load at full build | required (T1: 100 MW) | Installed IT of the whole campus |
+| IT load at full build | Not known: estimated from the area (T1: 100 MW entered) | Installed IT of the whole campus |
 | Phasing table | one phase at the grid full-connection date | IT MW and energisation date of each phase |
 | Ramp: share at energisation | 25 % (was 50 % until 22 October 2026) | Share of a phase's IT drawn when it opens |
 | Ramp duration | 12 months | Time to reach 100 % |
@@ -107,19 +107,15 @@ The net developable area is the land budget for every block of plant and the dat
 
 The footprint takes land on the site plan and gives the roof area for rooftop solar.
 
-::: {.callout .agreed}
-**Agreed, not built yet: estimating the IT load from the area.** If you do not know the IT load, choose "Estimate from area":
+::: {.callout .built}
+**Built (23 October 2026, work package 2; OPEN-QUESTIONS 26): estimating the IT load from the area.** Leave the IT load blank and the tool estimates it with the building massing rule above, run backwards:
 
 ::: formula
-| IT load ≈ site area × site coverage × storeys × IT density
-| T1: 15 ha × 35 % × 1 storey × 5.5 kW/m² ≈ 290 MW
+| IT load ≈ site area × site coverage × storeys ÷ gross-up × IT density of the cooling type
+| 15 ha, cooling open (air density): 150,000 m² × 35 % × 2 ÷ 2.2 × 1.5 kW/m² = 71.6 MW
 :::
 
-Site coverage 35 % and one storey are judgements. The density, 5.5 kW per m² of floor, comes from a single benchmark: STACK's Erskine Park campus in Sydney (450 MW "operational capacity" on 82,020 m² of floor over three storeys, on 7.7 ha). The published sources do not say whether the 450 MW is IT load or facility load; if it is facility load, the IT density would be nearer 4 kW/m². The estimate is flagged as assumed on every option, and you can override the IT load at any time.
-:::
-
-::: {.callout .open}
-**Open: two densities that disagree.** The estimate above assumes 5.5 kW of IT per m² of *floor*. The building massing assumes 1.5 to 4 kW per m² of *whitespace* with a gross-up of 2.2, which is only 0.7 to 1.8 kW per m² of floor. For the same site, the two rules differ by a factor of three to eight. One of them should change during the research of the defaults (chapter 50).
+Site coverage 35 % (the walkthrough's figure), the storeys and the gross-up are judgements. When the cooling is an open choice the air density, the lowest, is used. One rule now serves both the estimate and the sizing, so the same site gives the same building. The walkthrough's benchmark of 5.5 kW per m² of floor (STACK Erskine Park: 450 MW "operational capacity" on 82,020 m², not known whether IT or facility load) would give about 290 MW on 15 ha; it stays a research item (chapter 50). If you enter phases but no IT load, the IT load is their sum. The estimate is flagged as assumed on every option, and you can enter the IT load at any time.
 :::
 
 ![MOCK-UP of the agreed "enter what you know" pattern: grid capacity and IT load each "Known" or assumed, with the source and the per-option flags.](img/m02-knowledge-levels.png)
@@ -140,9 +136,9 @@ Site coverage 35 % and one storey are judgements. The density, 5.5 kW per m² of
 
 | Field | Default | What it does |
 |---|---|---|
-| Grid import now | required (T1: 20 MW) | Import capacity from the analysis start |
-| Grid import at full connection | required (T1: 120 MW) | Import capacity from the full-connection date |
-| Full-connection date | required (T1: 2029-07) | When the full capacity is available |
+| Grid import now | Not known: 0 MW (T1: 20 MW) | Import capacity from the analysis start |
+| Grid import at full connection | Not known: IT load × 1.4 (T1: 120 MW) | Import capacity from the full-connection date |
+| Full-connection date | Not known: start + 48 months (T1: 2029-07) | When the full capacity is available |
 | Grid export capacity | 0 MW | Used only by C1 "Grid + export" |
 | Grid price multiplier | × 1 | Scales the country's hourly wholesale prices |
 | Grid carbon multiplier | × 1 | Scales the country's hourly grid carbon |
@@ -161,8 +157,7 @@ Two inputs exist in the engine but are not on screen in the current version: **g
 ::: {.callout .agreed}
 **Agreed, not built yet.**
 
-- **Grid capacity and connection time can be "Not known".** The tool then uses country defaults, labelled indicative, and flags them on every option, with the source. These country values are still to be researched.
-- **Contracted grid capacity per option**, set by the engineer, and a **fixed grid connection charge**, the same for every option (chapter 19).
+- **Country values for "Not known" grid capacity and connection time.** Built 23 October 2026 with one default for every country: now 0 MW, full connection 1.4 MW per MW of IT (about the design load), 48 months after the start, each labelled indicative and flagged on every grid-connected option. Country values are still to be researched.
 - **Gas price**: the latest published wholesale price with its date, from a free monthly source, overridable with a current quote.
 :::
 
@@ -200,7 +195,7 @@ Two inputs exist in the engine but are not on screen in the current version: **g
 
 # 19. Inputs: economics and run settings {#ch19}
 
-In the current version, the economic inputs sit in the collapsed **Run and dispatch settings** section, together with settings that change how the run is done or reported.
+Since 23 October 2026 the economic inputs have their own section, **5 · Economics** (below); the collapsed **Run and dispatch settings** section keeps the settings that change how the run is done or reported.
 
 | Field | Default | What it does |
 |---|---|---|
@@ -214,28 +209,32 @@ In the current version, the economic inputs sit in the collapsed **Run and dispa
 | Sample above cap | on | Samples down to the cap; off screens all |
 | Wind default site threshold | 20 ha | Wind not generated on smaller sites |
 | Layout raster cell / large-site cell / threshold | 2 m / 5 m / 50 ha | Resolution of the auto-layout |
-| WACC (real) | 7 % | Discount rate |
-| Evaluation period | 20 years | Length of the cost ledger |
-| Contingency | 10 % | Added to every capex line |
-| Carbon price (Scope 1) | country default | €/t CO₂e; €85 everywhere except the United Kingdom (€50) |
+
 
 **Rank requirement-compliant options first.** Off by default (flag, don't enforce). When on, options whose resilience is "Does not meet" or whose site fit is "Does not fit" are ranked after all the others. Their scores do not change. The setting is shown in the header.
 
 **Sampling.** With sampling on, a run with more combinations than the cap screens all archetypes plus a seeded Latin hypercube sample of the rest (chapter 34). With sampling off, every combination is screened, which can take much longer. The header and the run summary always say which applies.
 
-Several economic defaults have no field on screen in the current version: capex range −30 %/+50 %, carbon price escalation 2 % a year real, electricity and gas price escalation 0 %, and salvage value 50 % of remaining value.
+**Section 5 · Economics** (built 23 October 2026, work package 2):
+
+| Field | Default | What it does |
+|---|---|---|
+| WACC (real) | 7 % | "The blended return the investors require, used as the discount rate" |
+| Scoring evaluation period | 20 years | Length of the ledger that sets the cost axis and the ranking (OPEN-QUESTIONS 21) |
+| Further periods shown | 10, 15 years | LCOE and NPV over these periods in each option's detail and the PDF; they do not rank |
+| Contingency | 10 % | Added to every capex line |
+| Carbon price (Scope 1) | country default | €/t CO₂e (EU ETS or UK ETS) |
+| Electricity, gas and carbon escalation | 0 %, 0 %, 2 % a year real | Price change per year over the period |
+
+The currency is the euro; revenue options (export, battery grid services, heat reuse) stay off unless opened in the choices. Capex range (−30 %/+50 %) and salvage value (50 %) have no field.
 
 ::: {.callout .agreed}
-**Agreed, not built yet: an Economics section.**
+**Agreed, not built yet: the rest of the economics section.**
 
-- **Evaluation periods**: several at once (for example 10, 15 and 20 years).
-- **WACC**: 7 % real, labelled judgement until researched; explained on screen as "the blended return investors require, used as the discount rate".
 - **Carbon price**: the latest EU ETS market price with its date (for example €82.40/t on 5 October 2026).
 - **Gas price**: the latest published wholesale price with its date (for example the TTF front month, €75.75/MWh on 5 October 2026), from a free monthly source; overridable.
 - **Escalation**: a published forecast per commodity, overridable.
-- **Grid connection capex and charge** (built 23 October 2026, in the grid section; chapter 9): one lump sum, default 0, flagged as assumed, with the expected figure shown.
-- **Contracted grid capacity** (built 23 October 2026, in the grid section): one value per grid strategy, set before the run.
-- **Revenue options** (battery arbitrage or grid services, waste-heat reuse): off by default.
+- **Currency** per site, from a fixed list (package 1).
 :::
 
 ![MOCK-UP of the agreed economics section, including contracted grid capacity per option. Prices shown are the published values found on the dates given.](img/m05-economics.png)

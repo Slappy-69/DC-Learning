@@ -634,3 +634,17 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .sens-driver input[type=checkbox] { width: 24px; height: 24px; margin: 0; flex: none; }
 .sens-driver { min-height: 28px; }
 .sens #sens-measure { min-height: 32px; border: 1px solid var(--control-border); border-radius: var(--radius); background: var(--surface); padding: 2px 6px; }
+/* Dispatch: any period (work package 8) */
+.dv-period select, .dv-period input { min-height: 32px; border: 1px solid var(--control-border); border-radius: var(--radius); background: var(--surface); padding: 2px 6px; }
+.dv-period input { width: 5em; }
+/* Map pin (work package 1) */
+.map-picker { margin: 4px 0 8px; }
+.map-svg { width: 100%; aspect-ratio: 1.15; display: block; border: 1px solid var(--line); border-radius: var(--radius); cursor: crosshair; touch-action: manipulation; }
+.map-svg:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.map-sea { fill: #dfe9f1; }
+.map-land { fill: #ece9e1; stroke: #9a968c; }
+.map-builtin { fill: #d6e6d0; }
+.map-pin circle { fill: #b3261e; stroke: #fff; stroke-width: 0.06; }
+.map-pin .map-pin-dot { fill: #fff; stroke: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .map-sea { fill: #1d2a35; } :root:not([data-theme="light"]) .map-land { fill: #3a3a36; stroke: #77746c; } :root:not([data-theme="light"]) .map-builtin { fill: #34473a; } }
+:root[data-theme="dark"] .map-sea { fill: #1d2a35; } :root[data-theme="dark"] .map-land { fill: #3a3a36; stroke: #77746c; } :root[data-theme="dark"] .map-builtin { fill: #34473a; }

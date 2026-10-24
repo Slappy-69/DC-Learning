@@ -2,7 +2,7 @@ import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } f
 import { tornadoSteps, TORNADO_DRIVERS, DEFAULT_DRIVER_IDS, TORNADO_MEASURES, measureById, sortRows } from '../engine/sensitivity.js';
 import { normalizeInputs, LABEL } from '../engine/defaults.js';
 import { UnverifiedTag } from './Field.jsx';
-import { sig } from '../format.js';
+import { sig, money, perMWh, cur, curUnit } from '../format.js';
 import { siteFor } from './SiteView.jsx';
 
 // Sensitivity tab (BRIEF §13.3 tornado). Port of the other line's SensitivityView (commit f1fd5c5): one option at a
@@ -27,16 +27,16 @@ function useWidth(ref, initial) {
   return w;
 }
 
-const lcoeText = (x) => (Number.isFinite(x) ? `€${sig(x, 3)}/MWh` : 'not finite (no delivered energy)');
+const lcoeText = (x) => (Number.isFinite(x) ? perMWh(x, 3) : 'not finite (no delivered energy)');
 // A value of the chosen measure as text (work package 9: LCOE, NPV, carbon or score).
 export function measureText(m, x) {
   if (!Number.isFinite(x)) return 'not finite';
-  if (m.id === 'lcoe') return `€${sig(x, 3)}/MWh`;
-  if (m.id === 'npv') return `€${sig(x / 1e6, 4)} m`;
+  if (m.id === 'lcoe') return perMWh(x, 3);
+  if (m.id === 'npv') return money(x, 4);
   if (m.id === 'carbon') return `${sig(x, 3)} g/kWh`;
   return `${sig(x, 4)} points`;
 }
-const swingText = (m, r) => (r.measureSwing >= 0 ? (m.id === 'npv' ? `€${sig(r.measureSwing / 1e6, 3)} m` : m.id === 'score' ? `${sig(r.measureSwing, 3)} points` : measureText(m, r.measureSwing)) : 'not finite');
+const swingText = (m, r) => (r.measureSwing >= 0 ? (m.id === 'npv' ? money(r.measureSwing, 3) : m.id === 'score' ? `${sig(r.measureSwing, 3)} points` : measureText(m, r.measureSwing)) : 'not finite');
 function rowReadout(r, i, n, m) {
   return `${i + 1} of ${n}: ${r.label}. Low ${r.low.text}: ${m.label} ${measureText(m, m.get(r.low))}. High ${r.high.text}: ${m.label} ${measureText(m, m.get(r.high))}. Swing ${swingText(m, r)}.`;
 }
@@ -73,7 +73,7 @@ export function TornadoChart({ result, rows: rowsIn = null, measure = 'score', i
   const mag = 10 ** Math.floor(Math.log10(raw));
   const step = [1, 2, 5, 10].map((k) => k * mag).find((k) => k >= raw) || 10 * mag;
   for (let t = Math.ceil(lo / step) * step; t <= hi + 1e-9 * step; t += step) ticks.push(Number(t.toPrecision(10)));
-  const axisLabel = m.id === 'score' ? "Weighted score (0–100, base run's axis ranges)" : m.id === 'npv' ? `${m.label} (€ m)` : `${m.label} (${m.unit})`;
+  const axisLabel = m.id === 'score' ? "Weighted score (0–100, base run's axis ranges)" : m.id === 'npv' ? `${m.label} (${cur().trim()} m)` : `${m.label} (${curUnit(m.unit)})`;
   const onKey = (e) => {
     let n = null;
     if (e.key === 'ArrowDown' || e.key === 'ArrowRight') n = active == null ? 0 : Math.min(rows.length - 1, active + 1);
@@ -147,7 +147,7 @@ export function SensitivityResult({ result, ms = null, chartWidth = null, measur
       <div className="dv-scroll" role="region" aria-label="Tornado values" tabIndex={0}>
         <table className="mini sens-table dv-num">
           <caption className="sr-only">{m.label} and weighted score of the option at the low and high value of each driver, largest {m.label} swing first</caption>
-          <thead><tr><th scope="col">Driver (range record)</th><th scope="col">Low value</th><th scope="col">{m.label}</th><th scope="col">Score</th><th scope="col">High value</th><th scope="col">{m.label}</th><th scope="col">Score</th><th scope="col">Swing ({m.id === 'npv' ? '€ m' : m.id === 'score' ? 'points' : m.unit})</th></tr></thead>
+          <thead><tr><th scope="col">Driver (range record)</th><th scope="col">Low value</th><th scope="col">{m.label}</th><th scope="col">Score</th><th scope="col">High value</th><th scope="col">{m.label}</th><th scope="col">Score</th><th scope="col">Swing ({m.id === 'npv' ? `${cur().trim()} m` : m.id === 'score' ? 'points' : curUnit(m.unit)})</th></tr></thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} data-driver={r.id}>

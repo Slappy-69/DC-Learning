@@ -4406,12 +4406,12 @@
  {
   "path": "project.currency",
   "value": "by country",
-  "unit": "",
+  "unit": "by country / EUR / GBP / CHF / NOK / SEK / DKK / ISK",
   "low": null,
   "high": null,
   "basis": "judgement",
   "sourceToVerify": "",
-  "note": "",
+  "note": "Display only; converted at the ECB reference rates of the release (project.fx). Inputs stay in euro.",
   "briefRef": "§5.1"
  },
  {
@@ -4633,6 +4633,28 @@
   "sourceToVerify": "",
   "note": "Note only; no geotechnical modelling (flat site, §10.1).",
   "briefRef": "§5.2"
+ },
+ {
+  "path": "load.itMW",
+  "value": null,
+  "unit": "MW IT at full build (blank = estimated from the site area)",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Blank: site area × building coverage × storeys ÷ gross-up × whitespace density of the cooling type (air when the cooling is an open choice), the same rule the building massing uses (OPEN-QUESTIONS 26).",
+  "briefRef": "§5.3"
+ },
+ {
+  "path": "load.estimateCoverage",
+  "value": 0.35,
+  "unit": "fraction of the site area covered by data halls",
+  "low": 0.2,
+  "high": 0.5,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Walkthrough 2026-10-21: 35 % site coverage for the IT estimate from area. To research.",
+  "briefRef": "§5.3"
  },
  {
   "path": "load.rampStart",
@@ -5029,6 +5051,72 @@
   "sourceToVerify": "",
   "note": "Walkthrough 2026-10-21: the economic battery runs the site in trigger hours before any curtailment.",
   "briefRef": "§5.3"
+ },
+ {
+  "path": "grid.nowMW",
+  "value": null,
+  "unit": "MW import available now (blank = not known: 0 MW)",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Blank = not known: no import before the full connection (grid.unknownNowMW).",
+  "briefRef": "§5.4"
+ },
+ {
+  "path": "grid.fullMW",
+  "value": null,
+  "unit": "MW import at full connection (blank = not known)",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Blank = not known: the IT load × grid.unknownFullPerITMW, about the design facility load.",
+  "briefRef": "§5.4"
+ },
+ {
+  "path": "grid.fullDate",
+  "value": null,
+  "unit": "YYYY-MM (blank = not known)",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Blank = not known: the analysis start + grid.unknownFullMonths.",
+  "briefRef": "§5.4"
+ },
+ {
+  "path": "grid.unknownNowMW",
+  "value": 0,
+  "unit": "MW now when not known",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "No source. Country values to research (package 0).",
+  "briefRef": "§5.4"
+ },
+ {
+  "path": "grid.unknownFullPerITMW",
+  "value": 1.4,
+  "unit": "MW of grid per MW of IT when not known",
+  "low": 1.1,
+  "high": 1.6,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "About the design facility load (IT × design-day PUE + ancillary). No source; country values to research.",
+  "briefRef": "§5.4"
+ },
+ {
+  "path": "grid.unknownFullMonths",
+  "value": 48,
+  "unit": "months from the analysis start when not known",
+  "low": 24,
+  "high": 96,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "No source; country connection lead times to research (package 0).",
+  "briefRef": "§5.4"
  },
  {
   "path": "grid.steps",
@@ -5661,6 +5749,20 @@
   "briefRef": "§5.6"
  },
  {
+  "path": "economics.displayPeriods",
+  "value": [
+   10,
+   15
+  ],
+  "unit": "years, shown beside the scoring period",
+  "low": null,
+  "high": null,
+  "basis": "judgement",
+  "sourceToVerify": "",
+  "note": "Walkthrough 2026-10-21: several evaluation periods at once (for example 10, 15 and 20 years). The scoring period (economics.periodYears) sets the cost axis.",
+  "briefRef": "§5.6"
+ },
+ {
   "path": "weights.cost",
   "value": 35,
   "unit": "raw 0–100",
@@ -5977,6 +6079,28 @@
   "basis": "run setting",
   "sourceToVerify": "",
   "note": "Distinct 8760-h dispatch years before steady state is assumed.",
+  "briefRef": "§9.1"
+ },
+ {
+  "path": "settings.screeningModel",
+  "value": "full",
+  "unit": "\"full\" | \"repDays\"",
+  "low": null,
+  "high": null,
+  "basis": "run setting",
+  "sourceToVerify": "",
+  "note": "OPEN-QUESTIONS 23: full-year hourly for every option by default; representative days (design day, dearest day and a typical day per month) as an optional faster screening.",
+  "briefRef": "§9.1"
+ },
+ {
+  "path": "settings.verifyTop",
+  "value": 10,
+  "unit": "options verified with the full year",
+  "low": 1,
+  "high": 50,
+  "basis": "run setting",
+  "sourceToVerify": "",
+  "note": "OPEN-QUESTIONS 23: the best-ranked options re-run hour by hour when the screening model is on.",
   "briefRef": "§9.1"
  },
  {

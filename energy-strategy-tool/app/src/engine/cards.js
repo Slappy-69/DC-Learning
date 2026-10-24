@@ -5,6 +5,7 @@
 // C2, firm generation C4 and backup C5), in rank order, so the cards follow the ranking (adequate options first).
 // Pros and cons are judged against every option in the run, and the card says so. An option whose figures are the
 // same as a better-ranked option's is marked "same results as #k" and never takes a card.
+import { perMWh, money } from '../format.js';
 
 export const STRATEGY_KEYS = ['C1', 'C2', 'C4', 'C5'];
 export const strategyKey = (o) => STRATEGY_KEYS.map((k) => o.v[k]).join('|');
@@ -32,8 +33,8 @@ export function identicalResults(options) {
 
 // Metrics judged for pros and cons (lower is better unless stated).
 export const CARD_METRICS = [
-  { id: 'lcoe', label: 'LCOE', get: (o) => o.eco.lcoe, fmt: (x) => `€${Math.round(x).toLocaleString('en-GB')}/MWh` },
-  { id: 'capex', label: 'capex', get: (o) => o.eco.capex, fmt: (x) => `€${Number((x / 1e6).toPrecision(3)).toLocaleString('en-GB')} m` },
+  { id: 'lcoe', label: 'LCOE', get: (o) => o.eco.lcoe, fmt: (x) => perMWh(x, 3) },
+  { id: 'capex', label: 'capex', get: (o) => o.eco.capex, fmt: (x) => money(x, 3) },
   { id: 'carbon', label: 'carbon (location-based)', get: (o) => o.carbon.locationG, fmt: (x) => `${Math.round(x).toLocaleString('en-GB')} g/kWh` },
   { id: 'cfe', label: 'hourly carbon-free energy', higher: true, get: (o) => o.carbon.cfePct, fmt: (x) => `${(x * 100).toFixed(0)} %` },
   { id: 'ttp', label: 'time-to-power', get: (o) => o.ttp.metric, fmt: (x) => `${Number(x.toPrecision(3))} months` },

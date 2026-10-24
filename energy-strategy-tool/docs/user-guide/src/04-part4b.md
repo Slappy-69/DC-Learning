@@ -499,5 +499,5 @@ This chapter lists every walkthrough decision that changes what the engine calcu
 - how the representative days are chosen and how many options are verified at full resolution;
 - whether the top five should show five distinct strategies;
 - how the land budget for ground solar and wind is set with the Site tab hidden;
-- which density rule (IT estimate from area, or building massing) is kept.
+- (answered 23 October 2026) the building massing rule is kept, and the IT estimate inverts it.
 :::

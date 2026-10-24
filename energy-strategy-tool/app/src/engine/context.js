@@ -1,16 +1,36 @@
 // Run context: everything shared by all options in one run (BRIEF §4 incremental recompute:
 // these arrays depend only on inputs, not on the option's choices).
 
-import { COUNTRIES, COOLING, TECH, FUEL } from './defaults.js';
+import { COUNTRIES, COOLING, TECH, FUEL, FX } from './defaults.js';
 import { getProfiles, coolingProfile, nearestCountry, H } from './profiles.js';
 import { monthsBetween, yearOf, parseYM } from './dates.js';
 import { mulberry32, subSeed } from './prng.js';
 import { buildSiteModel } from './site.js';
+import { countryAtPoint } from './geocountry.js';
 
 export function resolveCountry(inputs) {
   const c = inputs.project.country;
   if (c && COUNTRIES[c]) return c;
-  return nearestCountry(inputs.project.lat, inputs.project.lon);
+  return countryFromPin(inputs.project.lat, inputs.project.lon);
+}
+
+// Country from the pin (work package 1, AC 17): the built-in country whose outline contains the pin; otherwise
+// (sea, or a country without a profile) the nearest country reference point, flagged on every option (assumed.js).
+export function countryFromPin(lat, lon) {
+  const hit = countryAtPoint(lat, lon);
+  if (hit && hit.iso2 && COUNTRIES[hit.iso2]) return hit.iso2;
+  return nearestCountry(lat, lon);
+}
+// Display currency code for the inputs: the entered code, or the country's currency for 'by country'; euro when no
+// release rate exists for it.
+export function displayCurrencyCode(inputs) {
+  const c = inputs.project.currency;
+  const code = !c || c === 'by country' ? COUNTRIES[resolveCountry(inputs)].currency : c;
+  return FX[code] ? code : 'EUR';
+}
+export function pinCountryInfo(lat, lon) {
+  const hit = countryAtPoint(lat, lon);
+  return { inside: !!(hit && hit.iso2 && COUNTRIES[hit.iso2]), mapName: hit ? hit.name : null, code: countryFromPin(lat, lon) };
 }
 
 export function monthOf(inputs, ym) {
@@ -133,7 +153,8 @@ export function buildContext(inputs, opts = {}) {
   const seed = inputs.project.seed;
   const prof = getProfiles(country, seed, inputs.project.lat);
   const nMonthsTimeline = inputs.settings.timelineMonths;
-  const maxYears = Math.max(inputs.economics.periodYears, Math.ceil(nMonthsTimeline / 12));
+  const dp = Array.isArray(inputs.economics.displayPeriods) ? inputs.economics.displayPeriods.map(Number).filter((n) => Number.isInteger(n) && n <= 60) : [];
+  const maxYears = Math.max(inputs.economics.periodYears, ...dp, Math.ceil(nMonthsTimeline / 12));
   const nMonths = Math.max(nMonthsTimeline, maxYears * 12) + 12;
   const gridCap = gridCapByMonth(inputs, nMonths);
   const itInst = itInstalledByMonth(inputs, nMonths);

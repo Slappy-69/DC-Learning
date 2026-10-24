@@ -191,6 +191,6 @@ const SORTERS = {
   unmet: (o) => o.unmet.mwh,
   landTake: (o) => (o.siteFit ? o.siteFit.landTakeM2 : Infinity),
   siteFit: (o) => (o.siteFit ? ['Fits', 'Fits with flags', 'Does not fit'].indexOf(o.siteFit.status) : 3),
-  flags: (o) => o.flags.length,
+  flags: (o) => o.flags.filter((f) => !f.assumed).length, // assumed-default flags are listed apart (work package 2)
   name: (o) => o.name,
 };

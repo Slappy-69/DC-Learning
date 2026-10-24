@@ -429,8 +429,10 @@ Chapter 37 gives the exact rules and works through two real hours of the T1 lead
 
 Simulating 8,760 hours for 2,000 options takes 15 to 20 seconds. The brief's speed targets (results in about half a second) need a faster first pass.
 
-::: {.callout .agreed}
-**Agreed, not built yet.** A screening run uses **representative days** (a dozen typical days chosen by clustering, plus a design day and a seven-day low-renewables window) for every option; the top options are then verified with the full 8,760-hour model. Dispatch views of any period of the year are available only for those verified options. Each figure says which model produced it, and the tool flags a difference of more than 5 % between the two.
+::: {.callout .built}
+**Built (23 October 2026, work package 8; OPEN-QUESTIONS 23), optional and off by default.** Power adequacy needs every hour, so the full year stays the default. In **Run and dispatch settings → Dispatch model** you can choose **Screening: representative days, then verify the best**. Every option is then dispatched over about 25 days: in each month the design day (when it falls in that month), the day with the highest mean grid price and the most typical day, weighted so that the days add up to the year. The best options by rank (10 by default, "Options verified with the full year") are re-run hour by hour for the full year, their figures replaced, and every option re-scored. Each option says which model produced its figures; a verified option also shows its screening figures. In the Dispatch tab only verified options are offered.
+
+On T1, the screening LCOE is within 4 % of the full year for every option (the target is 5 %); location-based carbon is within about 13 %. The adequacy count is the same (1,566 options) and 9 of the top 10 are the same; the run takes about 9 s instead of 15 s on the test machine, because layout and the other stages do not change.
 :::
 
 # 11. Money: capex, opex, discounting, NPV and LCOE {#ch11}

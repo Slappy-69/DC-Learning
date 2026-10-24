@@ -3,6 +3,7 @@
 
 import { TECH, FUEL, PPA, COOLING, COUNTRIES, choiceLabel } from './defaults.js';
 import { decarbFactor, contractedCap, contractLimit } from './context.js';
+import { assumedFlags } from './assumed.js';
 import { fuelPrice, fuelEF } from './dispatch.js';
 import { bridgeActive, techAvailMonth } from './sizing.js';
 import { permittingTriggers } from './permitting.js';
@@ -67,6 +68,20 @@ export function timeToPower(ctx, v, sz) {
 function yearOfMonth(m) { return Math.max(0, Math.floor(m / 12)); }
 
 export function economics(ctx, v, sz, disp, ttp) {
+  const eco = economicsFor(ctx, v, sz, disp, ttp);
+  // Further evaluation periods shown beside the scoring period (work package 2, OPEN-QUESTIONS 21): the same ledger
+  // rule over each period; the scoring period alone sets the cost axis.
+  const E = ctx.inputs.economics;
+  const extra = (Array.isArray(E.displayPeriods) ? E.displayPeriods : []).map(Number).filter((n) => Number.isInteger(n) && n >= 1 && n <= 60 && n !== E.periodYears);
+  eco.byPeriod = [...new Set([...extra, E.periodYears])].sort((a, b) => a - b).map((n) => {
+    if (n === E.periodYears) return { years: n, lcoe: eco.lcoe, npvCost: eco.npvCost, scoring: true };
+    const e = economicsFor({ ...ctx, inputs: { ...ctx.inputs, economics: { ...E, periodYears: n } } }, v, sz, disp, ttp);
+    return { years: n, lcoe: e.lcoe, npvCost: e.npvCost, scoring: false };
+  });
+  return eco;
+}
+
+function economicsFor(ctx, v, sz, disp, ttp) {
   const inputs = ctx.inputs;
   const E = inputs.economics;
   const N = E.periodYears;
@@ -595,6 +610,8 @@ export function allOptionFlags(ctx, v, sz, disp, ttp, eco, carb, res, siteFit) {
   const flags = optionFlags(ctx, v, sz, disp, ttp, eco, carb, res);
   if (siteFit) flags.push(...siteFit.flags);
   flags.push(flag('data-unverified', 'info', 'Data', 'Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles'));
+  // Assumed defaults (work package 2, AC 16): one info flag per key input not entered that the option uses.
+  flags.push(...assumedFlags(ctx, v, sz, flag));
   return flags;
 }
 

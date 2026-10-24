@@ -31,6 +31,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Ask the owner:** the map licence, attribution and file size found in research (the size adds to the 370 MB program); the ASHRAE licence result; whether weather processing (NOAA cleaning) belongs here or in package 0.
 - **Watch:** the Windows program must still make no network connection (packaging check D12 traces every process); the map must load from the program's own files.
 - **Mock-up:** `m01-location`. **Guide:** chapters 2, 14, 52, 53.
+- **Progress:** built 2026-10-23 on `feature/input-model` (with packages 2 and 8), not merged: OPEN-QUESTIONS 63–65 answered with Claude's recommendations (Natural Earth outlines bundled, ASHRAE not bundled and flagged, weather processing moved to package 0); AC 17 tested. Not built: roads on the map, editable exchange rates, NOAA/EPW weather.
 
 ### 2. Input model with flagged defaults (and the Beta switch)
 
@@ -40,6 +41,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Started out of order (2026-10-22), on branch `feature/site-tab-beta` while the owner was away ("progress independently on sections without comments"):** the Site tab's Beta switch and AC 27 only. Built: the general-settings switch, the Beta label, site fit out of the ranking, "compliant first" and dominance, and out of the main views when off. Not started: everything else in this package, which waits for its open questions.
 - **Code before 2026-10-22:** "Rank requirement-compliant options first" also counted "Does not fit" (`app/src/engine/scoring.js`, `isRequirementCompliant`), and the site layout runs in every run and sets the land for ground solar. With the Site tab as Beta, site fit must not count in the ranking (AC 27); how ground solar gets its land without the layout is OPEN-QUESTIONS 25.
 - **Mock-ups:** `m02-knowledge-levels`, `m05-economics`, `m10-settings`. **Guide:** chapters 14–19, 28, 30, 32, 42.
+- **Progress:** built 2026-10-23 on `feature/input-model` (from `feature/grid-contract`), not merged: OPEN-QUESTIONS 21, 25, 26, 28 answered with Claude's recommendations (accepted in advance by the owner); AC 16 tested; KNOWN-ISSUES item 6 resolved. Not built: country values for "Not known" grid inputs and dated prices (package 0), currency (package 1), typical PUE beside the cooling input.
 
 ### 3. Contracted grid capacity and the fixed grid connection charge
 
@@ -98,6 +100,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Ask the owner:** OPEN-QUESTIONS 23 (representative-day method; number verified).
 - **Watch:** this is the largest engine change. The owner's run time today is 15–20 s for 2,000 options; the brief's targets need the screening tier. The Dispatch and Sensitivity tabs re-run an option and check it reproduces the ranking's figures; keep that check.
 - **Guide:** chapters 10, 26, 37.
+- **Progress:** built 2026-10-23 on `feature/input-model` (with package 2), not merged: OPEN-QUESTIONS 23 answered with Claude's recommendation (optional, off by default; three day types per month; 10 verified); AC 4 (LCOE within ±5 % on T1) and AC 25 tested.
 
 ### 9. Tornado
 

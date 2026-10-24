@@ -554,6 +554,63 @@ await check('B32. PDF report (work package 10, AC 26): "Save PDF report" downloa
   return `${name}: ${pages} pages, ${(buf.length / 1024).toFixed(0)} kB; status "${status.match(/PDF report made[^.]*\./)[0]}".`;
 });
 
+await check('B34. Knowledge levels and the economics section (work package 2, AC 16): the IT load and grid fields accept "Not known"; section 5 is Economics with the WACC explanation and the further periods; each top-five card counts its assumed defaults', async () => {
+  const { page, errors } = main;
+  await page.getByRole('tab', { name: /^Options/ }).click();
+  const it = page.getByLabel(/^IT load at full build/);
+  ok(/Not known/.test(await it.getAttribute('placeholder')), 'IT load placeholder');
+  ok(await page.getByText('5 · Economics').count() >= 1, 'no Economics section');
+  ok(await page.getByLabel(/^Further periods shown/).count() === 1, 'no further-periods field');
+  const cards = await page.locator('.top5-assumed').allInnerTexts();
+  ok(cards.length === 5 && cards.every((t) => /^Assumed defaults \(\d+\)/.test(t)), `cards: ${JSON.stringify(cards).slice(0, 200)}`);
+  ok(errors.length === 0, errors.join(' | '));
+  return `IT load placeholder "${await it.getAttribute('placeholder')}"; Economics section present; cards: ${cards[0].slice(0, 90)}…`;
+});
+
+await check('B35. Dispatch for any period (work package 8, AC 25): a start day and a length of 3 days give a 72-hour chart and table; "Back to weeks" returns to the week view', async () => {
+  const { page, errors } = main;
+  await page.getByRole('tab', { name: 'Dispatch', exact: true }).click();
+  await page.waitForSelector('#dispatch-chart', { timeout: 60000 });
+  await page.locator('#dv-day').fill('100');
+  await page.locator('#dv-day').press('Enter');
+  await page.selectOption('#dv-len', '3');
+  await page.waitForTimeout(300);
+  const sum = page.locator('details summary', { hasText: 'as a table (MW, hourly)' }).first();
+  const label = await sum.innerText();
+  ok(/^Days 100–102 as a table/.test(label), `table summary "${label}"`);
+  await page.evaluate(() => document.querySelectorAll('.dv details').forEach((d) => { d.open = true; }));
+  const rows = await page.locator('table', { has: page.locator('caption', { hasText: 'Hourly dispatch of days 100–102' }) }).locator('tbody tr').count();
+  ok(rows === 72, `rows ${rows}`);
+  await page.getByRole('button', { name: 'Back to weeks' }).click();
+  ok(/^Week \d+ as a table/.test(await sum.innerText()), 'not back to weeks');
+  ok(errors.length === 0, errors.join(' | '));
+  return `days 100–102: ${rows} hourly rows; back to the week view.`;
+});
+
+await check('B36. Map pin (work package 1, AC 17): the bundled map shows the pin; arrow keys on the map move it by 0.1° and the latitude field follows; the country under the pin is named; the results are shown in the country currency (pounds for T1)', async () => {
+  const { page, errors } = main;
+  const map = page.locator('#map-picker');
+  ok(await map.count() === 1 && (await map.getAttribute('role')) === 'application', 'no map');
+  ok((await page.locator('#map-picker path').count()) > 30, 'map outlines missing');
+  ok(/United Kingdom/.test(await page.locator('.map-picker [aria-live]').innerText()), 'pin country not named');
+  const lat = page.getByLabel(/^Latitude/);
+  const before = Number(await lat.inputValue());
+  await map.focus();
+  await page.keyboard.press('ArrowUp');
+  await page.waitForTimeout(200);
+  const after = Number(await lat.inputValue());
+  ok(Math.abs(after - before - 0.1) < 1e-9, `latitude ${before} → ${after}`);
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(500);
+  await page.waitForFunction(() => { const t = document.querySelector('.status').textContent; return /Last run/.test(t) && !/Screening options/.test(t); }, null, { timeout: 180000, polling: 250 });
+  ok(Number(await lat.inputValue()) === before, 'pin did not return');
+  await page.getByRole('tab', { name: /^Options/ }).click();
+  const lcoe = await page.locator('.top5 dd').first().innerText();
+  ok(/^£[\d.,]+\/MWh$/.test(lcoe), `card LCOE "${lcoe}"`);
+  ok(errors.length === 0, errors.join(' | '));
+  return `pin ${before} → ${after} → ${before} with the arrow keys; country named; card LCOE "${lcoe}".`;
+});
+
 await check('B33. Grid connection charge (work package 3, OPEN-QUESTIONS 50): the field shows the expected figure; "Use the expected figure" copies it into the field and re-runs; the contracted-capacity fields start blank (the full offer)', async () => {
   const { page, errors } = main;
   const wait = page.getByLabel(/^Wait for grid \(C1\)/);
@@ -1007,7 +1064,7 @@ await check('B23. Phone width (375 px, touch): the Sensitivity tab runs the torn
   ok(w[0] <= w[1], `Sensitivity tab scrollWidth ${w[0]} > clientWidth ${w[1]}`);
   const r = await chartReadout(page, '#tornado-chart', ['ArrowDown']);
   ok(r.focused && r.focusVisible, 'tornado not focused with a visible indicator');
-  ok(/^1 of \d+: /.test(r.live) && /LCOE .*Swing €[\d.]+\/MWh/.test(r.live) && r.tip === r.live, `tornado readout: live "${r.live.slice(0, 80)}" tip "${r.tip.slice(0, 80)}"`);
+  ok(/^1 of \d+: /.test(r.live) && /LCOE .*Swing [£€][\d.]+\/MWh/.test(r.live) && r.tip === r.live, `tornado readout: live "${r.live.slice(0, 80)}" tip "${r.tip.slice(0, 80)}"`);
   const r2 = await chartReadout(page, '#tornado-chart', ['End']);
   ok(/^(\d+) of \1: /.test(r2.live), `End: "${r2.live.slice(0, 60)}"`);
   const rows = await page.locator('.sens-table tbody tr').count();

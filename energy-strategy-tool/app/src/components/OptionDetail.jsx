@@ -1,7 +1,7 @@
 import React from 'react';
 import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
-import { sig, money, monthLabel, pct } from '../format.js';
+import { sig, money, monthLabel, pct, perMWh } from '../format.js';
 import { visibleFlags } from '../engine/view.js';
 import { adequacyText } from '../engine/adequacy.js';
 
@@ -109,7 +109,8 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
         {onCompare ? <button type="button" className="chip-btn" aria-pressed={inCompare} onClick={() => onCompare(o.id)}>{inCompare ? 'In compare ✓' : 'Add to compare'}</button> : null}
         <button type="button" className="icon-btn" onClick={onClose} aria-label="Close option detail">×</button>
       </header>
-      <p className="model-badge">Full-year hourly (8760 h) · synthetic profiles · all defaults indicative — unverified</p>
+      <p className="model-badge">{o.model || 'Full-year hourly (8760 h)'} · synthetic profiles · all defaults indicative — unverified</p>
+      {o.verified && o.screening ? <p className="small">Verified: the screening model (representative days) gave LCOE {perMWh(o.screening.lcoe)} and {sig(o.screening.carbonG)} gCO₂e/kWh; the full year gives {perMWh(o.eco.lcoe)} and {sig(o.carbon.locationG)} gCO₂e/kWh (rank {o.screening.rank} before verification).</p> : null}
       <p className="small">
         {o.dominatedBy
           ? <>Dominated by #{dominator ? dominator.rank : '?'} {dominator ? dominator.name : o.dominatedBy}: equal or better on cost, carbon, time-to-power and deliverability, and better on at least one, with no worse resilience status. Still ranked and shown.</>
@@ -132,7 +133,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
           <h4>Economics</h4>
           <table className="mini">
             <tbody>
-              <tr><th scope="row">LCOE</th><td className="num">€{sig(o.eco.lcoe)}/MWh</td></tr>
+              <tr><th scope="row">LCOE</th><td className="num">{perMWh(o.eco.lcoe)}</td></tr>
               <tr><th scope="row">NPV of net cost</th><td className="num">{money(o.eco.npvCost)}</td></tr>
               <tr><th scope="row">Capex (incl. contingency)</th><td className="num">{money(o.eco.capex)} <span className="range">({money(o.eco.capexLow, 2)}–{money(o.eco.capexHigh, 2)})</span></td></tr>
               <tr><th scope="row">Opex year 1 / steady state</th><td className="num">{money(o.eco.opexYear1)} / {money(o.eco.opexSteady)}</td></tr>
@@ -140,6 +141,13 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
               {o.eco.ppaHedge ? <PpaHedgeRow h={o.eco.ppaHedge} /> : null}
             </tbody>
           </table>
+          {o.eco.byPeriod && o.eco.byPeriod.length > 1 ? (
+            <table className="mini by-period">
+              <caption className="small">By evaluation period (the scoring period sets the ranking)</caption>
+              <thead><tr><th scope="col">Period</th><th scope="col">LCOE</th><th scope="col">NPV of net cost</th></tr></thead>
+              <tbody>{o.eco.byPeriod.map((p) => <tr key={p.years}><th scope="row">{p.years} years{p.scoring ? ' (scoring)' : ''}</th><td className="num">{perMWh(p.lcoe)}</td><td className="num">{money(p.npvCost)}</td></tr>)}</tbody>
+            </table>
+          ) : null}
           <p className="note">Capex scope: energy, backup (including the resilience reserve battery), grid connection, substation and cooling delta only. Data hall shell and IT fit-out excluded.{o.eco.ppaHedge ? ' PPA settlement counts only on PPA energy delivered over the grid connection; the PPA hedge is reported outside the ledger, LCOE, NPV and score.' : ''}</p>
         </div>
         <div>
@@ -187,8 +195,11 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
       </div>
       <h4>Sizing</h4>
       <ul className="sizing">{sz.sentences.map((s, i) => <li key={i}>{s}</li>)}</ul>
-      <h4>Flags ({shownFlags.length})</h4>
-      <ul className="flags-list">{shownFlags.map((f, i) => <li key={i} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
+      <h4>Flags ({shownFlags.filter((f) => !f.assumed).length})</h4>
+      <ul className="flags-list">{shownFlags.filter((f) => !f.assumed).map((f, i) => <li key={i} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
+      <h4>Assumed defaults ({shownFlags.filter((f) => f.assumed && f.path).length})</h4>
+      <p className="small">Values you did not enter that this option uses, with their source. Entering a value removes its flag from every option (§15).</p>
+      <ul className="flags-list assumed-list">{shownFlags.filter((f) => f.assumed).map((f, i) => <li key={i} className="sev-info" data-assumed={f.path || 'records'}><span className="sev">info</span> {f.message.replace(/^Assumed /, '')}</li>)}</ul>
       <h4>Choice vector</h4>
       <table className="mini choice-vector">
         <tbody>{CHOICES.map((c) => <tr key={c.id}><th scope="row">{c.id} {c.name}</th><td>{o.v[c.id] === NA ? 'n/a' : choiceLabel(c.id, o.v[c.id])}</td></tr>)}</tbody>

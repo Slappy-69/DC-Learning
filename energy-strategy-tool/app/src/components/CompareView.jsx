@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
-import { sig, money, monthLabel, pct } from '../format.js';
+import { sig, money, monthLabel, pct, perMWh } from '../format.js';
 import OptionDetail from './OptionDetail.jsx';
 
 // Compare (BRIEF §12.7; work package 7): up to three options side by side, chosen from the cards, the options table or
@@ -11,7 +11,7 @@ const ROWS = [
   ['Weighted score', (o) => o.score.toFixed(1)],
   ['Axis scores (cost · carbon · TTP · deliverability)', (o) => ['cost', 'carbon', 'ttp', 'deliverability'].map((k) => o.axisScores[k].toFixed(0)).join(' · ')],
   ['Power adequacy', (o) => (o.adequacy ? o.adequacy.status : '—')],
-  ['LCOE', (o) => `€${sig(o.eco.lcoe)}/MWh`],
+  ['LCOE', (o) => perMWh(o.eco.lcoe)],
   ['NPV of net cost', (o) => money(o.eco.npvCost, 3)],
   ['Capex', (o) => money(o.eco.capex, 3)],
   ['Carbon, location-based', (o) => `${sig(o.carbon.locationG)} g/kWh`],
@@ -21,7 +21,8 @@ const ROWS = [
   ['Deliverability', (o) => sig(o.deliv.score, 2)],
   ['Resilience', (o) => o.resilience.status],
   ['Unmet load (dispatched years)', (o) => `${sig(o.unmet.mwh, 2)} MWh`],
-  ['Flags (major · minor · info)', (o) => ['major', 'minor', 'info'].map((s) => o.flags.filter((f) => f.severity === s).length).join(' · ')],
+  ['Flags (major · minor · info)', (o) => ['major', 'minor', 'info'].map((s) => o.flags.filter((f) => f.severity === s && !f.assumed).length).join(' · ')],
+  ['Assumed defaults (key inputs not entered)', (o) => String(o.flags.filter((f) => f.assumed && f.path).length)],
 ];
 
 export default function CompareView({ run, ids, onRemove, onClear, start }) {

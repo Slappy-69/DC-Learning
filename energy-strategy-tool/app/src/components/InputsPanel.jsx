@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react';
 import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTag } from './Field.jsx';
-import { COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, nearestCountry, effectiveWeights, expectedConnectionCharge } from '../engine/index.js';
+import { COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
+import MapPicker from './MapPicker.jsx';
 
 const YM = '^\\d{4}-(0[1-9]|1[0-2])$';
 
 export default function InputsPanel({ inputs, update, setWeights, siteBeta = false }) {
   const set = (path) => (val) => update(path, val);
   const norm = useMemo(() => normalizeInputs(inputs), [inputs]);
-  const countryAuto = nearestCountry(inputs.project.lat, inputs.project.lon);
+  const countryAuto = countryFromPin(inputs.project.lat, inputs.project.lon);
+  const pin = pinCountryInfo(inputs.project.lat, inputs.project.lon);
   const countryNow = inputs.project.country && COUNTRIES[inputs.project.country] ? inputs.project.country : countryAuto;
   const countryOptions = [['', `From location (${COUNTRIES[countryAuto].name})`], ...Object.entries(COUNTRIES).map(([k, c]) => [k, c.name])];
   const { w, equal } = effectiveWeights(inputs.weights);
@@ -16,13 +18,17 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
     <div className="inputs">
       <Section title="1 · Project and location" defaultOpen>
         <TextField label="Project name" value={inputs.project.name} onCommit={set('project.name')} path="project.name" inputs={inputs} />
+        <MapPicker lat={inputs.project.lat} lon={inputs.project.lon} onPick={(la, lo) => { update('project.lat', la); update('project.lon', lo); }} />
         <div className="row2">
           <NumberField label="Latitude" unit="°" value={inputs.project.lat} onCommit={set('project.lat')} required min={-90} max={90} />
           <NumberField label="Longitude" unit="°" value={inputs.project.lon} onCommit={set('project.lon')} required min={-180} max={180} />
         </div>
         <SelectField label="Country profile" value={inputs.project.country || ''} options={countryOptions}
           onCommit={(v) => update('project.country', v || null)} path="project.country" inputs={inputs}
-          hint="Selects the synthetic country profile and price, carbon and gas defaults." />
+          hint={`Selects the synthetic country profile and price, carbon and gas defaults. From the pin: ${pin.inside ? `${COUNTRIES[countryAuto].name} (the pin is inside its outline)` : `${pin.mapName ? `${pin.mapName} has no built-in profile` : 'the pin is at sea or outside the map'}, so the nearest built-in country, ${COUNTRIES[countryAuto].name}, is used and flagged`}.`} />
+        <SelectField label="Currency shown" value={inputs.project.currency || 'by country'} path="project.currency" inputs={inputs} onCommit={set('project.currency')}
+          options={[['by country', `By country (${COUNTRIES[countryNow].currency})`], ['EUR', 'Euro (€)'], ...Object.keys(FX).filter((c) => c !== 'EUR').map((c) => [c, c])]}
+          hint={`Results and the PDF are shown in this currency at the fixed ECB reference rate of the release (1 € = ${FX[!inputs.project.currency || inputs.project.currency === 'by country' ? COUNTRIES[countryNow].currency : inputs.project.currency] ?? 1} ${!inputs.project.currency || inputs.project.currency === 'by country' ? COUNTRIES[countryNow].currency : inputs.project.currency}). Inputs stay in euro.`} />
         <TextField label="Analysis start (YYYY-MM)" value={inputs.project.analysisStart} onCommit={set('project.analysisStart')} pattern={YM} path="project.analysisStart" inputs={inputs} />
         <NumberField label="Seed" value={inputs.project.seed} onCommit={(v) => update('project.seed', Math.round(v))} path="project.seed" inputs={inputs} step={1} />
       </Section>
@@ -61,7 +67,8 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
       </Section>
 
       <Section title="3 · Load and building" defaultOpen>
-        <NumberField label="IT load at full build" unit="MW" value={inputs.load.itMW} onCommit={(v) => update('load.itMW', v)} required min={1} max={2000} />
+        <NumberField label="IT load at full build" unit="MW" value={inputs.load.itMW} onCommit={(v) => update('load.itMW', v)} path="load.itMW" inputs={inputs} nullable min={1} max={2000}
+          placeholder={`Not known (estimate ${norm.load.itMW} MW)`} hint={norm.assumedInputs && norm.assumedInputs['load.itMW'] ? `Blank = not known: ${norm.assumedInputs['load.itMW']}. Every option is flagged "assumed" while it is blank.` : 'Blank = not known: estimated from the site area and flagged "assumed" on every option.'} />
         <PhasesEditor inputs={inputs} norm={norm} update={update} />
         <div className="row2">
           <NumberField label="Ramp: share at energisation" unit="%" scale={100} value={inputs.load.rampStart} onCommit={set('load.rampStart')} path="load.rampStart" inputs={inputs} min={0} max={1} />
@@ -135,10 +142,11 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
 
       <Section title="4 · Utilities and grid" defaultOpen>
         <div className="row2">
-          <NumberField label="Grid import now" unit="MW" value={inputs.grid.nowMW} onCommit={set('grid.nowMW')} required min={0} />
-          <NumberField label="Grid import at full connection" unit="MW" value={inputs.grid.fullMW} onCommit={set('grid.fullMW')} required min={0} />
+          <NumberField label="Grid import now" unit="MW" value={inputs.grid.nowMW} onCommit={set('grid.nowMW')} path="grid.nowMW" inputs={inputs} nullable min={0} placeholder={`Not known (${norm.grid.nowMW})`} />
+          <NumberField label="Grid import at full connection" unit="MW" value={inputs.grid.fullMW} onCommit={set('grid.fullMW')} path="grid.fullMW" inputs={inputs} nullable min={0} placeholder={`Not known (${norm.grid.fullMW})`} />
         </div>
-        <TextField label="Full-connection date (YYYY-MM)" value={inputs.grid.fullDate} onCommit={set('grid.fullDate')} pattern={YM} required />
+        <TextField label="Full-connection date (YYYY-MM)" value={inputs.grid.fullDate} onCommit={set('grid.fullDate')} pattern={YM} path="grid.fullDate" inputs={inputs} nullable placeholder={`Not known (${norm.grid.fullDate})`}
+          hint="Leave any grid value blank if it is not known: the tool assumes a default (now 0 MW; full connection about the design load, 48 months after the start), labelled indicative — unverified, and flags it on every grid-connected option." />
         <NumberField label="Grid export capacity" unit="MW" value={inputs.grid.exportMW} onCommit={set('grid.exportMW')} path="grid.exportMW" inputs={inputs} min={0}
           hint="Used only by C1 = Grid + export (not open by default)." />
         <fieldset className="subgroup">
@@ -185,7 +193,28 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           options={[['No', 'No'], ['Yes', 'Yes']]} hint="Heat reuse is not costed in this slice." />
       </Section>
 
-      <Section title="5 · Requirements and priorities" defaultOpen>
+      <Section title="5 · Economics" defaultOpen>
+        <div className="row2">
+          <NumberField label="WACC (real)" unit="%" scale={100} value={inputs.economics.wacc} onCommit={set('economics.wacc')} path="economics.wacc" inputs={inputs} min={0} max={0.3}
+            hint="The blended return the investors require, used as the discount rate for every cost and every MWh." />
+          <NumberField label="Scoring evaluation period" unit="yr" value={inputs.economics.periodYears} onCommit={(v) => update('economics.periodYears', Math.round(v))} path="economics.periodYears" inputs={inputs} min={5} max={40} step={1}
+            hint="This period sets the cost axis and the ranking (OPEN-QUESTIONS 21)." />
+        </div>
+        <TextField label="Further periods shown (years, comma-separated)" value={(inputs.economics.displayPeriods || []).join(', ')} path="economics.displayPeriods" inputs={inputs} nullable
+          onCommit={(v) => update('economics.displayPeriods', v == null ? [] : String(v).split(/[ ,;]+/).map(Number).filter((n) => Number.isInteger(n) && n >= 1 && n <= 60))}
+          hint="LCOE and NPV for these periods are shown in each option's detail and the PDF, beside the scoring period. They do not change the ranking." />
+        <NumberField label="Contingency" unit="%" scale={100} value={inputs.economics.contingency} onCommit={set('economics.contingency')} path="economics.contingency" inputs={inputs} min={0} max={1} />
+        <NumberField label="Carbon price (Scope 1)" unit="€/tCO₂e" value={typeof inputs.economics.carbonPrice === 'number' ? inputs.economics.carbonPrice : null} onCommit={set('economics.carbonPrice')} path="economics.carbonPrice" inputs={inputs} nullable min={0}
+          placeholder={`${COUNTRIES[countryNow].carbonPrice} (country default)`} hint={`Empty = the ${COUNTRIES[countryNow].name} EU/UK ETS default, ${COUNTRIES[countryNow].carbonPrice} €/tCO₂e; it escalates at the carbon escalation rate. Applied to Scope 1 combustion.`} />
+        <div className="row2">
+          <NumberField label="Electricity escalation (real)" unit="%/yr" scale={100} value={inputs.economics.elecEscalation} onCommit={set('economics.elecEscalation')} path="economics.elecEscalation" inputs={inputs} min={-0.1} max={0.1} />
+          <NumberField label="Gas escalation (real)" unit="%/yr" scale={100} value={inputs.economics.gasEscalation} onCommit={set('economics.gasEscalation')} path="economics.gasEscalation" inputs={inputs} min={-0.1} max={0.1} />
+        </div>
+        <NumberField label="Carbon price escalation (real)" unit="%/yr" scale={100} value={inputs.economics.carbonEscalation} onCommit={set('economics.carbonEscalation')} path="economics.carbonEscalation" inputs={inputs} min={-0.1} max={0.2} />
+        <p className="note">Currency: euro ({COUNTRIES[countryNow].name} profile; prices are converted to € in the country data). Revenue options are off by default and are opened in the choices below: export income (C1 = Grid + export), battery grid services (C12r role) and heat reuse (C15). The gas price is in section 4; the grid connection charge is with the grid.</p>
+      </Section>
+
+      <Section title="6 · Requirements and priorities" defaultOpen>
         <div className="row2">
           <NumberField label="Backed critical load" unit="%" scale={100} value={inputs.requirements.backedPct} onCommit={set('requirements.backedPct')} path="requirements.backedPct" inputs={inputs} min={0} max={1} />
           <SelectField label="Backup topology" value={inputs.requirements.topology} onCommit={(v) => { update('requirements.topology', v); update('choices.C6', null); }} path="requirements.topology" inputs={inputs}
@@ -225,7 +254,7 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
         </fieldset>
       </Section>
 
-      <Section title="6 · Choices (C1–C20)" defaultOpen badge={<ProjectedCount norm={norm} />}>
+      <Section title="7 · Choices (C1–C20)" defaultOpen badge={<ProjectedCount norm={norm} />}>
         <ChoicesPanel inputs={inputs} norm={norm} update={update} />
       </Section>
 
@@ -245,6 +274,10 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           hint={`Options whose backup is pooled across the campus lose ${inputs.deliverability.minorFlagPenalty} deliverability points (minor) or ${inputs.deliverability.majorFlagPenalty} (major). Per-building backup is the rule (OPEN-QUESTIONS 47, 48).`} />
         {siteBeta ? <ToggleField label="Include site-fit penalty in deliverability (Site tab, Beta)" checked={inputs.deliverability.siteFitPenalty} onCommit={set('deliverability.siteFitPenalty')} path="deliverability.siteFitPenalty" inputs={inputs}
           hint={`Off by default: site fit is a status, not a weight. On: −${inputs.deliverability.siteFitFlagsPenalty} for "Fits with flags", −${inputs.deliverability.siteFitNoFitPenalty} for "Does not fit", and the axis reads "Deliverability (incl. site fit)". It is switched off whenever the Site tab is turned off.`} /> : null}
+        <SelectField label="Dispatch model" value={inputs.settings.screeningModel} onCommit={set('settings.screeningModel')} path="settings.screeningModel" inputs={inputs}
+          options={[['full', 'Full year, every hour, every option (default)'], ['repDays', 'Screening: representative days, then verify the best']]}
+          hint="Full year by default: power adequacy needs every hour (OPEN-QUESTIONS 23). Screening dispatches each option over about 25 representative days, then re-runs the best options hour by hour for the full year and re-scores; every figure says which model produced it." />
+        {inputs.settings.screeningModel === 'repDays' ? <NumberField label="Options verified with the full year" unit="options" value={inputs.settings.verifyTop} onCommit={(v) => update('settings.verifyTop', Math.round(v))} path="settings.verifyTop" inputs={inputs} min={1} max={200} step={1} /> : null}
         <NumberField label="Generation cap" unit="options" value={inputs.settings.generationCap} onCommit={(v) => update('settings.generationCap', Math.round(v))} path="settings.generationCap" inputs={inputs} min={20} step={1} />
         <ToggleField label="Sample above cap" checked={inputs.settings.sampleAboveCap} onCommit={set('settings.sampleAboveCap')} path="settings.sampleAboveCap" inputs={inputs}
           hint="Off screens every combination (slow above the cap)." />
@@ -254,13 +287,6 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           <NumberField label="Raster cell above the threshold" unit="m" value={inputs.settings.layoutCellLargeM} onCommit={set('settings.layoutCellLargeM')} path="settings.layoutCellLargeM" inputs={inputs} min={1} max={20} />
         </div>
         <NumberField label="Large-site threshold for the raster" unit="ha" value={inputs.settings.layoutLargeSiteHa} onCommit={set('settings.layoutLargeSiteHa')} path="settings.layoutLargeSiteHa" inputs={inputs} min={1} />
-        <div className="row2">
-          <NumberField label="WACC (real)" unit="%" scale={100} value={inputs.economics.wacc} onCommit={set('economics.wacc')} path="economics.wacc" inputs={inputs} min={0} max={0.3} />
-          <NumberField label="Evaluation period" unit="yr" value={inputs.economics.periodYears} onCommit={(v) => update('economics.periodYears', Math.round(v))} path="economics.periodYears" inputs={inputs} min={5} max={40} step={1} />
-        </div>
-        <NumberField label="Contingency" unit="%" scale={100} value={inputs.economics.contingency} onCommit={set('economics.contingency')} path="economics.contingency" inputs={inputs} min={0} max={1} />
-        <NumberField label="Carbon price (Scope 1)" unit="€/tCO₂e" value={typeof inputs.economics.carbonPrice === 'number' ? inputs.economics.carbonPrice : null} onCommit={set('economics.carbonPrice')} path="economics.carbonPrice" inputs={inputs} nullable min={0}
-          placeholder={`${COUNTRIES[countryNow].carbonPrice} (country default)`} hint={`Empty = the ${COUNTRIES[countryNow].name} EU/UK ETS default, ${COUNTRIES[countryNow].carbonPrice} €/tCO₂e; it escalates at the carbon escalation rate. Applied to Scope 1 combustion.`} />
       </Section>
     </div>
   );

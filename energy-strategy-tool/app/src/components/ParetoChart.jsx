@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { sig, money } from '../format.js';
+import { sig, money, displayCurrency, curUnit } from '../format.js';
 import { paretoCanvasAbove } from '../engine/pareto.js';
 import { fmtAxis } from './ParetoTable.jsx';
 import { UnverifiedTag } from './Field.jsx';
@@ -38,6 +38,7 @@ function niceTicks(lo, hi, n) {
 }
 function tickLabel(axis, v) {
   if (axis.unit === '€') return money(v, 2);
+  if (axis.unit === '€/MWh') return sig(v * displayCurrency().rate, 3);
   if (axis.unit === '%') return `${sig(v * 100, 2)}`;
   return sig(v, 3);
 }
@@ -227,7 +228,7 @@ export default function ParetoChart({ model, selectedId, onSelect, forceSvg = fa
   const dirText = (a) => `${a.better} is better`;
   // Axis titles carry the better direction when they fit (about 6.9 px per character at 12 px semi-bold);
   // otherwise label and unit only. The direction is always stated in the help text below the chart.
-  const titleFor = (a, len) => { const full = `${a.label} (${a.unit}), ${dirText(a)}`; return full.length * 6.9 <= len ? full : `${a.label} (${a.unit})`; };
+  const titleFor = (a, len) => { const full = `${a.label} (${curUnit(a.unit)}), ${dirText(a)}`; return full.length * 6.9 <= len ? full : `${a.label} (${curUnit(a.unit)})`; };
   const xTitle = titleFor(model.xAxis, iw), yTitle = titleFor(model.yAxis, ih);
   const focusRegion = focusId ? describe(byId.get(focusId)) : '';
   const tipLeft = active ? Math.min(Math.max(8, active.cx + 12), width - (phone ? 210 : 260)) : 0;

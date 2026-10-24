@@ -10,7 +10,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **project.fx**: EUR 1; GBP 0.8377; NOK 10.488; SEK 11.112; DKK 7.4747; CHF 0.9211; ISK 136.2 (per EUR); src. Fixed rates; display conversion only. Engine works in EUR; check against ECB reference rates.
 - **project.name**: Untitled project; judg.
 - **project.country**: none; judg. null = derived from location (nearest built-in country centroid); overridable.
-- **project.currency**: by country; judg.
+- **project.currency**: by country (by country / EUR / GBP / CHF / NOK / SEK / DKK / ISK); judg. Display only; converted at the ECB reference rates of the release (project.fx). Inputs stay in euro.
 - **project.analysisStart**: 2027-01 (YYYY-MM); judg. Today + 3 months. No source; replace with the client programme start.
 - **project.seed**: 20261015 integer; run.
 
@@ -47,6 +47,8 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 
 ## Load and building
 
+- **load.itMW**: none (MW IT at full build (blank = estimated from the site area)); judg. Blank: site area × building coverage × storeys ÷ gross-up × whitespace density of the cooling type (air when the cooling is an open choice), the same rule the building massing uses (OPEN-QUESTIONS 26).
+- **load.estimateCoverage**: 0.35 fraction of the site area covered by data halls; range 0.2–0.5; judg. Walkthrough 2026-10-21: 35 % site coverage for the IT estimate from area. To research.
 - **load.rampStart**: 0.25 fraction of phase IT at energisation; range 0.1–0.5; judg. The owner's judgement (2026-10-22, OPEN-QUESTIONS 51; was 50 %). No source; replace with the client's fit-out programme.
 - **load.rampMonths**: 12 months; range 6–24; judg.
 - **load.utilisation**: 0.8 fraction of installed IT; range 0.6–0.95; judg.
@@ -87,6 +89,12 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 
 ## Grid
 
+- **grid.nowMW**: none (MW import available now (blank = not known: 0 MW)); judg. Blank = not known: no import before the full connection (grid.unknownNowMW).
+- **grid.fullMW**: none (MW import at full connection (blank = not known)); judg. Blank = not known: the IT load × grid.unknownFullPerITMW, about the design facility load.
+- **grid.fullDate**: none (YYYY-MM (blank = not known)); judg. Blank = not known: the analysis start + grid.unknownFullMonths.
+- **grid.unknownNowMW**: 0 MW now when not known; judg. No source. Country values to research (package 0).
+- **grid.unknownFullPerITMW**: 1.4 MW of grid per MW of IT when not known; range 1.1–1.6; judg. About the design facility load (IT × design-day PUE + ancillary). No source; country values to research.
+- **grid.unknownFullMonths**: 48 months from the analysis start when not known; range 24–96; judg. No source; country connection lead times to research (package 0).
 - **grid.steps**: none (list of {date, MW}); judg.
 - **grid.exportMW**: 0 MW; judg.
 - **grid.exportFactor**: 0.9 × hourly price; range 0.7–1; judg.
@@ -153,6 +161,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **economics.gasEscalation**: 0 real per yr; range -0.02–0.02; src; check against TTF/NBP forward curves.
 - **economics.salvageFraction**: 0.5 of remaining book value when removed; range 0.2–0.7; judg.
 - **economics.revenueExport**: off; judg.
+- **economics.displayPeriods**: 10 / 15 years, shown beside the scoring period; judg. Walkthrough 2026-10-21: several evaluation periods at once (for example 10, 15 and 20 years). The scoring period (economics.periodYears) sets the cost axis.
 
 ## Weights
 
@@ -192,6 +201,8 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **settings.bridgeBessHours**: 24 h; judg.
 - **settings.timelineMonths**: 120 months; run. Time-to-power horizon.
 - **settings.maxDispatchYears**: 8 years; run. Distinct 8760-h dispatch years before steady state is assumed.
+- **settings.screeningModel**: full ("full" | "repDays"); run. OPEN-QUESTIONS 23: full-year hourly for every option by default; representative days (design day, dearest day and a typical day per month) as an optional faster screening.
+- **settings.verifyTop**: 10 options verified with the full year; range 1–50; run. OPEN-QUESTIONS 23: the best-ranked options re-run hour by hour when the screening model is on.
 - **settings.autonomyBasis**: critical load; judg.
 - **settings.layoutCellM**: 2 m raster cell; run. Auto-layout raster cell size; chosen for the §17 layout timing, not from a source.
 - **settings.layoutCellLargeM**: 5 m raster cell (large sites); run.

@@ -8,7 +8,8 @@ import { buildContext } from './context.js';
 import { normalizeInputs } from './defaults.js';
 import { generateOptions, optionName, RULES, RULE_D } from './generator.js';
 import { sizeOption } from './sizing.js';
-import { dispatchConfig, dispatchKey, dispatchAll, MERIT_ORDER } from './dispatch.js';
+import { dispatchConfig, dispatchKey, dispatchAll, MERIT_ORDER, representativeHours } from './dispatch.js';
+import { verifySteps, FULL_MODEL } from './verify.js';
 import { timeToPower, economics, carbon, resilience, allOptionFlags, unmetSummary, deliverability, flag } from './evaluate.js';
 import { scoreOptions } from './scoring.js';
 import { hashString } from './prng.js';
@@ -177,6 +178,9 @@ export function* runModelSteps(rawInputs, opts = {}) {
   let yearsSimulated = 0;
   const unmetCfgs = new Set();
   const exceedCfgs = new Set();
+  // Screening model (work package 8): representative days when settings.screeningModel = 'repDays' (off by default).
+  const rep = inputs.settings.screeningModel === 'repDays' ? representativeHours(ctx) : null;
+  const modelLabel = rep ? rep.label : FULL_MODEL;
   d0 = demandStats();
   log.start(STAGE.dispatch, n, { cache: 'dispatch configuration key' });
   for (let i = 0; i < n; i++) {
@@ -185,7 +189,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
     const key = dispatchKey(cfg);
     let c = dispCache.get(key);
     if (!c) {
-      const disp = dispatchAll(ctx, cfg, opts.recordYears || null);
+      const disp = dispatchAll(ctx, cfg, opts.recordYears || null, rep);
       c = { disp, first: r.id, short: shortHash(key) };
       dispCache.set(key, c);
       misses++;
@@ -255,13 +259,21 @@ export function* runModelSteps(rawInputs, opts = {}) {
       id: r.id, key: g.key, v: g.v, archetype: g.archetype, archetypeName: g.archetypeName, custom: false, pinned: false,
       name: optionName(g.v, sz), sizing: sz, dispatchKey: r.cfgKey, dispatch: disp, ttp, eco, carbon: carb, resilience: res, flags, deliv, unmet, adequacy,
       siteFit: r.siteFit, layoutKey: r.layoutKey,
-      model: 'Full-year hourly (8760 h)',
+      model: modelLabel,
     });
   });
   const t3 = nowMs();
 
   // ---- 13. Scoring and ranking (whole screened set; in the worker pool this runs in mergeRuns) ----
-  const scoring = opts.skipScore ? null : scoreAndLog(log, options, inputs, null);
+  let scoring = opts.skipScore ? null : scoreAndLog(log, options, inputs, null);
+  // Screening tier: verify the best-ranked options with the full-year model and re-score (verify.js).
+  let verification = null;
+  if (scoring && rep) {
+    const vr = { options, scoring };
+    yield* verifySteps(vr, inputs, { ctx });
+    scoring = vr.scoring;
+    verification = vr.verification;
+  }
   const t4 = nowMs();
 
   if (!opts.skipScore) s.valuesNotGenerated = withSiteFitNotes(s.valuesNotGenerated, options);
@@ -274,6 +286,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
   if (windNote) runFlags.push(flag('tech-wind-default', 'info', 'Technology', windNote.note));
   if (inputs.load.workload === 'ai-training') runFlags.push(flag('load-ai', 'info', 'Load', 'AI training transient load not modelled'));
   runFlags.push(adequacyRunFlag(options));
+  if (rep) runFlags.push(screeningRunFlag(inputs, rep));
   runFlags.push(flag('load-util', 'info', 'Load', `IT utilisation assumption ${(inputs.load.utilisation * 100).toFixed(0)} % of installed IT (energy); sizing uses 100 %`));
 
   return {
@@ -286,6 +299,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
     generation: s,
     rules: [...RULES.map((r) => ({ id: r.id, name: r.name, detail: r.detail, removed: s.removedByRule[r.id] })), { ...RULE_D, removed: s.removedByRule.d }],
     scoring,
+    verification,
     runFlags,
     shortfall: shortfallAnalysis(ctx, [...new Set(options.map((o) => o.v.C8))].sort()),
     flexAnalysis: triggerAnalysis(ctx),
@@ -309,6 +323,17 @@ function adequacyRunFlag(options) {
   return flag(nAdequate ? 'adequacy-count' : 'adequacy-none', nAdequate ? 'info' : 'major', 'Adequacy', nAdequate
     ? `${nAdequate.toLocaleString('en-GB')} of ${options.length.toLocaleString('en-GB')} options serve their load in every hour; the other ${(options.length - nAdequate).toLocaleString('en-GB')} rank below them (power adequacy first)`
     : `No option serves its load in every hour: all ${options.length.toLocaleString('en-GB')} are ranked by score, and none is adequate. See the shortfall analysis in the run summary`);
+}
+
+// After verification in a pooled run (useCompute): the adequacy count over the verified figures.
+export function refreshAdequacyFlag(run) {
+  run.runFlags = run.runFlags.map((f) => (f.category === 'Adequacy' ? adequacyRunFlag(run.options) : f));
+  return run;
+}
+
+// Screening tier note (work package 8): which model produced which figures.
+export function screeningRunFlag(inputs, rep) {
+  return flag('screening-model', 'minor', 'Model', `Screening model on: options dispatched over ${rep.days.length} representative days a year; the best ${inputs.settings.verifyTop} by rank re-run hour by hour for the full year (verified) and every option re-scored. Power adequacy of options not verified is approximate`);
 }
 
 // Synchronous run (tests, worker): drains the generator.
@@ -416,18 +441,20 @@ export const HOOKS = Object.freeze({
 
 // Slim, structured-clone-friendly copy of a run for the UI thread (drops the context and
 // per-month arrays; keeps everything the ranked list, scoring and option detail need).
+export function slimOption(o) {
+  const { firmByMonth, designByMonth, plants, grid, ...sz } = o.sizing;
+  const { supplyByMonth, ...ttp } = o.ttp;
+  return {
+    ...o,
+    sizing: { ...sz, grid: { band: grid.band, fullMW: grid.fullMW, shortfalls: grid.shortfalls, cableKm: grid.cableKm } },
+    ttp,
+    dispatch: { nExplicit: o.dispatch.nExplicit, years: o.dispatch.years.map(({ hourly, ...y }) => y) },
+    eco: { ...o.eco, ledger: o.eco.ledger },
+  };
+}
+
 export function toTransferable(run) {
-  const options = run.options.map((o) => {
-    const { firmByMonth, designByMonth, plants, grid, ...sz } = o.sizing;
-    const { supplyByMonth, ...ttp } = o.ttp;
-    return {
-      ...o,
-      sizing: { ...sz, grid: { band: grid.band, fullMW: grid.fullMW, shortfalls: grid.shortfalls, cableKm: grid.cableKm } },
-      ttp,
-      dispatch: { nExplicit: o.dispatch.nExplicit, years: o.dispatch.years.map(({ hourly, ...y }) => y) },
-      eco: { ...o.eco, ledger: o.eco.ledger },
-    };
-  });
+  const options = run.options.map(slimOption);
   const { ctx, dispatchKeys, ...rest } = run;
   return {
     dispatchKeys,

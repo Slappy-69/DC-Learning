@@ -10,7 +10,7 @@ import { getRegistry, normalizeInputs, CHOICES, choiceLabel, LABEL, REQUIRED_EXA
 import { NA } from '../engine/generator.js';
 import { topCards } from '../engine/cards.js';
 import { measureById, sortRows } from '../engine/sensitivity.js';
-import { GUARDRAIL, sig, money, monthLabel, pct } from '../format.js';
+import { GUARDRAIL, sig, money, monthLabel, pct, perMWh, cur, displayCurrency } from '../format.js';
 
 // Input sections in the order of the inputs panel; site geometry belongs to the Site tab (Beta) and is left out.
 const SECTIONS = [
@@ -45,10 +45,13 @@ export function inputRows(inputs) {
       if (SITE_BETA_KEYS.includes(path)) continue;
       const r = reg[path];
       let status;
+      const A = I.assumedInputs || {};
       if (path in REQUIRED_EXAMPLE) status = 'Entered (required)';
+      else if (A[path]) status = `Default: ${A[path]}`;
+      else if (path === 'assumedInputs') continue;
       else if (r && same(r.value, v)) status = `Default: ${r.label}${r.basis ? ` (${r.basis})` : ''}`;
       else status = 'Entered';
-      out.push({ section: title, path, value: `${valueText(v)}${r && r.unit && typeof v === 'number' ? ` ${r.unit}` : ''}`, status, note: r && r.note ? r.note : '', isDefault: !!(r && same(r.value, v) && !(path in REQUIRED_EXAMPLE)) });
+      out.push({ section: title, path, value: `${valueText(v)}${r && r.unit && typeof v === 'number' ? ` ${r.unit}` : ''}`, status, note: r && r.note ? r.note : '', isDefault: !!((r && same(r.value, v) && !(path in REQUIRED_EXAMPLE)) || A[path]) });
     }
   }
   return out;
@@ -65,7 +68,7 @@ function choiceRows(inputs) {
 
 const resText = (o) => (o.resilience ? o.resilience.status : '—');
 const adeqText = (o) => (o.adequacy ? o.adequacy.status : '—');
-const flagCount = (o, s) => o.flags.filter((f) => f.severity === s).length;
+const flagCount = (o, s) => o.flags.filter((f) => f.severity === s && !f.assumed).length;
 
 // Energy balance of one dispatched year of an option (MWh).
 export function energyBalance(o, yi = null) {
@@ -103,6 +106,7 @@ export function buildReport(run, view = {}) {
     ['Date of report', dateText || '—'],
     ['Location', `${I.project.lat}, ${I.project.lon}${run.meta && run.meta.country ? ` (${run.meta.country})` : ''}`],
     ['Analysis start', String(start)],
+    ['Currency shown', displayCurrency().code === 'EUR' ? 'Euro' : `${displayCurrency().code}, converted from euro at ${displayCurrency().rate} per euro (fixed ECB reference rate of the release); inputs in euro`],
     ['IT load at full build', `${sig(I.load.itMW, 4)} MW in ${I.load.phases.length} phase${I.load.phases.length === 1 ? '' : 's'}`],
     ['Options screened', `${run.options.length.toLocaleString('en-GB')}${run.generation ? ` of ${run.generation.totalCombinations.toLocaleString('en-GB')} combinations` : ''}`],
     ['Engine and app version', `${run.engineVersion || '—'}${appVersion ? ` · app ${appVersion}` : ''}`],
@@ -147,7 +151,7 @@ export function buildReport(run, view = {}) {
   const W = Object.fromEntries(['cost', 'carbon', 'ttp', 'deliverability'].map((k) => [k, wSum <= 1.01 ? W0[k] * 100 : (W0[k] / wSum) * 100]));
   const nAdeq = run.options.filter((o) => o.adequacy && o.adequacy.status === 'Adequate').length;
   doc.para(`${run.options.length.toLocaleString('en-GB')} options were modelled hour by hour for a full year (8,760 hours) and ranked by a weighted score: cost ${sig(W.cost, 3)} %, carbon ${sig(W.carbon, 3)} %, time-to-power ${sig(W.ttp, 3)} %, deliverability ${sig(W.deliverability, 3)} % (cost measured as ${I.settings.costMetric === 'npv' ? 'NPV' : 'LCOE'}, carbon ${I.settings.carbonMetric}-based). Options that meet the power need in every hour (power adequacy) rank first: ${nAdeq.toLocaleString('en-GB')} of ${run.options.length.toLocaleString('en-GB')} are adequate.`, { size: 9 });
-  if (lead) doc.para(`Leader: #${lead.rank} ${lead.name}, score ${sig(lead.score, 4)}, LCOE €${sig(lead.eco.lcoe, 3)}/MWh, ${sig(lead.carbon.locationG, 3)} gCO2e/kWh (location-based), full load ${monthLabel(start, lead.ttp.fullLoadM)}.`, { size: 9.5, bold: true });
+  if (lead) doc.para(`Leader: #${lead.rank} ${lead.name}, score ${sig(lead.score, 4)}, LCOE ${perMWh(lead.eco.lcoe, 3)}, ${sig(lead.carbon.locationG, 3)} gCO2e/kWh (location-based), full load ${monthLabel(start, lead.ttp.fullLoadM)}.`, { size: 9.5, bold: true });
   const tc = topCards(run.options, 5);
   doc.heading('Top five strategies', 2);
   doc.para(`The best-ranked option of each distinct strategy (grid approach, bridging, permanent on-site generation and backup), skipping options with the same results as a better-ranked one. Pros and cons are judged ${tc.comparison}.`, { size: 8.5, color: MUTED });
@@ -155,16 +159,16 @@ export function buildReport(run, view = {}) {
     const o = c.o;
     doc.ensure(120);
     doc.para(`#${o.rank} ${o.name}`, { bold: true, size: 10, gap: 2 });
-    doc.table([{ label: 'Score' }, { label: 'LCOE €/MWh' }, { label: 'Capex' }, { label: 'Carbon g/kWh' }, { label: 'First power' }, { label: 'Full load' }, { label: 'Resilience' }, { label: 'Adequacy' }],
-      [[sig(o.score, 4), sig(o.eco.lcoe, 3), money(o.eco.capex, 3), sig(o.carbon.locationG, 3), monthLabel(start, o.ttp.firstPowerM), monthLabel(start, o.ttp.fullLoadM), resText(o), adeqText(o)]], { size: 7.5, headSize: 7.5, zebra: false });
+    doc.table([{ label: 'Score' }, { label: `LCOE ${cur().trim()}/MWh` }, { label: 'Capex' }, { label: 'Carbon g/kWh' }, { label: 'First power' }, { label: 'Full load' }, { label: 'Resilience' }, { label: 'Adequacy' }],
+      [[sig(o.score, 4), sig(o.eco.lcoe * displayCurrency().rate, 3), money(o.eco.capex, 3), sig(o.carbon.locationG, 3), monthLabel(start, o.ttp.firstPowerM), monthLabel(start, o.ttp.fullLoadM), resText(o), adeqText(o)]], { size: 7.5, headSize: 7.5, zebra: false });
     if (c.pros.length) doc.bullets(c.pros.map((p) => `Pro: ${p.text}`), { size: 8.5 });
     if (c.cons.length) doc.bullets(c.cons.map((p) => `Con: ${p.text}`), { size: 8.5 });
     const major = c.majorFlags.filter((f) => !f.siteFit);
     doc.para(major.length ? `Main flags: ${major.slice(0, 4).map((f) => f.message.split(':')[0].split('.')[0]).join(' · ')}${major.length > 4 ? ` · +${major.length - 4} more` : ''}` : 'No major flags.', { size: 8.5, color: major.length ? FLAG : MUTED, gap: 8 });
   }
   doc.heading('Ranked list (top 20)', 2);
-  doc.table([{ label: '#', w: 0.3, align: 'right' }, { label: 'Option', w: 3 }, { label: 'Score', w: 0.55, align: 'right' }, { label: 'LCOE', w: 0.55, align: 'right' }, { label: 'Capex', w: 0.7, align: 'right' }, { label: 'g/kWh', w: 0.55, align: 'right' }, { label: 'Full load', w: 0.75 }, { label: 'Adequate', w: 0.6 }],
-    ranked.slice(0, 20).map((o) => [String(o.rank), `${o.name}${tc.identical.has(o.id) ? ' (same results as a better-ranked option)' : ''}`, sig(o.score, 4), sig(o.eco.lcoe, 3), money(o.eco.capex, 3), sig(o.carbon.locationG, 3), monthLabel(start, o.ttp.fullLoadM), o.adequacy && o.adequacy.status === 'Adequate' ? 'yes' : 'no']), { size: 7, headSize: 7.5 });
+  doc.table([{ label: '#', w: 0.3, align: 'right' }, { label: 'Option', w: 3 }, { label: 'Score', w: 0.55, align: 'right' }, { label: `LCOE ${cur().trim()}/MWh`, w: 0.55, align: 'right' }, { label: 'Capex', w: 0.7, align: 'right' }, { label: 'g/kWh', w: 0.55, align: 'right' }, { label: 'Full load', w: 0.75 }, { label: 'Adequate', w: 0.6 }],
+    ranked.slice(0, 20).map((o) => [String(o.rank), `${o.name}${tc.identical.has(o.id) ? ' (same results as a better-ranked option)' : ''}`, sig(o.score, 4), sig(o.eco.lcoe * displayCurrency().rate, 3), money(o.eco.capex, 3), sig(o.carbon.locationG, 3), monthLabel(start, o.ttp.fullLoadM), o.adequacy && o.adequacy.status === 'Adequate' ? 'yes' : 'no']), { size: 7, headSize: 7.5 });
 
   // ---- 4 Trade-offs ----
   H1('4. Trade-offs');
@@ -182,12 +186,12 @@ export function buildReport(run, view = {}) {
     for (let i = 0; i <= 4; i++) {
       const vx = xl + ((xh - xl) * i) / 4, vy = yl + ((yh - yl) * i) / 4;
       doc.label(X(vx) - 8, y0 + B - 11, sig(vx, 3), 7, false, MUTED);
-      doc.label(x0 + 4, Y(vy) - 2, sig(vy, 3), 7, false, MUTED);
+      doc.label(x0 + 4, Y(vy) - 2, sig(vy * displayCurrency().rate, 3), 7, false, MUTED);
       doc.line(X(vx), y0 + B, X(vx), y0 + h - T, { color: [0.92, 0.91, 0.89], lw: 0.4 });
       doc.line(x0 + L, Y(vy), x0 + w - R, Y(vy), { color: [0.92, 0.91, 0.89], lw: 0.4 });
     }
     doc.label(x0 + L, y0 + 2, 'Carbon, location-based (gCO2e/kWh)', 7.5, false, INK);
-    doc.label(x0 + 4, y0 + h - T + 2, 'LCOE (EUR/MWh)', 7.5, false, INK);
+    doc.label(x0 + 4, y0 + h - T + 2, `LCOE (${displayCurrency().code}/MWh)`, 7.5, false, INK);
     for (const o of pts) {
       const ad = o.adequacy && o.adequacy.status === 'Adequate';
       doc.circle(X(o.carbon.locationG), Y(o.eco.lcoe), 1.6, ad ? { fill: [0.55, 0.62, 0.7] } : { stroke: [0.65, 0.65, 0.65], lw: 0.4 });
@@ -207,7 +211,7 @@ export function buildReport(run, view = {}) {
   else {
     const fig = [
       ['Rank', (o) => `#${o.rank}`], ['Weighted score', (o) => sig(o.score, 4)], ['Power adequacy', adeqText],
-      ['LCOE', (o) => `€${sig(o.eco.lcoe)}/MWh`], ['NPV of net cost', (o) => money(o.eco.npvCost, 3)], ['Capex', (o) => money(o.eco.capex, 3)],
+      ['LCOE', (o) => perMWh(o.eco.lcoe)], ['NPV of net cost', (o) => money(o.eco.npvCost, 3)], ['Capex', (o) => money(o.eco.capex, 3)],
       ['Carbon, location-based', (o) => `${sig(o.carbon.locationG)} g/kWh`], ['Carbon, market-based', (o) => `${sig(o.carbon.marketG)} g/kWh`], ['Hourly CFE', (o) => pct(o.carbon.cfePct)],
       ['First power · full load', (o) => `${monthLabel(start, o.ttp.firstPowerM)} · ${monthLabel(start, o.ttp.fullLoadM)}`], ['Deliverability', (o) => sig(o.deliv.score, 2)], ['Resilience', resText],
       ['Flags (major · minor · info)', (o) => `${flagCount(o, 'major')} · ${flagCount(o, 'minor')} · ${flagCount(o, 'info')}`],
@@ -240,7 +244,7 @@ export function buildReport(run, view = {}) {
   else {
     const m = measureById(sensitivityMeasure || sensitivity.measure);
     const srows = sortRows(sensitivity.allRows, m.id).slice(0, sensitivity.topN);
-    const fmt = (x) => (!Number.isFinite(x) ? 'not finite' : m.id === 'npv' ? money(x, 4) : m.id === 'lcoe' ? `€${sig(x, 4)}/MWh` : m.id === 'carbon' ? `${sig(x, 3)} g/kWh` : sig(x, 4));
+    const fmt = (x) => (!Number.isFinite(x) ? 'not finite' : m.id === 'npv' ? money(x, 4) : m.id === 'lcoe' ? perMWh(x, 4) : m.id === 'carbon' ? `${sig(x, 3)} g/kWh` : sig(x, 4));
     doc.para(`#${sensitivity.optionRank} ${sensitivity.optionName}: ${m.label} at each driver's low and high value, everything else held; base ${fmt(m.get(sensitivity.base))}. ${sensitivity.totalDrivers} drivers tested; largest swing first. Ranges are registry records, ${LABEL}.`, { size: 9 });
     const vals = [m.get(sensitivity.base), ...srows.flatMap((r) => [m.get(r.low), m.get(r.high)])].filter(Number.isFinite);
     if (vals.length > 1) {

@@ -161,7 +161,7 @@ function emptyYear() {
 }
 
 // Dispatch one model year. Returns aggregates and (optionally) hourly arrays.
-export function dispatchYear(ctx, cfg, y, socIn, record = false) {
+export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
   const dem = demandYear(ctx, cfg.coolingId, y);
   const { D, M, IT } = dem;
   const p = ctx.prof;
@@ -235,7 +235,13 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     rec.plant = cfg.plants.map(() => new Float64Array(H)); // firm output per plant (prime, bridging), sums to rec.firm
   }
 
-  for (let h = 0; h < H; h++) {
+  // Screening model (work package 8): representative days only, each hour weighted by the days it stands for. In
+  // the full-year model rep is null, every weight is 1 and the arithmetic is unchanged.
+  const repH = rep ? rep.hours : null, repW = rep ? rep.weights : null;
+  const NH = repH ? repH.length : H;
+  for (let k = 0; k < NH; k++) {
+    const h = repH ? repH[k] : k;
+    const w = repW ? repW[k] : 1;
     const hm = h < 8030 ? (h / 730) | 0 : 11;
     const m = y12 + hm;
     const D0 = D[h];
@@ -263,22 +269,22 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
       }
       if (!on && !inEvent) {
         if (recoverLeft > 0) recoverLeft--;
-        else if (trig[h]) { inEvent = true; evLen = 1; on = true; flexEvents++; }
+        else if (trig[h]) { inEvent = true; evLen = 1; on = true; flexEvents += w; }
       }
       if (on) {
-        flexTrigHours++;
+        flexTrigHours += w;
         let A = flexMax * IT[h];
         if (A > R) A = R;
         if (battResp && Pb > 0 && m >= bessAvailM) {
           const can = Pb < soc * eta ? Pb : soc * eta;
           disResp = A < can ? A : can;
           soc -= disResp / eta;
-          battRespMWh += disResp;
+          battRespMWh += disResp * w;
         }
         const rest = A - disResp;
-        if (rest > 1e-12 && flexHoursLeft > 0) { curtTrig = rest; flexHoursLeft--; }
+        if (rest > 1e-12 && flexHoursLeft > 0) { curtTrig = rest; flexHoursLeft -= w; }
         R -= disResp + curtTrig;
-        flexTrigMWh += curtTrig;
+        flexTrigMWh += curtTrig * w;
       }
     }
 
@@ -290,15 +296,15 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
       ppaV = ppaShp[h] * ppaVol;
       const want = ppaV < R ? ppaV : R;
       ppaUse = want < capPhys ? want : capPhys;
-      if (want - ppaUse > 1e-9) { ppaLimitedMWh += want - ppaUse; ppaLimitedHours++; }
+      if (want - ppaUse > 1e-9) { ppaLimitedMWh += (want - ppaUse) * w; ppaLimitedHours += w; }
       R -= ppaUse;
       if (capRem !== Infinity) capRem -= ppaUse;
-      ppaDeliveredMWh += ppaUse;
-      ppaNetworkCost += ppaUse * adder;
+      ppaDeliveredMWh += ppaUse * w;
+      ppaNetworkCost += ppaUse * adder * w;
       // Contracted volume not delivered physically, at the wholesale price (no non-commodity adder: a financial
       // settlement is not energy taken from the grid). Not in the cost ledger: "PPA hedge (not counted)".
-      ppaUndeliveredMWh += ppaV - ppaUse;
-      ppaUndeliveredSpotValue += (ppaV - ppaUse) * pPrice[h] * priceMult;
+      ppaUndeliveredMWh += (ppaV - ppaUse) * w;
+      ppaUndeliveredSpotValue += (ppaV - ppaUse) * pPrice[h] * priceMult * w;
     }
 
     // Firm capacity available this hour (for the BESS shortfall rule)
@@ -364,11 +370,11 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
       R -= served + credit;
       if (R < 0) R = 0;
       sur += excess; // output above need at min stable load is curtailed (or charges the BESS)
-      plantMslCurtail[i] += excess;
-      plantMWh[i] += P;
+      plantMslCurtail[i] += excess * w;
+      plantMWh[i] += P * w;
       if (rec) rec.plant[i][h] = P;
-      plantHours[i] += 1;
-      if (!pIsSmr[i]) plantFuel[i] += P / pEff[i];
+      plantHours[i] += w;
+      if (!pIsSmr[i]) plantFuel[i] += (P / pEff[i]) * w;
     }
 
     // 5. Grid import up to the offered capacity ("Show unmet load") or uncapped ("Show exceedance")
@@ -386,8 +392,8 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
       const room = flexMax * IT[h] - curtTrig;
       let fs = R < room ? R : room;
       if (fs > 1e-12 && (curtTrig > 0 || flexHoursLeft > 0)) {
-        if (curtTrig === 0) flexHoursLeft--;
-        R -= fs; flexed += fs; flexShortMWh += fs; flexShortHours++;
+        if (curtTrig === 0) flexHoursLeft -= w;
+        R -= fs; flexed += fs; flexShortMWh += fs * w; flexShortHours += w;
       }
     }
     const unmet = R > 1e-12 ? R : 0;
@@ -412,7 +418,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     let exp = 0;
     if (sur > 0 && exportMW > 0) {
       exp = sur < exportMW ? sur : exportMW;
-      exportRevenue += exp * pPrice[h] * exportFactor;
+      exportRevenue += exp * pPrice[h] * exportFactor * w;
     }
     const curt = sur - exp;
 
@@ -421,35 +427,35 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false) {
     const isDesignDay = ((h / 24) | 0) === designDay;
     if (physImport > capPhys + 1e-9) {
       const ex = physImport - capPhys;
-      exceedMWh += ex; exceedHours++; if (ex > exceedPeakMW) exceedPeakMW = ex;
+      exceedMWh += ex * w; exceedHours += w; if (ex > exceedPeakMW) exceedPeakMW = ex;
       if (isDesignDay) designDayShortfall = true;
     }
     const netDemand = D0 - chpCredit - flexed;
 
-    grossDemandMWh += D0;
-    netDemandMWh += netDemand;
-    servedMWh += netDemand - unmet;
-    if (unmet > 0) { unmetMWh += unmet; unmetHours++; if (unmet > unmetPeakMW) unmetPeakMW = unmet; if (isDesignDay) designDayShortfall = true; unmetRunH++; if (unmetRunH > unmetLongestH) unmetLongestH = unmetRunH; } else unmetRunH = 0;
-    gridMWh += gridTotal;
-    gridChargeMWh += gridCh;
-    gridCost += gridTotal * gp;
-    gridCarbonT += (gridTotal * ci) / 1000;
-    ppaCarbonT += (ppaUse * ci) / 1000;
-    reGenMWh += re; solarMWh += sol; windMWh += win;
-    reUsedMWh += reUse;
-    curtailMWh += curt;
-    exportMWh += exp;
-    bessChargeMWh += ch + gridCh;
-    bessDischargeMWh += dis;
-    firmMWh += firm;
-    chpCreditMWh += chpCredit;
-    flexMWh += flexed;
-    itMWh += IT[h];
+    grossDemandMWh += D0 * w;
+    netDemandMWh += netDemand * w;
+    servedMWh += (netDemand - unmet) * w;
+    if (unmet > 0) { unmetMWh += unmet * w; unmetHours += w; if (unmet > unmetPeakMW) unmetPeakMW = unmet; if (isDesignDay) designDayShortfall = true; unmetRunH++; if (unmetRunH > unmetLongestH) unmetLongestH = unmetRunH; } else unmetRunH = 0;
+    gridMWh += gridTotal * w;
+    gridChargeMWh += gridCh * w;
+    gridCost += gridTotal * gp * w;
+    gridCarbonT += ((gridTotal * ci) / 1000) * w;
+    ppaCarbonT += ((ppaUse * ci) / 1000) * w;
+    reGenMWh += re * w; solarMWh += sol * w; windMWh += win * w;
+    reUsedMWh += reUse * w;
+    curtailMWh += curt * w;
+    exportMWh += exp * w;
+    bessChargeMWh += (ch + gridCh) * w;
+    bessDischargeMWh += dis * w;
+    firmMWh += firm * w;
+    chpCreditMWh += chpCredit * w;
+    flexMWh += flexed * w;
+    itMWh += IT[h] * w;
     // Hourly CFE (24/7 matching): on-site renewables used + PPA volume counted only against grid energy actually used
     // for load in that hour (O2, walkthrough 2026-10-21) + carbon-free firm output.
     const gridUsed = ppaUse + g;
     const clean = reUse + (ppaV < gridUsed ? ppaV : gridUsed) + firm * cleanRatio;
-    cfeMWh += clean < netDemand ? clean : netDemand;
+    cfeMWh += (clean < netDemand ? clean : netDemand) * w;
 
     if (rec) {
       rec.demand[h] = D0; rec.net[h] = netDemand; rec.re[h] = re; rec.solar[h] = sol; rec.wind[h] = win; rec.ppa[h] = ppaUse; rec.ppaContract[h] = ppaV; rec.dis[h] = dis; rec.ch[h] = ch + gridCh;
@@ -495,14 +501,57 @@ function indexOfMax(a) {
   return bi;
 }
 
-// Dispatch all explicit years (chronological SOC); steady-state year repeats afterwards.
-export function dispatchAll(ctx, cfg, recordYears = null) {
+// Representative days for the screening model (work package 8, OPEN-QUESTIONS 23 answered 2026-10-23 with Claude's
+// recommendation, accepted in advance by the owner): in each month the design day (if it falls in that month), the
+// day with the highest mean grid price and the most typical day (closest to the month's mean price, solar and wind),
+// each hour weighted so the month's days add up. Chosen from the country profiles, so every option uses the same days.
+export function representativeHours(ctx) {
+  if (ctx.repHours) return ctx.repHours;
+  const p = ctx.prof;
+  const days = Math.floor(H / 24);
+  const designDay = Math.floor(indexOfMax(p.temp) / 24);
+  const mean = (a, d) => { let s = 0; for (let h = d * 24; h < d * 24 + 24; h++) s += a[h]; return s / 24; };
+  const dPrice = [], dSolar = [], dWind = [];
+  for (let d = 0; d < days; d++) { dPrice.push(mean(p.price, d)); dSolar.push(mean(p.solar, d)); dWind.push(mean(p.wind, d)); }
+  const sd = (a) => { const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / a.length) || 1; };
+  const sP = sd(dPrice), sS = sd(dSolar), sW = sd(dWind);
+  const picked = []; // { day, weight }
+  for (let mo = 0; mo < 12; mo++) {
+    // Months as the dispatch loop counts them: 730 h each, the last to the end of the year.
+    const d0 = Math.floor((mo * 730) / 24), d1 = mo === 11 ? days : Math.floor(((mo + 1) * 730) / 24);
+    const ds = [];
+    for (let d = d0; d < d1; d++) ds.push(d);
+    const n = ds.length;
+    const mP = ds.reduce((a, d) => a + dPrice[d], 0) / n, mS = ds.reduce((a, d) => a + dSolar[d], 0) / n, mW = ds.reduce((a, d) => a + dWind[d], 0) / n;
+    let typical = ds[0], best = Infinity, dear = ds[0];
+    for (const d of ds) {
+      const z = ((dPrice[d] - mP) / sP) ** 2 + ((dSolar[d] - mS) / sS) ** 2 + ((dWind[d] - mW) / sW) ** 2;
+      if (z < best) { best = z; typical = d; }
+      if (dPrice[d] > dPrice[dear]) dear = d;
+    }
+    const extra = [...new Set([dear, ...(designDay >= d0 && designDay < d1 ? [designDay] : [])])].filter((d) => d !== typical);
+    for (const d of extra) picked.push({ day: d, weight: 1 });
+    picked.push({ day: typical, weight: n - extra.length });
+  }
+  picked.sort((a, b) => a.day - b.day);
+  const hours = new Int32Array(picked.length * 24), weights = new Float64Array(picked.length * 24);
+  picked.forEach((x, i) => { for (let k = 0; k < 24; k++) { hours[i * 24 + k] = x.day * 24 + k; weights[i * 24 + k] = x.weight; } });
+  // The 8,760-hour year has 365 days; a remainder of hours after the last full day is folded into the last weight.
+  const covered = weights.reduce((a, x) => a + x, 0);
+  if (covered < H) for (let k = weights.length - 24; k < weights.length; k++) weights[k] += (H - covered) / 24;
+  ctx.repHours = { hours, weights, days: picked, label: `Representative days (${picked.length} days a year)` };
+  return ctx.repHours;
+}
+
+// Dispatch all explicit years (chronological SOC); steady-state year repeats afterwards. rep: representative hours
+// (screening model) or null for the full year.
+export function dispatchAll(ctx, cfg, recordYears = null, rep = null) {
   const nY = dispatchYears(ctx, cfg);
   const years = [];
   let soc = null;
   for (let y = 0; y < nY; y++) {
     const rec = recordYears ? recordYears.includes(y) : false;
-    const r = dispatchYear(ctx, cfg, y, soc, rec);
+    const r = dispatchYear(ctx, cfg, y, soc, rec, rep);
     soc = r.socEnd;
     years.push(r);
   }

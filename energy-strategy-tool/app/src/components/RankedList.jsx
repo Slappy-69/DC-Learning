@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { applyView } from '../engine/scoring.js';
 import { defaultView, tablePageSize, flagFilters, visibleFlags } from '../engine/view.js';
-import { sig, money, monthLabel, pct } from '../format.js';
+import { sig, money, monthLabel, pct, cur } from '../format.js';
 import OptionDetail from './OptionDetail.jsx';
 import FilterChips from './FilterChips.jsx';
 import { UnverifiedTag } from './Field.jsx';
@@ -174,7 +174,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
               {th('name', 'Option')}
               {th('score', 'Score', 'num')}
               <th scope="col" className="num">Cost · Carbon · TTP · Deliv.</th>
-              {th('lcoe', 'LCOE €/MWh', 'num')}
+              {th('lcoe', `LCOE ${cur().trim()}/MWh`, 'num')}
               {th('capex', 'Capex', 'num')}
               {th('carbon', 'Carbon', 'num')}
               {th('cfe', 'CFE', 'num')}
@@ -190,7 +190,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
           </thead>
           <tbody>
             {rows.map((o, i) => {
-              const c = sevCounts(visibleFlags(o, siteBeta));
+              const c = sevCounts(visibleFlags(o, siteBeta).filter((f) => !f.assumed));
               const open = openId === o.id;
               return (
                 <React.Fragment key={o.id}>

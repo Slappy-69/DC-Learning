@@ -16,7 +16,7 @@
 // run itself (main thread). A partial log (run cancelled or failed) is merged the same way.
 import { useEffect, useRef, useState } from 'react';
 import {
-  runModelSteps, toTransferable, mergeRuns, startPooledRun, normalizeInputs, hashInputs,
+  runModelSteps, toTransferable, mergeRuns, startPooledRun, normalizeInputs, hashInputs, verifySteps, refreshAdequacyFlag,
   createProgressTracker, mergeLogs, nowAbs,
 } from './engine/index.js';
 
@@ -184,8 +184,28 @@ export function useCompute(inputs, computeKey) {
               try {
                 // Scoring and ranking events reach the panel through coord.log's onEvent.
                 const run = mergeRuns(parts, inputs, { log: coord.log });
-                if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
-                setState({ status: 'done', run, error: null, mode, ms: performance.now() - t0, progress: tracker.snapshot(), runMeta: { ...runMeta, inputHash: run.inputHash } });
+                const finish = () => {
+                  if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+                  setState({ status: 'done', run, error: null, mode, ms: performance.now() - t0, progress: tracker.snapshot(), runMeta: { ...runMeta, inputHash: run.inputHash } });
+                };
+                if (normalizeInputs(inputs).settings.screeningModel !== 'repDays') { finish(); return; }
+                // Screening tier (work package 8): verify the best options with the full year on this thread, in slices.
+                const vit = verifySteps(run, inputs, { slim: true });
+                const vstep = () => {
+                  if (id !== reqRef.current) return;
+                  try {
+                    const until = performance.now() + SLICE_MS;
+                    let r = vit.next();
+                    while (!r.done && performance.now() < until) r = vit.next();
+                    if (!r.done) { setState((s) => ({ ...s, notice: `Verifying the best options with the full-year model: ${r.value.done} of ${r.value.total}` })); setTimeout(vstep, 0); return; }
+                    refreshAdequacyFlag(run);
+                    setState((s) => ({ ...s, notice: null }));
+                    finish();
+                  } catch (err) {
+                    setState((s) => ({ ...s, status: 'error', error: String(err && err.stack ? err.stack : err) }));
+                  }
+                };
+                setTimeout(vstep, 0);
               } catch (err) {
                 setState((s) => ({ ...s, status: 'error', error: String(err && err.stack ? err.stack : err) }));
               }

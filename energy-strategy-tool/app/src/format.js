@@ -11,13 +11,32 @@ export function sig(x, n = 3) {
   return r.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: Math.min(d, 6) });
 }
 
+// Display currency (work package 1; BRIEF §5.1): results can be shown in the site's currency at the fixed release
+// rate (project.fx). The engine and the inputs work in euro; only the display converts. Default: euro.
+const SYMBOL = { EUR: '€', GBP: '£', CHF: 'CHF ', NOK: 'NOK ', SEK: 'SEK ', DKK: 'DKK ', ISK: 'ISK ' };
+let DISPLAY = { code: 'EUR', symbol: '€', rate: 1 };
+export function setDisplayCurrency(code, rate) {
+  DISPLAY = code && code !== 'EUR' && Number.isFinite(rate) && rate > 0 ? { code, symbol: SYMBOL[code] || `${code} `, rate } : { code: 'EUR', symbol: '€', rate: 1 };
+  return DISPLAY;
+}
+export const displayCurrency = () => DISPLAY;
+export const cur = () => DISPLAY.symbol;
+// A unit string with the euro sign replaced by the display currency ("€/MWh" → "£/MWh").
+export const curUnit = (u) => (DISPLAY.code === 'EUR' ? u : String(u).replace(/€/g, DISPLAY.symbol.trim()));
+// Cost per MWh in the display currency.
+export function perMWh(x, n = 3) {
+  if (x == null || !Number.isFinite(x)) return '—';
+  return `${DISPLAY.symbol}${sig(x * DISPLAY.rate, n)}/MWh`;
+}
+
 export function money(x, n = 3) {
   if (x == null || !Number.isFinite(x)) return '—';
-  const a = Math.abs(x);
-  if (a >= 1e9) return `€${sig(x / 1e9, n)} bn`;
-  if (a >= 1e6) return `€${sig(x / 1e6, n)} m`;
-  if (a >= 1e3) return `€${sig(x / 1e3, n)} k`;
-  return `€${sig(x, n)}`;
+  const y = x * DISPLAY.rate, S = DISPLAY.symbol;
+  const a = Math.abs(y);
+  if (a >= 1e9) return `${S}${sig(y / 1e9, n)} bn`;
+  if (a >= 1e6) return `${S}${sig(y / 1e6, n)} m`;
+  if (a >= 1e3) return `${S}${sig(y / 1e3, n)} k`;
+  return `${S}${sig(y, n)}`;
 }
 
 export function monthLabel(start, m) {

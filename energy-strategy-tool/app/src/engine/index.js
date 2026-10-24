@@ -2,10 +2,12 @@
 export * from './defaults.js';
 export * from './generator.js';
 export * from './scoring.js';
-export { runModel, runModelSteps, startPooledRun, rescore, mergeRuns, toTransferable, HOOKS, ENGINE_VERSION, PROGRESS_EVERY, withSiteFitNotes } from './run.js';
+export { runModel, runModelSteps, startPooledRun, rescore, mergeRuns, toTransferable, HOOKS, ENGINE_VERSION, PROGRESS_EVERY, withSiteFitNotes, refreshAdequacyFlag, slimOption } from './run.js';
+export { verifySteps, verifyTop, FULL_MODEL } from './verify.js';
+export { representativeHours } from './dispatch.js';
 export * from './runlog.js';
 export { getProfiles, PROFILE_LABEL, nearestCountry, H } from './profiles.js';
-export { buildContext, demandYear, gridCapByMonth, contractedCap, contractLimit } from './context.js';
+export { buildContext, demandYear, gridCapByMonth, contractedCap, contractLimit, countryFromPin, pinCountryInfo, displayCurrencyCode, resolveCountry } from './context.js';
 export { sizeOption, techAvailMonth, bridgeActive } from './sizing.js';
 export { dispatchConfig, dispatchYear, dispatchAll, MERIT_ORDER } from './dispatch.js';
 export { addMonths, monthsBetween } from './dates.js';

@@ -65,8 +65,10 @@ function firmGroups(plants) {
 }
 
 export default function DispatchView({ run, optionId = null, setOptionId = () => {}, initial = null }) {
-  const ranked = useMemo(() => run.options.slice().sort((a, b) => a.rank - b.rank), [run.options]);
-  const option = (optionId != null && run.options.find((o) => o.id === optionId)) || ranked[0] || null;
+  // Screening runs (work package 8, BRIEF §12.13): dispatch views only for options verified with the full year.
+  const screened = !!run.verification;
+  const ranked = useMemo(() => run.options.filter((o) => !screened || o.verified).sort((a, b) => a.rank - b.rank), [run.options, screened]);
+  const option = (optionId != null && ranked.find((o) => o.id === optionId)) || ranked[0] || null;
   const key = option ? `${run.inputHash || ''}|${option.id}` : null;
   const [state, setState] = useState(() => (initial && option ? { key, ...initial } : { key: null }));
   const optionList = useMemo(() => ranked.map((o) => <option key={o.id} value={o.id}>#{o.rank} {o.name}</option>), [ranked]);
@@ -101,6 +103,7 @@ export default function DispatchView({ run, optionId = null, setOptionId = () =>
           </select>
         </label>
       </div>
+      {screened ? <p className="note">Screening run: only the {ranked.length} options verified with the full-year model are offered here; the others were dispatched over representative days only.</p> : null}
       <p className="dv-intro">How one option is supplied: month by month while the site is energised, and hour by hour in each model year. The option is re-run with the engine the ranking uses (sizing, site layout, dispatch and economics) and checked against the ranking's figures below.</p>
       {state.key === key && state.error ? <p className="flag-text" role="alert">Could not re-run this option: {state.error}</p>
         : !ready ? <p className="dv-wait" role="status">Re-running #{option.rank} {option.name} with hourly records…</p>
@@ -115,6 +118,8 @@ export function DispatchPanel({ run, option, I, ms = null, chartWidth = null, in
   const [year, setYear] = useState(dy.y);
   const [week, setWeek] = useState(() => defaultWeek(I.years[dy.y].hourly));
   const [weekDraft, setWeekDraft] = useState(null); // text while the week box is being edited
+  // Any period of the year (work package 8, AC 25): a start day and a length in days, instead of a calendar week.
+  const [period, setPeriod] = useState(null); // null = week view; { day: 1–365, len: 1–31 }
   const Y = I.years[Math.min(year, I.years.length - 1)];
   const groups = useMemo(() => firmGroups(I.plants), [I]);
   const check = useMemo(() => compareWithRun(I, option), [I, option]);
@@ -136,7 +141,12 @@ export function DispatchPanel({ run, option, I, ms = null, chartWidth = null, in
 
   const tl = I.timeline;
   const T = I.ttp;
-  const wr = weekRange(week);
+  const wk = weekRange(week);
+  const wr = period
+    ? (() => { const from = (period.day - 1) * 24; const to = Math.min(Y.hourly.net.length, from + period.len * 24); return { week: null, from, to }; })()
+    : wk;
+  const periodName = period ? `days ${period.day}–${Math.round(wr.to / 24)}` : `week ${wr.week}`;
+  const PeriodName = periodName[0].toUpperCase() + periodName.slice(1);
   const B = Y.balance;
   const E = Y.engine;
   const yearHasLoad = B.net > 1e-6;
@@ -215,6 +225,7 @@ export function DispatchPanel({ run, option, I, ms = null, chartWidth = null, in
     };
   };
   const weekUnmet = (() => { let s = 0; for (let h = wr.from; h < wr.to; h++) s += hs.unmet[h]; return s; })();
+  const unmetNoneText = period ? '! Unmet load: none in this period' : '! Unmet load: none this week';
   const hrLegend = [
     hasSolar ? { label: 'Solar PV (on site)', color: C.solar } : null,
     hasWind ? { label: 'Wind (on site)', color: C.wind, hatch: 'wind' } : null,
@@ -223,11 +234,11 @@ export function DispatchPanel({ run, option, I, ms = null, chartWidth = null, in
     { label: `Grid: import${hasPPA ? ' (incl. PPA)' : ''} above the axis${B.exp > 1e-6 ? ', export below' : ''}`, color: C.grid },
     B.curt > 1e-6 ? { label: 'Curtailment (below the axis)', color: C.curtail } : null,
     { label: 'Facility demand (net)', kind: 'line' },
-    { label: weekUnmet > 1e-6 ? '! Unmet load (strip above the plot)' : '! Unmet load: none this week', kind: 'strip' },
+    { label: weekUnmet > 1e-6 ? '! Unmet load (strip above the plot)' : unmetNoneText, kind: 'strip' },
   ].filter(Boolean);
   const plantRows = (E.plants || []).filter((p) => p.mwh > 1e-6 || p.hours > 0);
   const hedge = I.eco.ppaHedge;
-  const setWeekNow = (w) => { setWeekDraft(null); setWeek(w); };
+  const setWeekNow = (w) => { setWeekDraft(null); setPeriod(null); setWeek(w); };
 
   return (
     <>
@@ -301,8 +312,20 @@ export function DispatchPanel({ run, option, I, ms = null, chartWidth = null, in
               onKeyDown={(e) => { if (e.key === 'Enter') setWeekDraft(null); }} /> of {WEEKS_PER_YEAR}</label>
             <button type="button" className="chip-btn" onClick={() => setWeekNow(Math.min(WEEKS_PER_YEAR, week + 1))} disabled={week >= WEEKS_PER_YEAR} aria-label="Next week">›</button>
             {presets.map((p) => (
-              <button key={p.id} type="button" className="chip-btn" aria-pressed={week === p.week} onClick={() => setWeekNow(p.week)}>{p.label} (week {p.week})</button>
+              <button key={p.id} type="button" className="chip-btn" aria-pressed={!period && week === p.week} onClick={() => setWeekNow(p.week)}>{p.label} (week {p.week})</button>
             ))}
+          </div>
+        ) : null}
+        {yearHasLoad ? (
+          <div className="btn-row dv-period" role="group" aria-label="Any period">
+            <label className="small">Any period: start day <input id="dv-day" type="number" inputMode="numeric" min={1} max={365} key={`d${period ? period.day : 'w'}`} defaultValue={period ? period.day : wk.from / 24 + 1}
+              onBlur={(e) => { const d = Math.round(Number(e.target.value)); if (d >= 1 && d <= 365) setPeriod({ day: d, len: period ? period.len : 7 }); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} /></label>
+            <label className="small">length <select id="dv-len" value={period ? period.len : 7} onChange={(e) => setPeriod({ day: period ? period.day : wk.from / 24 + 1, len: Number(e.target.value) })}>
+              {[1, 2, 3, 7, 14, 31].map((n) => <option key={n} value={n}>{n} day{n === 1 ? '' : 's'}</option>)}
+            </select></label>
+            {period ? <button type="button" className="chip-btn" onClick={() => setPeriod(null)}>Back to weeks</button> : null}
+            <span className="small">{period ? `Showing ${periodName} of year ${Y.index + 1}.` : ''}</span>
           </div>
         ) : null}
       </div>
@@ -332,7 +355,7 @@ export function DispatchPanel({ run, option, I, ms = null, chartWidth = null, in
             readout={hrReadout}
             legendItems={hrLegend}
             initialWidth={chartWidth}
-            ariaLabel={`Hourly dispatch, year ${Y.index + 1}, week ${wr.week}, for #${option.rank} ${option.name}. Unmet load this week ${MWh(weekUnmet)}.`}
+            ariaLabel={`Hourly dispatch, year ${Y.index + 1}, ${periodName}, for #${option.rank} ${option.name}. Unmet load in this period ${MWh(weekUnmet)}.`}
             help="Above the axis: where each hour's energy came from, stacked from the bottom in merit order as on-site solar and wind, battery discharge, firm on-site plant, then grid import (PPA energy arrives over the grid connection, so it sits in the grid band; the readout splits it). Below the axis: energy that did not serve the facility (battery charging, curtailment, export). The line is the facility demand; where it sits above the stack, that part of the demand was not met. Colours and hatches are those of the site plan: solar, battery and grid in plain colour; wind (which shares the grid blue) and firm on-site plant with their plan hatch."
           />
           {hasBess ? (
@@ -348,15 +371,15 @@ export function DispatchPanel({ run, option, I, ms = null, chartWidth = null, in
                 height={80}
                 initialWidth={chartWidth}
                 readout={(i) => ({ title: `Year ${Y.index + 1} · day ${Math.floor((off + i) / 24) + 1} · ${pad2((off + i) % 24)}:00`, rows: [{ label: 'Battery charge level', text: `${sig(hs.soc[off + i], 3)} MWh`, key: 'line' }] })}
-                ariaLabel={`Battery charge level, year ${Y.index + 1}, week ${wr.week}.`}
+                ariaLabel={`Battery charge level, year ${Y.index + 1}, ${periodName}.`}
               />
             </>
           ) : null}
           <details className="dv-table">
-            <summary>Week {wr.week} as a table (MW, hourly)</summary>
-            <div className="dv-scroll" role="region" aria-label={`Week ${wr.week} table`} tabIndex={0}>
+            <summary>{PeriodName} as a table (MW, hourly)</summary>
+            <div className="dv-scroll" role="region" aria-label={`${PeriodName} table`} tabIndex={0}>
               <table className="mini dv-num">
-                <caption className="sr-only">Hourly dispatch of week {wr.week}, year {Y.index + 1}</caption>
+                <caption className="sr-only">Hourly dispatch of {periodName}, year {Y.index + 1}</caption>
                 <thead><tr><th scope="col">Hour</th><th scope="col">Demand</th><th scope="col">Solar</th><th scope="col">Wind</th><th scope="col">Battery out</th>{groups.map((g) => <th key={g.source} scope="col">{g.label}</th>)}<th scope="col">Grid to load</th><th scope="col">PPA delivered</th>{hasPPA ? <th scope="col">PPA contracted</th> : null}<th scope="col">Grid to battery</th><th scope="col">Unmet</th><th scope="col">Battery in</th><th scope="col">Curtailed</th><th scope="col">Export</th>{hasBess ? <th scope="col">Charge level MWh</th> : null}</tr></thead>
                 <tbody>
                   {Array.from({ length: nH }, (_, i) => {

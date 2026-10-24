@@ -1,12 +1,13 @@
 import React from 'react';
 import { paretoTableRows } from '../engine/pareto.js';
-import { sig, money } from '../format.js';
+import { sig, money, curUnit, displayCurrency } from '../format.js';
 
 // Table alternative for the Pareto scatter (§17: every chart has a data-table alternative).
 // Same rows as the chart's points (paretoTableRows), same order (rank), same values.
 export function fmtAxis(axis, v) {
   if (!Number.isFinite(v)) return 'not plotted (no finite value)';
   if (axis.unit === '€') return money(v, 3);
+  if (axis.unit === '€/MWh') return `${sig(v * displayCurrency().rate, 3)} ${curUnit(axis.unit)}`;
   if (axis.unit === '%') return `${sig(v * 100, 3)} %`;
   return `${sig(v, 3)} ${axis.unit}`;
 }
@@ -24,8 +25,8 @@ export default function ParetoTable({ model, page = 0, pageSize = 50, onOpen, op
           <th scope="col" className="num">Rank</th>
           <th scope="col">Option</th>
           <th scope="col" className="num">Score</th>
-          <th scope="col" className="num">{model.xAxis.label} ({model.xAxis.unit})</th>
-          <th scope="col" className="num">{model.yAxis.label} ({model.yAxis.unit})</th>
+          <th scope="col" className="num">{model.xAxis.label} ({curUnit(model.xAxis.unit)})</th>
+          <th scope="col" className="num">{model.yAxis.label} ({curUnit(model.yAxis.unit)})</th>
           <th scope="col" className="num">Time-to-power (months)</th>
           <th scope="col" className="num">Capex</th>
           {model.showSiteFit !== false ? <th scope="col">Site fit (Beta)</th> : null}

@@ -165,8 +165,8 @@ The **Dispatch** tab shows how one option is supplied. Choose the option at the 
 
 **Energy balance.** For the chosen year: every source in, every use out, and the totals, which must match. The notes below state the balance error (the largest hourly error was 7 × 10⁻¹⁵ MWh: rounding only), confirm that every year, time-to-power, LCOE, NPV, solar size, deliverability and site fit match the ranking, and report the PPA hedge.
 
-::: {.callout .agreed}
-**Agreed, not built yet.** Dispatch views of **any period of the year**, not just whole weeks; available only for the verified top options, because the screening run will use representative days (chapter 10).
+::: {.callout .built}
+**Built (23 October 2026, work package 8).** Beside the weeks: **Any period**, a start day (1–365) and a length of 1, 2, 3, 7, 14 or 31 days; the chart, readout and table follow it, and "Back to weeks" returns. In a screening run (chapter 10) only the options verified with the full year are offered here.
 :::
 
 # 27. Sensitivity (tornado) {#ch27}

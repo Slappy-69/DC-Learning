@@ -52,7 +52,7 @@ These were found while checking the guide against the code and the T1 run. None 
 3. **Export income ignores the price multiplier.** Export is valued at 90 % of the unscaled wholesale price.
 4. **Archetypes take the first open value of every unspecified choice.** With the defaults that makes every archetype air-cooled with roof heat rejection, which in T1 puts most of them out of reach of full load (chapter 47).
 5. **Identical options.** Options that differ only in choices that change no number appear as separate rows with identical results (T1 ranks 10 and 11).
-6. **Two density rules disagree.** The agreed IT estimate from area (5.5 kW/m² of floor) and the building massing (0.7–1.8 kW/m² of floor) differ by a factor of three to eight (chapter 16).
+6. **Two density rules disagree** (resolved 23 October 2026: the IT estimate now uses the building massing rule). The agreed IT estimate from area (5.5 kW/m² of floor) and the building massing (0.7–1.8 kW/m² of floor) differ by a factor of three to eight (chapter 16).
 7. **Grid connection cost on islanded options.** Every option pays for the full offered connection, including islanded options that never use it. Resolved on 23 October 2026: the charge is one lump sum, default 0, and islanded options do not pay it.
 8. **"Opex year 1"** in the option detail is the first year of the analysis (2027 for T1), which has no load, so it shows €0.
 9. **"First power"** can be month 0, before any phase exists, because it measures when the supply could energise phase 1.
@@ -95,10 +95,10 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Single-file version | Built | 2 |
 | Phone version | Dropped | 2 |
 | Inputs with defaults and "unverified" tags | Built | 14–19 |
-| Per-option "assumed default" flags with sources | Agreed | 14, 42 |
-| Map pin, offline map, country from pin | Agreed | 14 |
-| Currency per site | Agreed | 14 |
-| ASHRAE design station, NOAA or EPW weather | Agreed | 6 |
+| Per-option "assumed default" flags with sources | Built (23 Oct 2026) | 14, 42 |
+| Map pin, offline map (country outlines), country from pin | Built (23 Oct 2026) | 14 |
+| Currency per site (display, release rates) | Built (23 Oct 2026) | 14 |
+| ASHRAE design station (not bundled: licensed; flagged), NOAA or EPW weather (package 0) | Answered (23 Oct 2026) | 6 |
 | Real hourly data (ENTSO-E and others) at release | Agreed | 52 |
 | Site tab as Beta (switch, label, kept out of the ranking) | Built (22 Oct 2026) | 28, 30 |
 | Site area as one number (land for wind without the layout) | Agreed; open question | 15, 28 |
@@ -113,29 +113,29 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Battery sized to the permanent shortfall on the design day, with a recharge check, counted as firm supply (C12, work package 3b) | Built (23 Oct 2026) | 20, 34, 35, 42 |
 | Work package 4: load shapes; flexibility in trigger hours and against shortfalls, with battery response and cost of curtailment; economic battery sized to the trigger hours (three hold-fixed modes); resilience reserve battery; genset test running 6 h at 75 %; gensets as primary power | Built (23 Oct 2026) | 5, 7, 16, 18, 35, 37 |
 | Work package 6: top-five cards (five distinct strategies, pros and cons against the run), identical-result marks, trade-off defaults (cost up, carbon across, resilience size and colour), weight change described live | Built (23 Oct 2026) | 13, 22, 24, 45 |
-| IT load estimated from area | Agreed | 16 |
-| Load shapes, AI profiles | Agreed | 16 |
-| Flexibility with triggers; battery response | Agreed | 16 |
-| Battery split: reserve and economic | Agreed | 18 |
-| Gensets 6 h tests, separate test load, primary hours | Agreed | 18 |
-| Grid "not known" with country defaults | Agreed | 17 |
+| IT load estimated from area (massing rule) | Built (23 Oct 2026) | 16 |
+| Load shapes, AI profiles | Built (23 Oct 2026) | 16 |
+| Flexibility with triggers; battery response | Built (23 Oct 2026) | 16 |
+| Battery split: reserve and economic | Built (23 Oct 2026) | 18 |
+| Gensets 6 h tests, separate test load, primary hours | Built (23 Oct 2026) | 18 |
+| Grid "not known" with defaults (one value for every country; country values to research) | Built (23 Oct 2026) | 17 |
 | Contracted grid capacity (rule per grid strategy) | Built (23 Oct 2026) | 9, 19 |
 | Fixed grid connection charge (not paid by islanded options) | Built (23 Oct 2026) | 9, 19 |
 | Grid connection capex default 0 with the expected figure | Built (23 Oct 2026) | 9, 19 |
-| Several evaluation periods | Agreed | 11, 19 |
+| Several evaluation periods (scoring period ranks) | Built (23 Oct 2026) | 11, 19 |
 | Latest carbon and gas prices with dates; escalation forecasts | Agreed | 19 |
-| Revenue options (off) | Agreed | 19 |
-| Cooling chosen by the engineer | Agreed | 6 |
+| Revenue options (off; opened in the choices) | Built (23 Oct 2026) | 19 |
+| Cooling chosen by the engineer (open = all compared, flagged) | Built (23 Oct 2026); typical PUE beside the field not built | 6 |
 | No PPA income without delivery | Built | 39 |
 | O1, O2, O3 PPA and carbon rules; PPA off unless ticked, then with and without (work package 5) | Built (23 Oct 2026) | 12, 42 |
 | 8,760-hour dispatch for every option | Built | 37 |
-| Representative-day screening and verification | Agreed | 10 |
+| Representative-day screening and verification (optional, off by default) | Built (23 Oct 2026) | 10 |
 | Options table, option detail, trade-offs | Built | 22–24 |
 | Top five cards with pros and cons | Built (23 Oct 2026) | 22 |
 | Trade-off defaults (cost vertical, resilience bubbles) | Built (23 Oct 2026) | 24 |
 | Compare up to three | Built (23 Oct 2026) | 25 |
 | Dispatch tab | Built | 26 |
-| Dispatch for any period, verified options | Agreed | 26 |
+| Dispatch for any period, verified options | Built (23 Oct 2026) | 26 |
 | Tornado (7 drivers, score and LCOE) | Built | 27 |
 | Tornado with driver list, LCOE default | Built (23 Oct 2026) | 27 |
 | Run log export | Built | 29 |
@@ -152,11 +152,11 @@ Every number in the worked examples comes from a run of the T1 example exported 
 Collected from the chapters:
 
 - (Answered 23 October 2026) contracted capacity is a rule per grid strategy; islanded options do not pay the charge (9, 19).
-- Which evaluation period sets the score (48).
-- Representative-day method and the number of verified options (10, 48).
+- (Answered 23 October 2026) the scoring period sets the score (19).
+- (Answered 23 October 2026) screening optional and off by default; per month the design, dearest and typical days; 10 verified (10).
 - (Answered 23 October 2026) the top five show distinct strategies; pros and cons compare against the whole run (22).
-- The land budget for wind with the Site tab hidden (15); solar was settled on 22 October 2026 (OPEN-QUESTIONS 53).
-- Which density rule to keep (16).
+- (Answered 23 October 2026) wind uses the net developable area, which does not depend on the Site tab (15).
+- (Answered 23 October 2026) one density rule, the building massing (16).
 - Project save and reopen (4).
 - Whether more than one cooling type can be compared in a run (6).
 

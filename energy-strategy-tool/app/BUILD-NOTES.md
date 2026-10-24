@@ -1697,3 +1697,55 @@ T1 effect: the €18 m connection line (120 MW × €150k/MW) leaves every optio
 Interpretations (reversible): the substation stays on every option (it serves on-site plant too); editing one option's capacity after the run is not built; the export strategy's contract has no field of its own yet (record only).
 
 Tests: 31 (80 MW of 120 MW never exceeded in any hour; sizing and time-to-power follow; blank = offer; charge default 0 and flagged; one amount on grid options, none on islanded; expected figure; tornado driver with a charge), 9 updated (cable route line), 13d (grid capex moves only when there is something to scale), browser B33.
+
+## Work package 2: knowledge levels, assumed-default flags, economics section (2026-10-23)
+
+Branch `feature/input-model` (from `feature/grid-contract`). OPEN-QUESTIONS 21, 25, 26 and 28 answered with Claude's recommendations, accepted in advance by the owner (2026-10-23); KNOWN-ISSUES item 6 resolved by 26. The Site tab's Beta switch (AC 27) and the solar areas were built earlier on `feature/site-tab-beta` and `feature/solar-areas`.
+
+What changed:
+- **Only the location and the site area are required.** `load.itMW` and the three grid values default to blank ("Not known"), each a record. `resolveUnknowns` (in `normalizeInputs`) fills them and writes `inputs.assumedInputs` (path → how it was set):
+  - IT load: the sum of the phases if phases were entered; otherwise the massing rule inverted (OPEN-QUESTIONS 26): area × `load.estimateCoverage` (35 %) × storeys ÷ gross-up × whitespace density of the cooling type (air when open). T1's 15 ha → 71.6 MW.
+  - Grid: now `grid.unknownNowMW` (0), full `grid.unknownFullPerITMW` (1.4) × IT, date start + `grid.unknownFullMonths` (48). One value for every country; country values to research.
+  - The T1 example now enters 100 MW and 20 / 120 MW at month 30 explicitly (`T1_EXAMPLE`), so every T1 figure is unchanged.
+- **Assumed-default flags** (`src/engine/assumed.js`, AC 16): one info flag (category "Assumed default", `assumed: true`, `path`) per key input not entered that the option uses (24 key inputs, each with a rule for which options use it, for example the gas price only on gas-burning options, the grid values only on grid-connected ones), plus one flag counting the registry records. They are listed under "Assumed defaults" in the option detail, on the cards and in Compare, and kept out of the flag counts and the "Flags" sort.
+- **Cooling not chosen** (OPEN-QUESTIONS 28): the open choice compares all four types, flagged "assumed" on every option.
+- **Evaluation periods** (OPEN-QUESTIONS 21): `economics.displayPeriods` (10, 15); `eco.byPeriod` holds LCOE and NPV for each period and the scoring period (`economics.periodYears`), from the same ledger function; shown in the option detail. The context covers the longest period.
+- **Wind land** (OPEN-QUESTIONS 25): unchanged (net developable area of the site model, independent of the Beta tab); recorded as the answer.
+- **Inputs panel:** IT load and grid values accept blank with "Not known (…)" placeholders and the estimate in the hint; a new section **5 · Economics** (WACC with its plain explanation, scoring period, further periods, contingency, carbon price, three escalations, currency and revenue note); later sections renumbered (6 Requirements, 7 Choices).
+- **PDF:** inputs filled by `resolveUnknowns` are listed as "Default: <how it was set>".
+
+Not built: country values for "Not known" grid inputs, latest carbon and gas prices with dates (package 0 research), currency per site (package 1), typical PUE and maximum demand next to the cooling input.
+
+Tests: 32 (defaults-only run, estimates, flags per option and their removal, periods).
+
+## Work package 8: screening tier and dispatch for any period (2026-10-23)
+
+Branch `feature/input-model`, committed with package 2 (the edits shared files). OPEN-QUESTIONS 23 answered with Claude's recommendation, accepted in advance by the owner (2026-10-23).
+
+What changed:
+- **Run setting `settings.screeningModel`** ('full' by default, or 'repDays') and **`settings.verifyTop`** (10). Off by default: power adequacy needs every hour.
+- **Representative days** (`representativeHours` in `dispatch.js`, cached on the context): per month the design day (if in that month), the day with the highest mean grid price and the most typical day (smallest standardised distance to the month's mean price, solar and wind); weights add to 8,760 h. Chosen from the country profiles, so every option uses the same days (T1: 25 days).
+- **Weighted dispatch:** `dispatchYear(..., rep)` loops over the representative hours with each hour's weight on every annual total (energy, cost, carbon, hours, plant output and fuel, flexibility budget). With `rep = null` every weight is 1, so the full-year arithmetic is unchanged (all earlier tests pass unchanged).
+- **Verification** (`src/engine/verify.js`): after scoring, the best `verifyTop` options are re-run with `evaluateOption` (full year), their figures replaced (`model: "Full-year hourly (8760 h), verified"`, `screening` keeps the screening figures), and every option re-scored. In the browser's worker pool this runs on the main thread after the merge, in time slices, with a notice; `refreshAdequacyFlag` recounts adequacy.
+- **Screens:** "Dispatch model" in Run and dispatch settings; the header strip and each option's detail say which model produced the figures; the Dispatch tab offers only verified options in a screening run, and **any period** (start day, 1–31 days) beside the weeks.
+
+T1 result (test 33): LCOE within 3.8 % of the full year for every option (AC 4 target ±5 %); location carbon within about 12.5 %; adequacy count unchanged (1,566); 9 of the top 10 the same; leader unchanged; about 9 s against 15 s.
+
+Interpretations (reversible): battery charge carries from one representative day to the next; the longest unmet event is counted within representative days only; carbon is not part of the ±5 % check.
+
+Tests: 33, browser B35.
+
+## Work package 1: map pin, country from the pin, display currency (2026-10-23)
+
+Branch `feature/input-model`, committed with packages 2 and 8 (the edits shared files). OPEN-QUESTIONS 63 (map data), 64 (ASHRAE) and 65 (weather processing) — the build plan's "ask the owner" items for this package — answered with Claude's recommendations, accepted in advance by the owner (2026-10-23).
+
+What changed:
+- **Map data** (`src/data/europe-map.js`, generated by `tools/make-map-data.mjs` from world-atlas 2.0.2 `countries-50m.json`, Natural Earth 1:50m, public domain): 67 country outlines reaching 32°W–46°E, 33°N–72°N, rounded to 0.01°, 330 kB. Run `npm run make:map` at each release (needs the dev dependencies world-atlas and topojson-client); the program never fetches map data.
+- **Map pin** (`src/components/MapPicker.jsx`): an SVG map in section 1; click or tap places the pin, arrow keys move it (0.1°, Shift 1°), + and − zoom; the country under the pin is named in a live region; the 31 built-in countries are shaded.
+- **Country from the pin** (`geocountry.js` `countryAtPoint`; `context.js` `countryFromPin`, `pinCountryInfo`): the built-in country whose outline contains the pin (even-odd rule); otherwise the nearest reference point, flagged "assumed" on every option (assumed.js). `resolveCountry` uses it when the country is not chosen. T1 stays United Kingdom.
+- **Design temperatures**: no ASHRAE data (licensed); an "assumed" flag on every option says they come from the synthetic profile.
+- **Display currency** (`format.js` `setDisplayCurrency`, `perMWh`, `money`, `curUnit`; record `project.currency`, default "by country"): results, charts, cards, Compare, the tornado and the PDF in the chosen currency at the release rate (`project.fx`, ECB 2026-10-22); inputs and engine in euro. Changing it never re-runs (left out of the compute key). The PDF cover states the currency and rate.
+
+Not built: roads on the map (OpenStreetMap PMTiles, owner's call on size and licence), editable exchange rates, NOAA/EPW weather (package 0), inputs in the display currency.
+
+Tests: 34 (outlines, pins incl. Strasbourg and Belgrade, flags, currency, offline); browser B36.
