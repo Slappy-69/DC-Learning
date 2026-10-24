@@ -698,7 +698,8 @@ await check('B12. Tablet width (1000 px): the closed inputs panel takes no Tab s
   await page.getByRole('button', { name: 'Inputs' }).click();
   await page.waitForTimeout(350);
   let reached = false;
-  for (let i = 0; i < 6 && !reached; i++) { await page.keyboard.press('Tab'); const a = await active(page); reached = a.inPanel && a.visible; }
+  // The header buttons after "Inputs" come first (Load T1, Reset, Save study, Open study, Save PDF, General settings; work package 15 added two).
+  for (let i = 0; i < 10 && !reached; i++) { await page.keyboard.press('Tab'); const a = await active(page); reached = a.inPanel && a.visible; }
   ok(reached, 'opened inputs panel not reachable by Tab');
   await ctx.close();
   ok(errors.length === 0, errors.join(' | '));
