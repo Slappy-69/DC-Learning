@@ -277,7 +277,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   // is the "PPA hedge (not counted)": reported here, never added to the ledger, so it is outside LCOE, NPV, the
   // capex/opex split and the score. Before the decision the ledger booked the PPA price on the whole contract and
   // netted the undelivered volume at the hourly grid price (incl. the non-commodity adder) as income.
-  const hedge = sz.ppa ? { byYear: [], total: 0, pv: 0, contractMWh: 0, deliveredMWh: 0, undeliveredMWh: 0, limitedMWh: 0, price: ppaPrice } : null;
+  const hedge = sz.ppa ? { byYear: [], total: 0, pv: 0, contractMWh: 0, deliveredMWh: 0, undeliveredMWh: 0, limitedMWh: 0, mslBackMWh: 0, price: ppaPrice } : null;
   const testRun = sz.backup.tech ? (() => {
     const t = TECH[sz.backup.tech];
     const units = v.C5 === 'bessUps' ? sz.backup.nUnits : sz.backup.units;
@@ -319,6 +319,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
       hedge.deliveredMWh += d.ppaDeliveredMWh;
       hedge.undeliveredMWh += d.ppaUndeliveredMWh;
       hedge.limitedMWh += d.ppaLimitedMWh;
+      hedge.mslBackMWh += d.ppaMslBackMWh || 0;
     }
     L.carbon += scope1 * cPrice;
     L.revenue += d.exportRevenue * elecEsc;
@@ -560,7 +561,7 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
       `PPA limited by import capacity: ${mwh(lim)} (${pctTxt(lim)} of the ${mwh(hd.undeliveredMWh)} undelivered) of contracted PPA volume over the ${inputs.economics.periodYears}-year evaluation period could not be delivered because the grid connection was full. ${hedgeTxt}`,
       { value: lim, share: share(lim), hedge: hd.total }));
     if (above > 1e-6) flags.push(flag('ppa-above-load', 'info', 'Grid',
-      `PPA volume above the load: ${mwh(above)} (${pctTxt(above)} of the ${mwh(hd.undeliveredMWh)} undelivered) of contracted PPA volume over the ${inputs.economics.periodYears}-year evaluation period exceeded the load still to serve in its hour. ${hedgeTxt}`,
+      `PPA volume above the load: ${mwh(above)} (${pctTxt(above)} of the ${mwh(hd.undeliveredMWh)} undelivered) of contracted PPA volume over the ${inputs.economics.periodYears}-year evaluation period exceeded the load still to serve in its hour${hd.mslBackMWh > 1e-6 ? ` (${mwh(hd.mslBackMWh)} of it because firm plant needed at its minimum stable load served that load instead)` : ''}. ${hedgeTxt}`,
       { value: above, share: share(above), hedge: hd.total }));
   }
   if (sz.shortfallBess && !sz.shortfallBess.rechargeOK) flags.push(flag('bess-recharge', 'minor', 'Grid', `Battery for the shortfall cannot recharge from the grid headroom on the design day from month ${sz.shortfallBess.failMonth}: it does not count as firm supply against the design load`));

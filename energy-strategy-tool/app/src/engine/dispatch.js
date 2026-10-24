@@ -161,7 +161,7 @@ function emptyYear() {
     exceedMWh: 0, exceedHours: 0, exceedPeakMW: 0,
     gridMWh: 0, gridChargeMWh: 0, gridCost: 0, gridCarbonT: 0, ppaCarbonT: 0, gridCarbonWeighted: 0,
     reGenMWh: 0, solarMWh: 0, windMWh: 0, reUsedMWh: 0, curtailMWh: 0, exportMWh: 0, exportRevenue: 0,
-    ppaContractMWh: 0, ppaDeliveredMWh: 0, ppaUndeliveredMWh: 0, ppaUndeliveredSpotValue: 0, ppaLimitedMWh: 0, ppaLimitedHours: 0,
+    ppaContractMWh: 0, ppaDeliveredMWh: 0, ppaUndeliveredMWh: 0, ppaUndeliveredSpotValue: 0, ppaLimitedMWh: 0, ppaLimitedHours: 0, ppaMslBackMWh: 0,
     bessChargeMWh: 0, bessDischargeMWh: 0, bessLossMWh: 0, socStart: 0, socEnd: 0,
     firmMWh: 0, chpCreditMWh: 0, flexMWh: 0, cfeMWh: 0, itMWh: 0,
     plants: [], designDayShortfall: false, maxBalanceError: 0,
@@ -182,6 +182,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
   const plantHours = new Float64Array(nP);
   const plantFuel = new Float64Array(nP);
   const plantMslCurtail = new Float64Array(nP);
+  const exH = new Float64Array(nP); // this hour's output above demand at minimum stable load, by plant (known issue 19)
   const eta = Math.sqrt(cfg.rte);
   const E = cfg.bessMWh;
   const Pb = cfg.bessMW;
@@ -228,6 +229,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
   const roleArb = role === 'peakShave' || role === 'shifting' || role === 'gridServices';
   const reserveE = role === 'peakShave' ? 0.5 * E : 0;
   const y12 = y * 12;
+  let ppaMslBackMWh = 0;
   let ppaNetworkCost = 0, ppaLimitedMWh = 0, ppaLimitedHours = 0, ppaDeliveredMWh = 0, ppaUndeliveredMWh = 0, ppaUndeliveredSpotValue = 0, exportRevenue = 0;
   let exceedMWh = 0, exceedHours = 0, exceedPeakMW = 0, grossDemandMWh = 0, netDemandMWh = 0, servedMWh = 0;
   let unmetMWh = 0, unmetHours = 0, unmetPeakMW = 0, designDayShortfall = false, gridMWh = 0, gridChargeMWh = 0;
@@ -343,7 +345,9 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
     // 4. Firm on-site generation: economic against grid marginal cost, or covering the grid shortfall; must-run when islanded
     let firm = 0;
     let chpCredit = 0;
+    let mslEx = 0;
     for (let i = 0; i < nP; i++) {
+      exH[i] = 0;
       const md = pMode[i][m];
       if (md === 0 || R <= 1e-12) continue;
       if (pHourMask[i] && !pHourMask[i][h]) continue;
@@ -385,10 +389,32 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
       if (R < 0) R = 0;
       sur += excess; // output above need at min stable load is curtailed (or charges the BESS)
       plantMslCurtail[i] += excess * w;
+      exH[i] = excess; mslEx += excess;
       plantMWh[i] += P * w;
       if (rec) rec.plant[i][h] = P;
       plantHours[i] += w;
       if (!pIsSmr[i]) plantFuel[i] += (P / pEff[i]) * w;
+    }
+
+    // 4b. Firm plant held at its minimum stable load displaces PPA energy before any of its output is wasted (known issue
+    // 19, OPEN-QUESTIONS 77, 2026-10-24): the PPA delivery backs off by up to the surplus, and that volume is settled as
+    // undelivered (the hedge line, outside the ledger), as for any PPA energy the site does not take.
+    if (mslEx > 1e-12 && ppaUse > 1e-12) {
+      const back = mslEx < ppaUse ? mslEx : ppaUse;
+      ppaUse -= back;
+      if (capRem !== Infinity) capRem += back;
+      sur -= back;
+      ppaDeliveredMWh -= back * w;
+      ppaNetworkCost -= back * adder * w;
+      ppaUndeliveredMWh += back * w;
+      ppaUndeliveredSpotValue += back * pPrice[h] * priceMult * w;
+      ppaMslBackMWh += back * w;
+      let left = back;
+      for (let i = 0; i < nP && left > 1e-12; i++) {
+        if (exH[i] <= 0) continue;
+        const d = exH[i] < left ? exH[i] : left;
+        plantMslCurtail[i] -= d * w; left -= d;
+      }
     }
 
     // 5. Grid import up to the offered capacity ("Show unmet load") or uncapped ("Show exceedance")
@@ -486,7 +512,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
   }
 
   Object.assign(out, {
-    ppaNetworkCost, ppaLimitedMWh, ppaLimitedHours, ppaDeliveredMWh, ppaUndeliveredMWh, ppaUndeliveredSpotValue, exportRevenue, exceedMWh, exceedHours, exceedPeakMW,
+    ppaNetworkCost, ppaMslBackMWh, ppaLimitedMWh, ppaLimitedHours, ppaDeliveredMWh, ppaUndeliveredMWh, ppaUndeliveredSpotValue, exportRevenue, exceedMWh, exceedHours, exceedPeakMW,
     grossDemandMWh, netDemandMWh, servedMWh, unmetMWh, unmetHours, unmetPeakMW, unmetLongestH, designDayShortfall, gridMWh, gridChargeMWh,
     gridCost, gridCarbonT, ppaCarbonT, reGenMWh, solarMWh, windMWh, reUsedMWh, curtailMWh, exportMWh, bessChargeMWh,
     bessDischargeMWh, firmMWh, chpCreditMWh, flexMWh, itMWh, cfeMWh, maxBalanceError,

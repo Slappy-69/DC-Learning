@@ -124,7 +124,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 
 - **Why:** the Pego study (revision 3) and Haiku check H1 found defects that bent results: time-to-power rewarding early plant, rented plant paid early, retained plant bought at once, dispatch stopping before full load, plant at minimum load wasting fuel, a gas-dependency flag raised wrongly, running HVO stores missed by the Seveso test, and an ignored grid price adder. The small fixes 1, 2, 3, 8 and 9 were added.
 - **Decisions:** OPEN-QUESTIONS 68–76, Claude's recommendations accepted in advance by the owner (2026-10-24).
-- **Acceptance tests:** Node tests 35–37 (`app/tests/engine-fixes-tests.mjs`); on the old code the minimum-load check finds 1,176 hours importing while curtailing in 24 sampled T1 options, on the new code none.
+- **Acceptance tests:** Node tests 35–38 (38: known issue 19, PPA energy displaced by plant at its minimum stable load, OPEN-QUESTIONS 77) (`app/tests/engine-fixes-tests.mjs`); on the old code the minimum-load check finds 1,176 hours importing while curtailing in 24 sampled T1 options, on the new code none.
 - **User guide:** chapters 9, 17, 19, 22, 23, 33, 35, 37, 38, 39, 41, 54 and 56.
 - **Progress:** built 2026-10-24 on `feature/engine-fixes` (from `feature/verification-fixes`), not merged.
 
@@ -132,7 +132,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 
 Ask the owner before starting any of these:
 
-- Known issues still open: 4 (archetype defaults), 5 (identical options, partly handled by the "same results as" marks), 12 (an "existing plant" type; recommended as the next package), 19 (PPA energy not turned down when firm plant runs at its minimum; found in the Pego study, revision 3.1).
+- Known issues still open: 4 (archetype defaults), 5 (identical options, partly handled by the "same results as" marks), 12 (an "existing plant" type; recommended as the next package).
 - Saving and reopening a study (OPEN-QUESTIONS 27).
 - The plain-English summary (§14; OPEN-QUESTIONS 12).
 - Ranges, Monte Carlo, robust pick, breakevens and scenarios (§13).

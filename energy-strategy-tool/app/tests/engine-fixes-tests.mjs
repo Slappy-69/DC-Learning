@@ -1,4 +1,4 @@
-// 35–37. Work package 11: engine fixes from the Haiku checks and the Pego study, revision 3 (known issues 1–3, 8–11,
+// 35–38. Work package 11: engine fixes from the Haiku checks and the Pego study, revision 3 (known issues 1–3, 8–11,
 // 14–18; OPEN-QUESTIONS 68–76, answered 2026-10-24 with Claude's recommendations, accepted in advance by the owner).
 
 import assert from 'node:assert/strict';
@@ -238,5 +238,28 @@ export async function engineFixesTests(test, ctxRuns) {
     }
     out.push(`${pros} pros on ${Math.ceil(opts.length / 10)} options, each shared by no more than 10 % of the run`);
     return out.join('; ') + '.';
+  });
+  await test('38. Known issue 19 (OPEN-QUESTIONS 77): firm plant needed at its minimum stable load displaces PPA energy before any of its output is wasted; the displaced volume is settled as undelivered PPA (hedge line) and named in the PPA flag; no hour takes PPA energy while output is curtailed', () => {
+    const cand = opts.filter((o) => o.v.C13 === 'hybrid' && (o.v.C3 === 'prime' || o.v.C3 === 'split' || o.v.C4 !== 'none')).filter((_, i) => i % 5 === 0).slice(0, 60);
+    let bad = 0, back = 0, hours = 0, withBack = null;
+    for (const o of cand) {
+      const sz = sizeOption(ctx, o.v), cfg = dispatchConfig(ctx, o.v, sz);
+      const { years } = dispatchAll(ctx, cfg, Array.from({ length: 30 }, (_, i) => i));
+      let b = 0;
+      for (const y of years) {
+        b += y.ppaMslBackMWh;
+        const r = y.hourly;
+        for (let h = 0; h < r.ppa.length; h++) { hours++; if (r.ppa[h] > 1e-6 && r.curt[h] > 1e-6) bad++; }
+        assert.ok(Math.abs(y.ppaDeliveredMWh + y.ppaUndeliveredMWh - y.ppaContractMWh) < 1e-6 * Math.max(1, y.ppaContractMWh), `${o.id}: PPA volume does not add up`);
+      }
+      back += b;
+      if (b > 0 && !withBack) withBack = o;
+    }
+    assert.equal(bad, 0, `${bad} hours take PPA energy while output is curtailed`);
+    assert.ok(back > 0 && withBack, 'no option displaced PPA energy');
+    const f = withBack.flags.find((x) => x.id === 'ppa-above-load');
+    assert.ok(f && /firm plant needed at its minimum stable load/.test(f.message), 'the PPA flag does not name the displaced volume');
+    assert.ok(withBack.eco.ppaHedge.mslBackMWh > 0);
+    return `${cand.length} options with a PPA and firm plant, ${hours.toLocaleString('en-GB')} h: no hour takes PPA energy while output is curtailed; ${Math.round(back).toLocaleString('en-GB')} MWh of PPA volume displaced by plant at its minimum (on the code before the fix, 6,352 such hours); ${withBack.id}'s PPA flag names it.`;
   });
 }

@@ -542,7 +542,7 @@ For each hour h, with demand D and the grid capacity of that month:
 
 **1. On-site renewables.** Solar = installed MWp × solar profile; wind = MW × wind profile (each only from its availability month). They serve the demand first; the rest is surplus.
 
-**2. PPA.** The contracted volume for the hour is the annual volume (coverage × the year's facility energy) times the PPA's hourly shape (solar, wind, half-and-half hybrid, flat, or the site's own demand, normalised to sum to 1 over the year). The PPA delivers the smaller of: that volume, the remaining demand, and the grid import capacity. What it cannot deliver is recorded with its wholesale value; the part lost only because of the import capacity is also recorded ("limited by import capacity").
+**2. PPA.** The contracted volume for the hour is the annual volume (coverage × the year's facility energy) times the PPA's hourly shape (solar, wind, half-and-half hybrid, flat, or the site's own demand, normalised to sum to 1 over the year). The PPA delivers the smaller of: that volume, the remaining demand, and the grid import capacity. What it cannot deliver is recorded with its wholesale value; the part lost only because of the import capacity is also recorded ("limited by import capacity"). If firm plant later in the hour has to run at its minimum stable load and makes more than the demand left, the PPA delivery backs off by that surplus before any of the plant's output is wasted, and the volume counts as undelivered (built 24 October 2026, OPEN-QUESTIONS 77).
 
 **3. Battery discharge** (if the battery is available and there is remaining demand). The battery can give at most its power rating, and its stored energy × √(round-trip efficiency).
 
