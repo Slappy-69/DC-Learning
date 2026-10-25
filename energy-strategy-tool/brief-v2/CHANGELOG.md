@@ -337,3 +337,12 @@ OPEN-QUESTIONS 93–97 answered with Claude's recommendations, accepted in advan
 3. §14: the summary's part 5 names the two nearest flips when the breakevens have been run.
 4. §12.10: the PDF's section 7 includes the breakeven table when it was run.
 
+## Revision 5, as-built notes (2026-10-25): work package 18, Monte Carlo
+
+OPEN-QUESTIONS 98–104 answered with Claude's recommendations, accepted in advance by the owner.
+
+1. §13.1: the uncertain inputs are the thirteen tornado drivers about the world (not the IT load, evaluation period or flexibility trigger), triangular, with the price and capex correlations ("As built" note).
+2. §13.2: built on request, not automatically; robust band 1 % instead of 5 %; representative-day dispatch; results on the Sensitivity tab, the header, the summary and the PDF ("As built" note).
+3. §17: the Monte Carlo target (≤ 8 s) is not met: about 30 s in a browser for 300 × 20.
+4. §14: parts 1 and 4 of the summary use the Monte Carlo when it has been run.
+

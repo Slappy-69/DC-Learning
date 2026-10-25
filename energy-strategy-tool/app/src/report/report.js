@@ -128,7 +128,7 @@ export function buildReport(run, view = {}) {
 
   // ---- Summary (work package 16, BRIEF §14): the generated text, its detail, and the engineer's edit marked "edited".
   // Site fit is never in it (the Site tab is Beta and kept out of the PDF).
-  const sm = plainSummary(run, { sensitivity: view.sensitivity || null, breakevens: view.breakevens || null, siteBeta: false });
+  const sm = plainSummary(run, { sensitivity: view.sensitivity || null, breakevens: view.breakevens || null, monteCarlo: view.monteCarlo || null, siteBeta: false });
   if (sm) {
     doc.newPage();
     H1('Summary');
@@ -141,7 +141,7 @@ export function buildReport(run, view = {}) {
     else if (note) {
       doc.ensure(60);
       doc.heading('Summary as edited by the engineer (edited)', 2);
-      if (note.key !== summaryKey(run, { siteBeta: false, usedTornado: sm.usedTornado, usedBreakevens: sm.usedBreakevens })) doc.para(`Written for an earlier result (leader then: ${note.leaderName || 'not recorded'}); the generated summary above is for this run.`, { size: 8.5, color: FLAG });
+      if (note.key !== summaryKey(run, { siteBeta: false, usedTornado: sm.usedTornado, usedBreakevens: sm.usedBreakevens, usedMonteCarlo: sm.usedMonteCarlo })) doc.para(`Written for an earlier result (leader then: ${note.leaderName || 'not recorded'}); the generated summary above is for this run.`, { size: 8.5, color: FLAG });
       for (const t of note.text.split(/\n+/)) doc.para(t, { size: 9.5 });
       doc.para(`Edited ${String(note.editedAt || '').slice(0, 10)}.`, { size: 8, color: MUTED });
     }
@@ -152,7 +152,7 @@ export function buildReport(run, view = {}) {
       doc.para(p.heading, { bold: true, size: 8.5, gap: 1 });
       doc.bullets(d, { size: 8 });
     }
-    doc.para(`The flags of the leader are listed in full in section 8. Not built yet, so not in the summary: ${sm.notBuilt.join('; ')}.${sm.notRun.length ? ` Not run for this report: ${sm.notRun.join('; ')}.` : ''}`, { size: 8, color: MUTED });
+    doc.para(`The flags of the leader are listed in full in section 8.${sm.notBuilt.length ? ` Not built yet, so not in the summary: ${sm.notBuilt.join('; ')}.` : ''}${sm.notRun.length ? ` Not run for this report: ${sm.notRun.join('; ')}.` : ''}`, { size: 8, color: MUTED });
   }
 
   // ---- 1 Inputs ----
@@ -325,6 +325,20 @@ export function buildReport(run, view = {}) {
     doc.bullets(be.competitors.map((c) => `#${c.rank} ${c.name}`), { size: 7.5 });
     const nf = nearestFlips(be, 3);
     doc.para(nf.length ? `Nearest flips: ${nf.map((f) => f.text).join('; ')}.` : 'No flip within the drivers\' ranges: the leader stays ahead of every competitor on every driver.', { size: 8.5 });
+  }
+
+  // Uncertainty, Monte Carlo (work package 18, §13.2), when it was run for this run.
+  const mc = view.monteCarlo && view.monteCarlo.complete && view.monteCarlo.leaderId === (lead && lead.id) ? view.monteCarlo : null;
+  doc.heading('Uncertainty (Monte Carlo)', 2);
+  if (!mc) doc.para('The Monte Carlo was not run for this report. Run it in the Sensitivity tab, then make the report again to include it.', { size: 9, color: MUTED });
+  else {
+    const pc = (x) => `${Math.round(x * 100)} %`;
+    const lr = mc.rows.find((r) => r.id === mc.leaderId), rb = mc.rows.find((r) => r.id === mc.robustPickId);
+    doc.para(`${mc.samples.toLocaleString('en-GB')} Latin hypercube samples (seed ${mc.seed}) of ${mc.drivers.length} inputs drawn together, each triangular between its low and high value around the current one; grid and gas price correlated, and the capex factors. The ${mc.rows.length} leading options re-run in each sample with ${mc.screening ? 'representative-day' : 'full-year'} dispatch and put in the ranking's order. #1 leads in ${pc(lr.pRank1)} of samples and is in the top three in ${pc(lr.pTop3)}; the robust pick (most often within ${Math.round(mc.band * 100)} % of the best score) is #${rb.rank}${rb.id === lr.id ? ', the leader itself' : ''}.`, { size: 8.5, color: MUTED });
+    const startM = (run.meta && run.meta.analysisStart) || I.project.analysisStart;
+    doc.table([{ label: 'Option', w: 0.6 }, { label: 'Leads · top 3', w: 1 }, { label: `Within ${Math.round(mc.band * 100)} %`, w: 0.8 }, { label: 'LCOE P10 · P50 · P90', w: 1.9 }, { label: 'Carbon P50', w: 0.8 }, { label: 'Full load P10 – P90', w: 1.5 }, { label: 'Adequate', w: 0.7 }],
+      mc.rows.map((r) => [`#${r.rank}`, `${pc(r.pRank1)} · ${pc(r.pTop3)}`, pc(r.pRobust), `${perMWh(r.lcoe.p10)} · ${perMWh(r.lcoe.p50)} · ${perMWh(r.lcoe.p90)}`, `${sig(r.carbon.p50, 3)} g/kWh`,
+        r.fullLoadM.n ? `${monthLabel(startM, Math.round(r.fullLoadM.p10))} – ${monthLabel(startM, Math.round(r.fullLoadM.p90))}` : 'not reached', pc(r.pAdequate)]), { size: 7, headSize: 7.5 });
   }
 
   // ---- 8 Flags ----

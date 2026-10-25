@@ -20,7 +20,7 @@ import { paretoView } from './pareto.js';
 import { siteSummary } from './site.js';
 import { buildBlocks, blockSetKey } from './blocks.js';
 import { layoutManySteps } from './layout.js';
-import { layoutFacts, siteFitOf } from './sitefit.js';
+import { layoutFacts, siteFitOf, notLaidOut } from './sitefit.js';
 import { layoutForOption } from './siteapi.js';
 import { adequacyOf, shortfallAnalysis } from './adequacy.js';
 import { triggerAnalysis } from './triggers.js';
@@ -36,12 +36,8 @@ const YIELD_EVERY = 25;
 // (main-thread fallback with a live progress panel). runModel() drains it synchronously.
 // Stages run as passes over the option list in the order of STAGES (runlog.js), so the event log
 // has one start and one end per stage per source.
-// Site fit of an option the run did not lay out (work package 13): the Site tab lays it out when it shows it.
-export function notLaidOut(netM2) {
-  return { status: 'Not laid out', skipped: true, reasons: ['Not laid out in the run: a large campus whose site fit cannot change the ranking. The Site tab (Beta) lays the option out when it shows it.'],
-    flags: [], unplaced: [], unplacedM2: 0, relaxed: [], landTakeM2: null, landTakeHa: null, placedM2: 0, fillM2: 0, fillMWp: 0, netM2, budgetShortfallM2: 0, residualM2: null,
-    offsite: [], offsiteHa: 0, roof: { roofM2: 0, plantM2: 0, pvM2: 0, edgeM2: 0, freeM2: 0, overAllocated: false }, expansionMW: 0, heightsExceeded: 0, blocks: 0, placedBlocks: 0 };
-}
+// notLaidOut (work package 13) lives in sitefit.js since work package 18 (option.js uses it too); exported here as before.
+export { notLaidOut };
 export function* runModelSteps(rawInputs, opts = {}) {
   const log = opts.log || createRunLog({ source: opts.source || 'main', t0Abs: opts.t0Abs ?? null, onEvent: opts.onEvent || null });
   const t0 = nowMs();

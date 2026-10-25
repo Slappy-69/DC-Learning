@@ -424,6 +424,18 @@ Built 24 October 2026 (work package 17; chapter 27 shows the screen). For the le
 
 The search sees the first swap on each side only if the order differs at one of the checked points; a swap that reverses again between them is not seen. "Nearest flips" sorts every flip by |flip − b| ÷ (high − low).
 
+## Monte Carlo
+
+Built 25 October 2026 (work package 18; chapter 27 shows the screen).
+
+1. **Sampling.** For n samples (300 by default) and each of the thirteen drivers, the range 0–1 is cut into n equal strata; each sample takes one stratum, in a shuffled order, and a random point inside it (Latin hypercube; the shuffle and the points come from a seeded generator, so the same seed gives the same samples). Correlated pairs (grid and gas price, ρ 0.6; the capex factors, ρ 0.8) are joined through the normal distribution: z₂′ = ρ · z₁ + √(1 − ρ²) · z₂.
+2. **Values.** Each quantile u becomes a value of a triangular distribution from the driver's low value to its high value, peaking at the current value. Grid date and test hours are rounded to whole months and hours.
+3. **Re-runs.** All thirteen values are applied together (as the tornado applies one) and the 20 leading options are re-run with representative days (chapter 37), without a layout, which changes no figure the ranking reads.
+4. **Order in each sample.** As the ranking orders: adequacy first, then compliance when that setting is on, then the weighted score on the run's own axis scales and weights, not clipped.
+5. **Counts.** For each option: how often it is first, in the top three, and within 1 % of the best score among the sample's first group; and P10, P50 and P90 of its figures, by linear interpolation in the sorted samples.
+
+The robust pick is the option with the highest share within 1 %; ties go to the option that is first more often. §13.2 of the brief proposed 5 %, but in T1 every one of the top 20 options was within 5 % of the best in at least 93 % of samples, so 5 % told the options apart only by tie-break (OPEN-QUESTIONS 102).
+
 # 47. Worked example: the T1 run end to end {#ch47}
 
 ## Generation

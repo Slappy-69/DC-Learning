@@ -38,7 +38,8 @@
 
 - Scores are relative to the options in the run, and the sample of 2,000 can miss combinations.
 - Deliverability penalties and weights are judgements.
-- The summary (chapter 22) has no rank probability or robust pick, because Monte Carlo is not built; its ranges come from the tornado, one input at a time, and its breakevens from the breakeven table, each only once it has been run.
+- The summary (chapter 22) uses the tornado, the breakevens and the Monte Carlo only once each has been run for the current result.
+- The Monte Carlo draws thirteen inputs only; every other parameter keeps its central value. It uses representative days, so its adequacy is approximate, and 300 samples take about 30 s in a browser (target 8 s). It runs on request, not after every change.
 - The breakeven table checks a few points on each side of today's value: a swap that reverses between two of them is not seen. It moves one driver at a time and takes about 5 s or more, above the 3 s target.
 
 **Site (Beta)**
@@ -149,10 +150,12 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | General settings: Site tab (Beta) switch | Built (22 Oct 2026) | 28, 30 |
 | General settings: theme, run-log option, "About this copy" | Proposed | 30 |
 | Project save and reopen (study files) | Built (24 Oct 2026) | 4, 29 |
-| Plain-English summary of the result (templates, offline; edit kept as a note) | Built (24 Oct 2026); breakevens and rank probability in it wait for those features | 22, 29, 44 |
+| Plain-English summary of the result (templates, offline; edit kept as a note) | Built (24 Oct 2026); uses the tornado, breakevens and Monte Carlo once run | 22, 29, 44 |
 | Parallel coordinates, choice-impact chart | Not built; in the brief, not discussed in the walkthrough | — |
 | Breakeven table (leader against five competitors, eight drivers) | Built (24 Oct 2026) | 27, 46 |
-| Monte Carlo ranges, robust pick, scenarios | Not built; in the brief, not discussed in the walkthrough | 13 |
+| Monte Carlo ranges, rank probability, robust pick | Built (25 Oct 2026), on request | 27, 46 |
+| Scenarios | Not built; in the brief, not discussed in the walkthrough | 13 |
+| Work package 18: Monte Carlo on the Sensitivity tab, in the header, the summary and the PDF | Built (25 Oct 2026) | 22, 27, 29, 46 |
 | Work package 17: breakeven table on the Sensitivity tab, in the PDF and in the summary | Built (24 Oct 2026) | 27, 29, 46 |
 | Work package 16: plain-English summary on the Options tab and in the PDF (seven parts, at most 250 words, exact weight change, edit kept as a note) | Built (24 Oct 2026) | 22, 29, 44 |
 | Work package 15: study files (save and reopen, with a check that the re-run matches) | Built (24 Oct 2026) | 4, 29 |

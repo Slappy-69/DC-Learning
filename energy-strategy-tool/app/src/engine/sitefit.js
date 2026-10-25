@@ -310,3 +310,10 @@ export function siteFitOf(ctx, site, bs, L, facts, v, sz) {
 
 // Plain text for a status badge (status colours are always paired with an icon and text, §16).
 export function siteFitIcon(status) { return status === 'Fits' ? '✓' : status === 'Fits with flags' ? '!' : '✗'; }
+
+// Site fit of an option the run did not lay out (work package 13): the Site tab lays it out when it shows it.
+export function notLaidOut(netM2) {
+  return { status: 'Not laid out', skipped: true, reasons: ['Not laid out in the run: a large campus whose site fit cannot change the ranking. The Site tab (Beta) lays the option out when it shows it.'],
+    flags: [], unplaced: [], unplacedM2: 0, relaxed: [], landTakeM2: null, landTakeHa: null, placedM2: 0, fillM2: 0, fillMWp: 0, netM2, budgetShortfallM2: 0, residualM2: null,
+    offsite: [], offsiteHa: 0, roof: { roofM2: 0, plantM2: 0, pvM2: 0, edgeM2: 0, freeM2: 0, overAllocated: false }, expansionMW: 0, heightsExceeded: 0, blocks: 0, placedBlocks: 0 };
+}

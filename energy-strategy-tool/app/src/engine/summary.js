@@ -152,7 +152,7 @@ const CONF_ORDER = { C: 0, B: 1, A: 2 };
 // Each part is a list of sentences; a sentence with a priority p > 0 is optional. When the text would pass the word
 // limit, optional sentences are moved to the part's detail, the highest p first (from the last part back), until it
 // fits; nothing is lost.
-export function plainSummary(run, { sensitivity = null, breakevens = null, siteBeta = false, wordLimit = SUMMARY_WORD_LIMIT } = {}) {
+export function plainSummary(run, { sensitivity = null, breakevens = null, monteCarlo = null, siteBeta = false, wordLimit = SUMMARY_WORD_LIMIT } = {}) {
   if (!run || !run.options || !run.options.length) return null;
   const settings = run.inputs.settings || {};
   const w = run.scoring.weights;
@@ -165,6 +165,9 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, siteB
   const kind = `${adequate(L) ? 'adequate ' : ''}${settings.rankCompliantFirst ? 'requirement-compliant ' : ''}`;
   const groupName = `${kind}options`;
   const tor = sensitivity && sensitivity.optionId === L.id && Array.isArray(sensitivity.allRows) ? sensitivity : null;
+  // Monte Carlo (work package 18) finished for this leader: ranges, rank probability and the robust pick.
+  const mc = monteCarlo && monteCarlo.complete && monteCarlo.leaderId === L.id && Array.isArray(monteCarlo.rows) ? monteCarlo : null;
+  const mcL = mc ? mc.rows.find((r) => r.id === L.id) : null;
   const parts = [];
   const notBuilt = [];
   const notRun = [];
@@ -187,15 +190,17 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, siteB
     const more = [`Score ${L.score.toFixed(2)}; axis scores: ${SCORE_KEYS.map((k) => `${AXIS_NAME[k]} ${L.axisScores[k].toFixed(1)}`).join(', ')}.`,
       `NPV of net cost ${money(L.eco.npvCost)}; hourly carbon-free energy ${Math.round(L.carbon.cfePct * 100)} %; deliverability ${sig(L.deliv.score)} points.`];
     let range = null;
-    if (tor) {
+    if (mcL) {
+      const [a, b] = compactPair(perMWh(mcL.lcoe.p10), perMWh(mcL.lcoe.p90));
+      range = req(`In ${mc.samples.toLocaleString('en-GB')} Monte Carlo samples its LCOE is ${a} to ${b} (P10 to P90; P50 ${perMWh(mcL.lcoe.p50)}).`);
+      more.push(`Monte Carlo P10–P90: NPV of net cost ${money(mcL.npv.p10)} to ${money(mcL.npv.p90)}; capex ${money(mcL.capex.p10)} to ${money(mcL.capex.p90)}; carbon ${sig(mcL.carbon.p10)} to ${sig(mcL.carbon.p90)} g/kWh (location-based).`);
+      if (tor) { const vals = [tor.base.lcoe, ...tor.allRows.flatMap((r) => [r.low.lcoe, r.high.lcoe])].filter(Number.isFinite); more.push(`Tornado (one input at a time): LCOE ${compactPair(perMWh(Math.min(...vals)), perMWh(Math.max(...vals))).join(' to ')}.`); }
+    } else if (tor) {
       const vals = [tor.base.lcoe, ...tor.allRows.flatMap((r) => [r.low.lcoe, r.high.lcoe])].filter(Number.isFinite);
       // Optional, but kept longer than the inputs that follow it in part 7 (priority 1.5 against 1).
       range = opt(`With the ${plural(tor.allRows.length, 'tested input')} moved one at a time across their ranges, its LCOE is ${compactPair(perMWh(Math.min(...vals)), perMWh(Math.max(...vals))).join(' to ')}.`, 1.5);
       more.push('That range is one input at a time (the tornado on the Sensitivity tab), not a joint range.');
-    } else {
-      range = opt('These are single values: Monte Carlo ranges are not built yet.', 4);
-      notBuilt.push('ranges (Monte Carlo)');
-    }
+    } else range = opt('These are single values: the Monte Carlo has not been run for this result (Sensitivity tab).', 4);
     if (settings.rankCompliantFirst) more.push('Requirement-compliant options are ranked first (run setting).');
     add('leader', 'Leading option', [
       req(`The option that leads under the current weights (${wText}${run.scoring.equalWeightsUsed ? ', equal because every weight was 0' : ''}) is #1, ${L.name}, with a score of ${L.score.toFixed(1)}.`),
@@ -275,13 +280,14 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, siteB
     const assumed = L.flags.filter((f) => f.assumed && f.path);
     const reg = Object.values(getRegistry());
     const unv = reg.filter((r) => r.label === LABEL).length;
-    notBuilt.push('rank probability and the robust pick (Monte Carlo)');
+    if (!mc) notRun.push('the Monte Carlo');
     if (assumed.length) more.push(`Key inputs at their defaults: ${assumed.map((f) => f.message.replace(/^Assumed /, '').split(':')[0]).join('; ')}.`);
     const within = [0.1, 1, 5].map((d) => [d, group.filter((o) => o !== L && L.score - o.score <= d + 1e-12).length]);
     more.push(`Other ${groupName} close to the leader: ${within.map(([d, n]) => `${n.toLocaleString('en-GB')} within ${d} point${d === 1 ? '' : 's'}`).join(', ')}.`);
     add('confidence', 'Confidence', [
       req(close ? `${plural(close, `other ${kind}option`)} score${close === 1 ? 's' : ''} within 1 point of it.` : `No other ${kind}option scores within 1 point of it.`),
-      opt('Rank probability and the robust pick are not built yet (no Monte Carlo).', 3),
+      mcL ? req(`In ${mc.samples.toLocaleString('en-GB')} Monte Carlo samples it leads in ${Math.round(mcL.pRank1 * 100)} % and is in the top three in ${Math.round(mcL.pTop3 * 100)} %; ${(() => { const rb = mc.rows.find((r) => r.id === mc.robustPickId); return rb && rb.id !== L.id ? `the robust pick (most often within ${Math.round(mc.band * 100)} % of the best) is #${rb.rank}, not the leader` : `it is also the robust pick (most often within ${Math.round(mc.band * 100)} % of the best)`; })()}.`)
+        : opt('Rank probability and the robust pick come from the Monte Carlo, not run for this result.', 3),
       req(`${assumed.length ? `It uses ${plural(assumed.length, 'key input')} left at ${assumed.length === 1 ? 'its default' : 'their defaults'}` : 'No key input it uses is left at its default'}; ${unv.toLocaleString('en-GB')} of ${reg.length.toLocaleString('en-GB')} default records are ${LABEL}.`),
     ], more);
   }
@@ -407,15 +413,15 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, siteB
   return {
     title: SUMMARY_TITLE, leaderId: L.id, leaderName: L.name, comparedWith: cmp ? cmp.id : null,
     parts: out, details, guardrail: GUARDRAIL, text, words: count(), wordLimit, overLimit: count() > wordLimit, moved,
-    weightChanges: wc, usedTornado: !!tor, usedBreakevens: !!(breakevens && breakevens.leaderId === L.id), notBuilt, notRun,
+    weightChanges: wc, usedTornado: !!tor, usedBreakevens: !!(breakevens && breakevens.leaderId === L.id), usedMonteCarlo: !!mc, notBuilt, notRun,
   };
 }
 
 // The key of the result a summary describes: the inputs, the leader, the weights and scoring settings, and what the text
 // drew on (the Site tab, a tornado and breakevens on the leader; H5, H1 and L6). A user note written for one key is shown
 // as written for an earlier result when the key changes.
-export function summaryKey(run, { siteBeta = false, usedTornado = false, usedBreakevens = false } = {}) {
+export function summaryKey(run, { siteBeta = false, usedTornado = false, usedBreakevens = false, usedMonteCarlo = false } = {}) {
   if (!run || !run.options || !run.options.length) return '';
   const L = run.options.reduce((a, b) => (a.rank < b.rank ? a : b));
-  return `${run.inputHash || ''}|${L.id}|${SCORE_KEYS.map((k) => Math.round(run.scoring.weights[k] * 1000)).join(',')}|${run.inputs.settings.costMetric}|${run.inputs.settings.carbonMetric}|${run.inputs.settings.rankCompliantFirst ? 1 : 0}|s${siteBeta ? 1 : 0}|t${usedTornado ? 1 : 0}|b${usedBreakevens ? 1 : 0}`;
+  return `${run.inputHash || ''}|${L.id}|${SCORE_KEYS.map((k) => Math.round(run.scoring.weights[k] * 1000)).join(',')}|${run.inputs.settings.costMetric}|${run.inputs.settings.carbonMetric}|${run.inputs.settings.rankCompliantFirst ? 1 : 0}|s${siteBeta ? 1 : 0}|t${usedTornado ? 1 : 0}|b${usedBreakevens ? 1 : 0}|m${usedMonteCarlo ? 1 : 0}`;
 }

@@ -5,9 +5,9 @@ import { plainSummary, summaryKey, SUMMARY_TITLE } from '../engine/summary.js';
 // the run's numbers; updated with every ranking change. The engineer can edit it: the edit is kept as a user note,
 // marked "edited", and shown in place of the generated text until it is discarded. When the result changes after the
 // edit, the note says so and the generated summary for the current result is shown under it.
-export default function SummaryPanel({ run, sensitivity = null, breakevens = null, siteBeta = false, note = null, onSaveNote, onDiscardNote, onShowSensitivity, open = true, onToggle }) {
-  const s = useMemo(() => plainSummary(run, { sensitivity, breakevens, siteBeta }), [run, sensitivity, breakevens, siteBeta]);
-  const key = useMemo(() => (s ? summaryKey(run, { siteBeta, usedTornado: s.usedTornado, usedBreakevens: s.usedBreakevens }) : ''), [run, s, siteBeta]);
+export default function SummaryPanel({ run, sensitivity = null, breakevens = null, monteCarlo = null, siteBeta = false, note = null, onSaveNote, onDiscardNote, onShowSensitivity, open = true, onToggle }) {
+  const s = useMemo(() => plainSummary(run, { sensitivity, breakevens, monteCarlo, siteBeta }), [run, sensitivity, breakevens, monteCarlo, siteBeta]);
+  const key = useMemo(() => (s ? summaryKey(run, { siteBeta, usedTornado: s.usedTornado, usedBreakevens: s.usedBreakevens, usedMonteCarlo: s.usedMonteCarlo }) : ''), [run, s, siteBeta]);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   if (!s) return null;
@@ -64,7 +64,7 @@ export default function SummaryPanel({ run, sensitivity = null, breakevens = nul
               {generated}
               <div className="btn-row">
                 <button type="button" className="chip-btn" id="summary-edit-btn" onClick={startEdit}>Edit summary</button>
-                {(!s.usedTornado || !s.usedBreakevens) && onShowSensitivity ? <button type="button" className="chip-btn" onClick={onShowSensitivity}>Sensitivity tab</button> : null}
+                {(!s.usedTornado || !s.usedBreakevens || !s.usedMonteCarlo) && onShowSensitivity ? <button type="button" className="chip-btn" onClick={onShowSensitivity}>Sensitivity tab</button> : null}
               </div>
             </>
           )}
@@ -76,7 +76,7 @@ export default function SummaryPanel({ run, sensitivity = null, breakevens = nul
                 <ul className="plain small">{s.details[p.id].map((t, i) => <li key={i}>{t}</li>)}</ul>
               </div>
             ) : null))}
-            <p className="small">Not built yet, so not in the summary: {s.notBuilt.join('; ')}.{s.notRun.length ? ` Not run yet for this result (Sensitivity tab): ${s.notRun.join('; ')}.` : ''}</p>
+            {s.notBuilt.length || s.notRun.length ? <p className="small">{s.notBuilt.length ? `Not built yet, so not in the summary: ${s.notBuilt.join('; ')}. ` : ''}{s.notRun.length ? `Not run yet for this result (Sensitivity tab): ${s.notRun.join('; ')}.` : ''}</p> : null}
           </details>
         </div>
       ) : null}

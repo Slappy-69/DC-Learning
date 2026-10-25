@@ -634,7 +634,7 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .sens-driver { display: flex; gap: 6px; align-items: center; }
 .sens-driver input[type=checkbox] { width: 24px; height: 24px; margin: 0; flex: none; }
 .sens-driver { min-height: 28px; }
-.sens #sens-measure { min-height: 32px; border: 1px solid var(--control-border); border-radius: var(--radius); background: var(--surface); padding: 2px 6px; }
+.sens #sens-measure, .sens #mc-samples { min-height: 32px; border: 1px solid var(--control-border); border-radius: var(--radius); background: var(--surface); padding: 2px 6px; }
 /* Dispatch: any period (work package 8) */
 .dv-period select, .dv-period input { min-height: 32px; border: 1px solid var(--control-border); border-radius: var(--radius); background: var(--surface); padding: 2px 6px; }
 .dv-period input { width: 5em; }
@@ -678,3 +678,12 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
   .sum-panel { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 0 0 10px; background: transparent; }
   .tabs { margin-bottom: 6px; }
 }
+
+/* Uncertainty, Monte Carlo (work package 18, BRIEF §13.2) */
+.mc { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 12px; }
+.mc h3 { font-size: 15px; margin: 0 0 4px; }
+.mc-note { margin: 0; color: var(--ink-2); font-size: 12.5px; }
+.mc-bar { display: inline-flex; width: 60px; height: 8px; background: var(--surface-2); border-radius: 2px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+.mc-bar-1 { background: var(--accent); }
+.mc-bar-3 { background: var(--ax-cost); opacity: 0.45; }
+.mc-table td, .mc-table th { white-space: nowrap; }

@@ -87,6 +87,7 @@ import { archetypeTests } from './archetype-tests.mjs';
 import { studyTests } from './study-tests.mjs';
 import { summaryTests } from './summary-tests.mjs';
 import { breakevenTests } from './breakeven-tests.mjs';
+import { monteCarloTests } from './montecarlo-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1248,6 +1249,9 @@ await summaryTests(test, siteRuns);
 
 // 45. Work package 17: the breakeven table (tests/breakeven-tests.mjs)
 await breakevenTests(test, siteRuns);
+
+// 46. Work package 18: uncertainty by Monte Carlo (tests/montecarlo-tests.mjs)
+await monteCarloTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

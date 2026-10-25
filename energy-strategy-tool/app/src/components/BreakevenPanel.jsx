@@ -26,7 +26,7 @@ function cellText(row, cell, be, side) {
   return f.text;
 }
 
-export default function BreakevenPanel({ run }) {
+export default function BreakevenPanel({ run, onResult = null }) {
   const key = breakevenKey(run);
   const [state, setState] = useState(() => ({ key, ...(beCache.get(key) || {}) }));
   const timer = useRef(null);
@@ -50,6 +50,7 @@ export default function BreakevenPanel({ run }) {
           while (beCache.size > 6) beCache.delete(beCache.keys().next().value);
           latest = { key, result: r.value };
           setState({ key, ...v });
+          if (onResult) onResult();
           timer.current = null;
           return;
         }

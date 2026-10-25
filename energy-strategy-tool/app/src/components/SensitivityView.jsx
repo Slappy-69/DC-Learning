@@ -5,6 +5,7 @@ import { UnverifiedTag } from './Field.jsx';
 import { sig, money, perMWh, cur, curUnit } from '../format.js';
 import { siteFor } from './SiteView.jsx';
 import BreakevenPanel from './BreakevenPanel.jsx';
+import UncertaintyPanel from './UncertaintyPanel.jsx';
 
 // Sensitivity tab (BRIEF §13.3 tornado). Port of the other line's SensitivityView (commit f1fd5c5): one option at a
 // time (the leader unless another is chosen), run on request, never changing the run, its scores or its ranking.
@@ -165,7 +166,7 @@ export function SensitivityResult({ result, ms = null, chartWidth = null, measur
         <li>Each driver range is a §18 record and is {LABEL}: the input's own low and high for grid price, grid carbon, WACC, evaluation period, escalation and generator test hours, the grid date uncertainty for the grid date, and factor records for the others. {rows.length} of {result.totalDrivers} drivers shown (top {result.topN}, <UnverifiedTag path="sensitivity.topDrivers" compact />).</li>
         <li>Scores use the base run's axis ranges and weights, so the other options and their ranks do not change; a value outside the base range scores at the edge of 0–100.</li>
         <li>Gas price {result.context.gasFromInput ? 'entered' : `country default for ${result.context.country}`}: {sig(result.context.gasCommodity, 3)} €/MWh_th; carbon price {result.context.carbonFromInput ? 'entered' : 'country default'}: {sig(result.context.carbonPrice, 3)} €/tCO₂e. The carbon price moves cost only for options with on-site (Scope 1) combustion.</li>
-        <li>Capex, battery capex and grid connection capex scale those capex lines; capacity factors scale on-site solar and wind output; PUE scales the cooling energy and the design-day cooling load. Not in this tornado yet: PPA price, the capex of each technology on its own and lead times; Monte Carlo and scenarios. Breakevens are below.</li>
+        <li>Capex, battery capex and grid connection capex scale those capex lines; capacity factors scale on-site solar and wind output; PUE scales the cooling energy and the design-day cooling load. Not in this tornado yet: PPA price, the capex of each technology on its own and lead times; scenarios. Breakevens and the Monte Carlo are below.</li>
       </ul>
     </>
   );
@@ -184,7 +185,7 @@ export function latestSensitivity(run) {
   return { result: latest.result, measure: sensChoice.measure || DEFAULT_MEASURE };
 }
 
-export default function SensitivityView({ run, optionId = null, setOptionId = () => {} }) {
+export default function SensitivityView({ run, optionId = null, setOptionId = () => {}, onResult = null }) {
   const ranked = useMemo(() => run.options.slice().sort((a, b) => a.rank - b.rank), [run.options]);
   const option = (optionId != null && run.options.find((o) => o.id === optionId)) || ranked[0] || null;
   const [ticked, setTicked] = useState(() => sensChoice.drivers || DEFAULT_DRIVER_IDS.slice());
@@ -281,7 +282,8 @@ export default function SensitivityView({ run, optionId = null, setOptionId = ()
                 : `Run the test for #${option.rank}. Each of the ${drivers.length} ticked drivers is re-run twice (${1 + 2 * drivers.length} re-runs, a few seconds).`}
       </p>
       {mine && state.result ? <SensitivityResult result={state.result} ms={state.ms} measure={measure} /> : null}
-      <BreakevenPanel run={run} />
+      <BreakevenPanel run={run} onResult={onResult} />
+      <UncertaintyPanel run={run} onResult={onResult} />
     </section>
   );
 }

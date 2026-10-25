@@ -182,12 +182,21 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **User guide:** chapters 27, 29, 46, 54 and 56; appendix A (three new records).
 - **Progress:** built 2026-10-24 on `feature/plain-summary`, not merged.
 
+### 18. Uncertainty: Monte Carlo (added 2026-10-25)
+
+- **Why:** BRIEF §13.1–13.2: P10/P50/P90 ranges, how often the leader leads, and the robust pick; the summary's confidence part needs them.
+- **Decision:** OPEN-QUESTIONS 98–104, Claude's recommendations accepted in advance by the owner (2026-10-25).
+- **What:** `src/engine/montecarlo.js` (`monteCarloSteps`, `monteCarlo`, `latinHypercube`, `triangular`); `evaluateOption` takes `rep` (representative days) and `skipLayout`; `notLaidOut` moved to `sitefit.js`; `src/components/UncertaintyPanel.jsx` on the Sensitivity tab; the header strip, the summary (parts 1 and 4) and the PDF (section 7); seven records `uncertainty.*`.
+- **Acceptance tests:** Node test 46 (`app/tests/montecarlo-tests.mjs`); browser check B40.
+- **User guide:** chapters 13, 22, 27, 29, 46, 54 and 56; appendix A.
+- **Progress:** built 2026-10-25 on `feature/plain-summary`, not merged.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:
 
 - Known issues: none open (all 20 resolved by 2026-10-24).
-- Ranges, Monte Carlo, robust pick and scenarios (§13).
+- Scenarios (§13.3); every numeric parameter's own range in the Monte Carlo (§13.1); its automatic re-run in a worker (§13.2).
 - Parallel coordinates, the choice-impact chart, the schematic, key quantities, presentation mode, snapshots, undo and redo (§12, §16).
 - Code signing for the Windows program (`../packaging/README.md`).
 - The packaging Opus review that did not complete, and the NVDA screen-reader walk-through.

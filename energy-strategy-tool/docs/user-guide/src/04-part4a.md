@@ -72,7 +72,7 @@ Every default the engine uses is a **record** in one registry: **496 records** i
 |---|---|
 | path | Its name, for example `economics.wacc` or `tech.bess.p.capexPerKWh` |
 | value, unit | The default and its unit |
-| low, high | A range, where one is given (used by the tornado for some drivers, and reserved for the planned Monte Carlo) |
+| low, high | A range, where one is given (used by the tornado, the breakevens and the Monte Carlo for their drivers) |
 | basis | **source** (should come from a published source), **judgement** (an engineering judgement) or **run setting** (chosen for speed or resolution) |
 | source, year, url, accessed | Where the value was verified: **all empty** in the current version |
 | confidence, verified | C and false for every record |

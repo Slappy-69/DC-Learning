@@ -656,6 +656,34 @@ await check('B39. Breakeven table (work package 17, BRIEF §13.3): "Run breakeve
   return `${note.replace(/\s+/g, ' ').slice(0, 140)} (${s.toFixed(1)} s from the click in this browser; §17 target 3 s); ${near.slice(0, 160)}; summary: "${change.slice(0, 160)}…"; ${ax.skipped ? 'axe skipped' : `${ax.violations.length} axe violations`}.`;
 });
 
+await check('B40. Monte Carlo (work package 18, BRIEF §13.2): "Run uncertainty" on the Sensitivity tab with 100 samples fills a table for the 20 leading options in slices (the page stays responsive), then the header gives the leader\'s rank probability and the summary uses it; no serious axe violation', async () => {
+  const { page, errors } = main;
+  await page.getByRole('tab', { name: 'Sensitivity', exact: true }).click();
+  await page.locator('#mc-samples').selectOption('100');
+  const t0 = Date.now();
+  await page.locator('.mc-run').click();
+  // Responsive while it runs: a timer on the page fires within 200 ms several times.
+  const gaps = await page.evaluate(() => new Promise((resolve) => { const out = []; let last = performance.now(); let k = 0; const id = setInterval(() => { const t = performance.now(); out.push(t - last); last = t; if (++k >= 10) { clearInterval(id); resolve(out); } }, 50); }));
+  await page.waitForFunction(() => /^Done:/.test((document.querySelector('.mc .mc-note') || {}).textContent || ''), null, { timeout: 600000, polling: 500 });
+  const s = (Date.now() - t0) / 1000;
+  const rows = await page.locator('.mc-table tbody tr').count();
+  ok(rows === 20, `${rows} rows`);
+  const lead = await page.locator('.mc-lead').innerText();
+  ok(/#1 leads in \d+ %/.test(lead) && /Robust pick/.test(lead), lead.slice(0, 160));
+  const hs = await page.locator('.header-strip .hs-item').nth(1).innerText();
+  ok(/Leads in \d+ % of 100 Monte Carlo samples/.test(hs), `header: ${hs.replace(/\s+/g, ' ').slice(0, 160)}`);
+  const ax = await runAxe(page, 'Sensitivity tab with the Monte Carlo table');
+  await page.getByRole('tab', { name: /^Options/ }).click();
+  const conf = await page.locator('.sum-text p[data-part=confidence]').innerText();
+  ok(/In 100 Monte Carlo samples it leads in \d+ %/.test(conf), `summary part 4: ${conf.slice(0, 200)}`);
+  const maxGap = Math.max(...gaps);
+  ok(maxGap < 250, `a timer waited ${maxGap.toFixed(0)} ms while the Monte Carlo ran`);
+  const bad = ax.skipped ? [] : serious(ax).map((v) => `${v.impact} ${v.id} ×${v.nodes} (${v.target})`);
+  ok(bad.length === 0, bad.join(' | '));
+  ok(errors.length === 0, errors.join(' | '));
+  return `100 samples × 20 options in ${s.toFixed(1)} s from the click; longest timer wait while running ${maxGap.toFixed(0)} ms; ${lead.slice(0, 140)}; header "${hs.replace(/\s+/g, ' ').slice(0, 100)}"; ${ax.skipped ? 'axe skipped' : `${ax.violations.length} axe violations`}.`;
+});
+
 await check('B34. Knowledge levels and the economics section (work package 2, AC 16): the IT load and grid fields accept "Not known"; section 5 is Economics with the WACC explanation and the further periods; each top-five card counts its assumed defaults', async () => {
   const { page, errors } = main;
   await page.getByRole('tab', { name: /^Options/ }).click();

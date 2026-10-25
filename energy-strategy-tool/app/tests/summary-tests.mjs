@@ -46,7 +46,9 @@ export async function summaryTests(test, ctxRuns) {
     // Part 1: the leader and its figures, as the run has them.
     const p1 = s.parts[0].text;
     assert.ok(p1.includes(`#1, ${L.name}`) && p1.includes(`score of ${L.score.toFixed(1)}`));
-    assert.ok(p1.includes('Monte Carlo ranges are not built yet') || s.details.leader.includes('These are single values: Monte Carlo ranges are not built yet.'));
+    const single = 'These are single values: the Monte Carlo has not been run for this result (Sensitivity tab).';
+    assert.ok(p1.includes(single) || s.details.leader.includes(single));
+    assert.ok(s.notRun.includes('the Monte Carlo') && s.notBuilt.length === 0);
     assert.ok(p1.includes(`LCOE ${perMWh(L.eco.lcoe)}`) && p1.includes(`capex ${money(L.eco.capex)}`) && p1.includes(`carbon ${sig(L.carbon.locationG)} g/kWh`), p1);
     // Part 2: the gap to #2 and the weighted axis differences are the run's numbers, and they add up to the gap.
     const R = run.options.find((o) => o.rank === 2);

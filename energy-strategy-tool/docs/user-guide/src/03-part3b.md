@@ -12,22 +12,22 @@ It has seven parts, always in this order:
 
 | Part | What it says |
 |---|---|
-| Leading option | The option that leads under the current weights, its score, LCOE, capex, carbon and time-to-power. With a tornado run on the leader, its LCOE range with each tested input moved one at a time |
+| Leading option | The option that leads under the current weights, its score, LCOE, capex, carbon and time-to-power. With the Monte Carlo run, its LCOE from P10 to P90; otherwise, with a tornado run on the leader, its LCOE range with each tested input moved one at a time |
 | Why it leads | How far it is ahead of #2, split into the axis differences that make up the gap (in score points): those that favour #1 with their figures, those that favour #2 by their points, so the named parts add up to the gap; and one of the choices on which #2 differs |
 | What it gives up | The axes where #2 does better, and where the best option of the same group does better by more than 0.5 axis points |
-| Confidence | How many other options score within 1 point; how many key inputs the leader uses were left at their defaults; how many default records are unverified |
+| Confidence | How many other options score within 1 point; with the Monte Carlo run, how often the leader comes first and in the top three, and whether the robust pick differs; how many key inputs the leader uses were left at their defaults; how many default records are unverified |
 | What would change the answer | The smallest change of one weight that puts another option first, and which option; once the breakeven table has been run (chapter 27), the two flips nearest today's values |
 | Open flags on the leader | Resilience status; permitting and fuel flags; any other major flag. Site-fit flags only while the Site tab (Beta) is on. When many flags would take the text past 250 words, it gives their count and More detail lists them |
 | Inputs with most influence | With a tornado run on the leader, the three inputs with the largest swing, with their data confidence |
 
-The summary ends with the guardrail sentence. **More detail** under it lists, part by part, the figures behind each sentence, every weight change that alters the leader, all the leader's flags, and what is not built yet. When a summary would be longer than 250 words, its least important sentences move into More detail. Rank probability and the robust pick need Monte Carlo, which is not built; the summary says so rather than guessing. The tornado and the breakevens run on request on the Sensitivity tab; until they have been run for the current result, More detail lists them as not run. Chapter 44 shows how its numbers are worked out.
+The summary ends with the guardrail sentence. **More detail** under it lists, part by part, the figures behind each sentence, every weight change that alters the leader, all the leader's flags, and what is not built yet. When a summary would be longer than 250 words, its least important sentences move into More detail. The tornado, the breakevens and the Monte Carlo run on request on the Sensitivity tab (chapter 27); until they have been run for the current result, the summary says so rather than guessing, and More detail lists them as not run. Chapter 44 shows how its numbers are worked out.
 
 **The T1 example** (analysis start January 2027, run of 24 October 2026) reads, before any tornado:
 
 > **Leading option.** The option that leads under the current weights (cost 35 %, carbon 25 %, time-to-power 25 %, deliverability 15 %) is #1, Grid + hvo-diesel prime bridge → retain as prime · retained-plant backup · Evaporative-adiabatic · PV 5.6 MWp · PPA hybrid 100 %, with a score of 94.1. LCOE €152/MWh, capex €84.9 m, carbon 121 g/kWh (location-based), power on time.
 > **Why it leads.** It is 0.15 points ahead of #2: 0.11 points from cost (LCOE €152 against €153/MWh) and 0.04 points from carbon (121 against 122 g/kWh). #2 differs in 8 choices, among them bridging plant after grid arrives: Remove.
 > **What it gives up.** On deliverability it has 89 points; the best of the adequate options, #595, has 96.8 points.
-> **Confidence.** 21 other adequate options score within 1 point of it. It uses 13 key inputs left at their defaults; 542 of 566 default records are indicative — unverified.
+> **Confidence.** 21 other adequate options score within 1 point of it. It uses 13 key inputs left at their defaults; 549 of 573 default records are indicative — unverified.
 > **What would change the answer.** #26 would lead if the deliverability weight fell from 15 % to 0 %, the other weights scaled in proportion. #595 would lead if the cost weight fell from 35 % to 13 %.
 > **Open flags on the leader.** Resilience: meets the requirement. Permitting: aggregated combustion thermal input 337 MWth ≥ 50 MWth (IED threshold), a major flag, and 2 minor flags. Fuel and utilities: HVO-diesel prime bridging, a minor flag.
 > **Inputs with most influence.** The tornado has not been run on #1 (Sensitivity tab), so the inputs with most influence are not listed.
@@ -259,6 +259,22 @@ The order is the ranking's: an option that serves its load in every hour stays a
 
 **The T1 example** (24 October 2026). The competitors are #2, #5, #7, #11 and #16; the drivers, largest swing first, are electricity price escalation, grid import price, grid date, grid carbon, evaluation period, capex, WACC and battery capex. Only two cells flip: #7 (rented bridge, removed) takes the lead if the grid date slips by 14 months or more, and #2 if every capex line rises to × 1.41. Every other competitor stays behind on every driver across its range: the T1 leader is robust to these inputs, while the margins are small (0.15 points to #2).
 
+## Uncertainty (Monte Carlo)
+
+::: {.callout .built}
+**Built 25 October 2026 (work package 18; OPEN-QUESTIONS 98–104).** At the bottom of the Sensitivity tab, **Run uncertainty** draws the uncertain inputs together, many times over, and re-runs the 20 leading options each time. It answers: how wide is each option's likely range, and how often does the leader stay first? It runs on request and changes nothing in the run.
+:::
+
+- **Inputs drawn:** the thirteen tornado drivers that describe the world rather than the design: grid date, grid price, grid carbon, gas price, carbon price, WACC, capex, capacity factors, PUE, battery capex, grid connection capex, price escalation and test hours. The IT load, the evaluation period and the flexibility trigger are your choices and are not drawn. Each input is most likely at its current value and can go as low or high as its range (a triangle). Grid and gas price tend to move together, and so do the capex figures.
+- **Samples:** 300 by default (100, 300 or 1,000 in the panel), drawn with a fixed seed, so the same run gives the same answer. Each sample re-runs the options with representative days instead of the full year, which is about three times faster; adequacy is then approximate.
+- **The table**, one row per option: how often it comes first and in the top three (with a small bar), how often it is within 1 % of the best score in its sample, and its P10, P50 and P90 score, LCOE, carbon and full-load date. P10 means one sample in ten is lower.
+- **The robust pick** is the option most often within 1 % of the best score. If it is not the leader, an option a little behind is the safer bet across the uncertain inputs.
+- The header strip then gives the leader's chance of coming first, and the summary and the PDF use the results.
+
+The table fills in as it runs, every ten samples, and the page stays usable. 300 samples take about 30 s in a browser, above the brief's 8 s target.
+
+**The T1 example** (100 samples, 25 October 2026). The leader comes first in 82 % of samples and is in the top three in 98 %; #7 (rented bridge) comes first in 17 %. The leader's LCOE runs from €145 to €171/MWh (P10 to P90), higher than its €152/MWh in the run because the input ranges lean upwards (the grid price can rise to × 1.5 but fall only to × 0.7, and the grid date can slip 24 months but come only 6 months early). The robust pick is the leader itself.
+
 # 28. Site (Beta) {#ch28}
 
 ::: {.callout .built}
@@ -328,7 +344,7 @@ The sections (OPEN-QUESTIONS 32, answered 23 October 2026):
 | 4. Trade-offs | LCOE against location-based carbon for every option; the top five numbered |
 | 5. Compare | The options ticked for comparison, their headline figures and the choices on which they differ |
 | 6. Dispatch | Energy balance of the top five in the last modelled year and in the first year with load (GWh) |
-| 7. Sensitivity | The last tornado run in the Sensitivity tab, with its chart and table, in the measure chosen there; the breakeven table when it was run for this run (24 October 2026) |
+| 7. Sensitivity | The last tornado run in the Sensitivity tab, with its chart and table, in the measure chosen there; the breakeven table (24 October 2026) and the Monte Carlo table (25 October 2026) when they were run for this run |
 | 8. Flags | Every flag on the top five (not the site-fit flags), and the run notes |
 | 9. Method | How the options are generated, dispatched, costed and ranked; run settings; the guardrail |
 

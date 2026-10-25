@@ -11,6 +11,7 @@ import CompareView from './components/CompareView.jsx';
 import SensitivityView, { latestSensitivity } from './components/SensitivityView.jsx';
 import SummaryPanel from './components/SummaryPanel.jsx';
 import { latestBreakevens } from './components/BreakevenPanel.jsx';
+import { latestMonteCarlo } from './components/UncertaintyPanel.jsx';
 import { buildReport, reportFileName } from './report/report.js';
 import { saveBytes } from './saveFile.js';
 import { useCompute } from './useCompute.js';
@@ -83,6 +84,8 @@ export default function App() {
   // study file, printed in the PDF), and whether the summary is shown on the Options tab.
   const [summaryNote, setSummaryNote] = useState(null);
   const [summaryShown, setSummaryShown] = useState(true);
+  // Bumped when the breakevens or the Monte Carlo finish, so the header and the summary read the new result.
+  const [, setExtras] = useState(0);
   const [focusChart, setFocusChart] = useState(false); // "Skip to trade-offs chart" request
   const [focusPlan, setFocusPlan] = useState(false); // "Skip to site plan" request
   // General settings (§12.12): the Site tab (Beta) switch, off by default (walkthrough, 2026-10-21). A view setting:
@@ -168,9 +171,9 @@ export default function App() {
     try {
       const sens = latestSensitivity(run);
       const created = new Date();
-      const r = buildReport(run, { compareIds, sensitivity: sens ? sens.result : null, sensitivityMeasure: sens ? sens.measure : null, created, summaryNote, breakevens: latestBreakevens(run) });
+      const r = buildReport(run, { compareIds, sensitivity: sens ? sens.result : null, sensitivityMeasure: sens ? sens.measure : null, created, summaryNote, breakevens: latestBreakevens(run), monteCarlo: latestMonteCarlo(run) });
       saveBytes(reportFileName(run, created), r.bytes, 'application/pdf');
-      setPdfMsg(`PDF report made: ${r.pages} pages${compareIds.length ? `, ${compareIds.length} compared option${compareIds.length === 1 ? '' : 's'}` : ''}${sens ? ', with the sensitivity test' : ', without a sensitivity test (run one in the Sensitivity tab to include it)'}${latestBreakevens(run) ? ' and the breakevens' : ''}.`);
+      setPdfMsg(`PDF report made: ${r.pages} pages${compareIds.length ? `, ${compareIds.length} compared option${compareIds.length === 1 ? '' : 's'}` : ''}${sens ? ', with the sensitivity test' : ', without a sensitivity test (run one in the Sensitivity tab to include it)'}${latestBreakevens(run) ? ', the breakevens' : ''}${latestMonteCarlo(run) ? ', the Monte Carlo' : ''}.`);
     } catch (e) { setPdfMsg(`Could not make the PDF report: ${e && e.message ? e.message : e}`); }
   };
 
@@ -301,7 +304,7 @@ export default function App() {
         <main id="results" className="main" tabIndex={-1}>
           <div className="header-strip" role="region" aria-label="Results header">
             <div className="hs-item"><span className="hs-k">Options</span><span className="hs-v">{run ? `${shown.toLocaleString('en-GB')} shown / ${run.options.length.toLocaleString('en-GB')} screened / ${run.generation.totalCombinations.toLocaleString('en-GB')} combinations · ${dominated.toLocaleString('en-GB')} dominated` : '—'}</span></div>
-            <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">Rank probability not available in this slice (no Monte Carlo)</span></div>
+            <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">{(() => { const mc = run ? latestMonteCarlo(run) : null; const r = mc && leader ? mc.rows.find((x) => x.id === leader.id) : null; return r ? `Leads in ${Math.round(r.pRank1 * 100)} % of ${mc.samples.toLocaleString('en-GB')} Monte Carlo samples` : 'Rank probability: run the Monte Carlo (Sensitivity tab)'; })()}</span></div>
             <div className="hs-item"><span className="hs-k">Power adequacy</span><span className="hs-v">{run ? <>✓ {adequate.toLocaleString('en-GB')} adequate · ✗ {(run.options.length - adequate).toLocaleString('en-GB')} not adequate</> : '—'}</span><span className="hs-sub">Adequate options rank first; none is hidden.</span></div>
             {siteBeta ? <div className="hs-item"><span className="hs-k">Site fit (Beta)</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit.' : 'Status only: it changes no score or rank.'} Site inputs set the POC and gas-main route costs.</span></div> : null}
             <div className="hs-item"><span className="hs-k">Model</span><span className="hs-v">{run && run.verification ? `Screening (representative days); best ${run.verification.verified} verified with the full year` : 'Full-year hourly (8760 h)'}</span><span className="hs-sub">Synthetic profiles · {run ? COUNTRIES[run.country].name : ''}</span></div>
@@ -362,13 +365,13 @@ export default function App() {
               </div>
               <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
                 {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} onCompare={toggleCompare} compareIds={compareIds}
-                  summary={<SummaryPanel run={run} sensitivity={latestSensitivity(run) ? latestSensitivity(run).result : null} breakevens={latestBreakevens(run)} siteBeta={siteBeta} note={summaryNote} onSaveNote={setSummaryNote} onDiscardNote={() => setSummaryNote(null)}
+                  summary={<SummaryPanel run={run} sensitivity={latestSensitivity(run) ? latestSensitivity(run).result : null} breakevens={latestBreakevens(run)} monteCarlo={latestMonteCarlo(run)} siteBeta={siteBeta} note={summaryNote} onSaveNote={setSummaryNote} onDiscardNote={() => setSummaryNote(null)}
                     onShowSensitivity={() => { setSensOptionId(null); setTab('sensitivity'); setTimeout(() => document.getElementById('tab-sensitivity')?.focus(), 0); }} open={summaryShown} onToggle={setSummaryShown} />} />
                   : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} onCompare={toggleCompare} compareIds={compareIds} />
                     : tab === 'compare' ? <CompareView run={run} ids={compareIds} onRemove={toggleCompare} onClear={() => setCompareIds([])} start={start} />
                     : tab === 'site' && siteBeta ? <SiteView run={run} inputs={inputs} update={update} optionId={siteOptionId} setOptionId={setSiteOptionId} computing={compute.status === 'running'} focusPlan={focusPlan} onPlanFocused={() => setFocusPlan(false)} />
                       : tab === 'dispatch' ? <DispatchView run={run} optionId={dispatchOptionId} setOptionId={setDispatchOptionId} />
-                        : <SensitivityView run={run} optionId={sensOptionId} setOptionId={setSensOptionId} />}
+                        : <SensitivityView run={run} optionId={sensOptionId} setOptionId={setSensOptionId} onResult={() => setExtras((x) => x + 1)} />}
               </div>
             </>
           ) : compute.status !== 'error' ? (

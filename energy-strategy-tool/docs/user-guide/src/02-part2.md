@@ -593,7 +593,7 @@ On a chart of any two axes, the **frontier** is the set of options that no other
 
 ## Sensitivity
 
-A ranking built on uncertain inputs needs a check: does it change if a key assumption is wrong? The **tornado** re-runs one option with each key driver set to a low and a high value and shows how much the result moves. Drivers with long bars are the ones worth pinning down (chapter 27).
+A ranking built on uncertain inputs needs a check: does it change if a key assumption is wrong? The **tornado** re-runs one option with each key driver set to a low and a high value and shows how much the result moves. Drivers with long bars are the ones worth pinning down (chapter 27). The **breakevens** find how far a driver must move before another option takes the lead, and the **Monte Carlo** moves all the uncertain inputs together, many times, to show each option's likely range and how often the leader stays first (chapter 27, built 24 and 25 October 2026).
 
 ## Flag, don't enforce
 
