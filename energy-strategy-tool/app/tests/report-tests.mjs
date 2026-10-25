@@ -54,7 +54,7 @@ export async function reportTests(test, ctxRuns) {
     const r = buildReport(run, { compareIds: cmp, sensitivity: sens, created, appVersion: 'test' });
     const ms = Date.now() - t0;
     const nObj = checkPdfStructure(r.bytes);
-    assert.deepEqual(r.sections, ['1. Inputs', '2. Assumptions', '3. Results', '4. Trade-offs', '5. Compare', '6. Dispatch: energy balance', '7. Sensitivity', '8. Flags', '9. Method']);
+    assert.deepEqual(r.sections, ['Summary', '1. Inputs', '2. Assumptions', '3. Results', '4. Trade-offs', '5. Compare', '6. Dispatch: energy balance', '7. Sensitivity', '8. Flags', '9. Method']);
     const pages = pdfPageTexts(r.bytes);
     assert.equal(pages.length, r.pages);
     const all = pages.join('\n');

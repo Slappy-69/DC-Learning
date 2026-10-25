@@ -83,7 +83,7 @@ function ResBadge({ s }) {
   return <span className={`badge badge-${cls}`}><span aria-hidden="true">{icon}</span> {s}</span>;
 }
 
-export default function RankedList({ run, view, setView, start, onShowSite, onShowDispatch = null, siteBeta = false, onCompare = null, compareIds = [] }) {
+export default function RankedList({ run, view, setView, start, onShowSite, onShowDispatch = null, siteBeta = false, onCompare = null, compareIds = [], summary = null }) {
   const FLAG_FILTERS = flagFilters(siteBeta);
   const [page, setPage] = useState(0);
   const [openId, setOpenId] = useState(null);
@@ -112,6 +112,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
 
   return (
     <div className="ranked">
+      {summary}
       <TopFive run={run} onOpen={(id) => { const i = list.findIndex((x) => x.id === id); if (i >= 0) setPage(Math.floor(i / PAGE)); setOpenId(id); }} onCompare={onCompare} compareIds={compareIds} />
       <div className="filters" role="group" aria-label="View filters (never change score or rank)">
         <span className="filters-label">View filters</span>

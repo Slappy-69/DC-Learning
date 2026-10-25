@@ -574,6 +574,63 @@ await check('B37. Study files (work package 15): "Save study" downloads a JSON s
   return `${name} (${(readFileBytes(path).length / 1024).toFixed(0)} kB, leader ${f.result.leader.name.slice(0, 60)}…); reopened: "${msg.slice(0, 120)}…"; a JSON file without a schema refused.`;
 });
 
+await check('B38. Plain-English summary (work package 16, BRIEF §14): on the Options tab, headed "Summary" with seven parts, at most 250 words and the guardrail sentence last, no "Recommendation"; it follows a weight change within the 300 ms bound; an edit is kept as a note marked "edited", says when it was written for an earlier result, and can be discarded; no serious axe violation while editing or with the note', async () => {
+  const { page, errors } = main;
+  await page.getByRole('tab', { name: /^Options/ }).click();
+  const panel = page.locator('.sum-panel');
+  await panel.waitFor();
+  ok((await panel.locator('h2').innerText()).trim() === 'Summary', 'heading');
+  const parts = await panel.locator('.sum-text p[data-part]').allInnerTexts();
+  ok(parts.length === 7, `${parts.length} parts`);
+  const heads = parts.map((t) => t.split('.')[0]);
+  ok(JSON.stringify(heads) === JSON.stringify(['Leading option', 'Why it leads', 'What it gives up', 'Confidence', 'What would change the answer', 'Open flags on the leader', 'Inputs with most influence']), `parts: ${heads.join(' | ')}`);
+  const guard = await panel.locator('.sum-guardrail').innerText();
+  ok(/^Concept-stage screening only\./.test(guard), 'guardrail sentence');
+  const words = await page.evaluate(() => [...document.querySelectorAll('.sum-text p')].map((p) => p.textContent.replace(/^[^.]*\.\s/, (h) => (p.dataset.part ? '' : h))).join(' ').trim().split(/\s+/).filter((t) => /[A-Za-z0-9]/.test(t)).length);
+  ok(words <= 250, `${words} words`);
+  const all = await panel.innerText();
+  ok(!/recommend/i.test(all), 'the word "recommend" in the summary');
+  const leaderName = (await page.locator('.header-strip .hs-item').nth(1).locator('.hs-v').innerText()).replace(/\s+[\d.]+\s*$/, '').trim();
+  ok(parts[0].includes(leaderName.slice(0, 40)), `the summary does not name the header's leader (${leaderName.slice(0, 50)})`);
+  // A weight preset: the summary's first part (which states the weights) changes within the bound.
+  const ms = await page.evaluate(async () => {
+    const btn = [...document.querySelectorAll('.preset-row button')].find((b) => b.textContent.trim() === 'Lowest carbon');
+    const was = document.querySelector('.sum-text p[data-part=leader]').textContent;
+    const t0 = performance.now();
+    btn.click();
+    return await new Promise((resolve) => {
+      const tick = () => { const p = document.querySelector('.sum-text p[data-part=leader]'); if (p && p.textContent !== was) resolve(performance.now() - t0); else requestAnimationFrame(tick); };
+      tick();
+      setTimeout(() => resolve(-1), 5000);
+    });
+  });
+  ok(ms >= 0 && ms <= B9_BOUND_MS, `summary updated in ${ms.toFixed(0)} ms (bound ${B9_BOUND_MS} ms)`);
+  ok(/carbon 60 %/.test(await panel.locator('p[data-part=leader]').innerText()), 'the weights in the summary did not follow the preset');
+  await page.locator('.preset-row button', { hasText: 'Balanced' }).click();
+  await page.waitForFunction(() => /cost 35 %/.test(document.querySelector('.sum-text p[data-part=leader]').textContent), null, { timeout: 5000 });
+  // Edit, save, see "edited"; change the weights: the note says it was written for an earlier result; back: it does not.
+  await page.locator('#summary-edit-btn').click();
+  const ta = page.locator('#summary-edit');
+  ok((await ta.inputValue()).startsWith('Leading option.'), 'the edit box does not start from the generated text');
+  const axeEdit = await runAxe(page, 'Summary, editing');
+  await ta.fill('Engineer note: the two leaders are close; the grid date matters most.');
+  await page.locator('#summary-save').click();
+  await panel.locator('.badge-edited').waitFor();
+  ok((await panel.locator('.sum-note').innerText()).includes('Engineer note: the two leaders are close'), 'note text');
+  ok(await panel.locator('.notice').count() === 0, 'a stale notice right after saving');
+  await page.locator('.preset-row button', { hasText: 'Lowest carbon' }).click();
+  await panel.locator('.notice', { hasText: 'Written for an earlier result' }).waitFor({ timeout: 5000 });
+  const axeNote = await runAxe(page, 'Summary, edited note (earlier result)');
+  await page.locator('.preset-row button', { hasText: 'Balanced' }).click();
+  await page.waitForFunction(() => !document.querySelector('.sum-panel .notice'), null, { timeout: 5000 });
+  await page.locator('#summary-discard').click();
+  ok(await panel.locator('.badge-edited').count() === 0 && await panel.locator('.sum-text p[data-part]').count() === 7, 'discard did not restore the generated summary');
+  const bad = [axeEdit, axeNote].flatMap((r) => (r.skipped ? [] : serious(r).map((v) => `${r.label}: ${v.impact} ${v.id} ×${v.nodes} (${v.target})`)));
+  ok(bad.length === 0, bad.join(' | '));
+  ok(errors.length === 0, errors.join(' | '));
+  return `7 parts, ${words} words, guardrail last; preset "Lowest carbon" updated the summary in ${ms.toFixed(0)} ms (≤ ${B9_BOUND_MS} ms); edit saved as a note marked "edited", flagged as written for an earlier result after a weight change and not after the change back; discarded; ${[axeEdit, axeNote].map((r) => (r.skipped ? `${r.label}: axe skipped` : `${r.label}: ${r.violations.length} violations`)).join('; ')}.`;
+});
+
 await check('B34. Knowledge levels and the economics section (work package 2, AC 16): the IT load and grid fields accept "Not known"; section 5 is Economics with the WACC explanation and the further periods; each top-five card counts its assumed defaults', async () => {
   const { page, errors } = main;
   await page.getByRole('tab', { name: /^Options/ }).click();

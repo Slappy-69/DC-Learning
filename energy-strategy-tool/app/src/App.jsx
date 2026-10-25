@@ -9,6 +9,7 @@ import SiteView from './components/SiteView.jsx';
 import DispatchView from './components/DispatchView.jsx';
 import CompareView from './components/CompareView.jsx';
 import SensitivityView, { latestSensitivity } from './components/SensitivityView.jsx';
+import SummaryPanel from './components/SummaryPanel.jsx';
 import { buildReport, reportFileName } from './report/report.js';
 import { saveBytes } from './saveFile.js';
 import { useCompute } from './useCompute.js';
@@ -77,6 +78,10 @@ export default function App() {
   const [siteOptionId, setSiteOptionId] = useState(null); // option shown on the Site tab (null = the leader)
   const [dispatchOptionId, setDispatchOptionId] = useState(null); // option shown on the Dispatch tab (null = the leader)
   const [sensOptionId, setSensOptionId] = useState(null); // option tested on the Sensitivity tab (null = the leader)
+  // Plain-English summary (work package 16, BRIEF §14): the engineer's edit, kept as a note marked "edited" (saved in the
+  // study file, printed in the PDF), and whether the summary is shown on the Options tab.
+  const [summaryNote, setSummaryNote] = useState(null);
+  const [summaryShown, setSummaryShown] = useState(true);
   const [focusChart, setFocusChart] = useState(false); // "Skip to trade-offs chart" request
   const [focusPlan, setFocusPlan] = useState(false); // "Skip to site plan" request
   // General settings (§12.12): the Site tab (Beta) switch, off by default (walkthrough, 2026-10-21). A view setting:
@@ -132,7 +137,7 @@ export default function App() {
     if (__HOSTED__) return;
     try {
       const hash = hashInputs(normalizeInputs(inputs));
-      const f = studyFile(inputs, compute.run && compute.run.inputHash === hash ? compute.run : null);
+      const f = studyFile(inputs, compute.run && compute.run.inputHash === hash ? compute.run : null, { note: summaryNote });
       saveBytes(studyFileName(inputs), JSON.stringify(f, null, 1), 'application/json');
       setStudyMsg(`Study saved: ${f.name}${f.result ? `, with the result of the last run (leader ${f.result.leader.name})` : ' (inputs only: run it before saving to keep a record of the result)'}.`);
     } catch (e) { setStudyMsg(`Could not save the study: ${e && e.message ? e.message : e}`); }
@@ -145,6 +150,7 @@ export default function App() {
       const r = readStudyFile(await file.text());
       if (!r.ok) { setStudyMsg(`Could not open ${file.name}: ${r.error}`); return; }
       setInputs(r.inputs);
+      setSummaryNote(r.notes && r.notes.summary ? r.notes.summary : null);
       setOpenedStudy({ file: r.file, hash: hashInputs(normalizeInputs(r.inputs)) });
       setStudyMsg(`Opened "${r.file.name}" (saved ${String(r.file.savedAt || '').slice(0, 10)}). ${r.warnings.join(' ')} Running it…`.replace(/\s+/g, ' '));
     } catch (err) { setStudyMsg(`Could not open ${file.name}: ${err && err.message ? err.message : err}`); }
@@ -161,7 +167,7 @@ export default function App() {
     try {
       const sens = latestSensitivity(run);
       const created = new Date();
-      const r = buildReport(run, { compareIds, sensitivity: sens ? sens.result : null, sensitivityMeasure: sens ? sens.measure : null, created });
+      const r = buildReport(run, { compareIds, sensitivity: sens ? sens.result : null, sensitivityMeasure: sens ? sens.measure : null, created, summaryNote });
       saveBytes(reportFileName(run, created), r.bytes, 'application/pdf');
       setPdfMsg(`PDF report made: ${r.pages} pages${compareIds.length ? `, ${compareIds.length} compared option${compareIds.length === 1 ? '' : 's'}` : ''}${sens ? ', with the sensitivity test' : ', without a sensitivity test (run one in the Sensitivity tab to include it)'}.`);
     } catch (e) { setPdfMsg(`Could not make the PDF report: ${e && e.message ? e.message : e}`); }
@@ -263,8 +269,8 @@ export default function App() {
         </div>
         <div className="topbar-actions">
           <button type="button" className="chip-btn panel-toggle" aria-expanded={panelOpen} aria-controls="inputs-panel" onClick={() => setPanelOpen(!panelOpen)}>{panelOpen ? 'Close inputs' : 'Inputs'}</button>
-          <button type="button" className="chip-btn" onClick={() => setInputs(referenceT1())}>Load T1 example</button>
-          <button type="button" className="chip-btn" onClick={() => setInputs(buildDefaultInputs())}>Reset to defaults</button>
+          <button type="button" className="chip-btn" onClick={() => { setInputs(referenceT1()); setSummaryNote(null); }}>Load T1 example</button>
+          <button type="button" className="chip-btn" onClick={() => { setInputs(buildDefaultInputs()); setSummaryNote(null); }}>Reset to defaults</button>
           {!__HOSTED__ ? <button type="button" className="chip-btn" id="save-study" onClick={saveStudy}>Save study</button> : null}
           <button type="button" className="chip-btn" id="open-study" onClick={() => studyInput.current && studyInput.current.click()}>Open study…</button>
           <input ref={studyInput} id="open-study-file" type="file" accept=".json,application/json" hidden onChange={openStudy} aria-label="Study file to open" />
@@ -354,7 +360,9 @@ export default function App() {
                 ))}
               </div>
               <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} onCompare={toggleCompare} compareIds={compareIds} />
+                {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} onCompare={toggleCompare} compareIds={compareIds}
+                  summary={<SummaryPanel run={run} sensitivity={latestSensitivity(run) ? latestSensitivity(run).result : null} siteBeta={siteBeta} note={summaryNote} onSaveNote={setSummaryNote} onDiscardNote={() => setSummaryNote(null)}
+                    onShowSensitivity={() => { setSensOptionId(null); setTab('sensitivity'); setTimeout(() => document.getElementById('tab-sensitivity')?.focus(), 0); }} open={summaryShown} onToggle={setSummaryShown} />} />
                   : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} onCompare={toggleCompare} compareIds={compareIds} />
                     : tab === 'compare' ? <CompareView run={run} ids={compareIds} onRemove={toggleCompare} onClear={() => setCompareIds([])} start={start} />
                     : tab === 'site' && siteBeta ? <SiteView run={run} inputs={inputs} update={update} optionId={siteOptionId} setOptionId={setSiteOptionId} computing={compute.status === 'running'} focusPlan={focusPlan} onPlanFocused={() => setFocusPlan(false)} />

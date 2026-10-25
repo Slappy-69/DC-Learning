@@ -18,7 +18,7 @@ const SCHEMA_RE = /^dc-energy-study\/(\d+)$/;
 const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
 
 // The study file for the inputs on screen and, when there is one, the run of those inputs.
-export function studyFile(inputs, run = null, { savedAt = new Date(), appVersion = '' } = {}) {
+export function studyFile(inputs, run = null, { savedAt = new Date(), appVersion = '', note = null } = {}) {
   const n = normalizeInputs(inputs);
   const out = {
     schema: STUDY_SCHEMA,
@@ -30,6 +30,8 @@ export function studyFile(inputs, run = null, { savedAt = new Date(), appVersion
     inputsAsRun: n,
     inputHash: hashInputs(n),
     result: null,
+    // The engineer's edit of the plain-English summary (work package 16), kept as a note marked "edited".
+    notes: note && typeof note.text === 'string' ? { summary: { text: note.text, key: note.key || '', leaderId: note.leaderId || null, leaderName: note.leaderName || '', editedAt: note.editedAt || '' } } : {},
   };
   if (run && run.options && run.options.length) {
     const lead = run.options.reduce((a, b) => (a.rank < b.rank ? a : b));
@@ -91,7 +93,12 @@ export function readStudyFile(text) {
   if (added.length) warnings.push(`Saved by an earlier version: ${added.length} input${added.length === 1 ? '' : 's'} not in the file take${added.length === 1 ? 's' : ''} today's defaults (${added.slice(0, 6).join(', ')}${added.length > 6 ? ', …' : ''}).`);
   if (dropped.length) warnings.push(`${dropped.length} input${dropped.length === 1 ? '' : 's'} in the file ${dropped.length === 1 ? 'is' : 'are'} not known to this version and ${dropped.length === 1 ? 'was' : 'were'} left out (${dropped.slice(0, 6).join(', ')}${dropped.length > 6 ? ', …' : ''}).`);
   if (f.engineVersion && f.engineVersion !== ENGINE_VERSION) warnings.push(`Saved with engine ${f.engineVersion}; this is engine ${ENGINE_VERSION}.`);
-  return { ok: true, inputs, file: f, added, dropped, warnings };
+  // The summary note (work package 16): kept when it is a text; a damaged note is dropped with a warning.
+  const sn = isObj(f.notes) ? f.notes.summary : null;
+  const notes = {};
+  if (isObj(sn) && typeof sn.text === 'string' && sn.text.trim()) notes.summary = { text: sn.text, key: String(sn.key || ''), leaderId: sn.leaderId || null, leaderName: String(sn.leaderName || ''), editedAt: String(sn.editedAt || '') };
+  else if (sn != null) warnings.push('The summary note in the file is damaged and was left out.');
+  return { ok: true, inputs, file: f, added, dropped, warnings, notes };
 }
 
 // After the reopened study has run: does the result match the saved record?

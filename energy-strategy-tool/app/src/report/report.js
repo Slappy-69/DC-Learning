@@ -1,7 +1,7 @@
 // The PDF report (work package 10, BRIEF §12.10; OPEN-QUESTIONS 32 answered 2026-10-23 with Claude's
 // recommendation, accepted in advance by the owner). One PDF, inputs first and results after:
-//   cover · 1 inputs · 2 assumptions · 3 results (run summary, top five, ranked list) · 4 trade-offs ·
-//   5 compare · 6 dispatch (energy balance) · 7 sensitivity · 8 flags · 9 method.
+//   cover · summary (BRIEF §14, work package 16) · 1 inputs · 2 assumptions · 3 results (run summary, top five,
+//   ranked list) · 4 trade-offs · 5 compare · 6 dispatch (energy balance) · 7 sensitivity · 8 flags · 9 method.
 // The Site tab (Beta) is never included: no site plan, no site-fit figures, no site geometry inputs.
 // Pure: built from the run and the view state handed in; no browser APIs.
 
@@ -10,6 +10,7 @@ import { getRegistry, normalizeInputs, CHOICES, choiceLabel, LABEL, LABEL_SOURCE
 import { NA } from '../engine/generator.js';
 import { topCards } from '../engine/cards.js';
 import { measureById, sortRows } from '../engine/sensitivity.js';
+import { plainSummary, summaryKey } from '../engine/summary.js';
 import { GUARDRAIL, sig, money, monthLabel, pct, perMWh, cur, displayCurrency } from '../format.js';
 
 // Input sections in the order of the inputs panel; site geometry belongs to the Site tab (Beta) and is left out.
@@ -123,6 +124,33 @@ export function buildReport(run, view = {}) {
   doc.para(GUARDRAIL, { size: 9, indent: 8 });
   doc.y = Math.min(doc.y, gy - 70);
   doc.para(`Every default is labelled "${LABEL}" until it is researched. The tool makes no network connection; this report was made on this computer from the run shown. The Site tab (Beta) is not part of this report.`, { size: 8.5, color: MUTED });
+
+  // ---- Summary (work package 16, BRIEF §14): the generated text, its detail, and the engineer's edit marked "edited".
+  // Site fit is never in it (the Site tab is Beta and kept out of the PDF).
+  const sm = plainSummary(run, { sensitivity: view.sensitivity || null, siteBeta: false });
+  if (sm) {
+    doc.newPage();
+    H1('Summary');
+    doc.para("Written by fixed templates from this run's figures, without a language model: it describes the result under the run's weights and settings and does not advise.", { size: 8.5, color: MUTED });
+    for (const p of sm.parts) { doc.ensure(40); doc.para(p.heading, { bold: true, size: 10, gap: 1 }); doc.para(p.text, { size: 9.5 }); }
+    doc.para(sm.guardrail, { size: 9, bold: true, gap: 8 });
+    const note = view.summaryNote && typeof view.summaryNote.text === 'string' ? view.summaryNote : null;
+    if (note) {
+      doc.ensure(60);
+      doc.heading('Summary as edited by the engineer (edited)', 2);
+      if (note.key !== summaryKey(run)) doc.para(`Written for an earlier result (leader then: ${note.leaderName || 'not recorded'}); the generated summary above is for this run.`, { size: 8.5, color: FLAG });
+      for (const t of note.text.split(/\n+/)) doc.para(t, { size: 9.5 });
+      doc.para(`Edited ${String(note.editedAt || '').slice(0, 10)}.`, { size: 8, color: MUTED });
+    }
+    doc.heading('Summary detail', 2);
+    for (const p of sm.parts) {
+      const d = sm.details[p.id] || [];
+      if (p.id === 'flags' || !d.length) continue;
+      doc.para(p.heading, { bold: true, size: 8.5, gap: 1 });
+      doc.bullets(d, { size: 8 });
+    }
+    doc.para(`The flags of the leader are listed in full in section 8. Not built yet, so not in the summary: ${sm.notBuilt.join('; ')}.`, { size: 8, color: MUTED });
+  }
 
   // ---- 1 Inputs ----
   doc.newPage();

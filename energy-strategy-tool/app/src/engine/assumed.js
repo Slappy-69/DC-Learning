@@ -4,7 +4,7 @@
 // one further flag (they are listed in the PDF report's assumptions and the user guide's appendix).
 // Pure: no UI, no browser APIs.
 
-import { getRegistry, COUNTRIES, TECH, LABEL } from './defaults.js';
+import { getRegistry, COUNTRIES, TECH, LABEL, buildDefaultInputs } from './defaults.js';
 import { pinCountryInfo } from './context.js';
 
 const getPath = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
@@ -63,6 +63,10 @@ const RESOLVED = ['load.itMW', 'load.phases', 'grid.nowMW', 'grid.fullMW', 'grid
 export function assumedBase(ctx) {
   if (ctx.assumedBase) return ctx.assumedBase;
   const inputs = ctx.inputs;
+  // The input and run-setting records are created by buildDefaultInputs(). A pool worker (or any process that runs
+  // inputs it did not build) has not called it, so without this the flags missed every registry-backed key input and
+  // counted 387 instead of 563 records (known issue 21, found 2026-10-24 while building the summary).
+  if (!('economics.wacc' in getRegistry())) buildDefaultInputs();
   const reg = getRegistry();
   const A = inputs.assumedInputs || {};
   const cname = COUNTRIES[ctx.country] ? COUNTRIES[ctx.country].name : ctx.country;

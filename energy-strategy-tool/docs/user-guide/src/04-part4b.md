@@ -351,6 +351,31 @@ Within each group, options are sorted by weighted score, highest first; equal sc
 
 In the T1 run 953 of the 2,000 screened options are adequate. The options with the highest scores (92.7 and just below) are not: each leaves some 300 to 1,000 MWh of load unmet over 500 to 1,000 hours before the full grid connection, and has a power gap (the highest scorer: 608 MWh over 830 hours, longest event 581 hours, 15 MW-months of power gap). The leader is now the best adequate option, OPIAR4Q (score 89.8).
 
+## How the summary's numbers are worked out
+
+Built 24 October 2026 (work package 16; chapter 22 shows the summary). Every number in it comes from the scoring above.
+
+**Why it leads.** The score gap between #1 and #2 splits exactly into one part per axis:
+
+::: formula
+| part for an axis = effective weight × (axis score of #1 − axis score of #2)
+| the four parts add up to score of #1 − score of #2
+:::
+
+In T1 (24 October 2026), the gap of 0.15 points is 0.11 from cost (axis scores 98.58 and 98.28, × 0.35) and 0.04 from carbon (91.65 and 91.47, × 0.25); time-to-power and deliverability are level. The summary names the largest three parts that favour #1; parts that favour #2 go under "What it gives up".
+
+**The weight change that changes the leader.** Raise one axis's weight by a share t of the way to 100 %, with the other weights scaled down in proportion. The axis ranges do not depend on the weights, so every option's score moves in a straight line:
+
+::: formula
+| score(t) = (1 − t) × score now + t × axis score
+| option j overtakes the leader at t = gap ÷ (gap + (axis score of j − axis score of the leader))
+| the axis weight there = weight now + t × (1 − weight now)
+:::
+
+Lowering a weight towards 0 % works the same way, with "axis score" replaced by the score the option would have with that axis left out. The engine solves this for each axis, both ways, against every option in the leader's group (adequate, and requirement-compliant when that setting is on), keeps the smallest change, and states the first whole per cent past the crossing with the option that leads there (test 43 checks each one by re-scoring). In T1 the leader survives every change but two modest ones: removing deliverability altogether (the crossing is at 0.3 %) puts #26 first, and lowering cost from 35 % to 13 % (crossing 13.5 %) or raising deliverability to 38 % (crossing 37.5 %) puts #595 first.
+
+**What it gives up** compares the leader's axis scores with the best of its group on each axis and names up to two gaps larger than 0.5 axis points (judgement). **Confidence** counts the options of the group within 1 point of the leader, the leader's "assumed default" flags (chapter 42) and the unverified registry records. **Inputs with most influence** sorts the tornado rows by their swing in the tornado's measure (LCOE when the measure is the weighted score, which depends on the weights); equal swings put the less certain record (confidence C) first.
+
 # 45. The trade-off view {#ch45}
 
 **Frontier.** On the two chosen axes (each turned so that lower is better), the frontier is the set of options not beaten on both: sort by the first axis, then keep each option whose second value is lower than that of every option with a smaller first value. Options with exactly equal values are all kept. The frontier is computed over all screened options, so filters never move it.

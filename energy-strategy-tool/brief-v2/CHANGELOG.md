@@ -319,3 +319,11 @@ No change to the agreed design; the brief records what the program now does wher
 2. §9.8: rented bridging plant is hired one month before it is first needed; bridging plant kept as the backup is bought (or hired) in step with the buildings; dispatch runs to the first year that starts after the last change (limit 15 years, with a run flag); firm plant needed below its minimum stable load runs at its minimum while the grid import backs off; first power is the later of the phase 1 date and the month the supply is ready.
 3. §5.4: an entered network charge and levy figure replaces the country default.
 4. §5.4, §7.2, §8: existing plant near the site, leased (work package 12, OPEN-QUESTIONS 78–82): an input group, C2 and C4 value "Existing plant (lease)", generator rules (l)–(n). Firm plant needed at its minimum stable load displaces PPA energy before its output is wasted (OPEN-QUESTIONS 77).
+
+## Revision 5, as-built notes (2026-10-24): work package 16, plain-English summary
+
+OPEN-QUESTIONS 12 answered with Claude's recommendation, accepted in advance by the owner (templates, deterministic, offline, editable); the details are OPEN-QUESTIONS 86–92.
+
+1. §14: built. Where it is shown, how the words are counted, the runner-up, the exact weight change, the use of the tornado, the edit kept as a note, and which flags it lists are recorded under §14 "As built".
+2. §12.10: the PDF prints the summary on its own page after the cover, before section 1.
+3. AC 12: met except the two breakevens, which are not built (the summary says so).

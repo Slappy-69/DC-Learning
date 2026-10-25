@@ -164,12 +164,20 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **User guide:** chapters 4, 29 and 56.
 - **Progress:** built 2026-10-24 on `feature/engine-fixes`, not merged.
 
+### 16. Plain-English summary (added 2026-10-24)
+
+- **Why:** BRIEF §14 and AC 12: a short text that says what the run shows, for the engineer and for the PDF reader.
+- **Decision:** OPEN-QUESTIONS 12 and 86–92, Claude's recommendations accepted in advance by the owner (2026-10-24).
+- **What:** `src/engine/summary.js` (`plainSummary`, `weightChanges`, `summaryKey`); `src/components/SummaryPanel.jsx` at the top of the Options tab; a Summary page after the PDF cover; the edited note in the study file (`notes.summary`).
+- **Acceptance tests:** Node test 43 (`app/tests/summary-tests.mjs`); browser check B38; test 30 now expects the Summary section first. Test 44: known issue 21, found while building it (assumed-default flags missing in pool workers), fixed.
+- **User guide:** chapters 22, 29, 44, 54 and 56.
+- **Progress:** built 2026-10-24 on `feature/plain-summary` (from `main` after packages 0–15 were merged), not merged.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:
 
 - Known issues: none open (all 20 resolved by 2026-10-24).
-- The plain-English summary (§14; OPEN-QUESTIONS 12).
 - Ranges, Monte Carlo, robust pick, breakevens and scenarios (§13).
 - Parallel coordinates, the choice-impact chart, the schematic, key quantities, presentation mode, snapshots, undo and redo (§12, §16).
 - Code signing for the Windows program (`../packaging/README.md`).

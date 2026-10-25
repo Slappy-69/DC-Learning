@@ -1,4 +1,40 @@
-# 22. Results: the top five and the options table {#ch22}
+# 22. Results: the summary, the top five and the options table {#ch22}
+
+## The summary
+
+::: {.callout .built}
+**Built 24 October 2026 (work package 16; OPEN-QUESTIONS 12 and 86–92).** The Options tab opens with a **Summary**: a short text, at most 250 words, that says in plain words what the run shows under your weights and settings. It is written by fixed templates from the run's own figures, with no language model and no network, so the same run always gives the same words, in the browser and in the Windows program. It describes; it never advises, and it never uses the word "recommendation". **Hide** folds it away.
+:::
+
+![The Summary at the top of the Options tab after the T1 run (24 October 2026; figures in pounds, the display currency for T1).](img/s25-summary.png)
+
+It has seven parts, always in this order:
+
+| Part | What it says |
+|---|---|
+| Leading option | The option that leads under the current weights, its score, LCOE, capex, carbon and time-to-power. With a tornado run on the leader, its LCOE range with each tested input moved one at a time |
+| Why it leads | How far it is ahead of #2, split into the axis differences that make up the gap (in score points), and one of the choices on which #2 differs |
+| What it gives up | The axes where #2 does better, and where the best option of the same group does better by more than 0.5 axis points |
+| Confidence | How many other options score within 1 point; how many key inputs the leader uses were left at their defaults; how many default records are unverified |
+| What would change the answer | The smallest change of one weight that puts another option first, and which option |
+| Open flags on the leader | Resilience status; permitting and fuel flags; any other major flag. Site-fit flags only while the Site tab (Beta) is on |
+| Inputs with most influence | With a tornado run on the leader, the three inputs with the largest swing, with their data confidence |
+
+The summary ends with the guardrail sentence. **More detail** under it lists, part by part, the figures behind each sentence, every weight change that alters the leader, all the leader's flags, and what is not built yet. When a summary would be longer than 250 words, its least important sentences move into More detail. Rank probability, the robust pick and breakevens need features that are not built (Monte Carlo and breakevens, chapter 48); the summary says so rather than guessing. Chapter 44 shows how its numbers are worked out.
+
+**The T1 example** (analysis start January 2027, run of 24 October 2026) reads, before any tornado:
+
+> **Leading option.** The option that leads under the current weights (cost 35 %, carbon 25 %, time-to-power 25 %, deliverability 15 %) is #1, Grid + hvo-diesel prime bridge → retain as prime · retained-plant backup · Evaporative-adiabatic · PV 5.6 MWp · PPA hybrid 100 %, with a score of 94.1. LCOE €152/MWh, capex €84.9 m, carbon 121 g/kWh (location-based), power on time.
+> **Why it leads.** It is 0.15 points ahead of #2, from cost (LCOE €152 against €153/MWh, 0.11 points) and carbon (121 against 122 g/kWh, 0.04 points). #2 differs in 8 choices, among them bridging plant after grid arrives: Remove.
+> **What it gives up.** On deliverability it has 89 points; the best of the adequate options, #595, has 96.8 points.
+> **Confidence.** 21 other adequate options score within 1 point of it. It uses 13 key inputs left at their defaults; 539 of 563 default records are indicative — unverified.
+> **What would change the answer.** #26 would lead if the deliverability weight fell from 15 % to 0 %, the other weights scaled in proportion. #595 would lead if the cost weight fell from 35 % to 13 %.
+> **Open flags on the leader.** Resilience: meets the requirement. Permitting: aggregated combustion thermal input 337 MWth ≥ 50 MWth (IED threshold), a major flag, and 2 minor flags. Fuel and utilities: HVO-diesel prime bridging, a minor flag.
+> **Inputs with most influence.** The tornado has not been run on #1 (Sensitivity tab), so the inputs with most influence are not listed.
+
+After the tornado with its seven default drivers, the first part adds "its LCOE is €140 to €171/MWh" and the last reads "grid import price (confidence C) moves LCOE by up to €30.7/MWh across its range. Next: grid full-connection date (C), €11.7/MWh; capex (C), €10.7/MWh." (Figures in euro; the screen shows the display currency, pounds for T1.)
+
+**Editing.** **Edit summary** opens the text in a box. **Save note** keeps your text as a note marked **edited**, shown in place of the generated text, with the generated summary one click below. If the result changes afterwards (another leader, other weights or scoring settings, other inputs), the note says it was written for an earlier result and the summary for the current result opens under it. **Discard edit** removes the note. The note is saved in the study file and printed in the PDF after the generated summary (chapter 29). Editing it never starts a run.
 
 ## The top five cards
 
@@ -246,6 +282,7 @@ How the layout works is in chapter 36.
 **Save study** writes one file, named after the project and the date (for example `Pego-data-centre-campus-study-2026-10-24.json`; the Windows program asks where to save it). It holds:
 
 - your inputs as entered: a value you did not enter is stored as "at default", so a reopened study takes the tool's defaults of the day;
+- your edited summary note, if there is one (chapter 22; 24 October 2026);
 - the inputs as they were run, with every default resolved, for the record;
 - a record of the result of the last run of those inputs: its fingerprint (input hash), the number of options and adequate options, and the leader with its score, LCOE, carbon and capex.
 
@@ -267,6 +304,7 @@ The sections (OPEN-QUESTIONS 32, answered 23 October 2026):
 | Section | What it holds |
 |---|---|
 | Cover | Project, date, location, analysis start, IT load, options screened, engine version, inputs fingerprint, and the guardrail |
+| Summary | The plain-English summary of chapter 22 (built 24 October 2026), its detail, and your edited note marked "edited" when there is one (with a line when it was written for an earlier result). Site-fit flags are left out |
 | 1. Inputs | Every input with its value and "Entered", "Entered (required)" or "Default" with its label and basis. Site geometry (Site tab) is left out |
 | 2. Assumptions | The defaults the run used, with basis and note; how many registry records are unverified |
 | 3. Results | Run summary and weights, the leader, the top five cards (figures, pros, cons, main flags), the top 20 |

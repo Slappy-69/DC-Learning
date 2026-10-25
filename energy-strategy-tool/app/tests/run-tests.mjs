@@ -85,6 +85,7 @@ import { existingPlantTests } from './existing-plant-tests.mjs';
 import { layoutScopeTests } from './layout-scope-tests.mjs';
 import { archetypeTests } from './archetype-tests.mjs';
 import { studyTests } from './study-tests.mjs';
+import { summaryTests } from './summary-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1240,6 +1241,9 @@ await archetypeTests(test, siteRuns);
 
 // 42. Work package 15: study files (tests/study-tests.mjs)
 await studyTests(test, siteRuns);
+
+// 43–44. Work package 16: the plain-English summary; known issue 21 (tests/summary-tests.mjs)
+await summaryTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);
