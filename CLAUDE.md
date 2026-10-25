@@ -14,7 +14,7 @@ Read these before doing anything, in this order:
 6. `energy-strategy-tool/app/BUILD-NOTES.md`: architecture, every default with its label, decisions and test runs.
 7. The user guide, `energy-strategy-tool/docs/user-guide/`: how every number is worked out (Part IV), the defaults checked against published sources (chapter 50), and drawings of the agreed screens (`mock/*.html`).
 
-**Development restarted on 2026-10-22.** Every package in the build plan (0 to 15, and 3b) is built and was merged into `main` on 2026-10-24 with the owner's yes; `STATUS.md` has the state, the open decisions and what is waiting for the owner. Build further only when the owner asks, and follow the build plan and `STATUS.md` unless the owner says otherwise.
+**Development restarted on 2026-10-22.** Every package in the build plan (0 to 18, and 3b) is built and merged into `main` with the owner's yes (0 to 15 on 2026-10-24, 16 to 18 on 2026-10-25); `STATUS.md` has the state, the open decisions and what is waiting for the owner. Build further only when the owner asks, and follow the build plan and `STATUS.md` unless the owner says otherwise.
 
 ## Working with the owner
 

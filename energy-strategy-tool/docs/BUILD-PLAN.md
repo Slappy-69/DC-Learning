@@ -1,5 +1,7 @@
 # Build plan: the walkthrough changes
 
+> **State (2026-10-25):** every package below, 0 to 18 and 3b, is built and in `main` (0 to 15 merged on 2026-10-24, 16 to 18 on 2026-10-25, each with the owner's yes). "Not merged" in the older progress lines was written before those merges.
+
 The owner's walkthrough of 2026-10-21 agreed a set of changes to the tool. This plan breaks them into work packages in the order recorded in the project's handoff note at the end of the walkthrough (`claude/handoff-concept-tool.md` in the owner's Claude project); **The owner confirmed this order on 2026-10-22** (as recorded, 0 to 10) and asked to start package 0. Take the packages in order unless the owner says otherwise.
 
 The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lists the brief sections, the open questions to ask the owner first, the acceptance tests (brief §21) and the user-guide chapters and mock-ups that show the agreed design. The working rules are in `../../CLAUDE.md`.
@@ -171,7 +173,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **What:** `src/engine/summary.js` (`plainSummary`, `weightChanges`, `summaryKey`); `src/components/SummaryPanel.jsx` at the top of the Options tab; a Summary page after the PDF cover; the edited note in the study file (`notes.summary`).
 - **Acceptance tests:** Node test 43 (`app/tests/summary-tests.mjs`); browser check B38; test 30 now expects the Summary section first. Test 44: known issue 21, found while building it (assumed-default flags missing in pool workers), fixed.
 - **User guide:** chapters 22, 29, 44, 54 and 56.
-- **Progress:** built 2026-10-24 on `feature/plain-summary` (from `main` after packages 0–15 were merged), not merged.
+- **Progress:** built 2026-10-24 on `feature/plain-summary` (from `main` after packages 0–15 were merged); merged into `main` on 2026-10-25 with the owner's yes.
 
 ### 17. Breakeven table (added 2026-10-24)
 
@@ -180,7 +182,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **What:** `src/engine/breakeven.js` (`breakevenSteps`, `breakevens`, `breakevenCompetitors`, `nearestFlips`); `src/components/BreakevenPanel.jsx` on the Sensitivity tab; the table in the PDF's section 7; the summary's part 5; three run-setting records (`sensitivity.breakevenCompetitors`, `sensitivity.breakevenDrivers`, `sensitivity.breakevenTolerance`).
 - **Acceptance tests:** Node test 45 (`app/tests/breakeven-tests.mjs`); browser check B39.
 - **User guide:** chapters 27, 29, 46, 54 and 56; appendix A (three new records).
-- **Progress:** built 2026-10-24 on `feature/plain-summary`, not merged.
+- **Progress:** built 2026-10-24 on `feature/plain-summary`; merged into `main` on 2026-10-25 with the owner's yes.
 
 ### 18. Uncertainty: Monte Carlo (added 2026-10-25)
 
@@ -189,7 +191,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **What:** `src/engine/montecarlo.js` (`monteCarloSteps`, `monteCarlo`, `latinHypercube`, `triangular`); `evaluateOption` takes `rep` (representative days) and `skipLayout`; `notLaidOut` moved to `sitefit.js`; `src/components/UncertaintyPanel.jsx` on the Sensitivity tab; the header strip, the summary (parts 1 and 4) and the PDF (section 7); seven records `uncertainty.*`.
 - **Acceptance tests:** Node test 46 (`app/tests/montecarlo-tests.mjs`); browser check B40.
 - **User guide:** chapters 13, 22, 27, 29, 46, 54 and 56; appendix A.
-- **Progress:** built 2026-10-25 on `feature/plain-summary`, not merged.
+- **Progress:** built 2026-10-25 on `feature/plain-summary`; merged into `main` on 2026-10-25 with the owner's yes.
 
 ## Not scheduled
 
