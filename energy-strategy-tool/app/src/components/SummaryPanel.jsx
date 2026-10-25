@@ -5,9 +5,9 @@ import { plainSummary, summaryKey, SUMMARY_TITLE } from '../engine/summary.js';
 // the run's numbers; updated with every ranking change. The engineer can edit it: the edit is kept as a user note,
 // marked "edited", and shown in place of the generated text until it is discarded. When the result changes after the
 // edit, the note says so and the generated summary for the current result is shown under it.
-export default function SummaryPanel({ run, sensitivity = null, siteBeta = false, note = null, onSaveNote, onDiscardNote, onShowSensitivity, open = true, onToggle }) {
-  const s = useMemo(() => plainSummary(run, { sensitivity, siteBeta }), [run, sensitivity, siteBeta]);
-  const key = useMemo(() => summaryKey(run), [run]);
+export default function SummaryPanel({ run, sensitivity = null, breakevens = null, siteBeta = false, note = null, onSaveNote, onDiscardNote, onShowSensitivity, open = true, onToggle }) {
+  const s = useMemo(() => plainSummary(run, { sensitivity, breakevens, siteBeta }), [run, sensitivity, breakevens, siteBeta]);
+  const key = useMemo(() => (s ? summaryKey(run, { siteBeta, usedTornado: s.usedTornado, usedBreakevens: s.usedBreakevens }) : ''), [run, s, siteBeta]);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   if (!s) return null;
@@ -17,7 +17,7 @@ export default function SummaryPanel({ run, sensitivity = null, siteBeta = false
     const t = draft.trim();
     setEditing(false);
     if (!t || t === s.text.trim()) { if (onDiscardNote) onDiscardNote(); return; }
-    if (onSaveNote) onSaveNote({ text: t, key, leaderId: s.leaderId, leaderName: s.leaderName, editedAt: new Date().toISOString() });
+    if (onSaveNote) onSaveNote({ text: t, key, leaderId: s.leaderId, leaderName: s.leaderName, editedAt: new Date().toISOString(), siteBeta: !!siteBeta });
   };
   const generated = (
     <div className="sum-text">
@@ -36,7 +36,7 @@ export default function SummaryPanel({ run, sensitivity = null, siteBeta = false
           <p className="note">Written by fixed templates from this run's figures: it describes the result under your weights and settings and does not advise. {s.words} of {s.wordLimit} words.</p>
           {editing ? (
             <div className="sum-edit">
-              <label htmlFor="summary-edit" className="small">Summary text (kept as your note, marked “edited”)</label>
+              <label htmlFor="summary-edit" className="small">Summary text (kept as your note, marked “edited”){siteBeta ? '. With the Site tab (Beta) on, the note is left out of the PDF' : ''}</label>
               <textarea id="summary-edit" rows={14} value={draft} onChange={(e) => setDraft(e.target.value)} />
               <div className="btn-row">
                 <button type="button" className="chip-btn" id="summary-save" onClick={save}>Save note</button>
@@ -48,7 +48,7 @@ export default function SummaryPanel({ run, sensitivity = null, siteBeta = false
               {stale ? <p className="notice" role="status">Written for an earlier result (leader then: {note.leaderName}). The summary generated for the current result is below the note.</p> : null}
               <div className="sum-note" aria-label="Your edited summary">
                 {note.text.split(/\n+/).map((t, i) => <p key={i}>{t}</p>)}
-                <p className="small sum-meta">Edited {String(note.editedAt || '').slice(0, 10)}.</p>
+                <p className="small sum-meta">Edited {String(note.editedAt || '').slice(0, 10)}.{note.siteBeta ? ' Written with the Site tab (Beta) on, so it is left out of the PDF.' : ''}</p>
               </div>
               <div className="btn-row">
                 <button type="button" className="chip-btn" id="summary-edit-btn" onClick={startEdit}>Edit note</button>
@@ -64,7 +64,7 @@ export default function SummaryPanel({ run, sensitivity = null, siteBeta = false
               {generated}
               <div className="btn-row">
                 <button type="button" className="chip-btn" id="summary-edit-btn" onClick={startEdit}>Edit summary</button>
-                {!s.usedTornado && onShowSensitivity ? <button type="button" className="chip-btn" onClick={onShowSensitivity}>Sensitivity tab</button> : null}
+                {(!s.usedTornado || !s.usedBreakevens) && onShowSensitivity ? <button type="button" className="chip-btn" onClick={onShowSensitivity}>Sensitivity tab</button> : null}
               </div>
             </>
           )}
@@ -76,7 +76,7 @@ export default function SummaryPanel({ run, sensitivity = null, siteBeta = false
                 <ul className="plain small">{s.details[p.id].map((t, i) => <li key={i}>{t}</li>)}</ul>
               </div>
             ) : null))}
-            <p className="small">Not built yet, so not in the summary: {s.notBuilt.join('; ')}.</p>
+            <p className="small">Not built yet, so not in the summary: {s.notBuilt.join('; ')}.{s.notRun.length ? ` Not run yet for this result (Sensitivity tab): ${s.notRun.join('; ')}.` : ''}</p>
           </details>
         </div>
       ) : null}

@@ -173,12 +173,21 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **User guide:** chapters 22, 29, 44, 54 and 56.
 - **Progress:** built 2026-10-24 on `feature/plain-summary` (from `main` after packages 0–15 were merged), not merged.
 
+### 17. Breakeven table (added 2026-10-24)
+
+- **Why:** BRIEF §13.3: at which driver value the leader loses its place, against which option. It also fills the summary's "what would change the answer".
+- **Decision:** OPEN-QUESTIONS 93–97, Claude's recommendations accepted in advance by the owner (2026-10-24).
+- **What:** `src/engine/breakeven.js` (`breakevenSteps`, `breakevens`, `breakevenCompetitors`, `nearestFlips`); `src/components/BreakevenPanel.jsx` on the Sensitivity tab; the table in the PDF's section 7; the summary's part 5; three run-setting records (`sensitivity.breakevenCompetitors`, `sensitivity.breakevenDrivers`, `sensitivity.breakevenTolerance`).
+- **Acceptance tests:** Node test 45 (`app/tests/breakeven-tests.mjs`); browser check B39.
+- **User guide:** chapters 27, 29, 46, 54 and 56; appendix A (three new records).
+- **Progress:** built 2026-10-24 on `feature/plain-summary`, not merged.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:
 
 - Known issues: none open (all 20 resolved by 2026-10-24).
-- Ranges, Monte Carlo, robust pick, breakevens and scenarios (§13).
+- Ranges, Monte Carlo, robust pick and scenarios (§13).
 - Parallel coordinates, the choice-impact chart, the schematic, key quantities, presentation mode, snapshots, undo and redo (§12, §16).
 - Code signing for the Windows program (`../packaging/README.md`).
 - The packaging Opus review that did not complete, and the NVDA screen-reader walk-through.

@@ -6,35 +6,35 @@
 **Built 24 October 2026 (work package 16; OPEN-QUESTIONS 12 and 86–92).** The Options tab opens with a **Summary**: a short text, at most 250 words, that says in plain words what the run shows under your weights and settings. It is written by fixed templates from the run's own figures, with no language model and no network, so the same run always gives the same words, in the browser and in the Windows program. It describes; it never advises, and it never uses the word "recommendation". **Hide** folds it away.
 :::
 
-![The Summary at the top of the Options tab after the T1 run (24 October 2026; figures in pounds, the display currency for T1).](img/s25-summary.png)
+![The Summary at the top of the Options tab after the T1 run (24 October 2026). The screen shows pounds, the display currency for the T1 site; the example text below was run in euro.](img/s25-summary.png)
 
 It has seven parts, always in this order:
 
 | Part | What it says |
 |---|---|
 | Leading option | The option that leads under the current weights, its score, LCOE, capex, carbon and time-to-power. With a tornado run on the leader, its LCOE range with each tested input moved one at a time |
-| Why it leads | How far it is ahead of #2, split into the axis differences that make up the gap (in score points), and one of the choices on which #2 differs |
+| Why it leads | How far it is ahead of #2, split into the axis differences that make up the gap (in score points): those that favour #1 with their figures, those that favour #2 by their points, so the named parts add up to the gap; and one of the choices on which #2 differs |
 | What it gives up | The axes where #2 does better, and where the best option of the same group does better by more than 0.5 axis points |
 | Confidence | How many other options score within 1 point; how many key inputs the leader uses were left at their defaults; how many default records are unverified |
-| What would change the answer | The smallest change of one weight that puts another option first, and which option |
-| Open flags on the leader | Resilience status; permitting and fuel flags; any other major flag. Site-fit flags only while the Site tab (Beta) is on |
+| What would change the answer | The smallest change of one weight that puts another option first, and which option; once the breakeven table has been run (chapter 27), the two flips nearest today's values |
+| Open flags on the leader | Resilience status; permitting and fuel flags; any other major flag. Site-fit flags only while the Site tab (Beta) is on. When many flags would take the text past 250 words, it gives their count and More detail lists them |
 | Inputs with most influence | With a tornado run on the leader, the three inputs with the largest swing, with their data confidence |
 
-The summary ends with the guardrail sentence. **More detail** under it lists, part by part, the figures behind each sentence, every weight change that alters the leader, all the leader's flags, and what is not built yet. When a summary would be longer than 250 words, its least important sentences move into More detail. Rank probability, the robust pick and breakevens need features that are not built (Monte Carlo and breakevens, chapter 48); the summary says so rather than guessing. Chapter 44 shows how its numbers are worked out.
+The summary ends with the guardrail sentence. **More detail** under it lists, part by part, the figures behind each sentence, every weight change that alters the leader, all the leader's flags, and what is not built yet. When a summary would be longer than 250 words, its least important sentences move into More detail. Rank probability and the robust pick need Monte Carlo, which is not built; the summary says so rather than guessing. The tornado and the breakevens run on request on the Sensitivity tab; until they have been run for the current result, More detail lists them as not run. Chapter 44 shows how its numbers are worked out.
 
 **The T1 example** (analysis start January 2027, run of 24 October 2026) reads, before any tornado:
 
 > **Leading option.** The option that leads under the current weights (cost 35 %, carbon 25 %, time-to-power 25 %, deliverability 15 %) is #1, Grid + hvo-diesel prime bridge → retain as prime · retained-plant backup · Evaporative-adiabatic · PV 5.6 MWp · PPA hybrid 100 %, with a score of 94.1. LCOE €152/MWh, capex €84.9 m, carbon 121 g/kWh (location-based), power on time.
-> **Why it leads.** It is 0.15 points ahead of #2, from cost (LCOE €152 against €153/MWh, 0.11 points) and carbon (121 against 122 g/kWh, 0.04 points). #2 differs in 8 choices, among them bridging plant after grid arrives: Remove.
+> **Why it leads.** It is 0.15 points ahead of #2: 0.11 points from cost (LCOE €152 against €153/MWh) and 0.04 points from carbon (121 against 122 g/kWh). #2 differs in 8 choices, among them bridging plant after grid arrives: Remove.
 > **What it gives up.** On deliverability it has 89 points; the best of the adequate options, #595, has 96.8 points.
-> **Confidence.** 21 other adequate options score within 1 point of it. It uses 13 key inputs left at their defaults; 539 of 563 default records are indicative — unverified.
+> **Confidence.** 21 other adequate options score within 1 point of it. It uses 13 key inputs left at their defaults; 542 of 566 default records are indicative — unverified.
 > **What would change the answer.** #26 would lead if the deliverability weight fell from 15 % to 0 %, the other weights scaled in proportion. #595 would lead if the cost weight fell from 35 % to 13 %.
 > **Open flags on the leader.** Resilience: meets the requirement. Permitting: aggregated combustion thermal input 337 MWth ≥ 50 MWth (IED threshold), a major flag, and 2 minor flags. Fuel and utilities: HVO-diesel prime bridging, a minor flag.
 > **Inputs with most influence.** The tornado has not been run on #1 (Sensitivity tab), so the inputs with most influence are not listed.
 
-After the tornado with its seven default drivers, the first part adds "its LCOE is €140 to €171/MWh" and the last reads "grid import price (confidence C) moves LCOE by up to €30.7/MWh across its range. Next: grid full-connection date (C), €11.7/MWh; capex (C), €10.7/MWh." (Figures in euro; the screen shows the display currency, pounds for T1.)
+After the tornado with its seven default drivers, the first part adds "its LCOE is €140 to €171/MWh" and the last reads "grid import price (confidence C) moves LCOE by up to €30.7/MWh across its range. Next: grid full-connection date (C), €11.7/MWh; capex (C), €10.7/MWh." After the breakevens, part 5 adds "Breakevens: #7 would lead if the grid full-connection date slipped by 14 months or more; #2 would lead if capex rose to × 1.41." With both, the summary keeps to 250 words by moving the LCOE range and the second weight change into More detail. (Figures in euro; the screen shows the display currency, pounds for T1.)
 
-**Editing.** **Edit summary** opens the text in a box. **Save note** keeps your text as a note marked **edited**, shown in place of the generated text, with the generated summary one click below. If the result changes afterwards (another leader, other weights or scoring settings, other inputs), the note says it was written for an earlier result and the summary for the current result opens under it. **Discard edit** removes the note. The note is saved in the study file and printed in the PDF after the generated summary (chapter 29). Editing it never starts a run.
+**Editing.** **Edit summary** opens the text in a box. **Save note** keeps your text as a note marked **edited**, shown in place of the generated text, with the generated summary one click below. If the result changes afterwards (another leader, other weights or scoring settings, other inputs), the note says it was written for an earlier result and the summary for the current result opens under it. **Discard edit** removes the note. The note is saved in the study file and printed in the PDF after the generated summary (chapter 29), except a note written with the Site tab (Beta) on, which may hold site-fit wording: the PDF says one exists and leaves it out. The note also counts as written for an earlier result when the Site tab is switched, or when a tornado or the breakevens are run on the leader, since each changes the generated text. Editing it never starts a run.
 
 ## The top five cards
 
@@ -242,6 +242,23 @@ The screenshot above shows the tornado before work package 9 (score measured, th
 
 ![MOCK-UP of the tornado measuring LCOE (now built as the default measure).](img/m08-tornado.png)
 
+## Breakevens
+
+::: {.callout .built}
+**Built 24 October 2026 (work package 17; OPEN-QUESTIONS 93–97).** Under the tornado, **Run breakevens** asks, for the leader and each of five competitors: how far would each of eight drivers have to move before the competitor takes the leader's place? It runs on request (T1: 224 re-runs, a few seconds) and changes nothing in the run.
+:::
+
+![The breakeven table for the T1 leader (24 October 2026): one column per competitor, the flip below and above today's value in each cell.](img/s26-breakevens.png)
+
+- **Competitors:** #2, then the best option of each other strategy (the strategies of the top-five cards), in rank order.
+- **Drivers:** the eight, of all sixteen, that move the leader's weighted score most between their low and high values. They are chosen afresh by the breakeven run, whatever is ticked for the tornado.
+- **Each cell** gives, for one driver and one competitor, the value below the current one ("Lower", or "Earlier" for the grid date) and above it ("Higher", "Later") at which the two swap places, or "no flip" within the driver's range. For the grid date the cell also gives the date.
+- **Nearest flips** under the table: the flips closest to today's values, as a share of each driver's range. The summary (chapter 22) names the two nearest.
+
+The order is the ranking's: an option that serves its load in every hour stays ahead of one that does not, then the weighted score decides, on the run's own axis scales. The search checks the middle and the end of each side of the current value and narrows the first swap to 2 % of the range (to one month, year or hour for the grid date, the evaluation period and test hours). A swap that reverses again between two checked points is not seen.
+
+**The T1 example** (24 October 2026). The competitors are #2, #5, #7, #11 and #16; the drivers, largest swing first, are electricity price escalation, grid import price, grid date, grid carbon, evaluation period, capex, WACC and battery capex. Only two cells flip: #7 (rented bridge, removed) takes the lead if the grid date slips by 14 months or more, and #2 if every capex line rises to × 1.41. Every other competitor stays behind on every driver across its range: the T1 leader is robust to these inputs, while the margins are small (0.15 points to #2).
+
 # 28. Site (Beta) {#ch28}
 
 ::: {.callout .built}
@@ -304,14 +321,14 @@ The sections (OPEN-QUESTIONS 32, answered 23 October 2026):
 | Section | What it holds |
 |---|---|
 | Cover | Project, date, location, analysis start, IT load, options screened, engine version, inputs fingerprint, and the guardrail |
-| Summary | The plain-English summary of chapter 22 (built 24 October 2026), its detail, and your edited note marked "edited" when there is one (with a line when it was written for an earlier result). Site-fit flags are left out |
+| Summary | The plain-English summary of chapter 22 (built 24 October 2026), its detail, and your edited note marked "edited" when there is one (with a line when it was written for an earlier result). Site-fit flags are left out, and so is a note written with the Site tab (Beta) on |
 | 1. Inputs | Every input with its value and "Entered", "Entered (required)" or "Default" with its label and basis. Site geometry (Site tab) is left out |
 | 2. Assumptions | The defaults the run used, with basis and note; how many registry records are unverified |
 | 3. Results | Run summary and weights, the leader, the top five cards (figures, pros, cons, main flags), the top 20 |
 | 4. Trade-offs | LCOE against location-based carbon for every option; the top five numbered |
 | 5. Compare | The options ticked for comparison, their headline figures and the choices on which they differ |
 | 6. Dispatch | Energy balance of the top five in the last modelled year and in the first year with load (GWh) |
-| 7. Sensitivity | The last tornado run in the Sensitivity tab, with its chart and table, in the measure chosen there |
+| 7. Sensitivity | The last tornado run in the Sensitivity tab, with its chart and table, in the measure chosen there; the breakeven table when it was run for this run (24 October 2026) |
 | 8. Flags | Every flag on the top five (not the site-fit flags), and the run notes |
 | 9. Method | How the options are generated, dispatched, costed and ranked; run settings; the guardrail |
 

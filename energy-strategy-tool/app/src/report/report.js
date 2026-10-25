@@ -11,6 +11,7 @@ import { NA } from '../engine/generator.js';
 import { topCards } from '../engine/cards.js';
 import { measureById, sortRows } from '../engine/sensitivity.js';
 import { plainSummary, summaryKey } from '../engine/summary.js';
+import { nearestFlips, gridDateAt } from '../engine/breakeven.js';
 import { GUARDRAIL, sig, money, monthLabel, pct, perMWh, cur, displayCurrency } from '../format.js';
 
 // Input sections in the order of the inputs panel; site geometry belongs to the Site tab (Beta) and is left out.
@@ -127,7 +128,7 @@ export function buildReport(run, view = {}) {
 
   // ---- Summary (work package 16, BRIEF §14): the generated text, its detail, and the engineer's edit marked "edited".
   // Site fit is never in it (the Site tab is Beta and kept out of the PDF).
-  const sm = plainSummary(run, { sensitivity: view.sensitivity || null, siteBeta: false });
+  const sm = plainSummary(run, { sensitivity: view.sensitivity || null, breakevens: view.breakevens || null, siteBeta: false });
   if (sm) {
     doc.newPage();
     H1('Summary');
@@ -135,10 +136,12 @@ export function buildReport(run, view = {}) {
     for (const p of sm.parts) { doc.ensure(40); doc.para(p.heading, { bold: true, size: 10, gap: 1 }); doc.para(p.text, { size: 9.5 }); }
     doc.para(sm.guardrail, { size: 9, bold: true, gap: 8 });
     const note = view.summaryNote && typeof view.summaryNote.text === 'string' ? view.summaryNote : null;
-    if (note) {
+    // A note written with the Site tab (Beta) on can hold site-fit wording, and the Site tab stays out of the PDF (H5, H1).
+    if (note && note.siteBeta) doc.para('An edited summary note exists, but it was written with the Site tab (Beta) on, so it is left out of this report.', { size: 8.5, color: MUTED });
+    else if (note) {
       doc.ensure(60);
       doc.heading('Summary as edited by the engineer (edited)', 2);
-      if (note.key !== summaryKey(run)) doc.para(`Written for an earlier result (leader then: ${note.leaderName || 'not recorded'}); the generated summary above is for this run.`, { size: 8.5, color: FLAG });
+      if (note.key !== summaryKey(run, { siteBeta: false, usedTornado: sm.usedTornado, usedBreakevens: sm.usedBreakevens })) doc.para(`Written for an earlier result (leader then: ${note.leaderName || 'not recorded'}); the generated summary above is for this run.`, { size: 8.5, color: FLAG });
       for (const t of note.text.split(/\n+/)) doc.para(t, { size: 9.5 });
       doc.para(`Edited ${String(note.editedAt || '').slice(0, 10)}.`, { size: 8, color: MUTED });
     }
@@ -149,7 +152,7 @@ export function buildReport(run, view = {}) {
       doc.para(p.heading, { bold: true, size: 8.5, gap: 1 });
       doc.bullets(d, { size: 8 });
     }
-    doc.para(`The flags of the leader are listed in full in section 8. Not built yet, so not in the summary: ${sm.notBuilt.join('; ')}.`, { size: 8, color: MUTED });
+    doc.para(`The flags of the leader are listed in full in section 8. Not built yet, so not in the summary: ${sm.notBuilt.join('; ')}.${sm.notRun.length ? ` Not run for this report: ${sm.notRun.join('; ')}.` : ''}`, { size: 8, color: MUTED });
   }
 
   // ---- 1 Inputs ----
@@ -309,6 +312,19 @@ export function buildReport(run, view = {}) {
     }
     doc.table([{ label: 'Driver', w: 1.6 }, { label: 'Low' }, { label: m.label }, { label: 'High' }, { label: m.label }, { label: 'Score low · high', w: 1.1 }],
       srows.map((r) => [r.label, r.low.text, fmt(m.get(r.low)), r.high.text, fmt(m.get(r.high)), `${sig(r.low.score, 4)} · ${sig(r.high.score, 4)}`]), { size: 7.5, headSize: 7.5 });
+  }
+  // Breakevens (work package 17, §13.3): the leader against five competitors, when they were run for this run.
+  const be = view.breakevens && view.breakevens.leaderId === (lead && lead.id) ? view.breakevens : null;
+  doc.heading('Breakevens', 2);
+  if (!be) doc.para('The breakeven table was not run for this report. Run it in the Sensitivity tab, then make the report again to include it.', { size: 9, color: MUTED });
+  else {
+    doc.para(`The value of each driver, nearest its current value, at which the leader (#1) and a competitor swap places ("no flip" within the driver's range otherwise). Competitors: #2, then the best option of each other strategy; drivers: the ${be.rows.length} that move the leader's weighted score most. Each side of the current value is checked at its middle and its end and the first change of order narrowed to ${Math.round(be.tolerance * 100)} % of the range (whole-number drivers: to 1); a swap that reverses between two checked points is not seen.`, { size: 8.5, color: MUTED });
+    const cell = (r, c, side) => { const f = c.flips[side]; return !f ? 'no flip' : r.id === 'grid-date' ? `${f.text} (${gridDateAt(be, f.at)})` : f.text; };
+    doc.table([{ label: 'Driver (range)', w: 1.7 }, ...be.competitors.map((c) => ({ label: `#${c.rank}`, w: 1 }))],
+      be.rows.map((r) => [`${r.label} (${r.lowText} to ${r.highText})`, ...r.cells.map((c) => `${r.id === 'grid-date' ? 'earlier' : 'lower'}: ${cell(r, c, 'down')}; ${r.id === 'grid-date' ? 'later' : 'higher'}: ${cell(r, c, 'up')}`)]), { size: 7, headSize: 7.5 });
+    doc.bullets(be.competitors.map((c) => `#${c.rank} ${c.name}`), { size: 7.5 });
+    const nf = nearestFlips(be, 3);
+    doc.para(nf.length ? `Nearest flips: ${nf.map((f) => f.text).join('; ')}.` : 'No flip within the drivers\' ranges: the leader stays ahead of every competitor on every driver.', { size: 8.5 });
   }
 
   // ---- 8 Flags ----

@@ -101,3 +101,9 @@ Reports in `verification/walkthrough-build/`. The owner asked for Haiku checks o
 |---|---|---|
 | H4, packages 11–15 (engine fixes, PPA displacement, existing plant, layout scope, archetypes, study files) | Haiku | 0 high, 4 medium, 12 low (33 verified, 15 failed, 7 not verified). Medium: a land-take ceiling hid not-laid-out options; rule (o) wording; stale figures in the guide; Pego product figures not reproducible from the repository. All fixed (`app/BUILD-NOTES.md`, "Fixes after Haiku check H4") |
 | Opus review | — | Waived by the owner ("Don't bother with opus review", 2026-10-23) |
+
+## feature/plain-summary (work packages 16 and 17, 2026-10-24)
+
+| Check | Model | Result |
+|---|---|---|
+| H5, package 16 (plain-English summary) and known issue 21 | Haiku | 1 high, 4 medium, 13 low (50 verified, 20 failed, 4 not verified). High: an edited note written with the Site tab on reached the PDF. Medium: the 250-word limit not enforced with many major flags; "gives up nothing" with one adequate option; hourly CFE called "carbon"; "why it leads" left out the parts favouring #2. All fixed the same day except L13 (the B38 message is the failure message, correct as written); report `plain-summary/H5-summary.md`, fixes in `app/BUILD-NOTES.md` ("Fixes after Haiku check H5") |

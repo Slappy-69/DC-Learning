@@ -31,7 +31,7 @@ export function studyFile(inputs, run = null, { savedAt = new Date(), appVersion
     inputHash: hashInputs(n),
     result: null,
     // The engineer's edit of the plain-English summary (work package 16), kept as a note marked "edited".
-    notes: note && typeof note.text === 'string' ? { summary: { text: note.text, key: note.key || '', leaderId: note.leaderId || null, leaderName: note.leaderName || '', editedAt: note.editedAt || '' } } : {},
+    notes: note && typeof note.text === 'string' ? { summary: { text: note.text, key: note.key || '', leaderId: note.leaderId || null, leaderName: note.leaderName || '', editedAt: note.editedAt || '', siteBeta: !!note.siteBeta } } : {},
   };
   if (run && run.options && run.options.length) {
     const lead = run.options.reduce((a, b) => (a.rank < b.rank ? a : b));
@@ -94,10 +94,15 @@ export function readStudyFile(text) {
   if (dropped.length) warnings.push(`${dropped.length} input${dropped.length === 1 ? '' : 's'} in the file ${dropped.length === 1 ? 'is' : 'are'} not known to this version and ${dropped.length === 1 ? 'was' : 'were'} left out (${dropped.slice(0, 6).join(', ')}${dropped.length > 6 ? ', …' : ''}).`);
   if (f.engineVersion && f.engineVersion !== ENGINE_VERSION) warnings.push(`Saved with engine ${f.engineVersion}; this is engine ${ENGINE_VERSION}.`);
   // The summary note (work package 16): kept when it is a text; a damaged note is dropped with a warning.
-  const sn = isObj(f.notes) ? f.notes.summary : null;
+  // A notes section that is not a set of notes, or a summary note that is not a text, is dropped with a warning (H5, L7);
+  // a file without notes (saved before work package 16) opens without one.
   const notes = {};
-  if (isObj(sn) && typeof sn.text === 'string' && sn.text.trim()) notes.summary = { text: sn.text, key: String(sn.key || ''), leaderId: sn.leaderId || null, leaderName: String(sn.leaderName || ''), editedAt: String(sn.editedAt || '') };
-  else if (sn != null) warnings.push('The summary note in the file is damaged and was left out.');
+  if ('notes' in f && f.notes != null && !isObj(f.notes)) warnings.push('The notes section of the file is damaged and was left out.');
+  else if (isObj(f.notes) && 'summary' in f.notes) {
+    const sn = f.notes.summary;
+    if (isObj(sn) && typeof sn.text === 'string' && sn.text.trim()) notes.summary = { text: sn.text, key: String(sn.key || ''), leaderId: sn.leaderId || null, leaderName: String(sn.leaderName || ''), editedAt: String(sn.editedAt || ''), siteBeta: sn.siteBeta === true };
+    else warnings.push('The summary note in the file is damaged and was left out.');
+  }
   return { ok: true, inputs, file: f, added, dropped, warnings, notes };
 }
 

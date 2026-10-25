@@ -326,4 +326,14 @@ OPEN-QUESTIONS 12 answered with Claude's recommendation, accepted in advance by 
 
 1. §14: built. Where it is shown, how the words are counted, the runner-up, the exact weight change, the use of the tornado, the edit kept as a note, and which flags it lists are recorded under §14 "As built".
 2. §12.10: the PDF prints the summary on its own page after the cover, before section 1.
-3. AC 12: met except the two breakevens, which are not built (the summary says so).
+3. AC 12: met except the two breakevens, which were not built (the summary said so); built the same day in work package 17 (below).
+
+## Revision 5, as-built notes (2026-10-24): work package 17, breakeven table
+
+OPEN-QUESTIONS 93–97 answered with Claude's recommendations, accepted in advance by the owner.
+
+1. §13.3: the breakeven table is built ("As built" note under it): competitors from the top-five strategies, drivers from the leader's score swing over all sixteen drivers, a grid-and-bisection search with the full engine, the ranking's order with unclipped scores.
+2. §13: the intro says the breakeven table is built; ranges, Monte Carlo and scenarios are not.
+3. §14: the summary's part 5 names the two nearest flips when the breakevens have been run.
+4. §12.10: the PDF's section 7 includes the breakeven table when it was run.
+

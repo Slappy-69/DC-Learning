@@ -696,6 +696,10 @@ rec('sensitivity.itLoadFactor', 1, '× IT load of every phase', { low: 0.8, high
 rec('sensitivity.flexTriggerFactor', 1, '× flexibility trigger level', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver range (work package 9). No source.' });
 rec('sensitivity.defaultMeasure', 'lcoe', 'lcoe / npv / carbon / score', { basis: 'judgement', ref: '§13.3', dist: 'fixed', note: 'Walkthrough 2026-10-21: the tornado measures LCOE by default.' });
 rec('sensitivity.topDrivers', 12, 'drivers shown', { basis: 'run setting', ref: '§13.3', dist: 'fixed', note: 'Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). Work package 9 offers 16 drivers with tick boxes; the code clamps this setting to 1–30.' });
+// Breakeven table (§13.3; work package 17, OPEN-QUESTIONS 93–97, 2026-10-24).
+rec('sensitivity.breakevenCompetitors', 5, 'competitors of the leader', { basis: 'run setting', ref: '§13.3', dist: 'fixed', note: 'Breakeven table: the leader against this many competitors (§13.3 default scope 5 × 8). The code clamps it to 1–10.' });
+rec('sensitivity.breakevenDrivers', 8, 'drivers', { basis: 'run setting', ref: '§13.3', dist: 'fixed', note: 'Breakeven table: the drivers with the largest weighted-score swing in the leader\'s tornado (§13.3 default scope 5 × 8). The code clamps it to 1–16.' });
+rec('sensitivity.breakevenTolerance', 0.02, 'share of the driver range', { basis: 'judgement', ref: '§13.3', dist: 'fixed', note: 'Breakeven search: bisection stops when the flip is bracketed within this share of the driver\'s range (whole-number drivers: within 1). No source.' });
 
 // Required inputs (walkthrough 2026-10-21, knowledge levels): only the location and the site area. The app
 // pre-fills the T1 reference example so it can run on load; these are marked "example value — replace" in the UI.

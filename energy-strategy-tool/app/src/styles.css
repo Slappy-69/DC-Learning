@@ -665,3 +665,16 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .sum-generated > summary, .sum-more > summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
 .sum-more h3 { font-size: 13px; margin: 8px 0 2px; }
 .badge-edited { background: var(--info-bg); color: var(--info); font-size: 11px; vertical-align: middle; }
+
+/* Breakeven table (work package 17, BRIEF §13.3) */
+.be { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 12px; }
+.be h3 { font-size: 15px; margin: 0 0 4px; }
+.be-table td { vertical-align: top; min-width: 120px; }
+.be-side { display: block; white-space: nowrap; font-size: 12px; }
+.be-comps { margin: 6px 0; }
+.be-note { margin: 0; color: var(--ink-2); font-size: 12.5px; }
+/* Phone width: the summary keeps the start of the Options tab where the top five began before it (browser check B19). */
+@media (max-width: 767px) {
+  .sum-panel { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 0 0 10px; background: transparent; }
+  .tabs { margin-bottom: 6px; }
+}

@@ -362,7 +362,7 @@ Built 24 October 2026 (work package 16; chapter 22 shows the summary). Every num
 | the four parts add up to score of #1 − score of #2
 :::
 
-In T1 (24 October 2026), the gap of 0.15 points is 0.11 from cost (axis scores 98.58 and 98.28, × 0.35) and 0.04 from carbon (91.65 and 91.47, × 0.25); time-to-power and deliverability are level. The summary names the largest three parts that favour #1; parts that favour #2 go under "What it gives up".
+In T1 (24 October 2026), the gap of 0.15 points is 0.11 from cost (axis scores 98.58 and 98.28, × 0.35) and 0.04 from carbon (91.65 and 91.47, × 0.25); time-to-power and deliverability are level. The summary names every part above 0.005 points: those that favour #1 with their figures, those that favour #2 by their points ("less 0.02 points on hourly CFE, where #2 does better"; their figures are under "What it gives up"), so the named parts add up to the gap, to rounding.
 
 **The weight change that changes the leader.** Raise one axis's weight by a share t of the way to 100 %, with the other weights scaled down in proportion. The axis ranges do not depend on the weights, so every option's score moves in a straight line:
 
@@ -372,7 +372,7 @@ In T1 (24 October 2026), the gap of 0.15 points is 0.11 from cost (axis scores 9
 | the axis weight there = weight now + t × (1 − weight now)
 :::
 
-Lowering a weight towards 0 % works the same way, with "axis score" replaced by the score the option would have with that axis left out. The engine solves this for each axis, both ways, against every option in the leader's group (adequate, and requirement-compliant when that setting is on), keeps the smallest change, and states the first whole per cent past the crossing with the option that leads there (test 43 checks each one by re-scoring). In T1 the leader survives every change but two modest ones: removing deliverability altogether (the crossing is at 0.3 %) puts #26 first, and lowering cost from 35 % to 13 % (crossing 13.5 %) or raising deliverability to 38 % (crossing 37.5 %) puts #595 first.
+Lowering a weight towards 0 % works the same way, with "axis score" replaced by the score the option would have with that axis left out. The engine solves this for each axis, both ways, against every option in the leader's group (adequate, and requirement-compliant when that setting is on), keeps the smallest change, and states the first whole per cent past the crossing with the option that leads there (test 43 checks each one by re-scoring). In T1 the engine finds five such changes: deliverability down from 15 % to 0 % (crossing at 0.3 %: #26 leads), cost down from 35 % to 13 % (13.5 %: #595), deliverability up to 38 % (37.5 %: #595), cost up to 97 % (96.1 %: #26) and carbon up to 99 % (98.6 %: #145). Every other single-weight change leaves the leader in place. Two cases are not listed: a weight of exactly 100 %, where many options tie on that one axis and the order between them is by option code (in T1, time-to-power at 100 % puts #86 first that way), and lowering a weight that is already 100 %.
 
 **What it gives up** compares the leader's axis scores with the best of its group on each axis and names up to two gaps larger than 0.5 axis points (judgement). **Confidence** counts the options of the group within 1 point of the leader, the leader's "assumed default" flags (chapter 42) and the unverified registry records. **Inputs with most influence** sorts the tornado rows by their swing in the tornado's measure (LCOE when the measure is the weighted score, which depends on the weights); equal swings put the less certain record (confidence C) first.
 
@@ -412,6 +412,17 @@ How each driver is applied:
 The ranges are records in the registry, all labelled indicative: the inputs' own low and high for price, carbon, WACC, evaluation period, escalation and test hours; the grid-date uncertainty (−6 / +24 months); and factor records for gas price (× 0.7 / × 1.3), carbon price (× 0.5 / × 1.5), IT load (× 0.8 / × 1.2), capex (× 0.7 / × 1.5), battery capex (× 0.7 / × 1.3), grid connection capex (× 0.5 / × 2), capacity factors (× 0.85 / × 1.15), PUE (× 0.8 / × 1.2) and the flexibility trigger (× 0.8 / × 1.2). The factor records are all 1 in the main run, so they change nothing outside the tornado.
 
 The T1 results are in chapter 27.
+
+## Breakevens
+
+Built 24 October 2026 (work package 17; chapter 27 shows the screen). For the leader L and each competitor C, and each driver d with range low … high and current value b:
+
+1. The leader alone is re-run at every driver's low and high value; the eight drivers with the largest weighted-score swing are kept.
+2. L and every C are re-run at the middle and the end of each side, (low + b) ÷ 2, low, (b + high) ÷ 2 and high; at b the run's own figures are used.
+3. At each value the two are put in the ranking's order: adequacy first, then compliance when "rank requirement-compliant options first" is on, then the weighted score Σ w × axis score, with each axis score taken on the **run's** range and **not clipped** to 0–100 (the tornado clips; here two options beyond the run's range must still compare).
+4. Walking out from b on each side, the first value where C is ahead is bracketed with the last value where L is ahead, and the bracket is halved, re-running both options at its middle, until it is narrower than 2 % of the range (whole-number drivers: 1). The flip is reported at the middle of the bracket (whole-number drivers: its outer end).
+
+The search sees the first swap on each side only if the order differs at one of the checked points; a swap that reverses again between them is not seen. "Nearest flips" sorts every flip by |flip − b| ÷ (high − low).
 
 # 47. Worked example: the T1 run end to end {#ch47}
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Capture the Summary panel of the Options tab (work package 16, 2026-10-24) for chapter 22: the single-file build of the
+"""Capture the Summary panel of the Options tab (work package 16, 2026-10-24) for chapter 22, and the breakeven table of
+the Sensitivity tab (work package 17) for chapter 27: the single-file build of the
 app, T1 example, 1440 x 1000 window at 2x, light theme, after the first run finishes. Writes build/raw/real-summary.png
-and the figure src/img/s25-summary.png.
+and real-breakevens.png, and the figures src/img/s25-summary.png and s26-breakevens.png.
 Build the app first: cd energy-strategy-tool/app && npm ci && npm run build."""
 import asyncio, sys
 from pathlib import Path
@@ -29,9 +30,20 @@ async def main():
         raw = OUT / "real-summary.png"
         await loc.screenshot(path=str(raw))
         print("saved", raw.name)
+        # The breakeven table (work package 17) on the Sensitivity tab, after "Run breakevens".
+        await page.get_by_role("tab", name="Sensitivity", exact=True).click()
+        await page.locator(".be-run").click()
+        await page.wait_for_function("() => /^Done:/.test((document.querySelector('.be .be-note') || {}).textContent || '')", timeout=300000, polling=500)
+        be = page.locator(".be")
+        await be.scroll_into_view_if_needed()
+        await page.wait_for_timeout(300)
+        raw2 = OUT / "real-breakevens.png"
+        await be.screenshot(path=str(raw2))
+        print("saved", raw2.name)
         await b.close()
     save_figure(Image.open(raw), "s25-summary.png")
-    print("saved s25-summary.png")
+    save_figure(Image.open(raw2), "s26-breakevens.png")
+    print("saved s25-summary.png and s26-breakevens.png")
 
 
 asyncio.run(main())

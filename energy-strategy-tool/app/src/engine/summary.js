@@ -13,7 +13,8 @@
 //   3 what it gives up: where #2 or the best option on an axis does better;
 //   4 confidence: the lead, the options close to it, the defaults behind it (rank probability is not built);
 //   5 what would change the answer: the smallest change of one weight that changes the leader (exact: the score is
-//     linear in the weights and the axis ranges do not depend on them); breakevens are not built;
+//     linear in the weights and the axis ranges do not depend on them); the two nearest breakevens when the breakeven
+//     table (breakeven.js, work package 17) has been run on the leader;
 //   6 open flags on the leader: resilience, permitting, fuel and utilities, any other major flag, and site fit only
 //     while the Site tab (Beta) is on (never in the PDF);
 //   7 inputs with most influence: from a tornado run on the leader, by swing, data confidence breaking ties.
@@ -25,6 +26,7 @@ import { sameFigures } from './cards.js';
 import { SCORE_KEYS, isRequirementCompliant } from './scoring.js';
 import { visibleFlags } from './view.js';
 import { sortRows, measureById } from './sensitivity.js';
+import { nearestFlips } from './breakeven.js';
 import { GUARDRAIL, perMWh, money, sig } from '../format.js';
 
 export const SUMMARY_TITLE = 'Summary';
@@ -56,6 +58,8 @@ function axisFigure(k, settings) {
   if (k === 'ttp') return { name: 'time-to-power', get: (o) => o.ttp.metric, fmt: (x, n) => (x < 0.05 ? 'on time' : `${sig(x, n)} months late`) };
   return { name: 'deliverability', get: (o) => o.deliv.score, fmt: (x, n) => `${sig(x, n)} points` };
 }
+// The name of what an axis measures, as the run measures it: "carbon", "market-based carbon", "hourly CFE".
+function figureName(k, f) { return k === 'carbon' && f.tag ? (f.tag === 'market-based' ? 'market-based carbon' : f.tag) : AXIS_NAME[k]; }
 // Two values that read differently: more significant figures until they do (at most 5).
 function pair(f, a, b) {
   for (let n = 3; n <= 5; n++) { const x = f.fmt(f.get(a), n), y = f.fmt(f.get(b), n); if (x !== y || n === 5) return [x, y]; }
@@ -130,7 +134,12 @@ export function weightChanges(run) {
 export function shortFlag(m) {
   let s = String(m).split(/(?<=\.)\s/)[0].replace(/\.$/, '').replace(/\s*\(flagged in \u00a7[^)]*\)/, '');
   if (wordCount(s) > 16 && s.includes(': ')) s = s.split(': ')[0];
-  if (wordCount(s) > 16) s = `${s.split(/\s+/).slice(0, 16).join(' ')}…`;
+  if (wordCount(s) > 16) {
+    // Cut at the last clause boundary (comma, semicolon, bracket) inside the first 16 words; a word cut only without one.
+    const head = s.split(/\s+/).slice(0, 16).join(' ');
+    const k = Math.max(head.lastIndexOf(', '), head.lastIndexOf('; '), head.lastIndexOf(' ('));
+    s = k > 20 ? `${head.slice(0, k)}…` : `${head}…`;
+  }
   return /^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s;
 }
 
@@ -141,8 +150,9 @@ const CONF_ORDER = { C: 0, B: 1, A: 2 };
 // opts.siteBeta: the Site tab (Beta) is on (site-fit flags are left out otherwise, and always in the PDF).
 //
 // Each part is a list of sentences; a sentence with a priority p > 0 is optional. When the text would pass the word
-// limit, optional sentences are moved to the part's detail, the highest p first, until it fits; nothing is lost.
-export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLimit = SUMMARY_WORD_LIMIT } = {}) {
+// limit, optional sentences are moved to the part's detail, the highest p first (from the last part back), until it
+// fits; nothing is lost.
+export function plainSummary(run, { sensitivity = null, breakevens = null, siteBeta = false, wordLimit = SUMMARY_WORD_LIMIT } = {}) {
   if (!run || !run.options || !run.options.length) return null;
   const settings = run.inputs.settings || {};
   const w = run.scoring.weights;
@@ -157,10 +167,18 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
   const tor = sensitivity && sensitivity.optionId === L.id && Array.isArray(sensitivity.allRows) ? sensitivity : null;
   const parts = [];
   const notBuilt = [];
-  const add = (id, heading, sentences, more = []) => parts.push({ id, heading, sentences: sentences.filter((x) => x && x.t), more });
+  const notRun = [];
+  const add = (id, heading, sentences, more = [], condensed = null) => parts.push({ id, heading, sentences: sentences.filter((x) => x && x.t), more, condensed });
   const req = (t) => ({ t, p: 0 });
   const opt = (t, p) => ({ t, p });
-  const vs = (k, f, a, b) => { const [x, y] = compactPair(...pair(f, a, b)); return `${f.tag ? `${f.tag} ` : ''}${x} against ${y}`; };
+  // The cost figure is named (LCOE or NPV); a carbon figure is already named by figureName ("hourly CFE").
+  const vs = (k, f, a, b) => {
+    const tag = k === 'cost' && f.tag ? `${f.tag} ` : '';
+    const [x0, y0] = pair(f, a, b);
+    if (x0 === y0) return `${tag}both ${x0}`;
+    const [x, y] = compactPair(x0, y0);
+    return `${tag}${x} against ${y}`;
+  };
 
   // 1. Leading option.
   {
@@ -171,7 +189,8 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
     let range = null;
     if (tor) {
       const vals = [tor.base.lcoe, ...tor.allRows.flatMap((r) => [r.low.lcoe, r.high.lcoe])].filter(Number.isFinite);
-      range = req(`With the ${plural(tor.allRows.length, 'tested input')} moved one at a time across their ranges, its LCOE is ${compactPair(perMWh(Math.min(...vals)), perMWh(Math.max(...vals))).join(' to ')}.`);
+      // Optional, but kept longer than the inputs that follow it in part 7 (priority 1.5 against 1).
+      range = opt(`With the ${plural(tor.allRows.length, 'tested input')} moved one at a time across their ranges, its LCOE is ${compactPair(perMWh(Math.min(...vals)), perMWh(Math.max(...vals))).join(' to ')}.`, 1.5);
       more.push('That range is one input at a time (the tornado on the Sensitivity tab), not a joint range.');
     } else {
       range = opt('These are single values: Monte Carlo ranges are not built yet.', 4);
@@ -180,7 +199,7 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
     if (settings.rankCompliantFirst) more.push('Requirement-compliant options are ranked first (run setting).');
     add('leader', 'Leading option', [
       req(`The option that leads under the current weights (${wText}${run.scoring.equalWeightsUsed ? ', equal because every weight was 0' : ''}) is #1, ${L.name}, with a score of ${L.score.toFixed(1)}.`),
-      req(`LCOE ${perMWh(L.eco.lcoe)}${settings.costMetric === 'npv' ? ` (NPV of net cost ${money(L.eco.npvCost)})` : ''}, capex ${money(L.eco.capex)}, carbon ${sig(L.carbon.locationG)} g/kWh (location-based${settings.carbonMetric === 'market' ? `; market-based ${sig(L.carbon.marketG)}` : settings.carbonMetric === 'cfe' ? `; hourly CFE ${Math.round(L.carbon.cfePct * 100)} %` : ''}), ${ttp}.`),
+      req(`LCOE ${perMWh(L.eco.lcoe)}${settings.costMetric === 'npv' ? ` (NPV of net cost ${money(L.eco.npvCost)})` : ''}, capex ${money(L.eco.capex)}, carbon ${sig(L.carbon.locationG)} g/kWh (location-based${settings.carbonMetric === 'market' ? `; market-based ${sig(L.carbon.marketG)} g/kWh` : settings.carbonMetric === 'cfe' ? `; hourly CFE ${Math.round(L.carbon.cfePct * 100)} %` : ''}), ${ttp}.`),
       adequate(L) ? null : req('No option serves the load in every hour; it is the best-scoring of those that do not.'),
       range,
     ], more);
@@ -199,14 +218,18 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
       if (cmp && group.includes(cmp)) {
         const diffs = differingChoices(L, cmp);
         const contrib = SCORE_KEYS.map((k) => ({ k, c: w[k] * (L.axisScores[k] - cmp.axisScores[k]), f: axisFigure(k, settings) }));
-        const pos = contrib.filter((x) => x.c > 0.005).sort((a, b) => b.c - a.c).slice(0, 3);
+        const pos = contrib.filter((x) => x.c > 0.005).sort((a, b) => b.c - a.c);
+        const neg = contrib.filter((x) => x.c < -0.005).sort((a, b) => a.c - b.c);
         const level = contrib.filter((x) => Math.abs(x.c) <= 0.005).map((x) => AXIS_NAME[x.k]);
-        s.push(req(`It is ${pts(L.score - cmp.score)} points ahead of #${cmp.rank}${pos.length ? `, from ${list(pos.map((x) => `${AXIS_NAME[x.k]} (${vs(x.k, x.f, L, cmp)}, ${pts(x.c)} points)`))}` : ', a difference that rounds away on every axis'}.`));
+        // Every part that favours #1 is named with its figures, and every part that favours #2 by its points (its figures
+        // are in part 3), so the named parts add up to the gap (to rounding; parts below 0.005 points are left out).
+        const negText = neg.length ? `, less ${list(neg.map((x) => `${pts(x.c)} points on ${figureName(x.k, x.f)}`))}, where #${cmp.rank} does better` : '';
+        s.push(req(`It is ${pts(L.score - cmp.score)} points ahead of #${cmp.rank}${pos.length ? `: ${list(pos.map((x) => `${pts(x.c)} points from ${figureName(x.k, x.f)} (${vs(x.k, x.f, L, cmp)})`))}${negText}` : ', a difference that rounds away on every axis'}.`));
         if (diffs.length) s.push(opt(`#${cmp.rank} differs in ${plural(diffs.length, 'choice')}, among them ${diffs[0].name.toLowerCase()}: ${diffs[0].value}.`, 3));
         if (level.length && pos.length) s.push(opt(`They are level on ${list(level)}.`, 4));
         more.push(`#${cmp.rank}: ${cmp.name} (score ${cmp.score.toFixed(2)}).`);
         if (diffs.length) more.push(`Choices of #${cmp.rank} that differ from #1: ${diffs.map((d) => `${d.id} ${d.name}: ${d.value}`).join('; ')}.`);
-        for (const x of contrib) more.push(`${cap(AXIS_NAME[x.k])}: ${vs(x.k, x.f, L, cmp)}; weighted difference ${x.c >= 0 ? '+' : '−'}${pts(x.c)} points.`);
+        for (const x of contrib) more.push(`${cap(figureName(x.k, x.f))}: ${vs(x.k, x.f, L, cmp)}; ${Math.abs(x.c) < 0.005 ? 'no weighted difference (less than 0.01 points)' : `weighted difference ${x.c > 0 ? '+' : '−'}${pts(x.c)} points, in favour of #${x.c > 0 ? 1 : cmp.rank}`}.`);
       } else if (cmp) s.push(req(`#${cmp.rank} and every option below it rank lower because ${settings.rankCompliantFirst ? 'they do not serve the load in every hour or do not meet the resilience requirement' : 'they do not serve the load in every hour'}.`));
     }
     add('why', 'Why it leads', s, more);
@@ -214,7 +237,7 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
     const g = [], gMore = [];
     if (cmp && group.includes(cmp)) {
       const worse = SCORE_KEYS.map((k) => ({ k, c: w[k] * (L.axisScores[k] - cmp.axisScores[k]) })).filter((x) => x.c < -0.005);
-      if (worse.length) g.push(req(`Against #${cmp.rank} it gives up ${list(worse.map((x) => `${AXIS_NAME[x.k]} (${vs(x.k, axisFigure(x.k, settings), L, cmp)}, ${pts(x.c)} points)`))}.`));
+      if (worse.length) g.push(req(`Against #${cmp.rank} it gives up ${list(worse.map((x) => { const f = axisFigure(x.k, settings); return `${figureName(x.k, f)} (${vs(x.k, f, L, cmp)}, ${pts(x.c)} points)`; }))}.`));
     }
     // The best option of the group on each axis (axis score; ties keep the leader).
     const bestOn = SCORE_KEYS.map((k) => {
@@ -226,13 +249,22 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
     gaps.slice(0, 2).forEach((x, i) => {
       const f = axisFigure(x.k, settings);
       const [a, b] = pair(f, L, x.best);
-      g.push((g.length && i === 0) || i > 0 ? opt(`On ${AXIS_NAME[x.k]} it has ${a}; the best of the ${groupName}, #${x.best.rank}, has ${b}.`, 2)
-        : req(`On ${AXIS_NAME[x.k]} it has ${a}; the best of the ${groupName}, #${x.best.rank}, has ${b}.`));
+      const t = `On ${figureName(x.k, f)} it has ${a}; the best of the ${groupName}, #${x.best.rank}, has ${b}.`;
+      g.push((g.length && i === 0) || i > 0 ? opt(t, 2) : req(t));
     });
-    for (const x of bestOn.filter((y) => y.gap > 1e-9)) { const f = axisFigure(x.k, settings); const [a, b] = pair(f, L, x.best); gMore.push(`${cap(AXIS_NAME[x.k])}: ${a}; best of the ${groupName}: #${x.best.rank} ${x.best.name}, ${b} (axis score ${x.best.axisScores[x.k].toFixed(1)} against ${L.axisScores[x.k].toFixed(1)}).`); }
-    const none = bestOn.every((x) => x.gap <= 1e-9)
-      ? `It is the best of the ${groupName} on every axis, so it gives up nothing within this run.`
-      : `On every axis it is within ${GAP} points (of 100) of the best of the ${groupName}.`;
+    for (const x of bestOn.filter((y) => y.gap > 1e-9)) { const f = axisFigure(x.k, settings); const [a, b] = pair(f, L, x.best); gMore.push(`${cap(figureName(x.k, f))}: ${a}; best of the ${groupName}: #${x.best.rank} ${x.best.name}, ${b} (axis score ${x.best.axisScores[x.k].toFixed(1)} against ${L.axisScores[x.k].toFixed(1)}).`); }
+    // Options outside the leader's group (they rank below it whatever their score) that do better on an axis (H5, M2).
+    const outside = SCORE_KEYS.map((k) => {
+      let best = null;
+      for (const o of run.options) if (!group.includes(o) && o.axisScores[k] > L.axisScores[k] + GAP && (!best || o.axisScores[k] > best.axisScores[k])) best = o;
+      return best ? { k, best, gap: best.axisScores[k] - L.axisScores[k] } : null;
+    }).filter(Boolean).sort((a, b) => b.gap - a.gap);
+    let none;
+    if (group.length === 1) {
+      none = `It is the only one of the ${groupName}, so nothing in its group does better${outside.length ? `; options that rank below it ${adequate(L) ? 'because they do not serve the load in every hour ' : ''}do better on ${list(outside.slice(0, 2).map((x) => { const f = axisFigure(x.k, settings); return `${figureName(x.k, f)} (#${x.best.rank}, ${f.fmt(f.get(x.best), 3)})`; }))}` : ''}.`;
+    } else if (bestOn.every((x) => x.gap <= 1e-9)) none = `It is the best of the ${groupName} on every axis, so it gives up nothing to them.`;
+    else none = `On every axis it is within ${GAP} points (of 100) of the best of the ${groupName}.`;
+    for (const x of outside) { const f = axisFigure(x.k, settings); gMore.push(`Outside its group: #${x.best.rank} ${x.best.name} does better on ${figureName(x.k, f)} (${f.fmt(f.get(x.best), 3)} against ${f.fmt(f.get(L), 3)}).`); }
     add('gives-up', 'What it gives up', g.length ? g : [req(none)], gMore);
   }
 
@@ -250,7 +282,7 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
     add('confidence', 'Confidence', [
       req(close ? `${plural(close, `other ${kind}option`)} score${close === 1 ? 's' : ''} within 1 point of it.` : `No other ${kind}option scores within 1 point of it.`),
       opt('Rank probability and the robust pick are not built yet (no Monte Carlo).', 3),
-      req(`It uses ${plural(assumed.length, 'key input')} left at ${assumed.length === 1 ? 'its default' : 'their defaults'}; ${unv.toLocaleString('en-GB')} of ${reg.length.toLocaleString('en-GB')} default records are ${LABEL}.`),
+      req(`${assumed.length ? `It uses ${plural(assumed.length, 'key input')} left at ${assumed.length === 1 ? 'its default' : 'their defaults'}` : 'No key input it uses is left at its default'}; ${unv.toLocaleString('en-GB')} of ${reg.length.toLocaleString('en-GB')} default records are ${LABEL}.`),
     ], more);
   }
 
@@ -262,12 +294,27 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
     if (wc.length) {
       const first = wc[0];
       const second = wc.find((x) => x.axis !== first.axis);
-      s.push(req(`#${first.newLeader.rank} would lead if ${words(first)}, the other weights scaled in proportion.`));
-      if (second) s.push(opt(`#${second.newLeader.rank} would lead if ${words(second)}.`, 2));
+      if (second && second.newLeader.id === first.newLeader.id) {
+        s.push(req(`#${first.newLeader.rank} would lead if ${words(first)}, or if ${words(second)}, the other weights scaled in proportion.`));
+      } else {
+        s.push(req(`#${first.newLeader.rank} would lead if ${words(first)}, the other weights scaled in proportion.`));
+        if (second) s.push(opt(`#${second.newLeader.rank} would lead if ${words(second)}.`, 2));
+      }
       for (const x of wc) more.push(`${cap(words(x))} (crossing at ${x.exactPct.toFixed(1)} %): #${x.newLeader.rank} ${x.newLeader.name} leads.`);
+      more.push('Not listed: a weight at exactly 100 %, where many options tie on that axis and the order between them is by option code, and lowering a weight that is already 100 %.');
     } else s.push(req(group.length < 2 ? `No weight change alters the leader: it is the only one of the ${groupName}.` : 'No change of a single weight alters the leader.'));
-    s.push(opt('Breakeven values are not built yet.', 4));
-    notBuilt.push('breakevens');
+    // Breakevens (work package 17, OPEN-QUESTIONS 97): the two flips nearest the current values, when the table was run on
+    // this leader; otherwise said not to have been run.
+    const be = breakevens && breakevens.leaderId === L.id && Array.isArray(breakevens.rows) ? breakevens : null;
+    if (be) {
+      const nf = nearestFlips(be, 2);
+      if (nf.length) s.push(req(`Breakevens: ${nf.map((f) => f.text).join('; ')}.`));
+      else s.push(req(`Breakevens: none of the ${plural(be.competitors.length, 'competitor')} overtakes it on the ${plural(be.rows.length, 'driver')} tested, within their ranges.`));
+      for (const f of nearestFlips(be, Infinity)) more.push(`${cap(f.text)} (${Math.round(f.distance * 100)} % of the driver's range from today's value).`);
+    } else {
+      s.push(opt('Breakevens have not been run for this result (Sensitivity tab).', 4));
+      notRun.push('the breakevens');
+    }
     add('change', 'What would change the answer', s, more);
   }
 
@@ -276,7 +323,7 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
     const vis = visibleFlags(L, siteBeta).filter((f) => !f.assumed);
     const CATS = ['Permitting', 'Fuel and utilities', ...(siteBeta ? ['Site fit'] : [])];
     const resF = vis.filter((f) => f.category === 'Resilience' && f.severity !== 'info');
-    const s = [req(`Resilience: ${RES_TEXT[L.resilience.status] || L.resilience.status}${resF.length ? ` (${resF.map((f) => shortFlag(f.message)).join('; ')})` : ''}.`)];
+    const s = [req(`Resilience: ${RES_TEXT[L.resilience.status] || L.resilience.status}${resF.length ? ` (${resF.slice(0, 2).map((f) => shortFlag(f.message).replace(/: /g, ', ')).join('; ')}${resF.length > 2 ? `; and ${resF.length - 2} more` : ''})` : ''}.`)];
     for (const c of CATS) {
       const fs = vis.filter((f) => f.category === c && f.severity !== 'info');
       if (!fs.length) continue;
@@ -284,13 +331,17 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
       let t;
       if (maj.length) t = `${maj.map((f) => shortFlag(f.message)).join('; ')}, ${maj.length === 1 ? 'a major flag' : `${maj.length} major flags`}${min.length ? `, and ${plural(min.length, 'minor flag')}` : ''}`;
       else t = min.length === 1 ? `${shortFlag(min[0].message)}, a minor flag` : plural(min.length, 'minor flag');
+      t = t.replace(/: /g, ', ');
       s.push(maj.length ? req(`${c}: ${t}.`) : opt(`${c}: ${t}.`, 2));
     }
     const otherMajor = vis.filter((f) => f.severity === 'major' && f.category !== 'Resilience' && !CATS.includes(f.category));
-    if (otherMajor.length) s.push(req(`Other major flags: ${otherMajor.map((f) => shortFlag(f.message)).join('; ')}.`));
+    if (otherMajor.length) s.push(req(`Other major flags: ${otherMajor.map((f) => shortFlag(f.message).replace(/: /g, ', ')).join('; ')}.`));
     if (s.length === 1) s.push(req('No permitting or fuel flags.'));
     const more = vis.filter((x) => x.severity !== 'info').map((f) => `${f.category} (${f.severity}): ${f.message}`);
-    add('flags', 'Open flags on the leader', s, more);
+    // When the text is still too long with only required sentences, part 6 keeps its first sentence and this count.
+    const rest = vis.filter((f) => f.severity !== 'info' && f.category !== 'Resilience');
+    const nMaj = rest.filter((f) => f.severity === 'major').length, nMin = rest.length - nMaj;
+    add('flags', 'Open flags on the leader', s, more, rest.length ? `Other flags: ${plural(nMaj, 'major flag')} and ${plural(nMin, 'minor flag')}, listed in More detail.` : null);
   }
 
   // 7. Inputs with most influence.
@@ -318,13 +369,16 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
       const o = run.options.find((x) => x.id === sensitivity.optionId);
       s.push(req(`The last tornado was run on ${o ? `#${o.rank}` : 'another option'}, not on #1, so the inputs with most influence on the leader are not listed.`));
     } else s.push(req('The tornado has not been run on #1 (Sensitivity tab), so the inputs with most influence are not listed.'));
+    if (!tor) notRun.push('the tornado on #1');
     add('inputs', 'Inputs with most influence', s, more);
   }
 
   // Fit the word limit: move optional sentences to the detail, the highest priority number first.
   const count = () => parts.reduce((a, p) => a + p.sentences.reduce((b, x) => b + wordCount(x.t), 0), 0) + wordCount(GUARDRAIL);
   const moved = [];
-  for (let pr = 4; pr >= 1 && count() > wordLimit; pr--) {
+  const prios = [...new Set(parts.flatMap((p) => p.sentences.map((x) => x.p)).filter((x) => x > 0))].sort((a, b) => b - a);
+  for (const pr of prios) {
+    if (count() <= wordLimit) break;
     for (let i = parts.length - 1; i >= 0 && count() > wordLimit; i--) {
       const p = parts[i];
       for (let j = p.sentences.length - 1; j >= 0 && count() > wordLimit; j--) {
@@ -332,20 +386,36 @@ export function plainSummary(run, { sensitivity = null, siteBeta = false, wordLi
       }
     }
   }
+  // Still over the limit with required sentences only (H5, M1: several major flags, a long option name): part 6 is
+  // condensed to its first sentence and a count; then each part, from the last back, keeps only its first sentence
+  // until the text fits. The sentences moved go to the detail.
+  if (count() > wordLimit) {
+    const fp = parts.find((p) => p.id === 'flags');
+    if (fp && fp.condensed && fp.sentences.length > 1) {
+      const gone = fp.sentences.slice(1).map((x) => x.t);
+      fp.more.unshift(...gone); moved.push(...gone);
+      fp.sentences = [fp.sentences[0], req(fp.condensed)];
+    }
+  }
+  for (let i = parts.length - 1; i >= 0 && count() > wordLimit; i--) {
+    const p = parts[i];
+    while (p.sentences.length > 1 && count() > wordLimit) { const x = p.sentences.pop(); p.more.unshift(x.t); moved.push(x.t); }
+  }
   const out = parts.map((p) => ({ id: p.id, heading: p.heading, text: p.sentences.map((x) => x.t).join(' ') }));
   const details = Object.fromEntries(parts.map((p) => [p.id, p.more]));
   const text = `${out.map((p) => `${p.heading}. ${p.text}`).join('\n')}\n${GUARDRAIL}`;
   return {
     title: SUMMARY_TITLE, leaderId: L.id, leaderName: L.name, comparedWith: cmp ? cmp.id : null,
-    parts: out, details, guardrail: GUARDRAIL, text, words: count(), wordLimit, moved,
-    weightChanges: wc, usedTornado: !!tor, notBuilt,
+    parts: out, details, guardrail: GUARDRAIL, text, words: count(), wordLimit, overLimit: count() > wordLimit, moved,
+    weightChanges: wc, usedTornado: !!tor, usedBreakevens: !!(breakevens && breakevens.leaderId === L.id), notBuilt, notRun,
   };
 }
 
-// The key of the result a summary describes: the leader, its score and the weights. A user note written for one key is
-// shown as written for an earlier result when the key changes.
-export function summaryKey(run) {
+// The key of the result a summary describes: the inputs, the leader, the weights and scoring settings, and what the text
+// drew on (the Site tab, a tornado and breakevens on the leader; H5, H1 and L6). A user note written for one key is shown
+// as written for an earlier result when the key changes.
+export function summaryKey(run, { siteBeta = false, usedTornado = false, usedBreakevens = false } = {}) {
   if (!run || !run.options || !run.options.length) return '';
   const L = run.options.reduce((a, b) => (a.rank < b.rank ? a : b));
-  return `${run.inputHash || ''}|${L.id}|${SCORE_KEYS.map((k) => Math.round(run.scoring.weights[k] * 1000)).join(',')}|${run.inputs.settings.costMetric}|${run.inputs.settings.carbonMetric}|${run.inputs.settings.rankCompliantFirst ? 1 : 0}`;
+  return `${run.inputHash || ''}|${L.id}|${SCORE_KEYS.map((k) => Math.round(run.scoring.weights[k] * 1000)).join(',')}|${run.inputs.settings.costMetric}|${run.inputs.settings.carbonMetric}|${run.inputs.settings.rankCompliantFirst ? 1 : 0}|s${siteBeta ? 1 : 0}|t${usedTornado ? 1 : 0}|b${usedBreakevens ? 1 : 0}`;
 }

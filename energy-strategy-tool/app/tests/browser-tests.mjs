@@ -631,6 +631,31 @@ await check('B38. Plain-English summary (work package 16, BRIEF §14): on the Op
   return `7 parts, ${words} words, guardrail last; preset "Lowest carbon" updated the summary in ${ms.toFixed(0)} ms (≤ ${B9_BOUND_MS} ms); edit saved as a note marked "edited", flagged as written for an earlier result after a weight change and not after the change back; discarded; ${[axeEdit, axeNote].map((r) => (r.skipped ? `${r.label}: axe skipped` : `${r.label}: ${r.violations.length} violations`)).join('; ')}.`;
 });
 
+await check('B39. Breakeven table (work package 17, BRIEF §13.3): "Run breakevens" on the Sensitivity tab gives the leader against five competitors on eight drivers, with progress and the nearest flips; the summary on the Options tab then names breakevens instead of "not run"; no serious axe violation', async () => {
+  const { page, errors } = main;
+  await page.getByRole('tab', { name: 'Sensitivity', exact: true }).click();
+  const btn = page.locator('.be-run');
+  await btn.waitFor();
+  const t0 = Date.now();
+  await btn.click();
+  await page.waitForFunction(() => /^Done:/.test((document.querySelector('.be .be-note') || {}).textContent || ''), null, { timeout: 300000, polling: 250 });
+  const s = (Date.now() - t0) / 1000;
+  const note = await page.locator('.be .be-note').innerText();
+  const cols = await page.locator('.be-table thead th').count();
+  const rows = await page.locator('.be-table tbody tr').count();
+  ok(cols === 6 && rows === 8, `table ${rows} rows × ${cols - 1} competitors`);
+  const near = await page.locator('.be p.small').first().innerText();
+  ok(/Nearest flips:|No flip/.test(near), `nearest flips: ${near.slice(0, 120)}`);
+  const ax = await runAxe(page, 'Sensitivity tab with the breakeven table');
+  await page.getByRole('tab', { name: /^Options/ }).click();
+  const change = await page.locator('.sum-text p[data-part=change]').innerText();
+  ok(!/Breakeven values are not built|have not been run/.test(change) && /Breakevens?/i.test(change), `summary part 5: ${change.slice(0, 200)}`);
+  const bad = ax.skipped ? [] : serious(ax).map((v) => `${v.impact} ${v.id} ×${v.nodes} (${v.target})`);
+  ok(bad.length === 0, bad.join(' | '));
+  ok(errors.length === 0, errors.join(' | '));
+  return `${note.replace(/\s+/g, ' ').slice(0, 140)} (${s.toFixed(1)} s from the click in this browser; §17 target 3 s); ${near.slice(0, 160)}; summary: "${change.slice(0, 160)}…"; ${ax.skipped ? 'axe skipped' : `${ax.violations.length} axe violations`}.`;
+});
+
 await check('B34. Knowledge levels and the economics section (work package 2, AC 16): the IT load and grid fields accept "Not known"; section 5 is Economics with the WACC explanation and the further periods; each top-five card counts its assumed defaults', async () => {
   const { page, errors } = main;
   await page.getByRole('tab', { name: /^Options/ }).click();

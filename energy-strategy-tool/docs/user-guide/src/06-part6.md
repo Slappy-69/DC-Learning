@@ -38,7 +38,8 @@
 
 - Scores are relative to the options in the run, and the sample of 2,000 can miss combinations.
 - Deliverability penalties and weights are judgements.
-- The summary (chapter 22) has no rank probability, robust pick or breakevens, because Monte Carlo and breakevens are not built; its ranges come from the tornado, one input at a time, and only once the tornado has been run on the leader.
+- The summary (chapter 22) has no rank probability or robust pick, because Monte Carlo is not built; its ranges come from the tornado, one input at a time, and its breakevens from the breakeven table, each only once it has been run.
+- The breakeven table checks a few points on each side of today's value: a swap that reverses between two of them is not seen. It moves one driver at a time and takes about 5 s or more, above the 3 s target.
 
 **Site (Beta)**
 
@@ -59,7 +60,7 @@ These were found while checking the guide against the code and the T1 run. Items
 9. **"First power"** can be month 0, before any phase exists, because it measures when the supply could energise phase 1. Fixed 24 October 2026: the later of phase 1's date and the month the supply is ready.
 10. **The status file's run time** (9–10 s) is out of date; the owner's figure is 15–20 s. Corrected 22 October 2026.
 
-Found on 24 October 2026 while building the summary, and fixed the same day: in the app, the "assumed default" flags left out every key input whose default comes from the registry (the T1 leader showed 2 instead of 17), because the app's worker had not loaded the input defaults; the top-five cards and the summary now count them all (known issue 21).
+Found on 24 October 2026 while building the summary, and fixed the same day: in the app, the "assumed default" flags left out every key input whose default comes from the registry (the T1 leader showed 2 instead of 13), because the app's worker had not loaded the input defaults; the top-five cards and the summary now count them all (known issue 21).
 
 Found later and fixed on 24 October 2026 (work package 11): the gas-dependency flag raised when liquid-fuel gensets alone cover the critical load (chapter 41); a plant held at its minimum stable load did not back off the grid import (chapter 37); time-to-power rewarded plant bought long before it was needed; rented plant paid from the month it could arrive; plant kept as the backup bought all at once (chapter 35); long programmes dispatched only to year 8 with no flag (chapter 37); an entered grid adder ignored (chapter 39); fuel for running HVO-diesel plant left out of the Seveso test (chapter 35). Existing plant under lease was added on 24 October 2026 (KNOWN-ISSUES 12, work package 12), and plant needed at its minimum stable load now displaces PPA energy before wasting output (KNOWN-ISSUES 19). Archetype values (4) and identical options (5) were fixed the same day (work package 14).
 
@@ -150,7 +151,9 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Project save and reopen (study files) | Built (24 Oct 2026) | 4, 29 |
 | Plain-English summary of the result (templates, offline; edit kept as a note) | Built (24 Oct 2026); breakevens and rank probability in it wait for those features | 22, 29, 44 |
 | Parallel coordinates, choice-impact chart | Not built; in the brief, not discussed in the walkthrough | — |
-| Monte Carlo ranges, robust pick, breakevens, scenarios | Not built; in the brief, not discussed in the walkthrough | 13 |
+| Breakeven table (leader against five competitors, eight drivers) | Built (24 Oct 2026) | 27, 46 |
+| Monte Carlo ranges, robust pick, scenarios | Not built; in the brief, not discussed in the walkthrough | 13 |
+| Work package 17: breakeven table on the Sensitivity tab, in the PDF and in the summary | Built (24 Oct 2026) | 27, 29, 46 |
 | Work package 16: plain-English summary on the Options tab and in the PDF (seven parts, at most 250 words, exact weight change, edit kept as a note) | Built (24 Oct 2026) | 22, 29, 44 |
 | Work package 15: study files (save and reopen, with a check that the re-run matches) | Built (24 Oct 2026) | 4, 29 |
 | Work package 14: archetypes take the best open cooling type; identical options removed (heat rejection without rooftop solar, grid services while their revenue is not modelled) | Built (24 Oct 2026) | 34, 47 |

@@ -1,6 +1,6 @@
 # Appendix A. The full defaults register {#appA}
 
-Every default value in the current version: **563 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. **24 records** carry a published source and the label "sourced — not independently checked" (work package 0, batches 1 and 2; the source, year and access date follow the entry). The other 539 are labelled "indicative — unverified" (confidence C, not verified). None is verified. Chapter 50 compares the important values with published sources.
+Every default value in the current version: **566 records**. Each entry gives the record's path, its value and unit, its range where one exists, its basis (source, judgement or run setting) and, where the brief names one, the source it should be checked against. **24 records** carry a published source and the label "sourced — not independently checked" (work package 0, batches 1 and 2; the source, year and access date follow the entry). The other 542 are labelled "indicative — unverified" (confidence C, not verified). None is verified. Chapter 50 compares the important values with published sources.
 
 Abbreviations: **src** = basis "source" (should come from a published source); **judg** = judgement; **run** = run setting.
 
@@ -824,3 +824,6 @@ Check against: ISO 9613-2 (geometric divergence term only).
 - **sensitivity.flexTriggerFactor**: 1 × flexibility trigger level; range 0.8–1.2; judg. Tornado driver range (work package 9). No source.
 - **sensitivity.defaultMeasure**: lcoe (lcoe / npv / carbon / score); judg. Walkthrough 2026-10-21: the tornado measures LCOE by default.
 - **sensitivity.topDrivers**: 12 drivers shown; run. Largest-swing drivers shown in the tornado (§13.3: top 12 drivers, editable 1–30). Work package 9 offers 16 drivers with tick boxes; the code clamps this setting to 1–30.
+- **sensitivity.breakevenCompetitors**: 5 competitors of the leader; run. Breakeven table: the leader against this many competitors (§13.3 default scope 5 × 8). The code clamps it to 1–10.
+- **sensitivity.breakevenDrivers**: 8 drivers; run. Breakeven table: the drivers with the largest weighted-score swing in the leader's tornado (§13.3 default scope 5 × 8). The code clamps it to 1–16.
+- **sensitivity.breakevenTolerance**: 0.02 share of the driver range; judg. Breakeven search: bisection stops when the flip is bracketed within this share of the driver's range (whole-number drivers: within 1). No source.
