@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { breakevenSteps, nearestFlips, gridDateAt } from '../engine/breakeven.js';
+import { breakevenSteps, nearestFlips, gridDateAt, breakevenCompetitorCount, breakevenDriverCount } from '../engine/breakeven.js';
 import { normalizeInputs } from '../engine/defaults.js';
 import { UnverifiedTag } from './Field.jsx';
 import { sig } from '../format.js';
@@ -71,8 +71,8 @@ export default function BreakevenPanel({ run, onResult = null }) {
   const nFlips = be ? be.rows.reduce((a, r) => a + r.cells.reduce((b, c) => b + (c.flips.down ? 1 : 0) + (c.flips.up ? 1 : 0), 0), 0) : 0;
   return (
     <section className="be" aria-labelledby="be-h">
-      <h3 id="be-h">Breakevens: the leader against five competitors</h3>
-      <p className="dv-intro">For the leader (#1) and each competitor, the value of each driver, nearest its current value, at which the two swap places, or “no flip” within the driver's range. Competitors: #2, then the best option of each other strategy. Drivers: the eight that move the leader's weighted score most. Each option is re-run with the engine the ranking uses; the run, its scores and ranks are not changed.</p>
+      <h3 id="be-h">Breakevens: the leader against {be ? be.competitors.length : breakevenCompetitorCount()} competitor{(be ? be.competitors.length : breakevenCompetitorCount()) === 1 ? '' : 's'}</h3>
+      <p className="dv-intro">For the leader (#1) and each competitor, the value of each driver, nearest its current value, at which the two swap places, or “no flip” within the driver's range. Competitors: #2, then the best option of each other strategy. Drivers: the {be ? be.rows.length : breakevenDriverCount()} that move the leader's weighted score most. Each option is re-run with the engine the ranking uses; the run, its scores and ranks are not changed.</p>
       <div className="btn-row">
         <button type="button" className="chip-btn be-run" onClick={start} disabled={busy}>{busy ? 'Running…' : be ? 'Run again' : 'Run breakevens'}</button>
       </div>
@@ -93,7 +93,7 @@ export default function BreakevenPanel({ run, onResult = null }) {
               <tbody>
                 {be.rows.map((r) => (
                   <tr key={r.id} data-driver={r.id}>
-                    <th scope="row">{r.label}<span className="dv-basis">{r.lowText} to {r.highText} · <UnverifiedTag path={r.record} compact /></span></th>
+                    <th scope="row">{r.label}<span className="dv-basis">{r.lowText} to {r.highText}{r.widened ? ' (widened to include the value you entered, outside the record\'s range)' : ''} · <UnverifiedTag path={r.record} compact /></span></th>
                     {r.cells.map((c) => (
                       <td key={c.competitorId} data-competitor={c.competitorId}>
                         <span className="be-side">{r.id === 'grid-date' ? 'Earlier' : 'Lower'}: {cellText(r, c, be, 'down')}</span>
@@ -109,7 +109,7 @@ export default function BreakevenPanel({ run, onResult = null }) {
           {near.length ? <p className="small"><strong>Nearest flips:</strong> {near.map((f) => f.text).join('; ')}.</p> : <p className="small"><strong>No flip</strong> within the drivers' ranges: the leader stays ahead of every competitor on every driver.</p>}
           <ul className="dv-notes">
             <li>Search: each side of the current value is checked at its middle and its end, and the first change of order is narrowed to {Math.round(be.tolerance * 100)} % of the driver's range (<UnverifiedTag path="sensitivity.breakevenTolerance" compact />), or to one month, one year or one hour for whole-number drivers. A swap that reverses again between two checked points is not seen.</li>
-            <li>Order as in the ranking: power adequacy first, then the weighted score on the run's axis scales (not clipped at 0 and 100, so options beyond the run's range still compare). Scope: {be.competitors.length} competitors × {be.rows.length} drivers, run settings (§13.3 default 5 × 8) <UnverifiedTag path="sensitivity.breakevenCompetitors" compact />.</li>
+            <li>Order as in the ranking: power adequacy first, then the weighted score on the run's axis scales (not clipped at 0 and 100, so options beyond the run's range still compare). Scope: {be.competitors.length} competitors × {be.rows.length} drivers, run settings (§13.3 default 5 × 8) <UnverifiedTag path="sensitivity.breakevenCompetitors" compact />.{be.baseModel === 'full-year re-run' ? ' The run used the representative-day screening tier, so today\'s values of the leader and the competitors were re-run over the full year, as every other point in the table is.' : ''}</li>
           </ul>
         </>
       ) : null}

@@ -2,7 +2,8 @@
 // recommendations, accepted in advance by the owner).
 
 import assert from 'node:assert/strict';
-import { normalizeInputs } from '../src/engine/defaults.js';
+import { normalizeInputs, referenceT1 } from '../src/engine/defaults.js';
+import { runModel } from '../src/engine/run.js';
 import { buildContext } from '../src/engine/context.js';
 import { evaluateOption } from '../src/engine/option.js';
 import { axisMetrics, axisScore, SCORE_KEYS } from '../src/engine/scoring.js';
@@ -91,6 +92,44 @@ export async function breakevenTests(test, ctxRuns) {
     const other = { ...be, leaderId: 'not-the-leader' };
     assert.ok(!plainSummary(run, { breakevens: other }).usedBreakevens, 'breakevens of another leader used');
     out.push(`summary part 5: "${plainSummary(run, { breakevens: be }).parts.find((p) => p.id === 'change').text.slice(0, 160)}…"`);
+    // Check H6 (2026-10-26). (1) MED-4: with the default full-year run the base points are the run's own figures; with the
+    // representative-day screening tier they are re-run over the full year, as every other point is.
+    assert.equal(be.baseModel, 'run');
+    assert.ok([L, ...comps].every((o) => Math.abs(be.baseLines[o.id] - line(o.metrics)) < 1e-9), 'base points differ from the run');
+    const inpS = referenceT1({ analysisStart: ctxRuns.START });
+    inpS.settings.screeningModel = 'repDays';
+    const scr = runModel(inpS);
+    const beS = breakevens(scr, { site: scr.ctx.site });
+    assert.equal(beS.baseModel, 'full-year re-run');
+    const inputsS = normalizeInputs(scr.inputs);
+    const ctxS = buildContext(normalizeInputs(inputsS), { site: scr.ctx.site });
+    const lineS = (m) => SCORE_KEYS.reduce((a, k) => a + scr.scoring.weights[k] * axisScore(k, m[k], scr.scoring.ranges[k].lo, scr.scoring.ranges[k].hi), 0);
+    let stale = 0;
+    for (const id of [beS.leaderId, ...beS.competitors.map((c) => c.id)]) {
+      const o = scr.options.find((x) => x.id === id);
+      const e = evaluateOption(ctxS, o.v);
+      const full = lineS(axisMetrics({ eco: e.eco, carbon: e.carb, ttp: e.ttp, deliv: e.deliv }, inputsS.settings));
+      assert.ok(Math.abs(beS.baseLines[id] - full) < 1e-9, `#${o.rank}: base ${beS.baseLines[id]} against a full-year re-run ${full}`);
+      stale = Math.max(stale, Math.abs(lineS(o.metrics) - full));
+    }
+    assert.ok(stale > 0.01, 'every option of the screening run was verified: the test would not show the difference');
+    out.push(`screening run: base points re-run over the full year (the run's own figures for unverified options were up to ${stale.toFixed(3)} points off)`);
+    // (2) LOW-2: a value entered outside the record's range widens the range used; the "higher" side then holds only higher values.
+    const runW = { ...run, inputs: { ...run.inputs, economics: { ...run.inputs.economics, wacc: 0.13 } } };
+    const beW = breakevens(runW, { site: run.ctx.site });
+    const rowW = beW.rows.find((r) => r.id === 'wacc');
+    assert.ok(rowW, 'WACC is not among the drivers');
+    assert.ok(rowW.widened && Math.abs(rowW.high - 0.13) < 1e-12 && rowW.base === rowW.high && rowW.low < rowW.base, JSON.stringify([rowW.low, rowW.base, rowW.high]));
+    assert.ok(rowW.cells.every((c) => c.flips.up === null), 'a flip above a value that is already at the top of the range used');
+    assert.ok(be.rows.every((r) => !r.widened), 'a row widened in T1');
+    const flatW = (r) => pdfPageTexts(r.bytes).join(' ').replace(/\s+/g, ' ');
+    assert.ok(flatW(buildReport(runW, { created: new Date('2026-10-26T12:00:00Z'), breakevens: beW })).includes('widened to include the value entered'));
+    out.push('a WACC of 13 % (record range 4–12 %) widens the range to 4–13 %, says so in the table and the PDF, and tests nothing above it');
+    // (3) LOW-1 and LOW-9: no competitor to test against is said so; the summary's detail says the search is on a grid.
+    const smNone = plainSummary(run, { breakevens: { ...be, competitors: [], rows: [] } });
+    assert.ok(/no other option with different figures was available/.test(smNone.parts.find((p) => p.id === 'change').text), smNone.parts.find((p) => p.id === 'change').text);
+    assert.ok(!/none of the 0/.test(smNone.text));
+    assert.ok(plainSummary(run, { breakevens: be }).details.change.some((t) => /reverses again between two checked points/.test(t)), 'search caveat missing from the detail');
     // Deterministic, and the run is unchanged.
     assert.equal(JSON.stringify(breakevens(run, { site: run.ctx.site })), JSON.stringify(be));
     assert.equal(run.options.map((o) => `${o.id}:${o.rank}:${o.score}`).join('|'), before, 'the run changed');

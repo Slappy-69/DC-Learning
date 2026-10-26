@@ -53,6 +53,7 @@ GROUP_TITLES = collections.OrderedDict([
     ("weights", "Weights"), ("deliverability", "Deliverability"), ("settings", "Run settings"), ("choices", "Choice default states"),
     ("fuel", "Fuels and emission factors"), ("ppa", "PPA prices"), ("cooling", "Cooling approaches"), ("tech", "Technology library"),
     ("spatial", "Spatial library (site layout)"), ("view", "View settings"), ("sensitivity", "Sensitivity (tornado)"),
+    ("uncertainty", "Uncertainty (Monte Carlo)"), ("permitting", "Permitting"),
 ])
 TECH_NAMES = {
     "solarGround": "Solar PV ground-mount", "solarRoof": "Solar PV rooftop", "solarCarport": "Solar PV carport", "wind": "Wind onshore",
@@ -68,6 +69,10 @@ groups = collections.OrderedDict((k, []) for k in GROUP_TITLES)
 for r in reg:
     top = r["path"].split(".")[0]
     groups.setdefault(top, []).append(r)
+# Every record must be listed (check H6, MED-6: the Monte Carlo and permitting records were silently left out).
+unlisted = {k: len(v) for k, v in groups.items() if v and k not in GROUP_TITLES}
+if unlisted:
+    raise SystemExit(f"Appendix A would leave out records in groups with no title: {unlisted}. Add them to GROUP_TITLES.")
 
 out = []
 out.append("# Appendix A. The full defaults register {#appA}\n")

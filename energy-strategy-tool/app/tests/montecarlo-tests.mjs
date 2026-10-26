@@ -99,6 +99,27 @@ export async function monteCarloTests(test, ctxRuns) {
     assert.ok(pdf.includes('Uncertainty (Monte Carlo)') && pdf.includes(`#1 leads in ${Math.round(lr.pRank1 * 100)} % of samples`));
     assert.ok(flat(buildReport(run, { created })).includes('The Monte Carlo was not run for this report'));
     out.push('in the summary (parts 1 and 4) and the PDF');
+    // Check H6 (2026-10-26). MED-3: the counts behind the shares are kept; a robust pick that is not the leader is stated
+    // with its counts, in the summary and the PDF, so a one-sample margin shows as one.
+    assert.ok(mc.rows.every((r) => r.nRobust === Math.round(r.pRobust * mc.samples)), 'robust counts do not match the shares');
+    const other = mc.rows.find((r) => r.id !== mc.leaderId);
+    const mcOther = { ...mc, robustPickId: other.id };
+    const smOther = plainSummary(run, { monteCarlo: mcOther });
+    assert.ok(smOther.parts[3].text.includes(`not the leader (${other.nRobust} of 100 samples against ${lr.nRobust})`), smOther.parts[3].text);
+    assert.ok(smOther.words <= SUMMARY_WORD_LIMIT, `${smOther.words} words`);
+    assert.ok(flat(buildReport(run, { created, monteCarlo: mcOther })).includes(`within the band in ${other.nRobust} of 100 samples, against ${lr.nRobust} for #1`));
+    // MED-2: the representative-day caveat is in the summary's detail and the PDF; the full-year run does not carry it.
+    assert.ok(mc.screening && sm.details.confidence.some((t) => /representative days: adequacy and the order of the options are approximate/.test(t)), 'caveat missing from the detail');
+    assert.ok(pdf.includes('Representative-day dispatch makes adequacy and the order of the options approximate'), 'caveat missing from the PDF');
+    // LOW-2: an input entered outside its record's range is sampled over a widened range, and says so; T1's are inside.
+    assert.ok(mc.drivers.every((d) => !d.widened), 'a driver widened in T1');
+    const runW = { ...run, inputs: { ...run.inputs, economics: { ...run.inputs.economics, wacc: 0.13 } } };
+    const mcW = monteCarlo(runW, { site: run.ctx.site, samples: 30, nOptions: 4 });
+    const dW = mcW.drivers.find((d) => d.id === 'wacc');
+    assert.ok(dW.widened && dW.values.p90 <= 0.13 + 1e-9 && dW.values.p10 >= 0.04 - 1e-9, JSON.stringify(dW.values));
+    assert.ok(mcW.drivers.filter((d) => d.widened).length === 1);
+    assert.ok(plainSummary(runW, { monteCarlo: mcW }).details.confidence.some((t) => /sampled over a widened range: .*WACC/i.test(t)), 'widened range missing from the detail');
+    out.push('the robust pick is stated with its counts (one sample ahead reads as one sample); the representative-day caveat is in the detail and the PDF; a WACC of 13 % is sampled over 4–13 % and says so');
     return out.join('; ') + '.';
   });
 }

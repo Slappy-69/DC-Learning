@@ -281,12 +281,15 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     const reg = Object.values(getRegistry());
     const unv = reg.filter((r) => r.label === LABEL).length;
     if (!mc) notRun.push('the Monte Carlo');
+    // What the Monte Carlo cannot say exactly (check H6, MED-2 and LOW-2), in the detail.
+    if (mc && mc.screening) more.push('The Monte Carlo ran on representative days: adequacy and the order of the options are approximate, and now and then a full-year run would put a different option first in a sample.');
+    if (mc && mc.drivers.some((d) => d.widened)) more.push(`Inputs entered outside their record's range were sampled over a widened range: ${mc.drivers.filter((d) => d.widened).map((d) => d.label).join('; ')}.`);
     if (assumed.length) more.push(`Key inputs at their defaults: ${assumed.map((f) => f.message.replace(/^Assumed /, '').split(':')[0]).join('; ')}.`);
     const within = [0.1, 1, 5].map((d) => [d, group.filter((o) => o !== L && L.score - o.score <= d + 1e-12).length]);
     more.push(`Other ${groupName} close to the leader: ${within.map(([d, n]) => `${n.toLocaleString('en-GB')} within ${d} point${d === 1 ? '' : 's'}`).join(', ')}.`);
     add('confidence', 'Confidence', [
       req(close ? `${plural(close, `other ${kind}option`)} score${close === 1 ? 's' : ''} within 1 point of it.` : `No other ${kind}option scores within 1 point of it.`),
-      mcL ? req(`In ${mc.samples.toLocaleString('en-GB')} Monte Carlo samples it leads in ${Math.round(mcL.pRank1 * 100)} % and is in the top three in ${Math.round(mcL.pTop3 * 100)} %; ${(() => { const rb = mc.rows.find((r) => r.id === mc.robustPickId); return rb && rb.id !== L.id ? `the robust pick (most often within ${Math.round(mc.band * 100)} % of the best) is #${rb.rank}, not the leader` : `it is also the robust pick (most often within ${Math.round(mc.band * 100)} % of the best)`; })()}.`)
+      mcL ? req(`In ${mc.samples.toLocaleString('en-GB')} Monte Carlo samples it leads in ${Math.round(mcL.pRank1 * 100)} % and is in the top three in ${Math.round(mcL.pTop3 * 100)} %; ${(() => { const rb = mc.rows.find((r) => r.id === mc.robustPickId); return rb && rb.id !== L.id ? `the robust pick (most often within ${Math.round(mc.band * 100)} % of the best) is #${rb.rank}, not the leader (${rb.nRobust} of ${mc.samples.toLocaleString('en-GB')} samples against ${mcL.nRobust})` : `it is also the robust pick (most often within ${Math.round(mc.band * 100)} % of the best)`; })()}.`)
         : opt('Rank probability and the robust pick come from the Monte Carlo, not run for this result.', 3),
       req(`${assumed.length ? `It uses ${plural(assumed.length, 'key input')} left at ${assumed.length === 1 ? 'its default' : 'their defaults'}` : 'No key input it uses is left at its default'}; ${unv.toLocaleString('en-GB')} of ${reg.length.toLocaleString('en-GB')} default records are ${LABEL}.`),
     ], more);
@@ -315,8 +318,10 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     if (be) {
       const nf = nearestFlips(be, 2);
       if (nf.length) s.push(req(`Breakevens: ${nf.map((f) => f.text).join('; ')}.`));
+      else if (!be.competitors.length) s.push(req('Breakevens: no other option with different figures was available to test against.'));
       else s.push(req(`Breakevens: none of the ${plural(be.competitors.length, 'competitor')} overtakes it on the ${plural(be.rows.length, 'driver')} tested, within their ranges.`));
       for (const f of nearestFlips(be, Infinity)) more.push(`${cap(f.text)} (${Math.round(f.distance * 100)} % of the driver's range from today's value).`);
+      more.push('The breakeven search checks a grid of points on each side of today\'s value: a swap that reverses again between two checked points is not seen.');
     } else {
       s.push(opt('Breakevens have not been run for this result (Sensitivity tab).', 4));
       notRun.push('the breakevens');

@@ -833,7 +833,7 @@ Reference machine: a 4-core laptop CPU from 2020 or later, 16 GB RAM, current Ch
 | 8760 verification of 10 options | ≤ 3 s in background |
 | Monte Carlo: 300 samples × 20 options | ≤ 8 s, progressive. *As built (2026-10-25, work package 18):* **not met**: about 12 s in Node and about 30 s in Chromium (100 samples: 9 s, browser check B40), progressive (the table fills every ten samples), on the main thread in 25 ms slices |
 | Breakeven table (default scope, §13.3: leader vs 5 competitors × 8 drivers) | ≤ 3 s. *As built (2026-10-24, work package 17):* **not met**: the full engine, one re-run per tick on the main thread; T1 takes 224 re-runs, about 5 s in Node and 7 s in Chromium (browser check B39). The screening tier (§9.1) would be faster but is off by default |
-| Main thread long tasks during compute | none > 50 ms |
+| Main thread long tasks during compute | none > 50 ms. *As built (2026-10-26, check H6):* **not met** by the breakeven table and the Monte Carlo, which run on the main thread in steps (25 ms slices for the Monte Carlo). Node, T1: breakevens 11 of 217 steps over 50 ms, longest 182 ms; Monte Carlo 100 × 20 samples 3 of 2,010 steps, longest 100 ms; browser check B40: longest timer wait 115 ms. The cost is building the context for each new driver value or sample, which one step cannot split; a worker would remove it (not scheduled) |
 | Initial load to interactive (cold, broadband) | ≤ 3 s; JS bundle ≤ 1.5 MB gzipped excluding lazy 2.5D view and profile data |
 | Country profile data per country | ≤ 300 KB gzipped (representative days + 8760 arrays) |
 | Screening vs verification agreement | LCOE and annual carbon within ±5 %; resilience, site-fit and grid-cap flag status identical, for all 10 archetypes on the reference set |

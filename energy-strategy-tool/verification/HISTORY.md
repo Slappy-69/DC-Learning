@@ -107,3 +107,10 @@ Reports in `verification/walkthrough-build/`. The owner asked for Haiku checks o
 | Check | Model | Result |
 |---|---|---|
 | H5, package 16 (plain-English summary) and known issue 21 | Haiku | 1 high, 4 medium, 13 low (50 verified, 20 failed, 4 not verified). High: an edited note written with the Site tab on reached the PDF. Medium: the 250-word limit not enforced with many major flags; "gives up nothing" with one adequate option; hourly CFE called "carbon"; "why it leads" left out the parts favouring #2. All fixed the same day except L13 (the B38 message is the failure message, correct as written); report `plain-summary/H5-summary.md`, fixes in `app/BUILD-NOTES.md` ("Fixes after Haiku check H5") |
+
+## Breakeven table and Monte Carlo: work packages 17 and 18 (2026-10-26, branch feature/verification-h6)
+
+| Check | Model | Result |
+|---|---|---|
+| H6, packages 17 (breakeven table) and 18 (Monte Carlo) at commit 33f9c1a | Haiku | 0 high, 6 medium, 11 low (43 verified, 20 failed, 5 not verified). Medium: the competitor pool takes six cards (with the owner); the representative-day caveat too narrow; the robust pick shown on a one-sample margin as "100 %" for both; the breakeven base from the run while the re-runs use the full year; steps over 50 ms; Appendix A without the 7 Monte Carlo records (14 records missing). Fixed after the lead confirmed each against the code, except the 50 ms steps (recorded) and three points with the owner (`app/BUILD-NOTES.md`, "Fixes after Haiku check H6"). Report: `verification/breakeven-montecarlo/H6-report.md`; the lead's scripts in `scripts/` |
+| Opus review | — | **Due** under the rule "one Opus review after every three Haiku checks" (H4, H5 and H6 since the owner's waiver of 2026-10-23, which was given for the walkthrough-build round). Expensive: ask the owner before running it |

@@ -101,9 +101,25 @@ export function* breakevenSteps(run, { site = null } = {}) {
   const lineScore = (m) => SCORE_KEYS.reduce((a, k) => a + weights[k] * (ranges[k] ? axisScore(k, m[k], ranges[k].lo, ranges[k].hi) : 0), 0);
   const baseScore = (o) => ({ score: o.score, line: lineScore(o.metrics), adequate: !(o.adequacy && o.adequacy.adequate === false), compliant: !(o.resilience && o.resilience.status === 'Does not meet'), lcoe: o.eco.lcoe });
   let done = 0;
+  // With the representative-day screening tier on, only the best `verifyTop` options carry full-year figures in the run;
+  // the others carry screening figures. Every point of the table is a full-year re-run, so the base (today's value) is
+  // re-run the same way, or an option next to the leader could show a flip that is only the difference between the two
+  // models (H6, MED-4). With the default full-year run the re-run equals the run's own figures (checked: difference 0).
+  const rescoreBase = inputs.settings.screeningModel === 'repDays';
   // Step 1: the leader at each driver's low and high (its tornado on every driver), to choose the drivers.
-  const est = 2 * TORNADO_DRIVERS.length + nD * 2 * (1 + comps.length) + nD * comps.length * 8;
+  const est = (rescoreBase ? 1 + comps.length : 0) + 2 * TORNADO_DRIVERS.length + nD * 2 * (1 + comps.length) + nD * comps.length * 8;
   let total = est;
+  let baseFull = null;
+  if (rescoreBase) {
+    if (!ctx0) ctx0 = buildContext(normalizeInputs(inputs), { site: baseSite });
+    baseFull = new Map();
+    for (const o of [L, ...comps]) {
+      baseFull.set(o.id, scoreOf(ctx0, o));
+      done++;
+      yield { done, total, label: `#${o.rank} at today's values, full year` };
+    }
+  }
+  const baseOf = (o) => (baseFull ? baseFull.get(o.id) : baseScore(o));
   const lowHigh = new Map();
   for (const d of TORNADO_DRIVERS) {
     const [lo, hi] = d.range(inputs);
@@ -119,19 +135,24 @@ export function* breakevenSteps(run, { site = null } = {}) {
   // Step 2: every option at the middle and the end of each side; step 3: bisection of the first flip on each side.
   const rows = [];
   for (const d of drivers) {
-    const { lo, hi, L: Lr } = lowHigh.get(d.id);
+    const { lo: rLo, hi: rHi, L: Lr } = lowHigh.get(d.id);
     const b0 = driverBase(d, inputs);
+    // The side labelled "lower" must hold lower values and "higher" higher ones. When the engineer's own value lies outside
+    // the record's range (a WACC of 13 % against 4–12 %), the range used grows to include it (H6, LOW-2); nothing beyond the
+    // record's range is tested on that side, and the table says the range was widened.
+    const lo = Math.min(rLo, b0), hi = Math.max(rHi, b0);
+    const widened = lo !== rLo || hi !== rHi;
     const whole = WHOLE.has(d.id);
     const pt = (a, b) => (whole ? Math.round((a + b) / 2) : (a + b) / 2);
     const xs = [lo, pt(lo, b0), b0, pt(b0, hi), hi];
     const all = [L, ...comps];
     const at = new Map(); // x → Map(option id → score)
-    at.set(b0, new Map(all.map((o) => [o.id, baseScore(o)])));
+    at.set(b0, new Map(all.map((o) => [o.id, baseOf(o)])));
     for (const x of xs) {
       let m = at.get(x);
       if (!m) { m = new Map(); at.set(x, m); }
-      if (x === lo && !m.has(L.id)) m.set(L.id, Lr.low.s);
-      if (x === hi && !m.has(L.id)) m.set(L.id, Lr.high.s);
+      if (x === rLo && !m.has(L.id)) m.set(L.id, Lr.low.s);
+      if (x === rHi && !m.has(L.id)) m.set(L.id, Lr.high.s);
       const need = all.filter((o) => !m.has(o.id));
       if (!need.length) continue;
       const ctx = ctxAt(d, x);
@@ -170,12 +191,14 @@ export function* breakevenSteps(run, { site = null } = {}) {
       }
       cells.push({ competitorId: C.id, flips, baseLeaderAhead: sign(b0) > 0 });
     }
-    rows.push({ id: d.id, label: d.label, unit: d.unit, record: d.record, low: lo, high: hi, base: b0, whole, swing: lowHigh.get(d.id).swing, lowText: d.text(lo), highText: d.text(hi), cells });
+    rows.push({ id: d.id, label: d.label, unit: d.unit, record: d.record, low: lo, high: hi, base: b0, whole, widened, swing: lowHigh.get(d.id).swing, lowText: d.text(lo), highText: d.text(hi), cells });
   }
   return {
     leaderId: L.id, leaderRank: L.rank, leaderName: L.name,
     competitors: comps.map((o) => ({ id: o.id, rank: o.rank, name: o.name, score: o.score })),
     rows, tolerance: tol, evaluations: done,
+    baseModel: rescoreBase ? 'full-year re-run' : 'run',
+    baseLines: Object.fromEntries([L, ...comps].map((o) => [o.id, baseOf(o).line])), // the weighted scores the base points used
     gridDate: inputs.grid.fullDate,
   };
 }

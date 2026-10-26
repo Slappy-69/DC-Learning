@@ -382,7 +382,7 @@ export default function App() {
 
       <footer className="footer">
         <p>{GUARDRAIL}</p>
-        <p className="sub">Not built yet: parallel coordinates, choice-impact and radar charts, breakevens and the rest of the tornado drivers, scenarios, manual layout editing, 2.5D massing, map tiles and underlays, exports, Monte Carlo ranges, representative-day screening tier. Site layouts and noise figures are concept-stage proxies. PPA settlement counts only on PPA energy delivered over the grid connection. Profiles are synthetic and seeded; every default is indicative — unverified.</p>
+        <p className="sub">Not built yet: parallel coordinates, choice-impact and radar charts, the rest of the tornado drivers, scenarios, manual layout editing, 2.5D massing, map tiles and underlays, exports, a range for every numeric input in the Monte Carlo, an automatic Monte Carlo. Site layouts and noise figures are concept-stage proxies. PPA settlement counts only on PPA energy delivered over the grid connection. Profiles are synthetic and seeded; every default is indicative — unverified.</p>
       </footer>
     </div>
   );

@@ -39,8 +39,9 @@
 - Scores are relative to the options in the run, and the sample of 2,000 can miss combinations.
 - Deliverability penalties and weights are judgements.
 - The summary (chapter 22) uses the tornado, the breakevens and the Monte Carlo only once each has been run for the current result.
-- The Monte Carlo draws thirteen inputs only; every other parameter keeps its central value. It uses representative days, so its adequacy is approximate, and 300 samples take about 30 s in a browser (target 8 s). It runs on request, not after every change.
-- The breakeven table checks a few points on each side of today's value: a swap that reverses between two of them is not seen. It moves one driver at a time and takes about 5 s or more, above the 3 s target.
+- The Monte Carlo draws thirteen inputs only; every other parameter keeps its central value. It uses representative days, so its adequacy and the order of the options are approximate (check H6, T1: the first place of a sample differed from a full-year run in 1 of 21 test cases), and 300 samples take about 30 s in a browser (target 8 s) and 11–12 s in Node. It runs on request, not after every change.
+- The breakeven table checks a few points on each side of today's value: a swap that reverses between two of them is not seen. It moves one driver at a time and takes about 4–5 s in Node and 7 s in a browser, above the 3 s target.
+- Neither run is split finely enough for the brief's rule that no task on the main thread lasts more than 50 ms. Check H6 measured, in Node on T1, 11 breakeven steps over 50 ms (longest 182 ms) and 3 Monte Carlo steps over 50 ms (longest 100 ms); the browser check measured the longest wait at 115 ms. The page stays usable, but it can stall for about a fifth of a second. Building the context for each new driver value is the slow step; a worker would remove the stall (not scheduled).
 
 **Site (Beta)**
 

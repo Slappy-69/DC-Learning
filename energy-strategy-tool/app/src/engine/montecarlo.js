@@ -8,8 +8,8 @@
 // normal copula on the hypercube. In each sample all drivers move together, the leading options are re-run with the
 // representative-day dispatch (§9.1 screening tier) or the full year, and they are put in the ranking's order on the
 // run's own axis scales (as the breakevens do). Out: P10/P50/P90 of each option's figures, the probability that each
-// leads and is in the top three, and the robust pick: the option most often within 5 % of the best score in its sample.
-// The run itself is never changed. Pure: no UI, no browser APIs.
+// leads and is in the top three, and the robust pick: the option most often within the robust band (1 %, a run setting) of
+// the best score in its sample. The run itself is never changed. Pure: no UI, no browser APIs.
 
 import { buildContext } from './context.js';
 import { normalizeInputs, registryValue } from './defaults.js';
@@ -97,6 +97,8 @@ export function* monteCarloSteps(run, { site = null, samples = mcSamples(), nOpt
   const opts = run.options.slice().sort((a, b) => a.rank - b.rank).filter((o, i) => i < nOptions || o.pinned);
   const drivers = TORNADO_DRIVERS.filter((d) => MC_DRIVER_IDS.includes(d.id));
   const U = latinHypercube(samples, drivers.map((d) => d.id), seed);
+  // An input whose current value lies outside its record's range is sampled over a range widened to include it (H6, LOW-2).
+  const widened = new Set(drivers.filter((d) => { const [lo, hi] = d.range(inputs); const b0 = driverBase(d, inputs); return b0 < lo || b0 > hi; }).map((d) => d.id));
   const baseSite = site && site.key === siteKey(inputs) ? site : buildSiteModel(inputs);
   // The layout changes no figure the ranking reads unless site fit can rank (the rule of run.js, work package 13).
   const skipLayout = !(inputs.deliverability.siteFitPenalty || inputs.settings.rankCompliantFirst) || !!(run.layoutSummary && run.layoutSummary.onDemand);
@@ -107,7 +109,7 @@ export function* monteCarloSteps(run, { site = null, samples = mcSamples(), nOpt
   const firstSamples = []; // the first three samples in full, so a test can re-run one on its own
   const total = samples * opts.length;
   let done = 0;
-  const summarise = (nDone) => ({ ...summariseMC(run, opts, per, nDone, values, drivers, { samples, seed, screening, skipLayout }), firstSamples });
+  const summarise = (nDone) => ({ ...summariseMC(run, opts, per, nDone, values, drivers, { samples, seed, screening, skipLayout, widened }), firstSamples });
   for (let i = 0; i < samples; i++) {
     const inp = normalizeInputs(inputs);
     const vals = {};
@@ -156,6 +158,7 @@ function summariseMC(run, opts, per, n, values, drivers, meta) {
       id: o.id, rank: o.rank, name: o.name, score: o.score,
       lcoe: band(p.lcoe), npv: band(p.npv), capex: band(p.capex), carbon: band(p.carbon), firstPowerM: band(p.firstPowerM), fullLoadM: band(p.fullLoadM), scoreBand: band(p.score),
       pRank1: p.rank1 / n, pTop3: p.top3 / n, pRobust: p.robust / n, pAdequate: p.adequate / n,
+      nRobust: p.robust, // the counts behind the shares, so a one-sample margin can be shown as such (H6, MED-3)
     };
   });
   // Ties go to the option that leads more often, then to the better rank.
@@ -167,7 +170,7 @@ function summariseMC(run, opts, per, n, values, drivers, meta) {
     complete: n === meta.samples, correlations: mcCorrelations().map(([a, b, r]) => ({ a, b, rho: r })),
     leaderId: leader ? leader.id : null, rows,
     robustPickId: byRobust.length ? byRobust[0].id : null, mostOftenFirstId: byRank1.length ? byRank1[0].id : null,
-    drivers: drivers.map((d) => ({ id: d.id, label: d.label, record: d.record, values: band(values.map((v) => v[d.id])) })),
+    drivers: drivers.map((d) => ({ id: d.id, label: d.label, record: d.record, widened: meta.widened.has(d.id), values: band(values.map((v) => v[d.id])) })),
   };
 }
 

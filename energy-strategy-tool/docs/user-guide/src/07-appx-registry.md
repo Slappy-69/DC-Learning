@@ -827,3 +827,23 @@ Check against: ISO 9613-2 (geometric divergence term only).
 - **sensitivity.breakevenCompetitors**: 5 competitors of the leader; run. Breakeven table: the leader against this many competitors (§13.3 default scope 5 × 8). The code clamps it to 1–10.
 - **sensitivity.breakevenDrivers**: 8 drivers; run. Breakeven table: the drivers with the largest weighted-score swing in the leader's tornado (§13.3 default scope 5 × 8). The code clamps it to 1–16.
 - **sensitivity.breakevenTolerance**: 0.02 share of the driver range; judg. Breakeven search: bisection stops when the flip is bracketed within this share of the driver's range (whole-number drivers: within 1). No source.
+
+## Uncertainty (Monte Carlo)
+
+- **uncertainty.samples**: 300 samples; run. Latin hypercube samples (§13.2 default 300). The code clamps it to 20–2,000.
+- **uncertainty.options**: 20 options (from #1 down); run. The leading options re-run in every sample (§13.2: the top 20 by weighted score). The code clamps it to 2–50.
+- **uncertainty.robustBand**: 0.01 share of the best score; judg. Robust pick: the option most often within this share of the best weighted score in its sample. §13.2 proposed 5 %; 1 % since work package 18 (OPEN-QUESTIONS 102): in T1 every one of the top 20 options was within 5 % of the best in at least 93 % of samples, so 5 % separated nothing. Judgement, editable.
+- **uncertainty.seed**: 20,261,025 seed; run. Seed of the Latin hypercube, so the same run gives the same samples (§4 determinism).
+- **uncertainty.screening**: on; run. Re-run the options with the representative-day dispatch (§9.1 screening tier) in each sample, as §13.2 says; off = the full year (slower).
+- **uncertainty.correlationPrices**: 0.6 correlation coefficient; judg. Grid and gas price move together (§13.1: ρ = 0.6). No source; to review.
+- **uncertainty.correlationCapex**: 0.8 correlation coefficient; judg. Capex factors move together (§13.1: ρ = 0.8 within a technology family; here the all-lines, battery and grid connection factors). No source; to review.
+
+## Permitting
+
+- **permitting.outlook.gasRecip**: uncertain (likely / uncertain / unlikely); judg. Gas engines running in normal operation need an IED permit with NOx limits and an air-quality assessment; consentable on many sites but site-specific.
+- **permitting.outlook.gasTurbine**: uncertain (likely / uncertain / unlikely); judg. Gas turbines running in normal operation need an IED permit with NOx limits and an air-quality assessment; consentable on many sites but site-specific.
+- **permitting.outlook.chp**: uncertain (likely / uncertain / unlikely); judg. Gas CHP needs an IED permit with NOx limits and an air-quality assessment; the use of the heat helps the case.
+- **permitting.outlook.rented**: uncertain (likely / uncertain / unlikely); judg. Temporary gas generation running for months counts towards the installation and its permit; regulators increasingly scrutinise long-running temporary plant.
+- **permitting.outlook.dieselPrime**: unlikely (likely / uncertain / unlikely); judg. Diesel or HVO engines running as prime power in normal operation are unlikely to be consented under air-quality rules in most of Europe.
+- **permitting.outlook.hydrogen**: uncertain (likely / uncertain / unlikely); judg. Hydrogen storage above the Seveso threshold adds a major-accident regime and separation distances; few precedents at data centres.
+- **permitting.outlook.backup**: likely (likely / uncertain / unlikely); judg. Standby gensets tested a few hours a year are routinely permitted at data centres, although they bring the site under the IED.
