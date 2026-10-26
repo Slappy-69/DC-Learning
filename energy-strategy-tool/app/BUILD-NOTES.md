@@ -2019,3 +2019,5 @@ Report: `verification/breakeven-montecarlo/H6-report.md` (commit 33f9c1a, work p
 | Found by the lead | `App.jsx` footer said breakevens, Monte Carlo ranges and the representative-day tier were "not built yet": corrected |
 
 Same check: `tests/breakeven-tests.mjs` (test 45) and `tests/montecarlo-tests.mjs` (test 46) pass alone (`h6-lead-run-45-46.mjs`, 44 s).
+
+Full runs on the fixed code (commit a4f531c, 2026-10-26, one after the other on a 2-core machine): `npm test` 77/77 (about 22 minutes with the browser run following; Node alone about 8 minutes) and `npm run test:browser` 40/40, axe with no violations.
