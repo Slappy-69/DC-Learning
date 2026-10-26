@@ -250,7 +250,7 @@ The screenshot above shows the tornado before work package 9 (score measured, th
 
 ![The breakeven table for the T1 leader (24 October 2026): one column per competitor, the flip below and above today's value in each cell.](img/s26-breakevens.png)
 
-- **Competitors:** #2, then the best option of each other strategy (the strategies of the top-five cards), in rank order.
+- **Competitors:** #2, then the best option of each other strategy, in rank order. The strategies come from the first **six** cards: the leader's own card gives no competitor, so six cards are needed to reach five (the owner chose this on 26 October 2026; the alternative was five cards and then the next-ranked options, which on T1 would have added #3, the same strategy as #2).
 - **Drivers:** the eight, of all sixteen, that move the leader's weighted score most between their low and high values. They are chosen afresh by the breakeven run, whatever is ticked for the tornado.
 - **Each cell** gives, for one driver and one competitor, the value below the current one ("Lower", or "Earlier" for the grid date) and above it ("Higher", "Later") at which the two swap places, or "no flip" within the driver's range. For the grid date the cell also gives the date.
 - **Nearest flips** under the table: the flips closest to today's values, as a share of each driver's range. The summary (chapter 22) names the two nearest.

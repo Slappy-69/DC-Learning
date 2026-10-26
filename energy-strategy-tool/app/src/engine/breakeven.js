@@ -2,7 +2,8 @@
 // recommendations, accepted in advance by the owner).
 //
 // The leader against up to five competitors (#2, then the best option of each other strategy in rank order, the
-// strategies of the top-five cards), on the eight drivers with the largest weighted-score swing in the leader's tornado.
+// strategies of the first six cards: the leader's own card gives no competitor, so six cards reach five; owner's answer
+// of 2026-10-26, OPEN-QUESTIONS 93), on the eight drivers with the largest weighted-score swing in the leader's tornado.
 // For each competitor and driver: the driver value, nearest the current value on each side, at which their order
 // flips, or "no flip within range". Each option is re-run with the engine the ranking uses (option.js), the driver set as
 // the tornado sets it, and scored against the run's own axis ranges and weights (as the tornado does), so the run itself

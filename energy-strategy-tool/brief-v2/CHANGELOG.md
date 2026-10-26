@@ -346,3 +346,7 @@ OPEN-QUESTIONS 98–104 answered with Claude's recommendations, accepted in adva
 3. §17: the Monte Carlo target (≤ 8 s) is not met: about 30 s in a browser for 300 × 20.
 4. §14: parts 1 and 4 of the summary use the Monte Carlo when it has been run.
 
+
+## Revision 5, as-built notes (2026-10-26): check H6
+
+1. §13.3 / OPEN-QUESTIONS 93: the breakeven competitors are the best option of each other strategy among the first **six** cards (so that five are reached after the leader's own card), not the top-five cards. Answered by the owner on 2026-10-26; the code was right and the record was amended.

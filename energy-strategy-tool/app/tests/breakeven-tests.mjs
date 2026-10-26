@@ -28,7 +28,8 @@ export async function breakevenTests(test, ctxRuns) {
     assert.equal(comps[0].rank, 2);
     assert.ok(comps.every((o) => o !== L && !sameFigures(L, o)));
     const cardIds = topCards(run.options, 6).cards.map((c) => c.o.id);
-    assert.ok(comps.slice(1).every((o) => cardIds.includes(o.id) || o.rank <= 6), 'a competitor that is neither #2 nor a top-five strategy');
+    assert.ok(comps.slice(1).every((o) => cardIds.includes(o.id) || o.rank <= 6), 'a competitor that is neither #2 nor the best of a strategy among the first six cards (OPEN-QUESTIONS 93, owner 2026-10-26)');
+    assert.deepEqual(comps.map((o) => o.rank), [2, 5, 7, 11, 16], 'T1 competitors (owner 2026-10-26: the strategies of six cards)');
     assert.deepEqual(comps.map((o) => o.rank), comps.map((o) => o.rank).slice().sort((a, b) => a - b));
     const t0 = Date.now();
     const be = breakevens(run, { site: run.ctx.site });
