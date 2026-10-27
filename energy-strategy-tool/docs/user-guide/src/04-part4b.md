@@ -402,7 +402,7 @@ How each driver is applied:
 - **Gas price, carbon price**: entered as inputs at the factor times the current value (the country default or your value).
 - **WACC**: set to 4 % and 12 %.
 - **IT load**: the IT load at full build and every phase are scaled.
-- **Capex, battery capex, grid connection capex** (built 23 October 2026): a factor multiplies the capex lines before contingency. "Capex" scales every line; "battery capex" the battery lines (shortfall, bridge and resilience batteries); "grid connection capex" the grid connection and reinforcement line. Replacements follow the capex they replace.
+- **Capex, battery capex, grid connection capex** (built 23 October 2026): a factor multiplies the capex lines before contingency. "Capex" scales every line; "battery capex" the battery lines (shortfall, bridge and resilience batteries); "grid connection capex" the grid connection charge and the grid cable route only. It does not scale the substation line, which moves with "capex" (the owner chose this on 26 October 2026; check H6). On a project whose connection charge is left at its default of 0 this driver moves almost nothing: on T1 it scales €15,000 of €77.2 million. Replacements follow the capex they replace.
 - **Capacity factors**: the hourly output of on-site solar and wind is scaled (the PPA's own profile is not).
 - **PUE**: the cooling and mechanical share of the facility load, and the cooling term of the design-day PUE, are scaled. A higher PUE raises the energy bought and the plant sized.
 - **Evaluation period, escalation**: set to the input's own low and high.

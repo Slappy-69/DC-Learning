@@ -871,7 +871,7 @@ export function buildDefaultInputs(opts = {}) {
       // Sensitivity multipliers (work package 9): 1 = as entered; the tornado moves them. Judgement, no source.
       capexFactor: rec('economics.capexFactor', 1, '× every capex line', { low: 0.7, high: 1.5, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "capex"; range the AACE Class 5 band (−30 % / +50 %).' }),
       bessCapexFactor: rec('economics.bessCapexFactor', 1, '× battery capex', { low: 0.7, high: 1.3, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "battery capex". No source.' }),
-      gridCapexFactor: rec('economics.gridCapexFactor', 1, '× grid connection capex', { low: 0.5, high: 2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "grid connection capex". No source.' }),
+      gridCapexFactor: rec('economics.gridCapexFactor', 1, '× grid connection capex', { low: 0.5, high: 2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "grid connection capex". Scales the grid connection charge and the grid cable route only, not the substation, which moves with the capex driver (owner, 2026-10-26). No source.' }),
       elecEscalation: rec('economics.elecEscalation', 0, 'real per yr', { low: -0.02, high: 0.02, basis: 'source', verify: 'ENTSO-E / forward curves', ref: '§5.6' }),
       gasEscalation: rec('economics.gasEscalation', 0, 'real per yr', { low: -0.02, high: 0.02, basis: 'source', verify: 'TTF/NBP forward curves', ref: '§5.6' }),
       salvageFraction: rec('economics.salvageFraction', 0.5, 'of remaining book value when removed', { low: 0.2, high: 0.7, basis: 'judgement', ref: '§9.5' }),

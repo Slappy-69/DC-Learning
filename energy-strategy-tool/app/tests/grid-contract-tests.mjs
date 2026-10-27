@@ -68,6 +68,17 @@ export async function gridContractTests(test, ctxRuns) {
     const t = tornado(r1, lead.id, { site: run.ctx.site, drivers: TORNADO_DRIVERS.filter((x) => x.id === 'grid-capex') });
     assert.ok(t.rows[0].high.lcoe > t.rows[0].low.lcoe, 'grid connection capex driver does not move LCOE with a charge entered');
     out.push(`grid connection capex driver with the charge: LCOE ${t.rows[0].low.lcoe.toFixed(2)} → ${t.rows[0].high.lcoe.toFixed(2)} €/MWh`);
+    // Owner, 2026-10-26 (OPEN-QUESTIONS 105): the driver scales the charge (and the cable route), never the substation.
+    const I2 = normalizeInputs(run.inputs);
+    I2.grid.contractBridgeMW = 80;
+    I2.grid.connectionCharge = 30e6;
+    I2.economics = { ...I2.economics, gridCapexFactor: 2 };
+    const eW2 = evaluateOption(buildContext(I2, { site: run.ctx.site }), wait.v);
+    const sumOf = (e, re) => e.eco.capexLines.filter((l) => re.test(l.item)).reduce((a, l) => a + l.amount, 0);
+    assert.equal(sumOf(eW2, /^Grid connection charge/), 60e6, 'the factor should double the charge');
+    assert.equal(sumOf(eW2, /^Substation/), sumOf(eW, /^Substation/), 'the grid connection capex factor must not scale the substation');
+    assert.ok(sumOf(eW, /^Substation/) > 0, 'the wait option has no substation line to compare');
+    out.push(`grid connection capex × 2: charge ${sumOf(eW, /^Grid connection charge/) / 1e6} → ${sumOf(eW2, /^Grid connection charge/) / 1e6} m, substation unchanged at ${(sumOf(eW, /^Substation/) / 1e6).toFixed(1)} m`);
     return out.join('; ') + '.';
   });
 }

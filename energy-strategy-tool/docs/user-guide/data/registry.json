@@ -7955,7 +7955,7 @@
   "high": 2,
   "basis": "judgement",
   "sourceToVerify": "",
-  "note": "Tornado driver \"grid connection capex\". No source.",
+  "note": "Tornado driver \"grid connection capex\". Scales the grid connection charge and the grid cable route only, not the substation, which moves with the capex driver (owner, 2026-10-26). No source.",
   "briefRef": "§13.3",
   "label": "indicative — unverified",
   "year": "",

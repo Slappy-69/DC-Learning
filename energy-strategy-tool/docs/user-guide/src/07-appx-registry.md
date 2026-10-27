@@ -180,7 +180,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **economics.carbonEscalation**: 0.02 real per yr; range 0–0.05; src; check against EU ETS / UK ETS forward curves.
 - **economics.capexFactor**: 1 × every capex line; range 0.7–1.5; judg. Tornado driver "capex"; range the AACE Class 5 band (−30 % / +50 %).
 - **economics.bessCapexFactor**: 1 × battery capex; range 0.7–1.3; judg. Tornado driver "battery capex". No source.
-- **economics.gridCapexFactor**: 1 × grid connection capex; range 0.5–2; judg. Tornado driver "grid connection capex". No source.
+- **economics.gridCapexFactor**: 1 × grid connection capex; range 0.5–2; judg. Tornado driver "grid connection capex". Scales the grid connection charge and the grid cable route only, not the substation, which moves with the capex driver (owner, 2026-10-26). No source.
 - **economics.elecEscalation**: 0 real per yr; range -0.02–0.02; src; check against ENTSO-E / forward curves.
 - **economics.gasEscalation**: 0 real per yr; range -0.02–0.02; src; check against TTF/NBP forward curves.
 - **economics.salvageFraction**: 0.5 of remaining book value when removed; range 0.2–0.7; judg.
