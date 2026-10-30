@@ -110,3 +110,11 @@ Report: `../verification/packaging/H1-packaging.md` (commit f797cca).
 - **Opus review of the packaging:** started, stopped at the weekly usage limit (resets 2026-10-23 15:00 La Paz time)
   without a report. Not resumed: the owner asked to stop development. Recorded as not done.
 - Merged to `main` with the owner's approval of 2026-10-18.
+
+## Rebuild requested (2026-10-30)
+
+- **Owner asked for a Windows build.** The last Desktop builds run (commit 05aa425, 2026-10-25) predates packages 16 to 18
+  (summary, breakeven table, Monte Carlo) and the check H6 fixes. This note touches `packaging/` so that GitHub builds the
+  program from `main` (commit 3eb59a9) plus this note, on a feature branch. Nothing is merged into `main`.
+- To read the result: GitHub, Actions, Desktop builds, the run for `feature/windows-build-2026-10-30`; download
+  `desktop-win32-x64` from Artifacts. The Linux job launch-tests the same app, including the network trace (D12).
