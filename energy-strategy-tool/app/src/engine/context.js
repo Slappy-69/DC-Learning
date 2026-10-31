@@ -82,6 +82,7 @@ export function contractLimit(inputs, C1) {
   return x == null || x === '' || !Number.isFinite(Number(x)) ? Infinity : Math.max(0, Number(x));
 }
 export function contractedCap(ctx, C1) {
+  if (ctx.contractApplied) return ctx.gridCap; // already contracted (a takeover in place of part of the new connection)
   const lim = contractLimit(ctx.inputs, C1);
   if (!(lim < Infinity)) return ctx.gridCap;
   if (!ctx.contractCache) ctx.contractCache = new Map();
@@ -235,7 +236,7 @@ export function ctxFor(ctx, v) {
   if (!v || !isTakeover(v.C21) || ctx.takeover) return ctx;
   // Cached first (Opus review finding 19): the key holds everything the derived context depends on in this run.
   const own0 = [v.C2, v.C4].map(parsePlantValue).find((p) => p && p.id === parsePlantValue(v.C21).id && p.mode !== 'takeover');
-  const key = `${v.C21}|${own0 ? own0.mode : '-'}|${v.C8}`;
+  const key = `${v.C21}|${own0 ? own0.mode : '-'}|${v.C8}|${v.C1}`;
   if (!ctx.takeoverCache) ctx.takeoverCache = new Map();
   const hit = ctx.takeoverCache.get(key);
   if (hit) return hit;
@@ -251,14 +252,21 @@ export function ctxFor(ctx, v) {
   let need = 0;
   for (let m = 0; m < arr.length; m++) if (arr[m] > need) need = arr[m];
   const mw = Math.max(0, Math.min(plant.takeoverMW, need));
-  const gridCap = Float64Array.from(ctx.gridCap, (x, m) => (m >= month ? x + mw : x));
+  // In place of part of the new connection (tk:, OPEN-QUESTIONS 126): from the takeover month the new connection is
+  // reduced by the MW taken over, and the contracted capacity caps the new connection only (so the option's grid is
+  // already contracted here). As well as the new one (ta:): added on top, and the contract caps the total, as before.
+  const add = !!parsePlantValue(v.C21).add;
+  const fullMW0 = Number(ctx.inputs.grid.fullMW) || 0;
+  const newMW = add ? fullMW0 : Math.max(0, fullMW0 - mw);
+  const lim = add ? Infinity : contractLimit(ctx.inputs, v.C1);
+  const gridCap = Float64Array.from(ctx.gridCap, (x, m) => (m >= month ? (add ? x + mw : Math.min(x, newMW, lim) + mw) : (add ? x : Math.min(x, lim))));
   // Bridging hands over once the grid offered carries what the full grid would: the full grid capacity entered, or the
   // campus design load if that is less.
   const full = Math.min(Number(ctx.inputs.grid.fullMW) || 0, need);
   let fullGridM = ctx.fullGridM;
   for (let m = month; m < gridCap.length && m < fullGridM; m++) if (gridCap[m] + 1e-9 >= full) { fullGridM = m; break; }
-  const takeover = { value: v.C21, plant, month, mw, needMW: need, offeredMW: plant.takeoverMW, costPerMW: plant.takeoverCostPerMW, cost: mw * plant.takeoverCostPerMW, ownPower: own ? own.mode : null, closeM };
-  const d = { ...ctx, gridCap, fullGridM, contractCache: new Map(), takeover, baseCtx: ctx };
+  const takeover = { value: v.C21, plant, month, mw, needMW: need, offeredMW: plant.takeoverMW, costPerMW: plant.takeoverCostPerMW, cost: mw * plant.takeoverCostPerMW, ownPower: own ? own.mode : null, closeM, add, newMW };
+  const d = { ...ctx, gridCap, fullGridM, contractCache: new Map(), takeover, baseCtx: ctx, contractApplied: !add };
   ctx.takeoverCache.set(key, d);
   return d;
 }

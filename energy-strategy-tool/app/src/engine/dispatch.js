@@ -123,7 +123,7 @@ export function dispatchConfig(ctx, v, sz) {
     ppaType: sz.ppa ? sz.ppa.type : null, ppaCoverage: sz.ppa ? sz.ppa.coverage : 0,
     flex: v.C16 === 'on',
     reYield: inputs.utilities.reYieldFactor ?? 1, // tornado driver "capacity factors" (work package 9)
-    gridLimit: v.C1 === 'islanded' ? Infinity : contractLimit(inputs, v.C1), // contracted capacity (work package 3)
+    gridLimit: v.C1 === 'islanded' || ctx.contractApplied ? Infinity : contractLimit(inputs, v.C1), // contracted capacity (work package 3); already applied for a takeover in place (OPEN-QUESTIONS 126)
     plants,
   };
   // Work package 19: the option's own grid offer when it takes over a plant's connection (dispatch reads cfg.gridCap).

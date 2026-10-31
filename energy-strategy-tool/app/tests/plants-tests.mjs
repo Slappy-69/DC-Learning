@@ -93,7 +93,7 @@ export async function plantTests(test) {
     assert.equal(eem.units, Math.round(3210 / PLANT_DEFAULTS.unitMW.ccgt));
     const dC2 = defaultChoiceState('C2', I).values, dC4 = defaultChoiceState('C4', I).values, dC21 = defaultChoiceState('C21', I).values;
     for (const p of c.filter((x) => x.offersPower)) for (const v of [p.values.lease, p.values.buy]) assert.ok(dC2.includes(v) && dC4.includes(v), v);
-    assert.deepEqual(dC21.filter((v) => v !== 'none').sort(), c.filter((x) => x.offersTakeover).map((x) => x.values.takeover).sort());
+    assert.deepEqual(dC21.filter((v) => v !== 'none').sort(), c.filter((x) => x.offersTakeover).flatMap((x) => [x.values.takeover, x.values.takeoverAdd]).sort());
     // Corrections: a closure year entered; a plant left out; the list switched off.
     const I2 = normalizeInputs(eemSmall({ edits: { [mag.id]: { closeYear: 2035, unitMW: 300, units: 4 }, [old.id]: { include: false } } }));
     const c2 = plantCandidates(I2);
@@ -192,7 +192,12 @@ export async function plantTests(test) {
     const ct = ctxFor(ctx, vt);
     assert.ok(ct !== ctx && ct.takeover.month === 12);
     assert.ok(ct.takeover.mw <= old.takeoverMW && ct.takeover.mw > 0);
-    assert.ok(ct.gridCap.every((x, m) => Math.abs(x - (ctx.gridCap[m] + (m >= 12 ? ct.takeover.mw : 0))) < 1e-9), 'grid offered');
+    // In place of part of the new connection (OPEN-QUESTIONS 126): from month 12 the new connection keeps fullMW − MW taken over.
+    const newMW = Math.max(0, I.grid.fullMW - ct.takeover.mw);
+    assert.ok(ct.gridCap.every((x, m) => Math.abs(x - (m >= 12 ? Math.min(ctx.gridCap[m], newMW) + ct.takeover.mw : ctx.gridCap[m])) < 1e-9), 'grid offered (in place)');
+    // As well as the new one: added on top.
+    const ca = ctxFor(ctx, canonical({ ...vt, C21: old.values.takeoverAdd }));
+    assert.ok(ca.gridCap.every((x, m) => Math.abs(x - (ctx.gridCap[m] + (m >= 12 ? ca.takeover.mw : 0))) < 1e-9), 'grid offered (as well)');
     assert.ok(ct.fullGridM < ctx.fullGridM, `bridging hands over earlier: month ${ct.fullGridM} against ${ctx.fullGridM}`);
     const ot = evaluateOption(ctx, vt, { skipLayout: true });
     const tl = ot.eco.capexLines.find((l) => /^Grid connection charge \(taken over from/.test(l.item));
@@ -204,6 +209,11 @@ export async function plantTests(test) {
     // The same option without the takeover: the run context is untouched.
     const o0 = evaluateOption(ctx, canonical({ ...vt, C21: 'none' }), { skipLayout: true });
     assert.ok(!o0.flags.some((f) => f.id === 'plant-takeover') && o0.eco.capex > 0);
+    const oa = evaluateOption(ctx, canonical({ ...vt, C21: old.values.takeoverAdd }), { skipLayout: true });
+    const subOf = (o) => (o.eco.capexLines.find((l) => /^Substation/.test(l.item)) || { amount: 0 }).amount;
+    assert.ok(subOf(ot) < subOf(oa), `substation in place ${subOf(ot)} against as well ${subOf(oa)}`);
+    assert.ok(ot.flags.some((f) => f.id === 'plant-takeover-mode' && /replaces/.test(f.message)) && oa.flags.some((f) => f.id === 'plant-takeover-mode' && /as well as/.test(f.message)));
+    out.push(`substation €${(subOf(ot) / 1e6).toFixed(1)} m in place against €${(subOf(oa) / 1e6).toFixed(1)} m as well`);
     out.push(`takeover ${Math.round(ct.takeover.mw)} MW from month 12 (bridging to month ${ct.fullGridM} instead of ${ctx.fullGridM}), €${(tl.amount / 1e6).toFixed(1)} m`);
     // Power and connection from the same leased plant: it runs on until its connection is ready.
     const vs = canonical({ ...base, C2: eem.values.lease, C3: 'remove', C21: eem.values.takeover });

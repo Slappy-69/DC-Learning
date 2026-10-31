@@ -128,7 +128,11 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   // Grid connection and substation (offered capacity at full connection; same for every option)
   const sp = TECH.substation.p;
   const band = sz.grid.band;
-  const fullMW = inputs.grid.fullMW;
+  // A takeover in place of part of the new connection (OPEN-QUESTIONS 126) reduces the new connection: its substation
+  // by the MW taken over, and its charge and cable route pro rata (none at all when nothing new is left).
+  const fullMW0 = inputs.grid.fullMW;
+  const fullMW = ctx.takeover && !ctx.takeover.add ? ctx.takeover.newMW : fullMW0;
+  const newShare = fullMW0 > 0 ? fullMW / fullMW0 : 1;
   // The campus's own new connection is booked by the run's grid, not the option's (a taken-over connection, work
   // package 19, does not move it: Opus review finding 7).
   const g0 = ctx.baseCtx || ctx;
@@ -141,9 +145,9 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     // it nor the cable route. Before: every option paid the offered MW × the standard rate per MW (KNOWN-ISSUES 7).
     // A strategy contracted at 0 MW has no connection to pay for (Haiku check H2, L7).
     if (v.C1 !== 'islanded' && contractLimit(inputs, v.C1) > 0) {
-      addCapex('Grid connection charge', gridYear, Number(inputs.grid.connectionCharge) || 0, 40);
+      addCapex('Grid connection charge', gridYear, (Number(inputs.grid.connectionCharge) || 0) * newShare, 40);
       // Cable route from the POC (§5.4): route length from the site model (sizing.js, sz.grid.cableKm).
-      addCapex('Grid cable route (POC to site)', gridYear, sp.cablePerKm * (sz.grid.cableKm || 0), 40);
+      addCapex('Grid cable route (POC to site)', gridYear, sp.cablePerKm * (sz.grid.cableKm || 0) * (newShare > 0 ? 1 : 0), 40);
     }
     addCapex(`Substation (${band.toUpperCase()}, ${v.C17})`, gridYear, fullMW * sp[`subCapexPerMW_${band}`] * (v.C17 === 'GIS' ? sp.gisMultiplier : 1), 40);
   }
@@ -711,6 +715,9 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   }
   if (ctx.takeover) {
     const k = ctx.takeover;
+    flags.push(flag('plant-takeover-mode', 'info', 'Existing plant', k.add
+      ? `The taken-over connection comes as well as the campus's new ${Math.round(inputs.grid.fullMW)} MW connection, which is paid for in full (OPEN-QUESTIONS 126)`
+      : `The taken-over connection replaces ${Math.round(Math.min(k.mw, inputs.grid.fullMW))} MW of the campus's new connection from month ${k.month}: the new connection is ${Math.round(k.newMW)} MW, with its substation, charge and cable route reduced to match; the contracted capacity caps the new connection only (OPEN-QUESTIONS 126)`, { plant: k.plant.id }));
     flags.push(flag('plant-takeover', 'major', 'Existing plant', `${k.plant.defaultPassed ? `${k.plant.name} has no closure date and its ${PLANT_DEFAULTS.lifeYears}-year default has passed: the date its connection comes free is a guess (OPEN-QUESTIONS 125). ` : ''}Grid connection taken over from ${k.plant.name}: ${Math.round(k.mw)} MW${k.mw + 1e-6 < k.offeredMW ? ` (of its ${Math.round(k.offeredMW)} MW, capped at the campus's design load)` : ''} from month ${k.month} (${ym(k.month)}), ${eurM(k.cost)} at €${Math.round(k.costPerMW / 1000)}k/MW. An assumption, not a confirmed right: whether a closing plant's connection can pass to a new user depends on the country's rules and the network operator, not researched yet. Size, date (${k.plant.takeoverLagMonths} months after the plant stops) and cost are judgement defaults (OPEN-QUESTIONS 120).`, { plant: k.plant.id, value: k.mw }));
   }
 
