@@ -5,7 +5,7 @@ The owner chose **Windows and phone only** (2026-10-21):
 | Form | How to get it | State |
 |---|---|---|
 | **Windows program** (Electron 44.9.0) | Download from GitHub (below) | Built on GitHub by the **Desktop builds** workflow |
-| **Phone** | The private Claude artifact link "Concept Energy Optioneering", updated to the latest build | Opens in the phone's browser; private until shared |
+| **Phone** | The private Claude artifact link "Concept Energy Optioneering" (https://claude.ai/artifact/KZ5isQcoksrwHY1AqTHU55), published from `app/dist/energy-tool-hosted.html` with the host's `downloads` capability | Dropped 2026-10-21; **asked for again by the owner on 2026-10-30** and republished (version 7) the same day. Opens in the Claude app or a phone browser; private until shared. Saves (PDF, study, run log) go through the host, which asks the viewer to confirm each one |
 
 The model is the same in every form: it runs entirely on the device, with no server, no account and no telemetry.
 
@@ -113,6 +113,9 @@ the macOS and Windows builds' launch.
 - No code signing or notarisation (see above).
 - The Windows build is produced on Linux and checked for structure and fuses, but it is not launch-tested
   automatically: the same app and settings are launch-tested on the Linux build (D1–D12), in CI and locally.
-- The PWA is not hosted (owner's choice: the phone uses the private Claude link).
+- The PWA is not hosted (owner's choice: the phone uses the private Claude link). Hosting it (GitHub Pages) would
+  need a repository setting changed by the owner and would make the tool a public web address.
+- The phone page is not republished automatically: after changing the app, a Claude session with the Artifact tool
+  publishes `app/dist/energy-tool-hosted.html` to the link above, keeping the `downloads` capability.
 - The final Opus review of the packaging started on 2026-10-19 but stopped early at the weekly usage limit; it did not
   report. The Haiku check was done and answered (`../verification/packaging/H1-packaging.md`).

@@ -34,6 +34,7 @@ Read these before doing anything, in this order:
 - **Site tab.** Keep it working as a Beta feature: hidden by default, labelled Beta, kept out of the ranking and the PDF.
 - **Records.** Update `STATUS.md` after every completed step; `app/BUILD-NOTES.md` for defaults, decisions and test runs; the user guide when a feature is built (`docs/user-guide/README.md` says how).
 - After changing the app, copy `app/dist/energy-tool-single-file.html` over `energy-strategy-tool/energy-tool-single-file.html`.
+- **Phone version** (owner, 2026-10-30): the hosted page (`app/dist/energy-tool-hosted.html`) published to the private Claude link in `STATUS.md`, with the `downloads` capability. Republish it after the app changes and the checks pass (a session with the Artifact tool; read the link first, then publish to the same link).
 
 ## Commands
 

@@ -14,7 +14,7 @@ import SummaryPanel from './components/SummaryPanel.jsx';
 import { latestBreakevens } from './components/BreakevenPanel.jsx';
 import { latestMonteCarlo } from './components/UncertaintyPanel.jsx';
 import { buildReport, reportFileName } from './report/report.js';
-import { saveBytes } from './saveFile.js';
+import { saveFile, saveRefusal, hostDownloads } from './saveFile.js';
 import { useCompute } from './useCompute.js';
 import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount, studyFile, studyFileName, readStudyFile, compareWithSaved, hashInputs } from './engine/index.js';
 import { viewSetting, withoutSiteFilters } from './engine/view.js';
@@ -73,6 +73,16 @@ export default function App() {
   const [summaryOpen, setSummaryOpen] = useState(true);
   const [progressOpen, setProgressOpen] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
+  // Below 1280 px the inputs panel is a drawer over the page, and on a phone it covers the "Inputs" button that opened
+  // it. It closes from its own "Done" button, a tap beside it, or Escape; focus goes back to the button that opened it.
+  const panelToggle = useRef(null);
+  const closePanel = useCallback(() => { setPanelOpen(false); if (panelToggle.current) panelToggle.current.focus(); }, []);
+  useEffect(() => {
+    if (!panelOpen) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape' && window.matchMedia && window.matchMedia('(max-width: 1279px)').matches) closePanel(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [panelOpen, closePanel]);
   const [announce, setAnnounce] = useState('');
   // Compare (work package 7): up to three option ids; the oldest drops out when a fourth is added.
   const [compareIds, setCompareIds] = useState([]);
@@ -151,7 +161,16 @@ export default function App() {
   // The leader is the weighted pick (rank 1): the same function the Trade-offs view uses, so the header,
   // the live region and the highlighted pick always name the same option (AC5).
   const leader = useMemo(() => (run ? weightedPick(run.options) : null), [run]);
-  // PDF report (work package 10): made on this computer from the run on screen; never in the hosted page.
+  // Saving files: always in the single file and the Windows program; in the hosted page (the phone version, owner
+  // 2026-10-30) only once the host offers its downloads capability, which asks the viewer to confirm each save.
+  const [canSave, setCanSave] = useState(!__HOSTED__);
+  useEffect(() => {
+    if (!__HOSTED__) return undefined;
+    let live = true;
+    hostDownloads().then((ns) => { if (live) setCanSave(!!ns); });
+    return () => { live = false; };
+  }, []);
+  // PDF report (work package 10): made on this device from the run on screen.
   const [pdfMsg, setPdfMsg] = useState('');
   // Study files (work package 15, OPEN-QUESTIONS 27): save the inputs (and a record of the result); open one, re-run it and
   // say whether the result matches the record.
@@ -159,12 +178,13 @@ export default function App() {
   const [openedStudy, setOpenedStudy] = useState(null);
   const studyInput = useRef(null);
   const saveStudy = () => {
-    if (__HOSTED__) return;
+    if (!canSave) return;
     try {
       const hash = hashInputs(normalizeInputs(inputs));
       const f = studyFile(inputs, compute.run && compute.run.inputHash === hash ? compute.run : null, { note: summaryNote });
-      saveBytes(studyFileName(inputs), JSON.stringify(f, null, 1), 'application/json');
-      setStudyMsg(`Study saved: ${f.name}${f.result ? `, with the result of the last run (leader ${f.result.leader.name})` : ' (inputs only: run it before saving to keep a record of the result)'}.`);
+      const done = () => setStudyMsg(`Study saved: ${f.name}${f.result ? `, with the result of the last run (leader ${f.result.leader.name})` : ' (inputs only: run it before saving to keep a record of the result)'}.`);
+      const saving = saveFile(studyFileName(inputs), JSON.stringify(f, null, 1), 'application/json');
+      if (__HOSTED__) { setStudyMsg('Saving the study: confirm the save to keep the file.'); saving.then(done, (e) => setStudyMsg(saveRefusal(e, 'Study'))); } else done();
     } catch (e) { setStudyMsg(`Could not save the study: ${e && e.message ? e.message : e}`); }
   };
   const openStudy = async (e) => {
@@ -195,12 +215,17 @@ export default function App() {
   }, [compute.status, compute.run, openedStudy]);
   useEffect(() => { setPdfMsg(''); }, [run]);
   const savePdf = () => {
-    if (__HOSTED__ || !run) return;
+    if (!canSave || !run) return;
     try {
       const sens = latestSensitivity(run);
       const created = new Date();
       const r = buildReport(run, { compareIds, sensitivity: sens ? sens.result : null, sensitivityMeasure: sens ? sens.measure : null, created, summaryNote, breakevens: latestBreakevens(run), monteCarlo: latestMonteCarlo(run) });
-      saveBytes(reportFileName(run, created), r.bytes, 'application/pdf');
+      const saving = saveFile(reportFileName(run, created), r.bytes, 'application/pdf');
+      if (__HOSTED__) {
+        setPdfMsg(`PDF report made (${r.pages} pages): confirm the save to keep the file.`);
+        saving.then(() => setPdfMsg(`PDF report saved: ${r.pages} pages.`), (e) => setPdfMsg(saveRefusal(e, 'PDF report')));
+        return;
+      }
       setPdfMsg(`PDF report made: ${r.pages} pages${compareIds.length ? `, ${compareIds.length} compared option${compareIds.length === 1 ? '' : 's'}` : ''}${sens ? ', with the sensitivity test' : ', without a sensitivity test (run one in the Sensitivity tab to include it)'}${latestBreakevens(run) ? ', the breakevens' : ''}${latestMonteCarlo(run) ? ', the Monte Carlo' : ''}.`);
     } catch (e) { setPdfMsg(`Could not make the PDF report: ${e && e.message ? e.message : e}`); }
   };
@@ -300,13 +325,13 @@ export default function App() {
           <span className="sub">Data centre campus · core slice, trade-off view, site layout, dispatch and sensitivity</span>
         </div>
         <div className="topbar-actions">
-          <button type="button" className="chip-btn panel-toggle" aria-expanded={panelOpen} aria-controls="inputs-panel" onClick={() => setPanelOpen(!panelOpen)}>{panelOpen ? 'Close inputs' : 'Inputs'}</button>
+          <button type="button" ref={panelToggle} className="chip-btn panel-toggle" aria-expanded={panelOpen} aria-controls="inputs-panel" onClick={() => setPanelOpen(!panelOpen)}>{panelOpen ? 'Close inputs' : 'Inputs'}</button>
           <button type="button" className="chip-btn" onClick={() => { setInputs(referenceT1()); setSummaryNote(null); }}>Load T1 example</button>
           <button type="button" className="chip-btn" onClick={() => { setInputs(buildDefaultInputs()); setSummaryNote(null); }}>Reset to defaults</button>
-          {!__HOSTED__ ? <button type="button" className="chip-btn" id="save-study" onClick={saveStudy}>Save study</button> : null}
+          {canSave ? <button type="button" className="chip-btn" id="save-study" onClick={saveStudy}>Save study</button> : null}
           <button type="button" className="chip-btn" id="open-study" onClick={() => studyInput.current && studyInput.current.click()}>Open study…</button>
           <input ref={studyInput} id="open-study-file" type="file" accept=".json,application/json" hidden onChange={openStudy} aria-label="Study file to open" />
-          {run && !__HOSTED__ ? <button type="button" className="chip-btn" id="save-pdf" onClick={savePdf} disabled={compute.status === 'running'}>Save PDF report</button> : null}
+          {run && canSave ? <button type="button" className="chip-btn" id="save-pdf" onClick={savePdf} disabled={compute.status === 'running'}>Save PDF report</button> : null}
           <button type="button" className="chip-btn" aria-expanded={settingsOpen} aria-controls="general-settings" onClick={() => setSettingsOpen(!settingsOpen)}>General settings</button>
         </div>
       </header>
@@ -325,7 +350,12 @@ export default function App() {
       ) : null}
 
       <div className="layout">
+        {panelOpen ? <div className="panel-backdrop" onClick={closePanel} aria-hidden="true" /> : null}
         <aside id="inputs-panel" className={`panel ${panelOpen ? 'open' : ''}`} aria-label="Inputs">
+          <div className="panel-head">
+            <span className="panel-head-title">Inputs</span>
+            <button type="button" className="chip-btn" id="inputs-done" onClick={closePanel}>Done</button>
+          </div>
           <InputsPanel inputs={inputs} update={update} setWeights={setWeights} siteBeta={siteBeta} />
         </aside>
 

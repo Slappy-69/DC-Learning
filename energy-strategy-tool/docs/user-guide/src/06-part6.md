@@ -101,7 +101,7 @@ Every number in the worked examples comes from a run of the T1 example exported 
 |---|---|---|
 | Windows program, offline, unsigned | Built | 2 |
 | Single-file version | Built | 2 |
-| Phone version | Dropped | 2 |
+| Phone version (private Claude page) | Built (30 Oct 2026; dropped 21 Oct, asked for again 30 Oct) | 2 |
 | Inputs with defaults and "unverified" tags | Built | 14–19 |
 | Per-option "assumed default" flags with sources | Built (23 Oct 2026) | 14, 42 |
 | Map pin, offline map (country outlines), country from pin | Built (23 Oct 2026) | 14 |

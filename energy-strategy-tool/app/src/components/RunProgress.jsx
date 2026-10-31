@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { describeEvent, logToCSV, logToJSON, logFileName, validateRunLog, STAGE_LABEL, ENGINE_VERSION } from '../engine/index.js';
+import { saveFile, saveRefusal, hostDownloads } from '../saveFile.js';
 
 // Live run progress panel: current stage, percent complete per stage, a scrolling log of the last
 // 200 events and a "Download run log" control (JSON and CSV).
@@ -9,7 +10,8 @@ const pctText = (p) => `${Math.round(p * 100)} %`;
 
 /* global __HOSTED__ */
 // Hosted page (build.mjs dist/energy-tool-hosted.html, port of the other line's e9ed8f6 + c3f81f5): a host's frame
-// ignores downloads that the page starts itself, so the run log is copied to the clipboard instead, with a
+// ignores downloads that the page starts itself. Since 2026-10-30 (the phone version) the run log is saved through the
+// host's downloads capability when it is offered (saveFile.js); otherwise it is copied to the clipboard, with a
 // select-the-text fallback if the browser refuses. build.mjs defines __HOSTED__ in every bundle (true only in the
 // hosted page; like __INLINE_WORKER_SRC__ in useCompute.js). It is written out at each use, not held in a constant,
 // because esbuild folds the defined literal at each site but does not inline a module constant in this bundle: the
@@ -36,6 +38,15 @@ export default function RunProgress({ compute, open, onToggle }) {
   const lastAnnounced = useRef('');
   const [copied, setCopied] = useState(null); // hosted page: { fmt, ok, text }
   const copyRef = useRef(null);
+  // Hosted page: true once the host offers saving; until then (or without it) the log is copied.
+  const [hostSave, setHostSave] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
+  useEffect(() => {
+    if (!__HOSTED__) return undefined;
+    let live = true;
+    hostDownloads().then((ns) => { if (live) setHostSave(!!ns); });
+    return () => { live = false; };
+  }, []);
   const running = compute.status === 'running';
   const current = p && p.current;
 
@@ -83,7 +94,13 @@ export default function RunProgress({ compute, open, onToggle }) {
       download(name, text, fmt === 'json' ? 'application/json' : 'text/csv');
       return;
     }
-    // Hosted page: copy, inside the click handler as the clipboard requires; if refused, show the text selected.
+    if (hostSave) {
+      setCopied(null);
+      setSaveMsg(`Saving the ${fmt.toUpperCase()} run log: confirm the save to keep the file.`);
+      saveFile(name, text).then(() => setSaveMsg(`Saved the ${fmt.toUpperCase()} run log.`), (e) => setSaveMsg(saveRefusal(e, 'Run log')));
+      return;
+    }
+    // Hosted page without saving: copy, inside the click handler as the clipboard requires; if refused, show the text selected.
     const fail = () => setCopied({ fmt, ok: false, text });
     try {
       const pr = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : null;
@@ -132,10 +149,11 @@ export default function RunProgress({ compute, open, onToggle }) {
         <div className="rp-log-head">
           <h3 id="rp-log-title">Event log <span className="sub">(last {recent.length} of {total.toLocaleString('en-GB')})</span></h3>
           <div className="btn-row">
-            <span className="rp-dl-label">{__HOSTED__ ? 'Copy run log' : 'Download run log'}{finalLog ? '' : ' (partial)'}:</span>
+            <span className="rp-dl-label">{__HOSTED__ ? (hostSave ? 'Save run log' : 'Copy run log') : 'Download run log'}{finalLog ? '' : ' (partial)'}:</span>
             <button type="button" className="chip-btn" onClick={() => exportLog('json')} disabled={!p || !total}>JSON</button>
             <button type="button" className="chip-btn" onClick={() => exportLog('csv')} disabled={!p || !total}>CSV</button>
             {__HOSTED__ && copied && copied.ok ? <span className="rp-copied" role="status">Copied {copied.fmt.toUpperCase()} to the clipboard</span> : null}
+            {__HOSTED__ && hostSave && saveMsg ? <span className="rp-saved" role="status">{saveMsg}</span> : null}
           </div>
         </div>
         {__HOSTED__ && copied && !copied.ok ? (

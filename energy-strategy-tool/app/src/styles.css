@@ -687,3 +687,35 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .mc-bar-1 { background: var(--accent); }
 .mc-bar-3 { background: var(--ax-cost); opacity: 0.45; }
 .mc-table td, .mc-table th { white-space: nowrap; }
+
+/* Phone and touch screens (the phone version, owner 2026-10-30). Mouse-driven screens, the Windows program included,
+   are unchanged.
+   - Fields at 16 px: iOS zooms the page into any field whose text is smaller, on every tap.
+   - Buttons at least 40 px high on touch screens, for a finger; the seven buttons in the top bar 36 px with 6 px gaps,
+     because they wrap onto several rows and the first content must start within the first 1,000 px (B19, checked with
+     a wider fallback font as on GitHub's runners: 40 px and 8 px gaps put it at 1,008 px; 36 px and 6 px gaps fit the
+     buttons on three rows and put it at about 960 px).
+   - The inputs drawer keeps its first and last controls clear of the phone's status bar and home indicator. */
+@media (max-width: 767px), (pointer: coarse) {
+  .field input[type=number], .field input[type=text], .field select, .inline-search input, .inline-select select, .inline-number input, .mini input, textarea { font-size: 16px; }
+}
+@media (pointer: coarse) {
+  .chip-btn { min-height: 40px; }
+  .topbar-actions { gap: 6px; }
+  .topbar-actions .chip-btn { min-height: 36px; }
+  .field-toggle input { width: 22px; height: 22px; }
+}
+@media (max-width: 1279px) {
+  .panel { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+.rp-saved { font-size: 12px; color: var(--ink-2); }
+/* The inputs drawer (below 1280 px): its own head with "Done", and a backdrop that closes it when tapped. */
+.panel-head, .panel-backdrop { display: none; }
+@media (max-width: 1279px) {
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; position: sticky; top: 0; z-index: 2; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .panel-head-title { font-weight: 600; }
+  .panel-backdrop { display: block; position: fixed; inset: 0; z-index: 49; background: rgba(0, 0, 0, .3); }
+}
+/* Run summary: its wide tables (shortfall, grid periods, phasing) scroll inside their own section on a phone. */
+.rs-grid > * { min-width: 0; }
+.rs-wide { overflow-x: auto; max-width: 100%; }
