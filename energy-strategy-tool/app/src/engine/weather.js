@@ -46,6 +46,7 @@ export function wetBulb(t, W, p) {
 }
 
 const DAYS_BEFORE = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+const MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 const r1 = (x) => Math.round(x * 10) / 10;
 
 // The value exceeded in a share of the hours (0.004 = 0.4 %, the ASHRAE cooling design level).
@@ -63,6 +64,7 @@ function fillGaps(a, maxGap) {
     let e = h; while (e < a.length && !Number.isFinite(a[e])) e++;
     const len = e - h;
     if (len <= maxGap && h > 0 && e < a.length) { for (let k = h; k < e; k++) a[k] = a[h - 1] + ((a[e] - a[h - 1]) * (k - h + 1)) / (len + 1); }
+    else if (len <= maxGap && (h === 0) !== (e === a.length)) { const v = h === 0 ? a[e] : a[h - 1]; for (let k = h; k < e; k++) a[k] = v; } // a short gap at the start or end of the year (R1 F4)
     else missing += len;
     h = e - 1;
   }
@@ -80,14 +82,15 @@ function num(x, missing) {
 export function readEpw(text, fileName = 'weather.epw') {
   let src = String(text || '');
   if (src.charCodeAt(0) === 0xfeff) src = src.slice(1); // a byte-order mark
-  const lines = src.split(/\r?\n/);
+  const lines = src.split(/\r\n|\r|\n/); // also old Mac files with CR only (R1 F10)
   const loc = (lines[0] || '').split(',');
   if (!/^LOCATION$/i.test((loc[0] || '').trim())) return { ok: false, error: `${fileName} is not an EPW weather file (its first line does not start with LOCATION).` };
   const lat = Number(loc[6]), lon = Number(loc[7]), elev = Number(loc[9]);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return { ok: false, error: `${fileName}: the LOCATION line has no latitude and longitude.` };
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return { ok: false, error: `${fileName}: the LOCATION line has no valid latitude and longitude.` };
   const db = new Array(HOURS).fill(NaN), dp = new Array(HOURS).fill(NaN), rh = new Array(HOURS).fill(NaN), pr = new Array(HOURS).fill(NaN);
   const years = new Set();
-  let rows = 0, skippedLeap = 0;
+  let rows = 0, skippedLeap = 0, badDates = 0, repeats = 0;
+  const seen = new Uint8Array(HOURS);
   const first = lines.findIndex((l, i) => i >= 8 && /^\s*\d{4},\s*\d{1,2},\s*\d{1,2},\s*\d{1,2},/.test(l));
   if (first < 0) return { ok: false, error: `${fileName}: no hourly data rows were found.` };
   for (let i = first; i < lines.length; i++) {
@@ -96,7 +99,10 @@ export function readEpw(text, fileName = 'weather.epw') {
     const y = Number(f[0]), m = Number(f[1]), d = Number(f[2]), hr = Number(f[3]);
     if (!(m >= 1 && m <= 12 && d >= 1 && d <= 31 && hr >= 1 && hr <= 24)) continue;
     if (m === 2 && d === 29) { skippedLeap++; continue; }
+    if (d > MONTH_DAYS[m - 1]) { badDates++; continue; } // a day that does not exist (31 April): left out, counted
     const idx = (DAYS_BEFORE[m - 1] + d - 1) * 24 + (hr - 1);
+    if (seen[idx]) { repeats++; continue; } // a second row for the same hour (a multi-year or sub-hourly file): the first is kept
+    seen[idx] = 1;
     if (idx < 0 || idx >= HOURS) continue;
     rows++;
     if (Number.isFinite(y)) years.add(y);
@@ -122,33 +128,43 @@ export function readEpw(text, fileName = 'weather.epw') {
   }
   if (noHumidity) warnings.push(`${noHumidity} hours had no dew point or humidity; 50 % relative humidity was assumed for them.`);
   if (skippedLeap) warnings.push('29 February was left out (the model uses a 365-day year).');
-  // Design conditions: the file's ASHRAE cooling design values (0.4 % dry bulb and 0.4 % wet bulb) when present;
-  // otherwise the 0.4 % values of the file's own hours, which a typical year understates.
-  let designDB = null, designWB = null, designBasis = null;
+  if (repeats) warnings.push(`${repeats} rows repeated an hour already read (a file with more than one year, or sub-hourly rows); the first row for each hour was used.`);
+  if (badDates) warnings.push(`${badDates} rows had a date that does not exist and were left out.`);
+  // Design temperatures (owner 2026-10-31, OPEN-QUESTIONS 115): the n-year return-period extremes. Sizing uses N = 20;
+  // each option also shows its design load at N = 50 as a check. From the file's ASHRAE "Extremes" block when present:
+  // n = 20 and n = 50 maximum dry bulb, and the extreme maximum wet bulb (ASHRAE gives no return period for wet bulb, so
+  // it is used for both). Without the block: the hottest hour and the highest wet bulb of the file, which a typical year
+  // understates (flagged). The file's 0.4 % cooling values are kept for information.
+  let design = null, design04 = null;
   const dc = lines.find((l) => /^DESIGN CONDITIONS/i.test(l));
-  if (dc) {
-    const t = dc.split(',').map((x) => x.trim());
-    const k = t.findIndex((x) => /^Cooling$/i.test(x));
-    if (k > 0) {
-      const a = Number(t[k + 3]), b = Number(t[k + 9]);
-      if (Number.isFinite(a) && Number.isFinite(b) && a > -20 && a < 60 && b > -20 && b < 45 && b <= a) {
-        designDB = a; designWB = b;
-        designBasis = `the file's design conditions (${t[2] || 'ASHRAE'}, 0.4 % cooling dry bulb and 0.4 % wet bulb)`;
-      }
+  const tok = dc ? dc.split(',').map((x) => x.trim()) : [];
+  const dcSource = tok[2] || 'ASHRAE';
+  const kc = tok.findIndex((x) => /^Cooling$/i.test(x));
+  if (kc > 0) {
+    const a = Number(tok[kc + 3]), b = Number(tok[kc + 9]);
+    if (Number.isFinite(a) && Number.isFinite(b) && a > -20 && a < 60 && b > -20 && b < 45 && b <= a) design04 = { db: a, wb: b };
+  }
+  const ke = tok.findIndex((x) => /^Extremes$/i.test(x));
+  if (ke > 0) {
+    const wbx = Number(tok[ke + 4]), db20 = Number(tok[ke + 14]), db50 = Number(tok[ke + 16]);
+    if ([wbx, db20, db50].every(Number.isFinite) && db20 > -20 && db20 < 65 && db50 >= db20 && wbx > -20 && wbx < 45 && wbx <= db20) {
+      design = { db20, wb20: wbx, db50, wb50: wbx, kind: 'extreme', basis: `the file's ASHRAE extremes (${dcSource}): n = 20 and n = 50-year maximum dry bulb, and the extreme maximum wet bulb (no return period given for wet bulb)` };
     }
   }
-  if (designDB == null) {
-    designDB = r1(exceeded(dryBulb)); designWB = r1(exceeded(wet));
-    designBasis = 'the 0.4 % hottest hours of the file (no design conditions in it); a typical year understates design conditions';
+  if (!design) {
+    const dbMax = Math.max(...dryBulb), wbMax = Math.max(...wet);
+    design = { db20: dbMax, wb20: wbMax, db50: dbMax, wb50: wbMax, kind: 'hottest-hour', basis: 'the hottest hour and highest wet bulb of the file (it has no ASHRAE extremes); one year, often a typical year, understates n-year extremes' };
   }
   const yr = [...years].sort();
   const name = [loc[1], loc[2]].map((x) => (x || '').trim()).filter((x) => x && x !== '-').join(', ') || fileName;
   return {
     ok: true, warnings,
     weather: {
-      source: 'epw', name, country: (loc[3] || '').trim(), file: fileName, lat, lon, elevationM: Number.isFinite(elev) ? elev : null,
+      source: 'epw', id: null, auto: false, readingIntervalH: null, name, country: (loc[3] || '').trim(), file: fileName, lat, lon, elevationM: Number.isFinite(elev) ? elev : null,
       years: yr.length ? (yr.length === 1 ? String(yr[0]) : `${yr[0]}–${yr[yr.length - 1]} (${yr.length > 2 ? 'months from several years' : 'two years'})`) : '',
-      dataSource: (loc[4] || '').trim(), dryBulb, wetBulb: wet, designDB, designWB, designBasis, notes: warnings,
+      dataSource: (loc[4] || '').trim(), dryBulb, wetBulb: wet,
+      designDB: r1(design.db20), designWB: r1(design.wb20), designDB50: r1(design.db50), designWB50: r1(design.wb50), designKind: design.kind,
+      designBasis: design.basis, design04DB: design04 ? design04.db : null, design04WB: design04 ? design04.wb : null, humidityAssumedHours: noHumidity, notes: warnings,
     },
   };
 }
@@ -177,19 +193,32 @@ export function applyWeather(prof, inputs) {
     ...prof, temp, wetbulb,
     designTemp: Number.isFinite(w.designDB) ? w.designDB : tMax,
     designWetbulb: Number.isFinite(w.designWB) ? w.designWB : twMax,
+    // The N = 50 check (OPEN-QUESTIONS 115): shown on each option, not used for sizing.
+    designTemp50: Number.isFinite(w.designDB50) ? w.designDB50 : null,
+    designWetbulb50: Number.isFinite(w.designWB50) ? w.designWB50 : null,
     stats: { ...prof.stats, tMean: s / HOURS, tMax, twMax },
     weather: weatherSummary(inputs),
   };
 }
 
-// One line describing the weather in use (flags, run summary, PDF).
+// One line describing the weather in use (flags, run summary, PDF), and how serious its flag is: a warning (minor)
+// when the station is more than 50 km from the pin, when the design comes from one year's hottest hour, or when
+// humidity was assumed for some hours; otherwise information (R1 F2, R3 M3).
+export const FAR_KM = 50;
 export function weatherSummary(inputs) {
   if (!hasWeather(inputs)) return null;
   const w = inputs.weather, p = inputs.project;
   const km = Number.isFinite(w.lat) && Number.isFinite(p.lat) ? distanceKm(p.lat, p.lon, w.lat, w.lon) : null;
-  const what = w.source === 'epw' ? `uploaded EPW file "${w.file || w.name}"` : `NOAA station ${w.name}`;
+  const what = w.source === 'epw' ? `uploaded EPW file "${w.file || w.name}"` : `NOAA station ${w.name}${w.auto ? ', the nearest to the pin, chosen by the program' : ''}`;
+  const kmTxt = km != null ? `${km < 10 ? km.toFixed(1) : Math.round(km)} km from the pin` : null;
+  const warnings = [];
+  if (km != null && km > FAR_KM) warnings.push(`more than ${FAR_KM} km from the pin: check that its climate is representative`);
+  if (w.designKind === 'hottest-hour') warnings.push('design from one year\'s hottest hour, which understates n-year extremes');
+  if (w.humidityAssumedHours > 0) warnings.push(`humidity assumed (50 %) for ${w.humidityAssumedHours} hours`);
+  if (w.readingIntervalH >= 3) warnings.push(`the station reports every ${w.readingIntervalH} hours, so peaks between readings are missed`);
+  const n50 = Number.isFinite(w.designDB50) && w.designKind !== 'hottest-hour' ? `; check at n = 50: ${w.designDB50} °C and ${w.designWB50} °C` : '';
   return {
-    km,
-    text: `${what} (${[w.source === 'epw' ? w.name : null, w.years].filter(Boolean).join(', ')})${km != null ? `, ${km < 10 ? km.toFixed(1) : Math.round(km)} km from the pin` : ''}; design ${w.designDB} °C dry bulb and ${w.designWB} °C wet bulb from ${w.designBasis}`,
+    km, level: warnings.length ? 'minor' : 'info', warnings,
+    text: `${what} (${[w.source === 'epw' ? w.name : null, w.years].filter(Boolean).join(', ')})${kmTxt ? `, ${kmTxt}` : ''}; sized to n = 20: ${w.designDB} °C dry bulb and ${w.designWB} °C wet bulb${n50}, from ${w.designBasis}${warnings.length ? `. Warning: ${warnings.join('; ')}` : ''}`,
   };
 }

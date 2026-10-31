@@ -60,6 +60,8 @@ Claude session (the session's network is limited).
 
 ## Recommendation
 
+*Overruled by the owner on 2026-10-30 (NOAA station records plus an EPW upload, OPEN-QUESTIONS 106). Kept for the record. Design basis decided on 2026-10-31 (OPEN-QUESTIONS 115: n = 20 sizing, n = 50 check).*
+
 1. **Build the EPW upload in every case.** It is cheap, offline, and lets an engineer use any file they hold (TMYx,
    their own station data, a future-climate file).
 2. **Bundled default: a typical year from ERA5, made by our own release script with ISO 15927-4.** ERA5 is the only

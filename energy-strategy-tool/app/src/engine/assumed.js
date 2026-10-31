@@ -114,9 +114,9 @@ export function assumedBase(ctx) {
   const ws = weatherSummary(inputs);
   if (!ws) {
     list.push({ path: 'project.climate', name: 'Hourly weather and design temperatures', when: () => true, text: `from the synthetic ${cname} profile (made-up hourly temperatures; design from its hottest hour), not measured weather; upload an EPW file in section 1 to use measured weather (judgement, indicative — unverified)` });
-  } else if (!/design conditions \(/.test(inputs.weather.designBasis || '')) {
-    list.push({ path: 'project.climate', name: 'Design temperatures', when: () => true, text: `${inputs.weather.designDB} °C dry bulb and ${inputs.weather.designWB} °C wet bulb, the 0.4 % hottest hours of the weather year, which understates design conditions when the year is a typical year (judgement)` });
   }
+  // A NOAA station chosen by the program (Windows program) is a default the engineer did not enter: flagged in the
+  // option flags below as an assumed default, with its own warnings (R3 M3).
   // Every other record the run reads is a default too (technology, cost, carbon, spatial); counted once.
   const all = Object.values(reg);
   const unverified = all.filter((x) => x.label === LABEL).length;
@@ -128,9 +128,19 @@ export function assumedFlags(ctx, v, sz, flag) {
   const b = assumedBase(ctx);
   const out = [];
   for (const a of b.list) if (a.when(v, sz)) out.push(flag(`assumed:${a.path}`, 'info', 'Assumed default', `Assumed ${a.name}: ${a.text}`, { assumed: true, path: a.path }));
-  // The measured weather in use, on every option (not an assumed default: the engineer entered it).
+  // The measured weather in use, on every option: an uploaded EPW file was entered by the engineer; a NOAA station
+  // chosen by the program is an assumed default. A warning (minor) when the station is far, the design comes from one
+  // year's hottest hour, humidity was assumed, or readings are 3-hourly or sparser (R1 F2, R3 M3).
   const ws = weatherSummary(ctx.inputs);
-  if (ws) out.push(flag('weather', 'info', 'Weather', `Weather: ${ws.text}`, { path: 'weather' }));
+  if (ws) {
+    const auto = ctx.inputs.weather.source === 'station';
+    out.push(flag('weather', ws.level, auto ? 'Assumed default' : 'Weather', `${auto ? 'Assumed hourly weather' : 'Weather'}: ${ws.text}`, { path: 'weather', assumed: auto }));
+  }
+  // The n = 50 design check (owner 2026-10-31, OPEN-QUESTIONS 115): shown on each option, not used for sizing.
+  if (sz && sz.check50) {
+    const c = sz.check50;
+    out.push(flag('design-n50', 'info', 'Design check', `Design check at n = 50 (${c.designT.toFixed(1)} °C): peak PUE ${c.peakPUE.toFixed(3)}, design facility load ${c.designMW.toFixed(1)} MW (${c.extraMW >= 0 ? '+' : ''}${c.extraMW.toFixed(1)} MW over the n = 20 sizing); not used for sizing`, { path: 'weather' }));
+  }
   out.push(flag('assumed-records', 'info', 'Assumed default', `Technology, cost, carbon and other defaults: ${b.unverified} of ${b.total} registry records are ${LABEL} (PDF report section 2; user guide appendix)`, { assumed: true }));
   return out;
 }

@@ -1,5 +1,5 @@
 /* global __HOSTED__ */
-import { setStations, nearestStations, stationWeather } from './engine/stations.js';
+import { setStations, setStationsMissing, nearestStations, stationWeather } from './engine/stations.js';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputsPanel from './components/InputsPanel.jsx';
 import RankedList from './components/RankedList.jsx';
@@ -120,12 +120,13 @@ export default function App() {
   // Bundled NOAA station years (OPEN-QUESTIONS 114): only the Windows program carries them, next to the page. Loaded
   // once; nothing happens in the single-file or phone page, where the fetch is not even tried.
   const [stationsReady, setStationsReady] = useState(false);
+  const [, setStationsAbsent] = useState(false); // re-renders the panel when the station file is missing
   useEffect(() => {
     if (typeof location === 'undefined' || location.protocol !== 'app:' || typeof DecompressionStream === 'undefined') return;
     fetch('weather-stations.json.gz').then((r) => (r.ok ? r.body.pipeThrough(new DecompressionStream('gzip')) : null))
       .then((s) => (s ? new Response(s).json() : null))
-      .then((b) => { if (b && setStations(b) > 0) setStationsReady(true); })
-      .catch(() => {});
+      .then((b) => { if (b && setStations(b) > 0) setStationsReady(true); else { setStationsMissing(); setStationsAbsent(true); } })
+      .catch(() => { setStationsMissing(); setStationsAbsent(true); }); // R3 M5: the panel says the stations are missing from this build
   }, []);
   // With the bundle, the station nearest the pin is the weather unless an EPW file was uploaded.
   useEffect(() => {
@@ -197,6 +198,17 @@ export default function App() {
       // With the Site tab (Beta) off, the Beta site-fit penalty is cleared, as switching the tab off does, so the ranking
       // never uses site fit unseen (Opus review N-5, owner 2026-10-30, OPEN-QUESTIONS 112). The site itself is kept.
       let ins = r.inputs, betaNote = '';
+      // Windows program (R3 M1): a study without an EPW file takes the nearest NOAA station now, before the hash is
+      // taken, so the re-run is compared with the saved result; the message says when the weather differs from the save.
+      if (stationsReady && (!ins.weather || ins.weather.source !== 'epw')) {
+        const n = nearestStations(ins.project.lat, ins.project.lon, 1)[0];
+        const sw = n ? stationWeather(n.s) : null;
+        if (sw && (!ins.weather || ins.weather.id !== sw.id)) {
+          const was = ins.weather && ins.weather.source === 'station' ? `NOAA station ${ins.weather.name}` : 'the synthetic weather';
+          ins = setIn(ins, 'weather', sw);
+          betaNote = `${betaNote} The study was saved with ${was}; this program uses the nearest NOAA station, ${sw.name}, so results can differ from the saved ones.`.trim();
+        }
+      }
       if (!siteBeta && ins.deliverability && ins.deliverability.siteFitPenalty) {
         ins = setIn(ins, 'deliverability.siteFitPenalty', false);
         betaNote = 'The study used the site-fit penalty from the Site tab (Beta), which is off, so the penalty was cleared; turn the Site tab on in General settings to use it.';

@@ -1438,7 +1438,7 @@ await check('B42. Hourly weather (owner 2026-10-30): "Upload EPW file…" in sec
   await page.waitForFunction(() => /Measured: uploaded EPW file "b42-test\.epw"/.test(document.querySelector('.weather-field').textContent), null, { timeout: 30000 });
   unlinkSync(path);
   const txt = (await page.locator('.weather-field').innerText()).replace(/\s+/g, ' ');
-  ok(/Measured: uploaded EPW file "b42-test\.epw".*km from the pin.*design 30\.5 °C dry bulb and 21\.2 °C wet bulb/.test(txt), txt.slice(0, 300));
+  ok(/Measured: uploaded EPW file "b42-test\.epw".*km from the pin; sized to n = 20: 36 °C dry bulb and 20 °C wet bulb; check at n = 50: 37 °C/.test(txt), txt.slice(0, 300));
   await page.waitForFunction(() => { const t = document.querySelector('.status').textContent; return /Last run/.test(t) && !/Screening options/.test(t); }, null, { timeout: 180000, polling: 250 });
   // The hotter year moves the results shown in the header (the option flags are checked in Node test 48b).
   const after = (await page.locator('.header-strip').innerText()).replace(/\s+/g, ' ');

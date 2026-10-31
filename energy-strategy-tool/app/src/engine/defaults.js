@@ -950,9 +950,11 @@ export function buildDefaultInputs(opts = {}) {
   // Measured hourly weather (owner 2026-10-30, OPEN-QUESTIONS 106–107): an uploaded EPW file or a NOAA station year.
   // None = the synthetic country profile. The arrays are 8,760 hourly values in °C to 0.1 (engine/weather.js).
   inputs.weather = {
-    source: rec('weather.source', 'none', 'none / epw / station', { basis: 'judgement', ref: '§9.3', note: 'none: the synthetic country temperatures (indicative — unverified). epw: a file the engineer uploads. station: the nearest bundled NOAA station (not built yet).' }),
-    name: null, country: null, file: null, lat: null, lon: null, elevationM: null, years: null, dataSource: null,
-    dryBulb: null, wetBulb: null, designDB: null, designWB: null, designBasis: null, notes: null,
+    source: rec('weather.source', 'none', 'none / epw / station', { basis: 'judgement', ref: '§9.3', note: 'none: the synthetic country temperatures (indicative — unverified). epw: a file the engineer uploads. station: the nearest bundled NOAA station (Windows program only, OPEN-QUESTIONS 114; built 2026-10-31).' }),
+    // Every key a weather object can carry, so study files keep them all (R3 M1).
+    id: null, auto: null, name: null, country: null, file: null, lat: null, lon: null, elevationM: null, years: null, dataSource: null,
+    dryBulb: null, wetBulb: null, designDB: null, designWB: null, designDB50: null, designWB50: null, designKind: null, designBasis: null,
+    design04DB: null, design04WB: null, readingIntervalH: null, humidityAssumedHours: null, notes: null,
   };
   inputs.load.phases = rec('load.phases', null, 'list of {itMW, date}', { basis: 'judgement', derived: true, ref: '§5.3', note: 'null = 1 phase, 100 % of IT at the grid full-connection date' });
   // Choice states: null = default state (§8 table), which may follow other inputs (C6, C7, C8, C11, C15).

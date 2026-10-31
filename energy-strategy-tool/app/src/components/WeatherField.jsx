@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { readEpw, weatherSummary, hasWeather } from '../engine/weather.js';
-import { stationsLoaded } from '../engine/stations.js';
+import { stationsLoaded, stationsMissing } from '../engine/stations.js';
 
 // Hourly weather (owner 2026-10-30): upload an EPW file to replace the synthetic temperatures. The file is read on this
 // computer; nothing is sent anywhere.
@@ -26,8 +26,8 @@ export default function WeatherField({ inputs, update }) {
       <span className="label" id="weather-label">Hourly weather</span>
       <p className="small" aria-describedby="weather-label">
         {on
-          ? <>Measured: {ws.text}.{ws.km != null && ws.km > 50 ? <strong> The station is more than 50 km from the pin: check that its climate is representative.</strong> : null}{Array.isArray(inputs.weather.notes) && inputs.weather.notes.length ? ` ${inputs.weather.notes.join(' ')}` : ''}</>
-          : <>Synthetic country profile (made-up hourly temperatures, indicative — unverified). Upload an EPW weather file (EnergyPlus format, for example a TMYx or PVGIS file) to use measured weather for hourly PUE, the design load and the weather trigger.</>}
+          ? <>Measured: {ws.text}.{Array.isArray(inputs.weather.notes) && inputs.weather.notes.length ? ` ${inputs.weather.notes.join(' ')}` : ''}</>
+          : <>Synthetic country profile (made-up hourly temperatures, indicative — unverified).{stationsMissing() ? ' This copy of the Windows program has no NOAA station file, so the nearest station cannot be used.' : ''} Upload an EPW weather file (EnergyPlus format, for example a TMYx or PVGIS file) to use measured weather for hourly PUE, the design load and the weather trigger.</>}
       </p>
       <div className="btn-row">
         <button type="button" className="chip-btn" onClick={() => fileRef.current && fileRef.current.click()}>{on ? 'Replace EPW file…' : 'Upload EPW file…'}</button>

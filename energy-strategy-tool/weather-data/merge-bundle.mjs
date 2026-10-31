@@ -1,5 +1,5 @@
 // Merges out/stations-*.json into out/weather-stations.json (one list) and out/weather-summary.json (counts, sizes,
-// reports). Release-time only. The app's use of the bundle is not built yet (see README).
+// reports). Release-time only. The Windows program carries the bundle (OPEN-QUESTIONS 114; Desktop builds fetch it).
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -14,6 +14,7 @@ const gz = zlib.gzipSync(text, { level: 9 });
 fs.writeFileSync(path.join(dir, 'weather-stations.json.gz'), gz);
 const reports = fs.readdirSync(dir).filter((f) => /^report-.*\.json$/.test(f)).map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
 const byCountry = {}; for (const s of stations) byCountry[s.cc] = (byCountry[s.cc] || 0) + 1;
-const summary = { stations: stations.length, byCountry, megabytes: +(text.length / 1e6).toFixed(1), megabytesGzip: +(gz.length / 1e6).toFixed(1), reports };
+// trial: any group limited (a 3-station trial); runInputs: the years and minimum years used (R2 M5, R3 M4).
+const summary = { trial: reports.some((r) => r.trial !== false), runInputs: reports.length ? reports[0].runInputs : null, groups: reports.length, stations: stations.length, byCountry, megabytes: +(text.length / 1e6).toFixed(1), megabytesGzip: +(gz.length / 1e6).toFixed(1), reports };
 fs.writeFileSync(path.join(dir, 'weather-summary.json'), JSON.stringify(summary, null, 1));
 console.log(JSON.stringify({ ...summary, reports: reports.map((r) => ({ countries: r.countries, stations: r.stations, usable: r.usable, errors: r.errorCount, minutes: r.minutes, codes: r.qualityCodesSeen })) }, null, 1));

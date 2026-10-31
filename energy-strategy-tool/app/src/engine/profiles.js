@@ -203,10 +203,15 @@ export function coolingProfile(cool, prof) {
   const designT = p.tempBasis === 'wetbulb' ? prof.designWetbulb : prof.designTemp;
   const d = f(designT);
   const coolPeak = p.fanFrac + d.part / d.c;
+  // The n = 50 check (OPEN-QUESTIONS 115): measured weather only; null with the synthetic profile.
+  const designT50 = p.tempBasis === 'wetbulb' ? prof.designWetbulb50 : prof.designTemp50;
+  const d50 = Number.isFinite(designT50) ? f(designT50) : null;
   return {
     coolFrac, mechFrac, cop,
     coolAvg: sum / H,
     coolPeak,
+    coolPeak50: d50 ? p.fanFrac + d50.part / d50.c : null,
+    designT, designT50: Number.isFinite(designT50) ? designT50 : null,
     lossFrac: p.lossFrac,
     adiabaticHours: wueAdiabaticHours,
   };
