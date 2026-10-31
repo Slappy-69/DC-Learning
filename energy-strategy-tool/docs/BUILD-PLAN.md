@@ -198,10 +198,10 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Why:** the owner, 2026-10-31: "I want the app to use local assets as more and more gas plants get decommissioned from the grid and can be used to data centres … They should be part of the analysis." Work package 12 handles one plant, typed in, leased; the owner wants every suitable plant near the site found and explored in every way it could be used.
 - **Research:** `docs/research/existing-plant-2026-10-31.md`.
 - **What (draft, to be settled by the decisions):** (1) buy as well as lease, with purchase price and refurbishment; (2) taking over the plant's grid connection when it closes; (3) a closure date and remaining life; (4) several plants per study; (5) a list of European gas plants bundled at each release, with the plants near the site proposed automatically. The generator makes options for each plant and each way of using it, ranked with the new-build strategies; every value taken from the list or a default is flagged with its source.
-- **Decisions:** OPEN-QUESTIONS 116–123, asked one at a time.
+- **Decisions:** OPEN-QUESTIONS 116–123, all answered by the owner on 2026-10-31.
 - **Acceptance tests:** to be written with the decisions.
 - **User guide:** chapters 17, 34, 35, 39 and 56 (as for package 12), and the research note.
-- **Progress:** research done 2026-10-31 on `feature/existing-plant`; decisions not yet asked.
+- **Progress:** research done and decisions taken 2026-10-31 on `feature/existing-plant`; build not started (waiting for the owner's go-ahead, as it is a large step).
 
 ## Not scheduled
 
