@@ -118,6 +118,7 @@ Interpretations taken without asking (reversible, recorded in `app/BUILD-NOTES.m
 
 ## Known open items
 
+- **Hourly weather research** (package 0, owner's request 2026-10-30, branch `feature/weather-research`): `docs/research/hourly-weather-2026-10-30.md`. Recommends an EPW upload in every case and a bundled typical year built from ERA5 (CC-BY 4.0) by ISO 15927-4; NOAA station cleaning not recommended for bundling (WMO Resolution 40: no commercial redistribution of non-US data); PVGIS licence to confirm. **Owner chose NOAA (2026-10-30, OPEN-QUESTIONS 106)**, non-commercial use stated; plus the EPW upload; every usable station bundled (OPEN-QUESTIONS 107). Nothing built yet.
 - **Opus review of H4–H6 done (2026-10-30)**, `verification/review-h4-h6/OPUS-review.md`: 2 high, 4 medium, 6 low. High: the breakeven "capex (every line)" driver misses the cooling capex line (the T1 "×1.41" flip is false); the summary drops the leader's major permitting flag and the breakevens after a Monte Carlo. Medium includes the robust pick named on a one-sample margin. **Fixed 2026-10-30 on `feature/review-fixes`** with the owner's decisions (OPEN-QUESTIONS 108–113, KNOWN-ISSUES 22–27); not merged.
 
 - Packaging Opus review not done (usage limit). Resume it, or run a fresh one, before further packaging work.
