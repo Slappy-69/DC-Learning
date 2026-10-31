@@ -89,6 +89,7 @@ import { summaryTests } from './summary-tests.mjs';
 import { breakevenTests } from './breakeven-tests.mjs';
 import { reviewFixTests } from './review-fixes-tests.mjs';
 import { weatherTests } from './weather-tests.mjs';
+import { weatherTmyTests } from './weathertmy-tests.mjs';
 import { monteCarloTests } from './montecarlo-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
@@ -1260,6 +1261,9 @@ await reviewFixTests(test, siteRuns);
 
 // 48. Measured hourly weather: EPW upload (tests/weather-tests.mjs)
 await weatherTests(test, siteRuns);
+
+// 49. NOAA station years → typical year (tests/weathertmy-tests.mjs)
+await weatherTmyTests(test);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

@@ -1,0 +1,14 @@
+{
+  "name": "concept-energy-weather-data",
+  "private": true,
+  "type": "module",
+  "description": "Release-time preparation of the bundled NOAA (GHCNh) station weather years. Needs internet; runs on GitHub, not in the app.",
+  "scripts": {
+    "stations": "node build-stations.mjs",
+    "merge": "node merge-bundle.mjs"
+  },
+  "dependencies": {
+    "hyparquet": "1.31.3",
+    "hyparquet-compressors": "1.1.2"
+  }
+}
