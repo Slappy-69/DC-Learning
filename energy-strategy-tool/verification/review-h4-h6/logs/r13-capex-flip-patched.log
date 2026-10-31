@@ -1,0 +1,13 @@
+engine: /tmp/claude-0/-home-claude/7b5b253c-8ecd-5abb-94ad-6a9210e8e091/scratchpad/patched/src
+T1 leader OP13Y1Y 94.1497 LCOE 151.91
+tornado on #1, capex row: LCOE 148.10 at × 0.7, 158.27 at × 1.5
+breakevens: drivers escalation, grid-price, grid-date, grid-carbon, period, capex, wacc, bess-capex
+  flip: #7 would lead if the grid full-connection date slipped by 14 months or more
+  capex vs #2: lower no flip; higher no flip
+  capex vs #5: lower no flip; higher no flip
+  capex vs #7: lower no flip; higher no flip
+  capex vs #11: lower no flip; higher no flip
+  capex vs #16: lower no flip; higher no flip
+full re-run at capex x1.42: leader OP13Y1Y (T1 leader); T1 leader #1 LCOE 157.25; T1 #2 now #2 LCOE 158.16
+full re-run at capex x1.5: leader OP13Y1Y (T1 leader); T1 leader #1 LCOE 158.27; T1 #2 now #2 LCOE 159.21
+Monte Carlo 300: #1 leads 86.3 %, #7 (immersion) leads 13.7 %; robust pick #7 (300 vs #1 299); #1 LCOE P10-P90 145.3-172.3

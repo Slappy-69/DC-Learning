@@ -1,0 +1,6 @@
+(a) Pego study: warnings []; run 13.9 s; layout on demand true; leader EUR 144.2/MWh; same as saved true; Re-run matches the saved study: leader #1 Grid + rented temporary generation bridge → remove · Existing plant (lease) top-up · HVO N+1 · DLC
+(a) Pego Monte Carlo 20 samples x 20: 1.5 s; skipLayout true; leader leads 90 %
+(b) one adequate option, part 3: "It is the only one of the adequate options, so nothing in its group does better; options that rank below it because they do not serve the load in every hour do better on deliverability (#682, 96.8 points) and carbon (#814, 71.5 g/kWh)."
+(b) CFE: gap 0.1164; part 2: "It is 0.12 points ahead of #2: 0.23 points from cost (LCOE €152 against €153/MWh), less 0.11 points on hourly CFE, where #2 does better."
+(b) CFE: part 3: "Against #2 it gives up hourly CFE (66.8 against 67.2 %, 0.11 points). On deliverability it has 89 points; the best of the adequate options, #1163, has 96.8 points. On hourly CFE it has 66.8 %; the best of the adequate options, #426, has 67.8 %."
+(b) CFE: axis parts 0.2294, -0.1130, 0.0000, 0.0000; sum 0.1164

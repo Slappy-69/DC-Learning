@@ -1,0 +1,52 @@
+leader OP13Y1Y: major flags permit-ied (Permitting)
+
+[nothing run] 243 words; moved 4
+  flags part: "Resilience: meets the requirement. Permitting: aggregated combustion thermal input 337 MWth ≥ 50 MWth (IED threshold), a major flag, and 2 minor flags. Fuel and utilities: HVO-diesel prime bridging, a minor flag."
+  IED (major) named in the main text: true; "Other flags" count line: false; breakevens in part 5: false
+  moved: Breakevens have not been run for this result (Sensitivity tab).
+  moved: They are level on time-to-power and deliverability.
+  moved: These are single values: the Monte Carlo has not been run for this result (Sensitivity tab).
+  moved: Rank probability and the robust pick come from the Monte Carlo, not run for this result.
+
+[tornado] 239 words; moved 6
+  flags part: "Resilience: meets the requirement. Permitting: aggregated combustion thermal input 337 MWth ≥ 50 MWth (IED threshold), a major flag, and 2 minor flags."
+  IED (major) named in the main text: true; "Other flags" count line: false; breakevens in part 5: false
+  moved: Breakevens have not been run for this result (Sensitivity tab).
+  moved: They are level on time-to-power and deliverability.
+  moved: Rank probability and the robust pick come from the Monte Carlo, not run for this result.
+  moved: #2 differs in 8 choices, among them bridging plant after grid arrives: Remove.
+  moved: Fuel and utilities: HVO-diesel prime bridging, a minor flag.
+  moved: #595 would lead if the cost weight fell from 35 % to 13 %.
+
+[tornado + breakevens] 243 words; moved 6
+  flags part: "Resilience: meets the requirement. Permitting: aggregated combustion thermal input 337 MWth ≥ 50 MWth (IED threshold), a major flag, and 2 minor flags."
+  IED (major) named in the main text: true; "Other flags" count line: false; breakevens in part 5: true
+  moved: They are level on time-to-power and deliverability.
+  moved: Rank probability and the robust pick come from the Monte Carlo, not run for this result.
+  moved: #2 differs in 8 choices, among them bridging plant after grid arrives: Remove.
+  moved: Fuel and utilities: HVO-diesel prime bridging, a minor flag.
+  moved: #595 would lead if the cost weight fell from 35 % to 13 %.
+  moved: With the 7 tested inputs moved one at a time across their ranges, its LCOE is €140 to €171/MWh.
+
+[breakevens + Monte Carlo] 245 words; moved 7
+  flags part: "Resilience: meets the requirement."
+  IED (major) named in the main text: true; "Other flags" count line: false; breakevens in part 5: false
+  moved: They are level on time-to-power and deliverability.
+  moved: #2 differs in 8 choices, among them bridging plant after grid arrives: Remove.
+  moved: Fuel and utilities: HVO-diesel prime bridging, a minor flag.
+  moved: #595 would lead if the cost weight fell from 35 % to 13 %.
+  moved: Permitting: aggregated combustion thermal input 337 MWth ≥ 50 MWth (IED threshold), a major flag, and 2 minor flags.
+  moved: Other flags: 1 major flag and 4 minor flags, listed in More detail.
+  moved: Breakevens: #7 would lead if the grid full-connection date slipped by 14 months or more; #2 would lead if capex rose to × 1.41.
+
+[tornado + breakevens + Monte Carlo] 247 words; moved 8
+  flags part: "Resilience: meets the requirement."
+  IED (major) named in the main text: true; "Other flags" count line: false; breakevens in part 5: false
+  moved: They are level on time-to-power and deliverability.
+  moved: #2 differs in 8 choices, among them bridging plant after grid arrives: Remove.
+  moved: Fuel and utilities: HVO-diesel prime bridging, a minor flag.
+  moved: #595 would lead if the cost weight fell from 35 % to 13 %.
+  moved: Next: grid full-connection date (C), €11.7/MWh; capex (C), €10.7/MWh.
+  moved: Permitting: aggregated combustion thermal input 337 MWth ≥ 50 MWth (IED threshold), a major flag, and 2 minor flags.
+  moved: Other flags: 1 major flag and 4 minor flags, listed in More detail.
+  moved: Breakevens: #7 would lead if the grid full-connection date slipped by 14 months or more; #2 would lead if capex rose to × 1.41.

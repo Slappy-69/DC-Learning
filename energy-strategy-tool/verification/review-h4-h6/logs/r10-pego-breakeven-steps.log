@@ -1,0 +1,2 @@
+Pego leader re-run: 21 ms without the layout, 293 ms with it (site fit Fits; run's site fit Not laid out)
+first 12 breakeven steps: 193, 160, 139, 190, 171, 159, 167, 174, 164, 375, 151, 80 ms; planned steps about 448; estimate for all: 1.3 minutes

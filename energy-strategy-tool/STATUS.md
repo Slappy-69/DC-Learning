@@ -118,6 +118,8 @@ Interpretations taken without asking (reversible, recorded in `app/BUILD-NOTES.m
 
 ## Known open items
 
+- **Opus review of H4–H6 done (2026-10-30)**, `verification/review-h4-h6/OPUS-review.md`: 2 high, 4 medium, 6 low. High: the breakeven "capex (every line)" driver misses the cooling capex line (the T1 "×1.41" flip is false); the summary drops the leader's major permitting flag and the breakevens after a Monte Carlo. Medium includes the robust pick named on a one-sample margin. None fixed: waiting for the owner.
+
 - Packaging Opus review not done (usage limit). Resume it, or run a fresh one, before further packaging work.
 - Screen-reader walk-through with NVDA not done yet (VoiceOver no longer applies with the Windows-only scope).
 - A run takes **15–20 s for 2,000 options** on the owner's machine (owner's figure, 2026-10-21; the engine alone took 13.6–15.9 s in the sandbox), because every option runs the full 8760-hour model. The representative-day tier (package 8) is built but off by default, because adequacy needs every hour: on T1 it takes about 16 s against 25 s for the full run in the sandbox (one thread, after batch 2 and the Haiku fixes). The owner has said speed is not a priority for now.
