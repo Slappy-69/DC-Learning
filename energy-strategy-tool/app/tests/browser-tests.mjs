@@ -1434,8 +1434,9 @@ await check('B42. Hourly weather (owner 2026-10-30): "Upload EPW file…" in sec
   const path = join(tmpdir(), 'b42-test.epw');
   writeFileSync(path, fakeEpw({ offset: 6, lat: 52.0, lon: -0.5 }));
   await page.locator('input[aria-label="EPW weather file"]').setInputFiles(path);
+  // The file is removed only after the page has read it (removing it at once raced the browser's read).
+  await page.waitForFunction(() => /Measured: uploaded EPW file "b42-test\.epw"/.test(document.querySelector('.weather-field').textContent), null, { timeout: 30000 });
   unlinkSync(path);
-  await page.waitForFunction(() => /Measured: uploaded EPW file "b42-test\.epw"/.test(document.querySelector('.weather-field').textContent), null, { timeout: 10000 });
   const txt = (await page.locator('.weather-field').innerText()).replace(/\s+/g, ' ');
   ok(/Measured: uploaded EPW file "b42-test\.epw".*km from the pin.*design 30\.5 °C dry bulb and 21\.2 °C wet bulb/.test(txt), txt.slice(0, 300));
   await page.waitForFunction(() => { const t = document.querySelector('.status').textContent; return /Last run/.test(t) && !/Screening options/.test(t); }, null, { timeout: 180000, polling: 250 });
