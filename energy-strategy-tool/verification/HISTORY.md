@@ -114,3 +114,14 @@ Reports in `verification/walkthrough-build/`. The owner asked for Haiku checks o
 |---|---|---|
 | H6, packages 17 (breakeven table) and 18 (Monte Carlo) at commit 33f9c1a | Haiku | 0 high, 6 medium, 11 low (43 verified, 20 failed, 5 not verified). Medium: the competitor pool takes six cards (owner, 2026-10-26: keep six; the record was amended); the representative-day caveat too narrow; the robust pick shown on a one-sample margin as "100 %" for both; the breakeven base from the run while the re-runs use the full year; steps over 50 ms; Appendix A without the 7 Monte Carlo records (14 records missing). Fixed after the lead confirmed each against the code, except the 50 ms steps (recorded) and the three points the owner answered on 2026-10-26 (`app/BUILD-NOTES.md`, "Fixes after Haiku check H6"). Report: `verification/breakeven-montecarlo/H6-report.md`; the lead's scripts in `scripts/` |
 | Opus review (2026-10-30, `verification/review-h4-h6/OPUS-review.md`) | Opus | 2 high, 4 medium, 6 low (53 verified, 15 failed, 9 not checked). Of 15 Haiku High/Medium "fixed" claims: 11 fixed or settled, 3 partly fixed, 1 not fixed (as recorded). High: the "capex (every line)" driver skips the cooling capex line, so the T1 breakeven "×1.41" flip is false (confirmed by the lead: `evaluate.js` 210–216 bypass `addCapex`); after a Monte Carlo the summary's word limit drops the leader's major permitting flag and the breakevens. Not fixed yet: waiting for the owner |
+
+## Hourly weather (EPW upload and NOAA station years; `main` at 39e2e9b, 2026-10-31, branch feature/weather-review)
+
+| Check | Model | Result |
+|---|---|---|
+| R1, EPW reader and psychrometrics (`verification/weather/R1-epw-psychrometrics.md`) | Opus | 1 high, 2 medium, 7 low (18 verified, 6 not checked). Psychrometrics within 0.009 K of an independent reference over 12,960 points (except near 0 °C); EPW fields and design-condition fields right on 8 real files. High: with a weather file the design temperature becomes the 0.4 % value, not the hottest hour, without an owner decision |
+| R2, NOAA method and pipeline (`R2-noaa-method.md`) | Opus | 1 high, 6 medium, 8 low. High: fills of up to 6 h count as readings, so 6-hourly stations pass as complete and their design values come out about 1 K low |
+| R3, integration in the engine, app and Windows program (`R3-integration.md`) | Opus | 0 high, 5 medium, 7 low. Engine sound; study files with a station, contradictory design flags, a chosen station printed as "Entered", desktop build may take a trial or no bundle |
+| H-records, records against code (`H-records.md`) | Haiku | 60 verified, 26 failed, 7 not verifiable: station count (11,470 not 10,705), stale "not built" text, workflow described as by hand, a wrong design flag with a station |
+
+Not fixed yet: waiting for the owner's decisions.
