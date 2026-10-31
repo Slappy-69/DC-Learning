@@ -148,7 +148,10 @@ async function main() {
     while (next < list.length) {
       const s = list[next++];
       try {
-        const r = await station(s, a, stats);
+        // A failed download is retried once with the whole station, so repeated builds give the same set (the first
+        // two full builds differed by 16 stations through network errors, 2026-10-31).
+        let r;
+        try { r = await station(s, a, stats); } catch (e1) { await new Promise((res) => setTimeout(res, 3000)); r = await station(s, a, stats); }
         if (r.rec) out.push(r.rec); else stats.skipped[r.skip.replace(/\d+/g, 'n')] = (stats.skipped[r.skip.replace(/\d+/g, 'n')] || 0) + 1;
       } catch (e) { stats.errors.push(`${s.id}: ${e.message}`); }
       if (++done % 50 === 0) console.log(`${done}/${list.length} stations, ${out.length} usable, ${((Date.now() - t0) / 60000).toFixed(1)} min`);
