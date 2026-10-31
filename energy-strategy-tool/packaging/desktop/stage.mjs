@@ -39,7 +39,11 @@ export function cspFor(html) {
   return { csp, hashes };
 }
 
-export function stage({ input = DEFAULT_SINGLE_FILE, out = join(PACKAGING_ROOT, 'out', '.stage'), version } = {}) {
+// Bundled NOAA station years (OPEN-QUESTIONS 114: the Windows program only), from the latest full "Weather data" run.
+// Copied next to the page when present; the program works without it (EPW upload or the synthetic profile).
+export const DEFAULT_WEATHER = join(PACKAGING_ROOT, 'weather', 'weather-stations.json.gz');
+
+export function stage({ input = DEFAULT_SINGLE_FILE, out = join(PACKAGING_ROOT, 'out', '.stage'), version, weather = DEFAULT_WEATHER } = {}) {
   input = resolve(input);
   out = resolve(out);
   if (!existsSync(input)) throw new Error(`input not found: ${input} (build the web app first: npm run build in the app folder)`);
@@ -60,6 +64,12 @@ export function stage({ input = DEFAULT_SINGLE_FILE, out = join(PACKAGING_ROOT, 
   copyFileSync(join(src, 'main.js'), join(app, 'main.js'));
   cpSync(join(src, 'lib'), join(app, 'lib'), { recursive: true });
   copyFileSync(input, join(app, 'web', 'index.html'));
+  let weatherInfo = null;
+  if (weather && existsSync(weather)) {
+    copyFileSync(weather, join(app, 'web', 'weather-stations.json.gz'));
+    const summary = join(weather, '..', 'weather-summary.json');
+    weatherInfo = { file: 'weather-stations.json.gz', sha256: sha256(readFileSync(weather)), bytes: readFileSync(weather).length, stations: existsSync(summary) ? JSON.parse(readFileSync(summary, 'utf8')).stations : null };
+  }
   copyFileSync(join(ICONS_DIR, 'icon-linux-512.png'), join(app, 'icons', 'icon.png'));
   copyFileSync(join(ICONS_DIR, 'icon.ico'), join(res, 'icon.ico'));
   copyFileSync(join(ICONS_DIR, 'icon.icns'), join(res, 'icon.icns'));
@@ -75,13 +85,13 @@ export function stage({ input = DEFAULT_SINGLE_FILE, out = join(PACKAGING_ROOT, 
     private: true,
   };
   writeFileSync(join(app, 'package.json'), `${JSON.stringify(pkg, null, 2)}\n`);
-  const info = { name: APP_NAME, appId: APP_ID, version: full, engineVersion: full, numericVersion: numeric, webSha256: sha256(readFileSync(input)), csp, scriptHashes: hashes };
+  const info = { name: APP_NAME, appId: APP_ID, version: full, engineVersion: full, numericVersion: numeric, webSha256: sha256(readFileSync(input)), csp, scriptHashes: hashes, weatherStations: weatherInfo };
   writeFileSync(join(app, 'build-info.json'), `${JSON.stringify(info, null, 2)}\n`);
   return { out, app, resources: res, version: full, numeric, csp, info };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const a = args();
-  const r = stage({ input: a.input || DEFAULT_SINGLE_FILE, out: a.out, version: a.version });
+  const r = stage({ input: a.input || DEFAULT_SINGLE_FILE, out: a.out, version: a.version, weather: a.weather || DEFAULT_WEATHER });
   console.log(`Staged ${APP_NAME} ${r.version} (numeric ${r.numeric}) in ${r.out}\nCSP: ${r.csp}`);
 }

@@ -190,6 +190,6 @@ export function weatherSummary(inputs) {
   const what = w.source === 'epw' ? `uploaded EPW file "${w.file || w.name}"` : `NOAA station ${w.name}`;
   return {
     km,
-    text: `${what} (${w.name}${w.years ? `, ${w.years}` : ''})${km != null ? `, ${km < 10 ? km.toFixed(1) : Math.round(km)} km from the pin` : ''}; design ${w.designDB} °C dry bulb and ${w.designWB} °C wet bulb from ${w.designBasis}`,
+    text: `${what} (${[w.source === 'epw' ? w.name : null, w.years].filter(Boolean).join(', ')})${km != null ? `, ${km < 10 ? km.toFixed(1) : Math.round(km)} km from the pin` : ''}; design ${w.designDB} °C dry bulb and ${w.designWB} °C wet bulb from ${w.designBasis}`,
   };
 }

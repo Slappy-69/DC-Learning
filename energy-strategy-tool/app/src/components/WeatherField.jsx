@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { readEpw, weatherSummary, hasWeather } from '../engine/weather.js';
+import { stationsLoaded } from '../engine/stations.js';
 
 // Hourly weather (owner 2026-10-30): upload an EPW file to replace the synthetic temperatures. The file is read on this
 // computer; nothing is sent anywhere.
@@ -19,7 +20,7 @@ export default function WeatherField({ inputs, update }) {
       setMsg('');
     } catch (err) { setMsg(`Not loaded: ${err && err.message ? err.message : err}`); }
   };
-  const clear = () => { update('weather', { source: 'none' }); setMsg('Weather file removed: the synthetic country profile is used.'); };
+  const clear = () => { update('weather', { source: 'none' }); setMsg(stationsLoaded() ? 'Weather file removed: the nearest NOAA station is used.' : 'Weather file removed: the synthetic country profile is used.'); };
   return (
     <div className="field weather-field">
       <span className="label" id="weather-label">Hourly weather</span>
@@ -30,7 +31,7 @@ export default function WeatherField({ inputs, update }) {
       </p>
       <div className="btn-row">
         <button type="button" className="chip-btn" onClick={() => fileRef.current && fileRef.current.click()}>{on ? 'Replace EPW file…' : 'Upload EPW file…'}</button>
-        {on ? <button type="button" className="chip-btn" onClick={clear}>Use the synthetic profile</button> : null}
+        {on && inputs.weather.source === 'epw' ? <button type="button" className="chip-btn" onClick={clear}>{stationsLoaded() ? 'Use the nearest NOAA station' : 'Use the synthetic profile'}</button> : null}
         <input ref={fileRef} type="file" accept=".epw,text/plain" className="sr-only" aria-label="EPW weather file" onChange={load} tabIndex={-1} />
       </div>
       {msg ? <p className="small" role="status">{msg}</p> : <p className="small sr-only" role="status" />}

@@ -125,8 +125,8 @@ Without a weather file the tool takes the **hottest hour of its synthetic year**
 An example: the EnergyPlus sample file for Golden, Colorado gives 33.0 °C and 18.4 °C from its ASHRAE line, against 32.2 °C and 17.5 °C from its own typical-year hours.
 :::
 
-::: {.callout .agreed}
-**Being built: NOAA station years (OPEN-QUESTIONS 106–107).** A release script makes a typical year (ISO 15927-4) for every usable NOAA station in the 31 countries, with design values from all its real years, and the program picks the station nearest the pin. The method and the download are built and tried on real NOAA data (31 October 2026); how the data reaches the program is still to decide (its size). NOAA's non-US data may not be redistributed for commercial purposes; the owner states the tool's use is non-commercial.
+::: {.callout .built}
+**Built 31 October 2026: NOAA station years in the Windows program (OPEN-QUESTIONS 106, 107, 114).** At each release a script makes a typical year (ISO 15927-4, on temperature and humidity) for every usable NOAA station in the 31 countries, with design values (0.4 % dry bulb and wet bulb) from all its real years, not the typical year. The Windows program carries them and, unless you upload an EPW file, uses the station nearest the pin; each option's "Weather" flag names the station, its years and its distance, and the panel warns beyond 50 km. The single-file page and the phone page do not carry the stations (their size; owner, 31 October 2026) and use the EPW upload. A station counts when every calendar month has at least 10 years at least 80 % complete in 2010–2024 (judgement). NOAA's non-US data may not be redistributed for commercial purposes; the owner states the tool's use is non-commercial.
 :::
 
 ## Water

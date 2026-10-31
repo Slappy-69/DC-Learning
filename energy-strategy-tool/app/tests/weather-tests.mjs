@@ -97,3 +97,26 @@ export async function weatherTests(test, ctxRuns) {
     return `design ${run.ctx.prof.designTemp}/${run.ctx.prof.designWetbulb} °C (synthetic ${syn.ctx.prof.designTemp.toFixed(1)}/${syn.ctx.prof.designWetbulb.toFixed(1)} °C); leader LCOE €${L.eco.lcoe.toFixed(1)} against €${Ls.eco.lcoe.toFixed(1)}/MWh with the synthetic year; cooling never lower, higher for the mechanically cooled types; ${run.options.length} options flagged; study and PDF keep it`;
   });
 }
+
+// 48c. Bundled NOAA station records (OPEN-QUESTIONS 114): the nearest station's typical year becomes the weather.
+export async function stationTests(test) {
+  await test('48c. Bundled NOAA stations (Windows program only, OPEN-QUESTIONS 114): records from the release script are decoded to 8,760 hourly values, the station nearest the pin is found, and its weather carries the station, its years and design values from its own readings', async () => {
+    const { setStations, nearestStations, stationWeather, stationsLoaded } = await import('../src/engine/stations.js');
+    const { weatherSummary } = await import('../src/engine/weather.js');
+    const pack = (arr) => Buffer.from(Int16Array.from(arr, (x) => Math.round(x * 10)).buffer).toString('base64');
+    const db = Array.from({ length: HOURS }, (v, h) => 10 + 8 * Math.sin(h / 1000)), wb = db.map((x) => x - 3);
+    const rec = (id, lat, lon) => ({ id, name: `STATION ${id}`, cc: 'GB', lat, lon, elev: 50, icao: id === 'B' ? 'EGLL' : '', years: '2010–2024', designDB: 29.1, designWB: 20.3, db: pack(db), wb: pack(wb) });
+    assert.equal(setStations({ stations: [rec('A', 55, -3), rec('B', 51.47, -0.45), rec('C', 48, 2), { id: 'bad' }] }), 3);
+    assert.ok(stationsLoaded());
+    const [n] = nearestStations(51.5, -0.1, 1);
+    assert.equal(n.s.id, 'B'); assert.ok(n.km > 20 && n.km < 30, `${n.km} km`);
+    const w = stationWeather(n.s);
+    assert.equal(w.source, 'station'); assert.equal(w.dryBulb.length, HOURS);
+    assert.ok(Math.abs(w.dryBulb[5000] - Math.round(db[5000] * 10) / 10) < 1e-9 && Math.abs(w.wetBulb[5000] - Math.round(wb[5000] * 10) / 10) < 1e-9);
+    const inp = referenceT1(); inp.project.lat = 51.5; inp.project.lon = -0.1; inp.weather = w;
+    const s = weatherSummary(inp);
+    assert.match(s.text, /^NOAA station STATION B \(EGLL\).*typical year from 2010–2024.*km from the pin; design 29\.1 °C dry bulb and 20\.3 °C wet bulb from the station's own readings/);
+    setStations([]);
+    return s.text.slice(0, 200);
+  });
+}

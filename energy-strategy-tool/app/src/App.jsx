@@ -1,4 +1,5 @@
 /* global __HOSTED__ */
+import { setStations, nearestStations, stationWeather } from './engine/stations.js';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputsPanel from './components/InputsPanel.jsx';
 import RankedList from './components/RankedList.jsx';
@@ -106,6 +107,26 @@ export default function App() {
   const prevRunRules = useRef(null);
 
   const update = useCallback((path, val) => setInputs((cur) => setIn(cur, path, val)), []);
+  // Bundled NOAA station years (OPEN-QUESTIONS 114): only the Windows program carries them, next to the page. Loaded
+  // once; nothing happens in the single-file or phone page, where the fetch is not even tried.
+  const [stationsReady, setStationsReady] = useState(false);
+  useEffect(() => {
+    if (typeof location === 'undefined' || location.protocol !== 'app:' || typeof DecompressionStream === 'undefined') return;
+    fetch('weather-stations.json.gz').then((r) => (r.ok ? r.body.pipeThrough(new DecompressionStream('gzip')) : null))
+      .then((s) => (s ? new Response(s).json() : null))
+      .then((b) => { if (b && setStations(b) > 0) setStationsReady(true); })
+      .catch(() => {});
+  }, []);
+  // With the bundle, the station nearest the pin is the weather unless an EPW file was uploaded.
+  useEffect(() => {
+    if (!stationsReady) return;
+    const w = inputs.weather || {};
+    if (w.source === 'epw') return;
+    const n = nearestStations(inputs.project.lat, inputs.project.lon, 1)[0];
+    if (!n || w.id === n.s.id) return;
+    const sw = stationWeather(n.s);
+    if (sw) update('weather', sw);
+  }, [stationsReady, inputs.project.lat, inputs.project.lon, inputs.weather && inputs.weather.source, inputs.weather && inputs.weather.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // Turning the Site tab off removes every site-fit part of the main flow: the tab, site-fit view filters and the
   // optional site-fit penalty (which belongs to the Beta settings only, BRIEF §9.9).
   const setSiteBeta = (on) => {

@@ -88,7 +88,7 @@ import { studyTests } from './study-tests.mjs';
 import { summaryTests } from './summary-tests.mjs';
 import { breakevenTests } from './breakeven-tests.mjs';
 import { reviewFixTests } from './review-fixes-tests.mjs';
-import { weatherTests } from './weather-tests.mjs';
+import { weatherTests, stationTests } from './weather-tests.mjs';
 import { weatherTmyTests } from './weathertmy-tests.mjs';
 import { monteCarloTests } from './montecarlo-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
@@ -1261,6 +1261,7 @@ await reviewFixTests(test, siteRuns);
 
 // 48. Measured hourly weather: EPW upload (tests/weather-tests.mjs)
 await weatherTests(test, siteRuns);
+await stationTests(test);
 
 // 49. NOAA station years → typical year (tests/weathertmy-tests.mjs)
 await weatherTmyTests(test);
