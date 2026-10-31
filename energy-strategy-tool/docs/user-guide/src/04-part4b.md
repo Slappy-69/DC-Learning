@@ -19,6 +19,8 @@ Each line is booked in the year its plant can first supply power (or, for per-ph
 | Firm prime plant | MW × €/kW × 1,000 | availability | by technology |
 | Bridging plant (not rented) | MW × €/kW × 1,000 | availability; plant kept as the backup: the bridging units at availability, then each building's units at its date (lines "(bridging)" and "(retained as backup)", built 24 October 2026) | by technology |
 | Existing plant: connection to the campus (built 24 October 2026) | the amount entered; no plant capex (the plant is leased) | when the lease starts | 25; when the plant is handed back at the grid date the capex is still paid but has no life or residual value (judgement) |
+| Existing plant bought (built 31 October 2026) | units used × unit MW × (purchase + refurbishment) €/kW × 1,000 | when it is first available | until it stops (its closure plus 10 years): no replacement, no value left |
+| Grid connection taken over from a closing plant (built 31 October 2026) | MW taken over × €/MW (a quarter of the standard extra-high-voltage rate) | the month the campus can use it | 40 |
 | Gas connection pipe | km × €0.8 m; existing plant outside the campus does not need it | first gas plant on the campus | 40 |
 | Backup gensets | MW × €/kW × 1,000, split by phase | each phase | 25 |
 | Battery for UPS augmentation | as battery, split by phase | each phase | 15 |

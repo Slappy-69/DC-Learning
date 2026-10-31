@@ -385,9 +385,12 @@ function archetypeVector(a, inputs) {
 function lhsSample(valid, n, inputs, seed, exclude) {
   const rand = mulberry32(subSeed(seed, 'lhs'));
   const domains = splitDomains(inputs).base;
-  const strata = domains.map((d) => {
+  const strata = domains.map((d, j) => {
     const arr = [];
     for (let i = 0; i < n; i++) arr.push(d[i % d.length]);
+    // C21 (work package 19) with no takeover to choose draws nothing from the seeded stream, so the sample of a study
+    // without plants is the one drawn before C21 existed.
+    if (IDS[j] === 'C21' && d.length === 1) return arr;
     return shuffle(arr, rand);
   });
   const validByKey = new Map(valid.map((v) => [choiceKey(v), v]));

@@ -148,9 +148,23 @@ Site coverage 35 % (the walkthrough's figure), the storeys and the gross-up are 
 | Gas commodity price | country default | €/MWh of gas; the transport adder (€4) is added either way |
 | Hydrogen availability | No | Hydrogen plant runs only if Yes |
 | District heating offtake nearby | No | Allows heat-reuse values of C15 (not costed) |
-| Existing plant near the site (lease) | off | A plant beside the site whose owner would lease it to the campus (built 24 October 2026); see below |
+| Existing plant near the site (lease) | off | A plant beside the site that is not in the bundled list (built 24 October 2026; bought as well as leased since 31 October); see below |
+| Existing gas plants near the site (from the bundled list) | on | Every gas plant of 50 MW or more within 10 km of the pin enters the analysis (built 31 October 2026); see below |
 
-**Existing plant near the site** (built 24 October 2026, work package 12). Tick it when a power plant next to the site could be leased, as the Elecgás CCGT at Pego. Enter its name, type (combined-cycle gas turbine, open-cycle gas turbines or gas engines), the **units offered** and the **net output per unit** (both required: there is no default), the month it could be available (empty: from the analysis start), and the lease in € per kW a month (default €6, a judgement from the Pego study). Efficiency, minimum stable load and variable O&M follow the type unless you enter them (CCGT: 56 %, 45 % of a unit, €3/MWh, all judgement; the other two types use the gas turbine and gas engine records). A one-off cost for the connection from the plant to the campus can be added. The tool then offers the plant as bridging plant and as firm plant (chapters 34 and 35), with exactly the units offered, and pays the lease only from a month before the plant is first needed (chapter 39). The plant stands outside the campus: it has its own consent and gas supply, is not part of the campus's emissions permit and is not drawn on the plan. Ticked but without units or unit size, the plant is not used and the run says so.
+**Existing plant near the site** (built 24 October 2026, work package 12). Tick it when a power plant next to the site could be leased, as the Elecgás CCGT at Pego. Enter its name, type (combined-cycle gas turbine, open-cycle gas turbines or gas engines), the **units offered** and the **net output per unit** (both required: there is no default), the month it could be available (empty: from the analysis start), and the lease in € per kW a month (default €6, a judgement from the Pego study). Efficiency, minimum stable load and variable O&M follow the type unless you enter them (CCGT: 56 %, 45 % of a unit, €3/MWh, all judgement; the other two types use the gas turbine and gas engine records). A one-off cost for the connection from the plant to the campus can be added. The tool then offers the plant as bridging plant and as firm plant (chapters 34 and 35), with exactly the units offered, and pays the lease only from a month before the plant is first needed (chapter 39). The plant stands outside the campus: it has its own consent and gas supply, is not part of the campus's emissions permit and is not drawn on the plan. Ticked but without units or unit size, the plant is not used and the run says so. Since 31 October 2026 (work package 19) the same plant is also offered **bought**, and an optional **closure year** makes it stop then (bought: 10 years later) and offers its grid connection to the campus 12 months after it stops.
+
+**Existing gas plants near the site** (built 31 October 2026, work package 19, OPEN-QUESTIONS 116–123). As more gas plants close, their power, their site and their grid connection become available to data centres. The tool carries a list of European gas plants, **powerplantmatching** from the PyPSA project (608 plants of 50 MW or more in the tool's countries, data licence CC BY 4.0, credited on screen and in the PDF), prepared at each release and shipped in every version, so the Windows program stays offline. Every plant of 50 MW or more within 10 km of the pin enters the analysis without being asked for: a table under the toggle lists each plant with its distance, output, units, first year, closure year and status, each value marked with where it came from (the list, a default, by type, or entered). Open "Correct …" under a plant to change any value, untick it to leave it out, or keep two merged entries apart.
+
+How the values are set:
+
+- **Output and position** come from the list. Entries closer than 1 km, of the same type and within 25 % in size are taken as one plant listed twice and merged; the table says so.
+- **Units**: the list gives the plant total only, so it is split into units of a typical size by type (CCGT 400 MW, open-cycle turbine 100 MW, steam unit 300 MW, gas engine 10 MW; judgement). An option uses the units it needs, up to the plant's, with no N+1 (the standby gensets cover a unit trip).
+- **Closure**: the list's closure year when it has one; otherwise 40 years after the first year (judgement; gas plants often run 25 to 40 years). A plant whose closure falls before the analysis start counts as closed: it offers its grid connection only.
+- **Efficiency**: the list's value only when it is plausible for the type (a CCGT between 45 and 63 %); otherwise the type's value.
+- **Lease** €6 per kW a month; **purchase** €150 per kW plus €100 per kW **refurbishment**, which adds 10 years of life; a bought plant's **fixed O&M** €25 per kW a year; the **connection to the campus** is the straight-line distance times the cable rate. All judgement, to replace with the owner's figures.
+- **Grid connection takeover**: the plant's full output, capped at the campus's design load, from 12 months after the plant stops, at a quarter of the standard extra-high-voltage connection rate (about €30k per MW against €120k). All judgement. Whether a closing plant's connection can pass to a new user depends on the country's rules and the network operator, which are not researched yet, so every option that uses a takeover carries a major flag saying it is an assumption.
+
+Each plant then appears in the design choices (chapter 20): its power as bridging plant (C2) and as firm plant (C4), leased and bought, and its grid connection in the new choice C21. A bought plant keeps its own permit and is not added to the campus's combustion total, but carries a flag that one owner of neighbouring sites may be treated as one installation; it may be kept as the campus's backup. At Eemshaven, for example, the list finds Eemscentrale (3,210 MW, closure 2030 in the list), Magnum (1,311 MW, 2013), a 1,410 MW entry from 1976 that may be an older listing of Eemscentrale (not checked), and a 131 MW steam unit: the engineer should leave out or correct any entry the owner does not recognise.
 
 Two inputs exist in the engine but are not on screen in the current version: **grid steps** (intermediate capacities between "now" and "full", each from a date) and **water available** (m³ a day, for the water flag).
 
@@ -250,7 +264,7 @@ The currency is the euro; revenue options (export, battery grid services, heat r
 **Answered 23 October 2026** (OPEN-QUESTIONS 19 and 20, Claude's recommendations accepted in advance by the owner): contracted capacity is a rule per grid strategy set before the run (blank = the full offer); islanded options contract 0 MW and do not pay the connection charge.
 :::
 
-# 20. Inputs: the design choices C1–C20 {#ch20}
+# 20. Inputs: the design choices C1–C21 {#ch20}
 
 ![Current version: part of section 6, Choices. Filled values are included; outlined values are not generated.](img/s07-inputs-choices.png)
 
@@ -261,9 +275,9 @@ The table lists every choice, its values, and the values included by default (ma
 | Choice | Values (default in bold) |
 |---|---|
 | C1 Grid strategy | **Wait for grid**, **Bridge until grid**, **Islanded**, Grid + export |
-| C2 Bridging supply | **Gas recips**, Gas turbines, **Fuel cells**, HVO-diesel prime, BESS + solar only, **Rented temporary generation** |
+| C2 Bridging supply | **Gas recips**, Gas turbines, **Fuel cells**, HVO-diesel prime, BESS + solar only, **Rented temporary generation**, and **each nearby existing plant, leased and bought** (work package 19) |
 | C3 Bridging plant after grid arrives | **Remove**, **Retain as backup**, **Retain as prime**, **Retain for grid services**, **Keep shortfall share as prime, rest as backup** (built 23 October 2026; only with generating plant and a permanent shortfall) |
-| C4 Primary firm on-site generation | **None**, **Gas CHP-trigen**, Gas recips, **Fuel cells**, SMR, Hydrogen |
+| C4 Primary firm on-site generation | **None**, **Gas CHP-trigen**, Gas recips, **Fuel cells**, SMR, Hydrogen, and **each nearby existing plant, leased and bought** (work package 19) |
 | C4s Firm generation sizing | **Average load (baseload)**, **Permanent shortfall (top-up)**; the top-up only for cooling types with a permanent shortfall, or islanded (built 23 October 2026) |
 | C5 Backup power technology | **Diesel gensets**, **HVO gensets**, Gas gensets, BESS-augmented UPS + reduced gensets, **Retained bridging plant**, None |
 | C5a Backup arrangement | **Per building**, **Pooled across the campus** (built 23 October 2026; not applicable with no backup or retained-plant backup) |
@@ -283,6 +297,7 @@ The table lists every choice, its values, and the values included by default (ma
 | C18 Genset arrangement | **Single-deck**; double-deck and in-building available |
 | C19 Phasing of energy plant | locked to **Build per phase**; build all at phase 1 available |
 | C20 Fuel decarbonisation pathway | locked to **None**; biomethane, HVO switch available |
+| C21 Grid connection taken over from a closing plant | **None**, and **each nearby plant's connection** that comes free within the study (work package 19, built 31 October 2026) |
 
 **Which choices do something in the current engine.** Most choices change sizing, dispatch, costs or the layout. A few are recorded but have little or no effect yet:
 

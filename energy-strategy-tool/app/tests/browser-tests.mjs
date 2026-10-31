@@ -1451,6 +1451,30 @@ await check('B42. Hourly weather (owner 2026-10-30): "Upload EPW file…" in sec
   return `loaded: "${txt.slice(0, 160)}…"; re-run, header changed; removed again`;
 });
 
+await check('B43. Existing gas plants (work package 19): with the pin at Eemshaven, section 4 lists the plants within 10 km from the bundled list with their sources and the credit; leaving one out re-runs; axe finds no serious or critical violation; no outside request, no console error', async () => {
+  const { ctx, page, errors } = await openPage();
+  const outside = [];
+  page.on('request', (r) => { if (/^https?:/.test(r.url())) outside.push(r.url()); });
+  const ran = () => page.waitForFunction(() => { const t = document.querySelector('.status').textContent; return /Run failed/.test(t) || (/Last run/.test(t) && !/Screening options/.test(t)); }, null, { timeout: 240000, polling: 250 });
+  for (const [label, v] of [[/^Latitude/, '53.425'], [/^Longitude/, '6.875']]) { const f = page.getByLabel(label); await f.fill(v); await f.press('Tab'); }
+  await page.waitForFunction(() => /Magnum Centrale/.test((document.querySelector('.plants-field') || {}).textContent || ''), null, { timeout: 30000 });
+  await ran();
+  const txt = (await page.locator('.plants-field').innerText()).replace(/\s+/g, ' ');
+  ok(/powerplantmatching, PyPSA \(CC BY 4\.0\)/.test(txt), 'credit missing');
+  ok(/Eem/.test(txt) && /closure dated|closed/.test(txt) && /\(list\)/.test(txt), txt.slice(0, 300));
+  ok((await page.locator('.plants-field tbody tr').count()) === 4, 'four plants within 10 km');
+  const box = page.getByLabel('Include Magnum Centrale');
+  await box.uncheck();
+  await ran();
+  ok(!(await box.isChecked()), 'the plant was not left out');
+  const ax = await runAxe(page, 'section 4 with the plant table');
+  ok(!serious(ax).length, axeLine(ax));
+  ok(!outside.length, `outside requests: ${outside.slice(0, 3).join(', ')}`);
+  ok(!errors.length, errors.join(' | '));
+  await ctx.close();
+  return `plants listed: ${txt.slice(0, 200)}…; Magnum left out and re-run; ${axeLine(ax)}`;
+});
+
 await check('B41. Phone version (owner 2026-10-30): the hosted page inside a host-like document with the host\'s downloads capability, on a 390 × 844 touch screen: runs T1; no sideways page scroll with the run details open; "Save PDF report", "Save study" and the run log save through the host (a declined save says so and saves nothing); the saved study reopens through the file field and matches; fields at 16 px or more; the inputs drawer closes from its own "Done" button (focus back on "Inputs") and from a tap beside it; no browser download, no outside request, no console error', async () => {
   const content = readFileBytes(HOSTED_FILE, 'utf8');
   // The host's document as the publish skeleton writes it, with a stand-in for window.claude that records each save;
