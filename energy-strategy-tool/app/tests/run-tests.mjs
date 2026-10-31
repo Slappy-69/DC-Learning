@@ -88,6 +88,7 @@ import { studyTests } from './study-tests.mjs';
 import { summaryTests } from './summary-tests.mjs';
 import { breakevenTests } from './breakeven-tests.mjs';
 import { reviewFixTests } from './review-fixes-tests.mjs';
+import { weatherTests } from './weather-tests.mjs';
 import { monteCarloTests } from './montecarlo-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
@@ -1256,6 +1257,9 @@ await monteCarloTests(test, siteRuns);
 
 // 47. Fixes from the Opus review of H4–H6 (tests/review-fixes-tests.mjs)
 await reviewFixTests(test, siteRuns);
+
+// 48. Measured hourly weather: EPW upload (tests/weather-tests.mjs)
+await weatherTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

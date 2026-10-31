@@ -5,6 +5,7 @@ import { runModel } from '../src/engine/run.js';
 import { layoutScopeTests } from './layout-scope-tests.mjs';
 import { monteCarloTests } from './montecarlo-tests.mjs';
 import { reviewFixTests } from './review-fixes-tests.mjs';
+import { weatherTests } from './weather-tests.mjs';
 const START = '2027-01';
 let failures = 0;
 async function test(name, fn) {
@@ -18,4 +19,5 @@ const want = process.argv.slice(2);
 if (!want.length || want.includes('40')) await layoutScopeTests(test, ctx);
 if (!want.length || want.includes('46')) await monteCarloTests(test, ctx);
 if (!want.length || want.includes('47')) await reviewFixTests(test, ctx);
+if (!want.length || want.includes('48')) await weatherTests(test, ctx);
 process.exit(failures ? 1 : 0);

@@ -1,6 +1,7 @@
 // Run context: everything shared by all options in one run (BRIEF §4 incremental recompute:
 // these arrays depend only on inputs, not on the option's choices).
 
+import { applyWeather } from './weather.js';
 import { COUNTRIES, COOLING, TECH, FUEL, FX, applyExistingPlant } from './defaults.js';
 import { getProfiles, coolingProfile, nearestCountry, H } from './profiles.js';
 import { monthsBetween, yearOf, parseYM } from './dates.js';
@@ -164,7 +165,8 @@ export function buildContext(inputs, opts = {}) {
   const country = resolveCountry(inputs);
   const cdata = COUNTRIES[country];
   const seed = inputs.project.seed;
-  const prof = getProfiles(country, seed, inputs.project.lat);
+  // Measured weather, when entered, replaces the synthetic temperatures and design temperatures (engine/weather.js).
+  const prof = applyWeather(getProfiles(country, seed, inputs.project.lat), inputs);
   // Timeline: the run setting (120 months), extended so it always covers full load (the last phase plus its ramp) and the
   // full grid date with a year to spare (known issue 17, work package 11, 2026-10-24).
   const phaseMs = (inputs.load.phases || []).map((p) => monthOf(inputs, p.date)).filter(Number.isFinite);

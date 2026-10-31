@@ -1,5 +1,6 @@
 // Public engine API (pure functions, no UI).
 export * from './defaults.js';
+export * from './weather.js';
 export * from './generator.js';
 export * from './scoring.js';
 export { runModel, runModelSteps, startPooledRun, rescore, mergeRuns, toTransferable, HOOKS, ENGINE_VERSION, PROGRESS_EVERY, withSiteFitNotes, refreshAdequacyFlag, slimOption } from './run.js';
