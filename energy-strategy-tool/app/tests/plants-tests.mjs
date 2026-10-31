@@ -102,6 +102,14 @@ export async function plantTests(test) {
     assert.equal(mag2.unitMW, 300); assert.equal(mag2.units, 4);
     assert.ok(!c2.plants.some((p) => p.id === old.id) && c2.all.some((p) => p.id === old.id && !p.include), 'left out, still listed');
     assert.equal(plantCandidates(normalizeInputs(eemSmall({ auto: false }))).plants.length, 0);
+    // Other data centres' own plants (OPEN-QUESTIONS 127, "A"): left out unless ticked in. Dublin: five of seven.
+    const dub = eemSmall(); Object.assign(dub.project, { lat: 53.33, lon: -6.38, country: 'IE' });
+    const cd = plantCandidates(normalizeInputs(dub));
+    const dc = cd.all.filter((p) => p.dataCentre);
+    assert.deepEqual(dc.map((p) => p.name).sort(), ['Echelon Dub', 'Grange Castle Echelon', 'Microsoft Dublin Data Center', 'Profile Park', 'Winthrop Dublin']);
+    assert.ok(dc.every((p) => !p.include) && cd.plants.every((p) => !p.dataCentre), 'a data centre plant included by default');
+    dub.plants.edits = { [dc[0].id]: { include: true } };
+    assert.ok(plantCandidates(normalizeInputs(dub)).plants.some((p) => p.id === dc[0].id), 'ticking in');
     return `${c.length} plants: ${c.map((p) => `${p.name} ${Math.round(p.mw)} MW, ${p.status}, closes ${p.closeYear} (${p.basis.closeYear}), ${[p.offersPower ? 'power' : null, p.offersTakeover ? `connection from month ${p.takeoverM}` : null].filter(Boolean).join(' + ')}`).join('; ')}.`;
   });
 

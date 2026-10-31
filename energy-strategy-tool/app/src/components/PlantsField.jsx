@@ -39,14 +39,14 @@ export default function PlantsField({ inputs, norm, update }) {
               <tbody>
                 {list.map((p) => (
                   <tr key={p.id}>
-                    <td><input type="checkbox" aria-label={`Include ${p.name}`} checked={p.include} onChange={(e) => edit(p.id, 'include', e.target.checked ? null : false)} /></td>
+                    <td><input type="checkbox" aria-label={`Include ${p.name}`} checked={p.include} onChange={(e) => edit(p.id, 'include', p.dataCentre ? (e.target.checked ? true : null) : (e.target.checked ? null : false))} /></td>
                     <th scope="row">{p.name}{p.mergedFrom.length ? <span className="field-hint"> merged with {p.mergedFrom.map((m) => `${m.name} (${Math.round(m.mw)} MW)`).join(', ')}</span> : null}</th>
                     <td className="num">{p.km.toFixed(1)}</td>
                     <td className="num">{Math.round(p.mw)} <span className="field-hint">({BASIS[p.basis.mw]})</span></td>
                     <td>{p.units} × {Math.round(p.unitMW)} MW <span className="field-hint">({BASIS[p.basis.units]})</span></td>
                     <td>{p.firstYear ?? '—'} <span className="field-hint">({BASIS[p.basis.firstYear]})</span></td>
                     <td>{p.closeYear ?? '—'} <span className="field-hint">({p.basis.closeYear === 'default' ? `${PLANT_DEFAULTS.lifeYears} years` : BASIS[p.basis.closeYear]})</span></td>
-                    <td>{STATUS[p.status] || p.status}</td>
+                    <td>{!p.include && p.dataCentre ? 'left out: probably a data centre\'s own plant (tick to include)' : (STATUS[p.status] || p.status)}</td>
                     <td>{[p.offersPower ? 'power' : null, p.offersTakeover ? `connection from ${addMonths(start, p.takeoverM)}` : null].filter(Boolean).join('; ') || 'nothing within the study'}</td>
                   </tr>
                 ))}

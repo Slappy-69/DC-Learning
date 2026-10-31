@@ -324,7 +324,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
     const pl = ctx.plants.all.filter((p) => !p.manual);
     const share = s.plantSampling || {};
     runFlags.push(flag('plants-found', pl.length ? 'minor' : 'info', 'Existing plant', pl.length
-      ? `${pl.length} gas plant${pl.length === 1 ? '' : 's'} of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site, from the bundled list (${PLANT_SOURCE.credit}): ${pl.map((p) => `${p.name} (${Math.round(p.mw)} MW, ${p.km.toFixed(1)} km, ${p.include ? `${p.status}${share[p.id] ? `; ${share[p.id].drawn.toLocaleString('en-GB')} of ${share[p.id].combinations.toLocaleString('en-GB')} combinations screened` : ''}` : 'left out by the engineer'})`).join('; ')}. Their values come from the list and labelled defaults: check them with the plants' owners.`
+      ? `${pl.length} gas plant${pl.length === 1 ? '' : 's'} of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site, from the bundled list (${PLANT_SOURCE.credit}): ${pl.map((p) => `${p.name} (${Math.round(p.mw)} MW, ${p.km.toFixed(1)} km, ${p.include ? `${p.dataCentre ? 'probably a data centre\'s own plant, ticked in; ' : ''}${p.status}${share[p.id] ? `; ${share[p.id].drawn.toLocaleString('en-GB')} of ${share[p.id].combinations.toLocaleString('en-GB')} combinations screened` : ''}` : p.dataCentre ? 'left out: probably a data centre\'s own plant' : 'left out by the engineer'})`).join('; ')}. Their values come from the list and labelled defaults: check them with the plants' owners.`
       : `No gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site in the bundled list (${PLANT_SOURCE.credit}).`));
   }
   if (truncated.length) {

@@ -411,6 +411,8 @@ export const PLANT_DEFAULTS = {
   fomPerKW: rec('plants.fomPerKW', 25, '€/kW/yr fixed O&M of a bought plant', { low: 15, high: 40, ...J('Fixed O&M of an older CCGT, own staff and maintenance (work package 19).') }),
   takeoverLagMonths: rec('plants.takeoverLagMonths', 12, 'months from the plant closing to the campus using its connection', { low: 6, high: 24, ...J('OPEN-QUESTIONS 120: transfer and works.') }),
   takeoverCostFrac: rec('plants.takeoverCostFrac', 0.25, 'fraction of the standard extra-high-voltage connection rate', { low: 0.1, high: 0.5, ...J('OPEN-QUESTIONS 120: about €30k/MW against €120k/MW for a new connection.') }),
+  // OPEN-QUESTIONS 127 (owner, 2026-10-31, "A"): generators inside other data centre campuses are left out unless ticked.
+  dataCentreNames: rec('plants.dataCentreNames', 'data ?cent(er|re)|datacent|\\bDC\\b|echelon|profile park|winthrop|microsoft|google|amazon|\\baws\\b|equinix|digital realty|cyrus ?one|vantage|edgeconnex|pure dc|keppel|\\bmeta\\b|facebook', 'name pattern (case ignored)', J('Names in the bundled list that point to a data centre\'s own plant (in the 2026-10-07 list: six entries, all in Dublin). They are left out of the analysis unless the engineer ticks them in.')),
   sampleShare: rec('plants.sampleShare', 0.5, 'fraction of the sampled options kept for options with an existing plant', { low: 0.2, high: 0.8, ...J('OPEN-QUESTIONS 118: each plant gets its own equal share of this, so no plant is crowded out (builder, 2026-10-31).') }),
   unitMW: {
     ccgt: rec('plants.unitMW.ccgt', 400, 'MW per unit, when the list gives the plant total only', J('A typical CCGT block; the list gives no unit count.')),
@@ -459,10 +461,12 @@ function candidateFrom(p, edit, inputs, opts) {
   const status = defaultPassed ? 'running, default closure passed' : closeM <= 0 ? 'closed' : closeYear.basis === 'list' || closeYear.basis === 'entered' ? 'closure dated' : closeYear.v == null ? 'running, no closure date' : 'running';
   const periodM = inputs.economics.periodYears * 12;
   const takeoverM = defaultPassed ? tkLag : closeM === Infinity ? Infinity : Math.max(0, closeM) + tkLag;
-  const include = !(edit && edit.include === false);
+  // A data centre's own plant (OPEN-QUESTIONS 127): left out unless the engineer ticks it in.
+  const dataCentre = !opts.manual && new RegExp(PLANT_DEFAULTS.dataCentreNames, 'i').test(p.name || '');
+  const include = edit && edit.include !== undefined && edit.include !== null ? edit.include !== false : !dataCentre;
   return {
     id: p.id, name: (edit && edit.name) || p.name, listName: p.name, type, typeLabel: ty.label, tech: p.tech || '', cc: p.cc, km, lat: p.lat, lon: p.lon,
-    sources: p.sources || [], eic: p.eic || [], mergedFrom: p.mergedFrom || [], dateRetrofit: p.dateRetrofit ?? null, manual: !!opts.manual,
+    dataCentre, sources: p.sources || [], eic: p.eic || [], mergedFrom: p.mergedFrom || [], dateRetrofit: p.dateRetrofit ?? null, manual: !!opts.manual,
     mw: mw.v, units: units.v, unitMW: unitMW.v, firstYear: firstYear.v, closeYear: closeYear.v, closeM, defaultPassed, status, include,
     eff: eff.v, msl: pick(edit, 'msl', ty.msl, 'type').v, vomPerMWh: pick(edit, 'vomPerMWh', ty.vomPerMWh, 'type').v,
     leasePerKWMonth: pick(edit, 'leasePerKWMonth', opts.lease ?? PLANT_DEFAULTS.leasePerKWMonth, 'default').v,

@@ -188,7 +188,7 @@ export function buildReport(run, view = {}) {
         pc.map((p) => [`${p.name}${p.mergedFrom.length ? ` (merged with ${p.mergedFrom.map((m) => m.name).join(', ')})` : ''}`, p.km.toFixed(1),
           `${Math.round(p.mw)} (${B[p.basis.mw]}); ${p.units} × ${Math.round(p.unitMW)} (${B[p.basis.units]})`,
           `${p.firstYear ?? '—'} (${B[p.basis.firstYear]}) · ${p.closeYear ?? '—'} (${p.basis.closeYear === 'default' ? `${PLANT_DEFAULTS.lifeYears} years` : B[p.basis.closeYear]})`,
-          !p.include ? 'left out by the engineer' : [p.offersPower ? 'power, leased or bought' : null, p.offersTakeover ? `grid connection from ${addMonths(I.project.analysisStart, p.takeoverM)}` : null].filter(Boolean).join('; ') || 'nothing within the study']), { size: 7.5, headSize: 8 });
+          !p.include ? (p.dataCentre && !(I.plants.edits && I.plants.edits[p.id] && I.plants.edits[p.id].include === false) ? 'left out: probably a data centre\'s own plant' : 'left out by the engineer') : [p.offersPower ? 'power, leased or bought' : null, p.offersTakeover ? `grid connection from ${addMonths(I.project.analysisStart, p.takeoverM)}` : null].filter(Boolean).join('; ') || 'nothing within the study']), { size: 7.5, headSize: 8 });
     }
   }
   doc.heading('Technology choices generated', 2);

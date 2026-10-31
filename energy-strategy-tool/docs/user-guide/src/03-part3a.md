@@ -157,6 +157,7 @@ Site coverage 35 % (the walkthrough's figure), the storeys and the gross-up are 
 
 How the values are set:
 
+- **Other data centres' own plants** (generators inside a campus, such as Echelon or Microsoft's Dublin data centre) are left out: an entry whose name points to a data centre is listed as "left out: probably a data centre's own plant" and can be ticked back in (OPEN-QUESTIONS 127).
 - **Output and position** come from the list. Entries closer than 1 km, of the same type and within 25 % in size are taken as one plant listed twice and merged; the table says so.
 - **Units**: the list gives the plant total only, so it is split into units of a typical size by type (CCGT 400 MW, open-cycle turbine 100 MW, steam unit 300 MW, gas engine 10 MW; judgement). An option uses the units it needs, up to the plant's, with no N+1 (the standby gensets cover a unit trip).
 - **Closure**: the list's closure year when it has one; otherwise 40 years after the first year (judgement; gas plants often run 25 to 40 years). A plant whose closure date (from the list or entered) falls before the analysis start counts as closed: it offers its grid connection only. A plant whose 40-year default has already passed, with no date, counts as running with its closure unknown: its power is offered for the whole study, and its grid connection from 12 months after the start, with a flag that this date is a guess (OPEN-QUESTIONS 125, owner, 31 October 2026).
