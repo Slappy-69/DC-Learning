@@ -151,7 +151,11 @@ export function dispatchYears(ctx, cfg) {
   // The first model year that starts after the last change is the steady one that repeats (known issue 1, work package 11):
   // a change mid-year leaves that year still ramping.
   const lastYear = Math.ceil(Math.max(0, lastChangeM) / 12);
-  return Math.min(lastYear + 1, ctx.inputs.settings.maxDispatchYears, Math.floor(ctx.nMonths / 12));
+  // An existing plant that stops (work package 19): the years up to the first full year after it stops are always
+  // dispatched, whatever the cap, so the years after it repeat a year without it (Opus review of package 19, finding 1).
+  let endYear = 0;
+  for (const p of cfg.plants) if (Number.isFinite(p.endMonth)) endYear = Math.max(endYear, Math.ceil(p.endMonth / 12) + 1);
+  return Math.min(lastYear + 1, Math.max(ctx.inputs.settings.maxDispatchYears, endYear), Math.floor(ctx.nMonths / 12));
 }
 // Model years an option needs dispatched before nothing changes (full load, grid steps, plant changes), whatever the
 // cap: compared with dispatchYears for the "dispatch stops early" flag (known issue 17).

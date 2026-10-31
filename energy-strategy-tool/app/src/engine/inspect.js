@@ -6,7 +6,7 @@
 // The run keeps no hourly arrays or monthly series (they are dropped before the worker transfer), which is
 // why this recomputes. Pure: no UI, no browser APIs.
 
-import { buildContext, contractedCap } from './context.js';
+import { ctxFor, buildContext, contractedCap } from './context.js';
 import { normalizeInputs } from './defaults.js';
 import { siteKey } from './site.js';
 import { bridgeActive, bridgeMWAt } from './sizing.js';
@@ -112,6 +112,8 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
   const ctx = buildContext(inputs, { site: useSite });
   const allYears = Array.from({ length: Math.max(1, inputs.settings.maxDispatchYears || 8) }, (_, i) => i);
   const e = evaluateOption(ctx, v, { recordYears: allYears });
+  // The option's own grid: with a taken-over connection (work package 19) it differs from the run's (Opus review finding 8).
+  const octx = ctxFor(ctx, v);
   const { sz, ttp, disp, cfg } = e;
 
   // Monthly phasing timeline: the supply time-to-power counts, split by source (§12.6).
@@ -122,9 +124,9 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
   }));
   const tl = { months: n, design: new Float64Array(n), grid: new Float64Array(n), firm: new Float64Array(n), bess: new Float64Array(n), supply: new Float64Array(n), gap: new Float64Array(n), plants: plantsTl };
   for (let m = 0; m < n; m++) {
-    const grid = islanded ? 0 : contractedCap(ctx, v.C1)[m];
+    const grid = islanded ? 0 : contractedCap(octx, v.C1)[m];
     for (const p of plantsTl) {
-      const on = m >= p.availMonth && m >= p.fuelMonth;
+      const on = m >= p.availMonth && m >= p.fuelMonth && m < (p.plant.endMonth ?? Infinity);
       p.values[m] = !on ? 0 : p.role === 'prime' ? p.mw : bridgeMWAt(v, m, sz.T, p.plant);
     }
     const firm = sz.firmByMonth[m];
@@ -153,7 +155,8 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
     country: ctx.country,
     islanded,
     exceedance: !!cfg.exceedance,
-    fullGridM: ctx.fullGridM,
+    fullGridM: octx.fullGridM,
+    takeover: octx.takeover ? { plant: octx.takeover.plant.name, month: octx.takeover.month, mw: octx.takeover.mw } : null,
     firstPhaseM: ctx.firstPhaseM,
     lastPhaseM: ctx.lastPhaseM,
     designMW: sz.designMW,

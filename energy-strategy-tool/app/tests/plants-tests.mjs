@@ -11,6 +11,8 @@ import { permittingTriggers } from '../src/engine/permitting.js';
 import { buildReport } from '../src/report/report.js';
 import { addMonths, monthsBetween } from '../src/engine/dates.js';
 import { studyFile, readStudyFile } from '../src/engine/study.js';
+import { inspectOption } from '../src/engine/inspect.js';
+import { dispatchConfig, dispatchYears } from '../src/engine/dispatch.js';
 
 const EEM = { lat: 53.425, lon: 6.875 };
 // A small campus at Eemshaven, so a full run stays quick: 100 MW IT in two phases, no grid before 2033.
@@ -24,6 +26,28 @@ export function eemSmall({ cap = 400, auto = true, edits = {} } = {}) {
   inp.settings.generationCap = cap;
   inp.plants = { auto, edits };
   return inp;
+}
+
+// The fast path (base rows and their plant combinations) against the brute-force product of every value: the same
+// set of option keys, each once. Returns the count.
+function bruteAgree(I) {
+  const en = enumerate(I);
+  const fast = new Set([...en.valid.map(choiceKey), ...Array.from({ length: en.plant.count }, (_, j) => choiceKey(en.plant.get(j)))]);
+  assert.equal(fast.size, en.valid.length + en.plant.count, 'a combination reached twice');
+  const doms = CHOICE_IDS.map((id) => { const st = I.choices[id]; return st.state === 'locked' ? st.values.slice(0, 1) : st.values.slice(); });
+  const brute = new Set();
+  const cur = {};
+  const rec = (i) => {
+    if (i === CHOICE_IDS.length) { const v = canonical(cur); if (!RULES.some((r) => r.fails(v, I))) brute.add(choiceKey(v)); return; }
+    const id = CHOICE_IDS[i];
+    if (isNA(id, cur)) { cur[id] = NA; rec(i + 1); return; }
+    for (const x of doms[i]) { cur[id] = x; rec(i + 1); }
+  };
+  rec(0);
+  for (const k of brute) assert.ok(fast.has(k), `missed ${k}`);
+  for (const k of fast) assert.ok(brute.has(k), `extra ${k}`);
+  assert.equal(countCombinations(I).valid, brute.size, 'projected count');
+  return brute.size;
 }
 
 export async function plantTests(test) {
@@ -83,25 +107,27 @@ export async function plantTests(test) {
     for (const [id, vals] of Object.entries(lock)) inp.choices[id] = { state: 'open', values: vals };
     inp.choices.C2 = null; inp.choices.C4 = null; inp.choices.C21 = null;
     const I = normalizeInputs(inp);
+    const brute = bruteAgree(I);
     const en = enumerate(I);
-    const fast = new Set([...en.valid.map(choiceKey), ...Array.from({ length: en.plant.count }, (_, j) => choiceKey(en.plant.get(j)))]);
-    assert.equal(fast.size, en.valid.length + en.plant.count, 'a combination reached twice');
-    // Brute force over the whole product (plant values included).
-    const doms = CHOICE_IDS.map((id) => { const st = I.choices[id]; return st.state === 'locked' ? st.values.slice(0, 1) : st.values.slice(); });
-    const brute = new Set();
-    const cur = {};
-    const rec = (i) => {
-      if (i === CHOICE_IDS.length) { const v = canonical(cur); if (!RULES.some((r) => r.fails(v, I))) brute.add(choiceKey(v)); return; }
-      const id = CHOICE_IDS[i];
-      if (isNA(id, cur)) { cur[id] = NA; rec(i + 1); return; }
-      for (const x of doms[i]) { cur[id] = x; rec(i + 1); }
-    };
-    rec(0);
-    assert.equal(fast.size, brute.size, `${fast.size} reached, ${brute.size} by brute force`);
-    for (const k of brute) assert.ok(fast.has(k), `missed ${k}`);
+    // The Opus review's cases (findings 4, 5, 9): C21 without None, C21 locked to one takeover, C4 without None and no gas,
+    // C2 = BESS + solar and plants with a permanent shortfall; three plants never in one option.
+    const cases = [];
+    const tk = defaultChoiceState('C21', I).values.filter((x) => x !== 'none');
+    const pw = defaultChoiceState('C2', I).values.filter(isPlantPower);
+    const variant = (f) => { const x = JSON.parse(JSON.stringify(inp)); f(x); return normalizeInputs(x); };
+    cases.push(['C21 without None', variant((x) => { x.choices.C21 = { state: 'open', values: tk }; })]);
+    cases.push(['C21 locked', variant((x) => { x.choices.C21 = { state: 'locked', values: [tk[0]] }; })]);
+    cases.push(['C4 without None, no gas', variant((x) => { x.utilities.gasAvailable = 'No'; x.choices.C4 = { state: 'open', values: ['chp', 'fuelCell', ...pw] }; })]);
+    cases.push(['C2 BESS + solar and plants, shortfall', variant((x) => { x.grid.fullMW = 100; x.choices.C2 = { state: 'open', values: ['bessSolar', ...pw] }; x.choices.C3 = { state: 'open', values: ['remove', 'backup', 'prime', 'split'] }; })]);
+    const caseTxt = cases.map(([name, Ix]) => `${name} ${bruteAgree(Ix)}`);
+    assert.ok(Array.from({ length: en.plant.count }, (_, j) => en.plant.get(j)).every((v) => new Set([v.C2, v.C4, v.C21].map((x) => parsePlantValue(x)).filter(Boolean).map((p) => p.id)).size <= 2), 'three plants in one option');
     const cc = countCombinations(I);
-    assert.equal(cc.valid, brute.size);
+    assert.equal(cc.valid, brute);
     assert.equal(cc.plant, en.plant.count);
+    // A small base space with a cap below the total: the sample is filled to the cap (finding 6).
+    const small = JSON.parse(JSON.stringify(inp)); small.settings.generationCap = 600;
+    const gs = generateOptions(normalizeInputs(small));
+    assert.equal(gs.options.length, Math.min(600, gs.summary.totalCombinations), `${gs.options.length} screened of ${gs.summary.totalCombinations}`);
     // Keys without a takeover carry no C21, so studies without plants keep their option ids.
     assert.ok(en.valid.every((v) => !/C21=/.test(choiceKey(v))));
     // Full default space, sampled: each plant's share is equal (±1), and the plant options pass every rule.
@@ -115,7 +141,7 @@ export async function plantTests(test) {
     assert.equal(g.options.length, 600);
     assert.ok(g.options.every((o) => !RULES.some((r) => r.fails(o.v, I3))), 'an option breaks a rule');
     assert.equal(new Set(g.options.map((o) => o.key)).size, g.options.length);
-    return `small space: ${en.valid.length} base + ${en.plant.count} plant combinations = brute force ${brute.size}; default space ${g.summary.totalCombinations.toLocaleString('en-GB')} combinations (${g.summary.plantCombinations.toLocaleString('en-GB')} with a plant), sample shares ${JSON.stringify(drawn)}.`;
+    return `small space: ${en.valid.length} base + ${en.plant.count} plant combinations = brute force ${brute}; ${caseTxt.join('; ')}; default space ${g.summary.totalCombinations.toLocaleString('en-GB')} combinations (${g.summary.plantCombinations.toLocaleString('en-GB')} with a plant), sample shares ${JSON.stringify(drawn)}.`;
   });
 
   await test('50d. Evaluation (OPEN-QUESTIONS 119–122): a bought plant (purchase and refurbishment for the units used, its own O&M, used until it stops, no replacement), a leased plant (lease until its closure), a taken-over grid connection (grid offered from 12 months after the plant stops, capped at the campus need; bridging hands over then; a capex line; a major flag); outside the campus combustion total; flags with the sources', () => {
@@ -194,5 +220,53 @@ export async function plantTests(test) {
     assert.deepEqual(back.inputs.plants.edits, { ppm4359: { closeYear: 2036, include: false } });
     const best = [...run.options].sort((a, b) => a.rank - b.rank)[0];
     return `${run.options.length} options, ${withPlant.length} with a plant; leader: ${best.name} (LCOE ${best.eco.lcoe.toFixed(1)}); PDF ${rep.pages} pages.`;
+  });
+
+  await test('50f. Fixes from the Opus review of package 19: a plant that stops after the dispatch cap is dispatched past its end; a bought plant kept as the backup is checked against the topology and fails once it stops; a leased plant kept as prime is not backup; a takeover does not move the campus connection capex; the Dispatch tab shows the option grid; the takeover lag is editable per plant; an old study file names the plants it gains', () => {
+    const out = [];
+    const base = { C1: 'bridge', C3: 'remove', C4: 'none', C4s: NA, C5: 'hvo', C5a: 'perBuilding', C6: 'N+1', C7: '48', C8: 'evap', C9: 'roof', C10: 'none', C11: 'none', C12: 'none', C12r: NA, C13: 'none', C14: NA, C15: 'none', C16: 'off', C17: 'AIS', C18: 'single', C19: 'perPhase', C20: 'none', C21: 'none' };
+    // (1) Magnum closing in 2036 and bought: it stops in month 228 (year 19), after the 15 dispatch years.
+    const I = normalizeInputs(eemSmall({ edits: { ppm4359: { closeYear: 2036, units: 1, unitMW: 200 } } }));
+    const ctx = buildContext(I);
+    const v1 = canonical({ ...base, C1: 'islanded', C2: 'xb:ppm4359', C5: 'retained' });
+    const o1 = evaluateOption(ctx, v1, { skipLayout: true });
+    assert.equal(o1.sz.bridge.endMonth, monthsBetween('2027-01', '2036-01') + 120);
+    const ny = dispatchYears(ctx, dispatchConfig(ctx, v1, o1.sz));
+    assert.ok(ny * 12 > o1.sz.bridge.endMonth, `${ny} years dispatched for an end in month ${o1.sz.bridge.endMonth}`);
+    const yEnd = Math.ceil(o1.sz.bridge.endMonth / 12);
+    assert.ok(o1.eco.ledger[yEnd].unmetMWh > 0, 'the year after the plant stops shows unmet load');
+    out.push(`plant stops month ${o1.sz.bridge.endMonth}: ${ny} years dispatched, unmet ${Math.round(o1.eco.ledger[yEnd].unmetMWh).toLocaleString('en-GB')} MWh in year ${yEnd}`);
+    // (2) One 200 MW unit kept as the backup: topology fails; and it stops inside the period.
+    const v2 = canonical({ ...base, C2: 'xb:ppm4359', C3: 'backup', C5: 'retained' });
+    const o2 = evaluateOption(ctx, v2, { skipLayout: true });
+    assert.ok(o2.res.flags.some((f) => f.id === 'res-topology') && o2.res.status === 'Does not meet', o2.res.items.map((i) => i.text).join('; '));
+    assert.ok(o2.res.flags.some((f) => f.id === 'res-plant-ends'), 'no flag after the plant stops');
+    out.push(`one-unit backup: ${o2.res.status}`);
+    // (22 / known issue 33) A leased plant kept as prime is not counted as backup.
+    const eem = plantCandidates(I).plants.find((p) => Math.round(p.mw) === 3210);
+    const v3 = canonical({ ...base, C2: eem.values.lease, C3: 'prime', C5: 'hvo' });
+    const o3 = evaluateOption(ctx, v3, { skipLayout: true });
+    assert.ok(!/retained bridging/.test(o3.res.items.find((i) => i.item === 'Backed load').text), 'leased plant counted as backup');
+    // (7) The campus's own connection is booked in the same year with and without a takeover.
+    const old = plantCandidates(I).plants.find((p) => p.status === 'closed' && Math.round(p.mw) === 1410);
+    const sub = (o) => o.eco.capexLines.find((l) => /^Substation/.test(l.item));
+    const a = evaluateOption(ctx, canonical({ ...base, C2: 'gasRecip' }), { skipLayout: true });
+    const b = evaluateOption(ctx, canonical({ ...base, C2: 'gasRecip', C21: old.values.takeover }), { skipLayout: true });
+    assert.equal(sub(b).year, sub(a).year);
+    // (8) The Dispatch tab: the option's grid and hand-over month.
+    const insp = inspectOption(I, b.v);
+    assert.equal(insp.fullGridM, ctxFor(ctx, b.v).fullGridM);
+    assert.ok(insp.timeline.grid[24] > 0, "grid shown from the takeover");
+    assert.ok(insp.takeover && insp.takeover.month === 12);
+    out.push(`substation year ${sub(a).year} both ways; Dispatch tab hands over in month ${insp.fullGridM}`);
+    // (10) The takeover lag per plant.
+    const I2 = normalizeInputs(eemSmall({ edits: { [old.id]: { takeoverLagMonths: 30 } } }));
+    assert.equal(plantCandidates(I2).plants.find((p) => p.id === old.id).takeoverM, 30);
+    // (14) An old study file names the plants it gains.
+    const sf = studyFile(eemSmall(), null);
+    delete sf.inputs.plants;
+    const back = readStudyFile(JSON.stringify(sf));
+    assert.ok(back.warnings.some((w) => /Saved before the plant list: 4 gas plants/.test(w)), back.warnings.join(' | '));
+    return out.join('; ') + '.';
   });
 }

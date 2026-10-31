@@ -133,6 +133,10 @@ export const RULES = [
   { id: 'p', name: '(p) A grid connection is taken over only from a plant that offers it',
     detail: 'C21 = a plant\'s grid connection is generated only for a plant within reach whose closure falls within the study period (or that has closed), with a connection to take over.',
     fails: (v, inputs) => isTakeover(v.C21) && !plantSets(inputs).takeover.has(v.C21) },
+  // OPEN-QUESTIONS 118: an option uses one plant or two together (Opus review of package 19, finding 9).
+  { id: 'q', name: '(q) An option uses at most two existing plants',
+    detail: 'Bridging plant, firm plant and a taken-over grid connection from three different existing plants are not generated: options use one plant or two together (OPEN-QUESTIONS 118).',
+    fails: (v) => plantsOfOption(v).length > 2 },
   // Work package 14 (OPEN-QUESTIONS 85, 2026-10-24; known issue 5): a rule rather than an n/a collapse, because C9 comes
   // before C10 in the choice order and the Site tab (Beta) still needs a location to draw.
   { id: 'o', name: '(o) Heat rejection location matters only with rooftop solar',
@@ -223,26 +227,26 @@ export function valuesNotGenerated(inputs) {
 
 // Choice domains split into the base space (no existing plant) and the plant values (work package 19). The plant values
 // of C2, C4 and C21 would multiply the whole space (each nearby plant adds two C2, two C4 and one C21 value), so the
-// combinations with a plant are not enumerated as a product: each is reached from exactly one base combination, its
-// representative (the plant values replaced by the first non-battery C2 value, C4 = None and C21 = None), and they are
-// counted and stored compactly. Every combination is still checked against every rule.
+// combinations with a plant are not enumerated as a product: each is reached from exactly one base row, its
+// representative, in which every C2 or C4 plant value is replaced by a stand-in value (PLANT_TOKEN, named by no rule)
+// and C21 by None. Every combination is still checked against every rule, and plant combinations count against the
+// leaf limit like base ones (Opus review of package 19, findings 3–5).
+export const PLANT_TOKEN = '__plant__';
 function splitDomains(inputs) {
   const all = IDS.map((id) => openValues(inputs, id));
   const plantIn = (id, d) => (id === 'C2' || id === 'C4' ? d.filter(isPlantPower) : id === 'C21' ? d.filter(isTakeover) : []);
   const P = { C2: plantIn('C2', all[IDS.indexOf('C2')]), C4: plantIn('C4', all[IDS.indexOf('C4')]), C21: plantIn('C21', all[IDS.indexOf('C21')]) };
+  const noneC21 = all[IDS.indexOf('C21')].includes('none');
   const base = all.map((d, i) => {
     const id = IDS[i];
+    if (id === 'C21') return ['none'];
     if (!P[id] || !P[id].length) return d;
-    const b = d.filter((x) => !P[id].includes(x));
-    return b.length ? b : [id === 'C21' ? 'none' : id === 'C4' ? 'none' : 'gasRecip'];
+    return [...d.filter((x) => !P[id].includes(x)), PLANT_TOKEN];
   });
-  // Placeholder values (not in the engineer's domain) stand only as representatives: such base rows are not options.
-  const placeholder = Object.fromEntries(['C2', 'C4', 'C21'].map((id) => { const i = IDS.indexOf(id); return [id, !all[i].includes(base[i][0]) ? base[i][0] : null]; }));
-  const c2 = base[IDS.indexOf('C2')];
-  const rep2 = c2.find((x) => x !== 'bessSolar') || c2[0];
-  const rep4 = base[IDS.indexOf('C4')].includes('none') ? 'none' : base[IDS.indexOf('C4')][0];
+  // The base space without the stand-in, for the Latin hypercube over base options.
+  const lhs = base.map((d, i) => (IDS[i] === 'C21' ? ['none'] : d.filter((x) => x !== PLANT_TOKEN)));
   const hasPlants = P.C2.length + P.C4.length + P.C21.length > 0;
-  return { all, base, P, placeholder, rep2, rep4, hasPlants };
+  return { all, base, lhs, P, noneC21, hasPlants };
 }
 
 // Visit the valid combinations of the base space (fn(v) for each; v is reused, copy it to keep it).
@@ -252,7 +256,7 @@ function visitBase(inputs, domains, fn, maxLeaves, stats) {
     if (stats.truncated) return;
     if (i === IDS.length) {
       stats.collapsed++;
-      if (stats.collapsed > maxLeaves) { stats.truncated = true; return; }
+      if (stats.collapsed + stats.plantCollapsed > maxLeaves) { stats.truncated = true; return; }
       const r = firstFailingRule(cur, inputs);
       if (r) stats.removed[r] = (stats.removed[r] || 0) + 1;
       else fn(cur);
@@ -265,30 +269,28 @@ function visitBase(inputs, domains, fn, maxLeaves, stats) {
   rec(0);
 }
 
+// A base row that is not itself an option: a stand-in value, or C21 = None when the engineer excluded None.
+const isStandInRow = (v, sd) => v.C2 === PLANT_TOKEN || v.C4 === PLANT_TOKEN || (v.C21 === 'none' && !sd.noneC21);
+
 // The plant combinations reached from one base row r: fn(v) for each valid one (v is a fresh canonical object).
-function expandPlants(r, sd, inputs, fn, stats) {
-  const { P, rep2, rep4, all } = sd;
-  const c4sDom = all[IDS.indexOf('C4s')];
-  const c2s = r.C2 === NA ? [NA] : r.C2 === rep2 ? [r.C2, ...P.C2] : [r.C2];
-  const c4s = r.C4 === rep4 ? [r.C4, ...P.C4] : [r.C4];
-  const c21s = isNA('C21', r) ? [NA] : ['none', ...P.C21];
+function expandPlants(r, sd, inputs, fn, stats, maxLeaves) {
+  const { P } = sd;
+  const c2s = r.C2 === PLANT_TOKEN ? P.C2 : [r.C2];
+  const c4s = r.C4 === PLANT_TOKEN ? P.C4 : [r.C4];
+  const standIn = r.C2 === PLANT_TOKEN || r.C4 === PLANT_TOKEN;
+  // C21 from the engineer's domain: None only where the row stands in for a plant value (else it is the base row).
+  const c21s = isNA('C21', r) ? [NA] : [...(standIn && sd.noneC21 ? ['none'] : []), ...P.C21];
   for (const C2 of c2s) for (const C4 of c4s) for (const C21 of c21s) {
-    const p2 = isPlantPower(C2), p4 = isPlantPower(C4), pt = isTakeover(C21);
-    if (!p2 && !p4 && !pt) continue;
-    if (!p2 && sd.placeholder.C2 && C2 === sd.placeholder.C2) continue;
-    if (!p4 && sd.placeholder.C4 && C4 === sd.placeholder.C4) continue;
-    const sList = p4 && r.C4s === NA ? c4sDom : [r.C4s];
-    for (const C4s of sList) {
-      const v = canonical({ ...r, C2, C4, C4s, C21 });
-      stats.plantCollapsed++;
-      const f = firstFailingRule(v, inputs);
-      if (f) stats.removed[f] = (stats.removed[f] || 0) + 1;
-      else fn(v);
-    }
+    if (stats.truncated) return;
+    if (!isPlantPower(C2) && !isPlantPower(C4) && !isTakeover(C21)) continue; // that is the base row itself
+    if (++stats.plantCollapsed + stats.collapsed > maxLeaves) { stats.truncated = true; return; }
+    const v = canonical({ ...r, C2, C4, C21 });
+    const f = firstFailingRule(v, inputs);
+    if (f) stats.removed[f] = (stats.removed[f] || 0) + 1;
+    else fn(v);
   }
 }
 
-const isPlaceholderRow = (v, sd) => ['C2', 'C4', 'C21'].some((id) => sd.placeholder[id] && v[id] === sd.placeholder[id]);
 // Plants an option uses (power or connection), by plant id.
 export function plantsOfOption(v) {
   const ids = new Set();
@@ -296,15 +298,16 @@ export function plantsOfOption(v) {
   return [...ids];
 }
 
-// Fast count of valid combinations (no storage) for the Choices panel projected count.
-export function countCombinations(inputs) {
+// Fast count of valid combinations (no storage) for the Choices panel projected count. Stops at maxLeaves (then
+// `truncated`, and the count is a lower bound).
+export function countCombinations(inputs, maxLeaves = 3000000) {
   const sd = splitDomains(inputs);
   const stats = { collapsed: 0, plantCollapsed: 0, removed: {}, truncated: false };
   let valid = 0, plant = 0;
   visitBase(inputs, sd.base, (v) => {
-    if (!isPlaceholderRow(v, sd)) valid++;
-    if (sd.hasPlants) expandPlants(v, sd, inputs, () => { plant++; }, stats);
-  }, Infinity, stats);
+    if (!isStandInRow(v, sd)) valid++;
+    if (sd.hasPlants) expandPlants(v, sd, inputs, () => { plant++; }, stats, maxLeaves);
+  }, maxLeaves, stats);
   const domains = sd.all;
   const archetypeExtra = ARCHETYPES.reduce((acc, a) => {
     const v = archetypeVector(a, inputs);
@@ -316,7 +319,13 @@ export function countCombinations(inputs) {
     if (!inSpace) acc.n++;
     return acc;
   }, { n: 0, seen: new Set() }).n;
-  return { collapsed: stats.collapsed + stats.plantCollapsed, valid: valid + plant, plant, total: valid + plant + archetypeExtra };
+  return { collapsed: stats.collapsed + stats.plantCollapsed, valid: valid + plant, plant, total: valid + plant + archetypeExtra, truncated: stats.truncated };
+}
+
+// Growable Int32 store for the plant combinations (Opus review of package 19, finding 3: compact, within the leaf limit).
+function intStore() {
+  let a = new Int32Array(1024), n = 0;
+  return { push(x) { if (n === a.length) { const b = new Int32Array(a.length * 2); b.set(a); a = b; } a[n++] = x; }, get: (i) => a[i], get length() { return n; } };
 }
 
 // Count and enumerate. Returns the valid canonical base combinations as plain objects, and the combinations with an
@@ -327,26 +336,28 @@ export function enumerate(inputs, maxLeaves = 3000000) {
   const stats = { collapsed: 0, plantCollapsed: 0, removed: Object.fromEntries(RULES.map((r) => [r.id, 0])), truncated: false };
   const valid = [];
   const reps = [];
-  const pRow = [], pVec = [];
+  const pRow = intStore(), pCode = intStore();
+  const dict = [], dictIx = new Map();
+  const ix = (x) => { let k = dictIx.get(x); if (k === undefined) { k = dict.length; dict.push(x); dictIx.set(x, k); } return k; };
   const byPlant = new Map();
   visitBase(inputs, sd.base, (cur) => {
     const v = { ...cur };
-    if (!isPlaceholderRow(v, sd)) valid.push(v);
+    if (!isStandInRow(v, sd)) valid.push(v);
     if (sd.hasPlants) {
       let ri = -1;
       expandPlants(v, sd, inputs, (c) => {
         if (ri < 0) { ri = reps.length; reps.push(v); }
         const j = pRow.length;
         pRow.push(ri);
-        pVec.push([c.C2, c.C4, c.C4s, c.C21]);
+        pCode.push(ix(c.C2) | (ix(c.C4) << 10) | (ix(c.C21) << 20));
         for (const id of plantsOfOption(c)) { if (!byPlant.has(id)) byPlant.set(id, []); byPlant.get(id).push(j); }
-      }, stats);
+      }, stats, maxLeaves);
     }
   }, maxLeaves, stats);
   const plant = {
     count: pRow.length,
     byPlant,
-    get: (j) => { const [C2, C4, C4s, C21] = pVec[j]; return canonical({ ...reps[pRow[j]], C2, C4, C4s, C21 }); },
+    get: (j) => { const c = pCode.get(j); return canonical({ ...reps[pRow.get(j)], C2: dict[c & 1023], C4: dict[(c >> 10) & 1023], C21: dict[(c >> 20) & 1023] }); },
   };
   const collapsedTotal = stats.collapsed + stats.plantCollapsed;
   return {
@@ -384,7 +395,7 @@ function archetypeVector(a, inputs) {
 // Seeded Latin hypercube over choice dimensions, with repair to valid unique combinations.
 function lhsSample(valid, n, inputs, seed, exclude) {
   const rand = mulberry32(subSeed(seed, 'lhs'));
-  const domains = splitDomains(inputs).base;
+  const domains = splitDomains(inputs).lhs;
   const strata = domains.map((d, j) => {
     const arr = [];
     for (let i = 0; i < n; i++) arr.push(d[i % d.length]);
@@ -463,6 +474,20 @@ export function generateOptions(inputs) {
       plantDrawn = [...taken].sort((x, y) => x - y).map((j) => en.plant.get(j)).filter((v) => !archetypeTags.has(choiceKey(v)));
     }
     const r = lhsSample(en.valid, Math.max(0, room - plantDrawn.length), inputs, seed, new Set(archetypeTags.keys()));
+    // Room the base space cannot fill goes back to the plant combinations (Opus review of package 19, finding 6).
+    let spare = room - plantDrawn.length - r.sample.length;
+    if (spare > 0 && plantN > plantDrawn.length) {
+      const have = new Set(plantDrawn.map(choiceKey));
+      const rand2 = mulberry32(subSeed(seed, 'plants-spare'));
+      const order = shuffle(Array.from({ length: plantN }, (_, j) => j), rand2);
+      for (const j of order) {
+        if (spare <= 0) break;
+        const v = en.plant.get(j), k = choiceKey(v);
+        if (have.has(k) || archetypeTags.has(k)) continue;
+        have.add(k); plantDrawn.push(v); spare--;
+        for (const id of plantsOfOption(v)) if (perPlant[id]) perPlant[id].drawn++;
+      }
+    }
     rest = [...r.sample, ...plantDrawn];
     repaired = r.repaired;
   } else {

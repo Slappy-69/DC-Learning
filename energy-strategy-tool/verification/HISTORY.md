@@ -125,3 +125,13 @@ Reports in `verification/walkthrough-build/`. The owner asked for Haiku checks o
 | H-records, records against code (`H-records.md`) | Haiku | 60 verified, 26 failed, 7 not verifiable: station count (11,470 not 10,705), stale "not built" text, workflow described as by hand, a wrong design flag with a station |
 
 Not fixed yet: waiting for the owner's decisions.
+
+## Work package 19: existing gas plants near the site (2026-10-31, branch feature/existing-plant)
+
+| Check | Model | Result |
+|---|---|---|
+| H1, arithmetic by hand against the engine (`existing-plant/H1-arithmetic.md`) | Haiku | 119 verified, 0 failed, 1 not verifiable (peak PUE from the weather profile). Observations put to the owner (OPEN-QUESTIONS 126, purchase timing fixed) |
+| H2, records against code (`existing-plant/H2-records.md`) | Haiku | 86 verified, 7 failed (wording: size, plant count, label, rules l and p), 12 not verifiable. All fixed |
+| H3, bundled data and offline (`existing-plant/H3-data.md`) | Haiku | 15 verified, 0 failed, 1 not verifiable. Credit link added |
+| Opus review (`existing-plant/OPUS-review.md`) | Opus | 3 high, 9 medium, 10 low. Fixed: 1–11, 13, 14, 16, 17, 19, 22 (known issue 33); accepted: 18, 20; to the owner: OPEN-QUESTIONS 124–130 |
+

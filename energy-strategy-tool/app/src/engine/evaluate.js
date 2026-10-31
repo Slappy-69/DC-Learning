@@ -129,9 +129,12 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   const sp = TECH.substation.p;
   const band = sz.grid.band;
   const fullMW = inputs.grid.fullMW;
+  // The campus's own new connection is booked by the run's grid, not the option's (a taken-over connection, work
+  // package 19, does not move it: Opus review finding 7).
+  const g0 = ctx.baseCtx || ctx;
   let firstGridM = 0;
-  while (firstGridM < ctx.gridCap.length && ctx.gridCap[firstGridM] <= 0) firstGridM++;
-  const gridYear = fullMW > 0 ? yearOfMonth(Math.min(firstGridM, ctx.fullGridM)) : 0;
+  while (firstGridM < g0.gridCap.length && g0.gridCap[firstGridM] <= 0) firstGridM++;
+  const gridYear = fullMW > 0 ? yearOfMonth(Math.min(firstGridM, g0.fullGridM)) : 0;
   if (fullMW > 0) {
     // Work package 3 (OPEN-QUESTIONS 20, 2026-10-23): the grid connection charge is one lump sum entered by the
     // engineer (default 0), the same for every grid-connected option; islanded options contract 0 MW and pay neither
@@ -170,7 +173,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     const primeEnd = t.existingPlant && sz.prime.endMonth < Infinity ? yearOfMonth(sz.prime.endMonth) : null;
     addCapex(`${t.name} (prime)`, yearOfMonth(sz.prime.availMonth), sz.prime.mw * 1000 * t.p.capexPerKW, t.p.life, { removeYear: primeEnd });
     // Existing plant (work package 12): the one-off connection to the campus, when the lease starts.
-    if (t.p.linkCapex) addCapex(`${t.name}: connection to the campus`, yearOfMonth(sz.prime.availMonth), t.p.linkCapex, t.p.life);
+    if (t.p.linkCapex) addCapex(`${t.name}: connection to the campus`, yearOfMonth(sz.prime.availMonth), t.p.linkCapex, t.p.life, { removeYear: primeEnd }); // ends with the plant (finding 11)
     if (t.p.stackLife) assets.push({ item: `${t.name} stack replacement`, year: yearOfMonth(sz.prime.availMonth), amount: sz.prime.mw * 1000 * t.p.capexPerKW * t.p.stackFraction * capF, life: t.p.stackLife, stackOnly: true });
   }
   // Bridging plant
@@ -448,7 +451,9 @@ export function resilience(ctx, v, sz) {
     if (t.fuel === 'gas') gasDependent = true; else nonGasFirm += nCap;
   }
   // Retained bridging plant (on site after grid arrives)
-  const bridgeRetained = sz.bridge && (v.C1 === 'islanded' || (v.C1 === 'bridge' && v.C3 !== 'remove'));
+  // A leased existing plant is never the campus's standby (rule (m), OPEN-QUESTIONS 79): kept as prime it does not count
+  // as backed load (known issue 33, Opus review of package 19, finding 22).
+  const bridgeRetained = sz.bridge && (v.C1 === 'islanded' || (v.C1 === 'bridge' && v.C3 !== 'remove')) && !(TECH[sz.bridge.tech].existingPlant && TECH[sz.bridge.tech].lease);
   if (bridgeRetained && sz.bridge.fuelMonth !== Infinity) {
     const cap = sz.bridge.nUnits * sz.bridge.unitMW;
     firmMW += cap;
@@ -480,8 +485,30 @@ export function resilience(ctx, v, sz) {
     topoOK = TOPO_RANK[v.C6] >= TOPO_RANK[req.topology];
     items.push({ item: 'Topology', ok: topoOK, text: `${v.C6} vs ${req.topology} required` });
     if (!topoOK) flags.push(flag('res-topology', 'major', 'Resilience', `Requirement not met: backup topology ${v.C6} < ${req.topology} required`));
+  } else if (v.C5 === 'retained' && sz.bridge && TECH[sz.bridge.tech].existingPlant) {
+    // A bought existing plant kept as the backup (work package 19, OPEN-QUESTIONS 122) has only the plant's units: its
+    // units against those the required topology needs (Opus review of package 19, finding 2).
+    const nCrit = Math.ceil(crit / sz.bridge.unitMW - 1e-9);
+    const B = Math.ceil(nCrit / bs);
+    const need = req.topology === 'N' ? nCrit : req.topology === '2N' ? 2 * nCrit : req.topology === 'catcher' ? nCrit + Math.ceil(B / (req.catcherN || 1)) : nCrit + B;
+    topoOK = sz.bridge.units >= need;
+    items.push({ item: 'Topology', ok: topoOK, text: `retained ${TECH[sz.bridge.tech].name}: ${sz.bridge.units} unit${sz.bridge.units === 1 ? '' : 's'} vs ${need} for ${req.topology}` });
+    if (!topoOK) flags.push(flag('res-topology', 'major', 'Resilience', `Requirement not met: the retained existing plant has ${sz.bridge.units} unit${sz.bridge.units === 1 ? '' : 's'} of ${Math.round(sz.bridge.unitMW)} MW; ${req.topology} needs ${need}`));
   } else if (v.C5 === 'retained') {
     items.push({ item: 'Topology', ok: true, text: 'Retained bridging plant sized N+1 per block of ' + bs });
+  }
+  // An existing plant counted here stops within the evaluation period: from then on it backs up nothing
+  // (work package 19, Opus review finding 2).
+  {
+    const period = ctx.inputs.economics.periodYears * 12;
+    const ending = [bridgeRetained ? sz.bridge : null, sz.prime].filter((p) => p && TECH[p.tech].existingPlant && p.endMonth < period);
+    for (const p of ending) {
+      // Only when the rest of the backed load falls short without it.
+      const part = p === sz.prime ? (TOPO_RANK[req.topology] >= 1 ? Math.max(0, p.units - Math.ceil(p.units / bs)) : p.units) * p.unitMW : p.nUnits * p.unitMW;
+      if (firmMW - part + 1e-9 >= crit) continue;
+      items.push({ item: 'Backup after the plant stops', ok: false, text: `${TECH[p.tech].name} stops in month ${p.endMonth}` });
+      flags.push(flag('res-plant-ends', 'major', 'Resilience', `Requirement not met from month ${p.endMonth} (${addMonths(ctx.inputs.project.analysisStart, p.endMonth)}): ${TECH[p.tech].name}, counted in the backed load, stops then, and no other plant takes its place (none is costed)`));
+    }
   }
 
   // Autonomy
@@ -678,13 +705,13 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
     }
     if (p.endMonth < inputs.economics.periodYears * 12) {
       const own = ctx.takeover && ctx.takeover.plant.id === t.plantKey;
-      flags.push(flag('plant-closes', 'minor', 'Existing plant', `${t.name} stops in month ${p.endMonth} (${ym(p.endMonth)})${own ? `, when the campus takes over its grid connection${t.lease ? '; assumed the owner keeps it running until then' : ''}` : ''}${p.endMonth <= p.availMonth ? ': it never supplies the campus' : '; after that the option relies on its other supply'}.`, { plant: t.plantKey, value: p.endMonth }));
+      flags.push(flag('plant-closes', 'minor', 'Existing plant', `${t.name} stops in month ${p.endMonth} (${ym(p.endMonth)})${own ? `, when the campus takes over its grid connection${t.lease ? '; assumed the owner keeps it running until then' : ''}` : ''}${p.endMonth <= p.availMonth ? ': it never supplies the campus' : '; from then on it supplies nothing, and nothing new is sized to replace it (see the adequacy and resilience flags)'}.`, { plant: t.plantKey, value: p.endMonth }));
     }
     if (t.bought) flags.push(flag('plant-ownership', 'minor', 'Existing plant', `${t.name}: bought, it keeps its own permit and is not added to the campus's combustion total; one owner of neighbouring sites may be treated as one installation (a point for the permitting adviser). Screening flag, not a permitting determination.`, { plant: t.plantKey }));
   }
   if (ctx.takeover) {
     const k = ctx.takeover;
-    flags.push(flag('plant-takeover', 'major', 'Existing plant', `Grid connection taken over from ${k.plant.name}: ${Math.round(k.mw)} MW${k.mw + 1e-6 < k.offeredMW ? ` (of its ${Math.round(k.offeredMW)} MW, capped at the campus's design load)` : ''} from month ${k.month} (${ym(k.month)}), ${eurM(k.cost)} at €${Math.round(k.costPerMW / 1000)}k/MW. An assumption, not a confirmed right: whether a closing plant's connection can pass to a new user depends on the country's rules and the network operator, not researched yet. Size, date (${PLANT_DEFAULTS.takeoverLagMonths} months after the plant stops) and cost are judgement defaults (OPEN-QUESTIONS 120).`, { plant: k.plant.id, value: k.mw }));
+    flags.push(flag('plant-takeover', 'major', 'Existing plant', `Grid connection taken over from ${k.plant.name}: ${Math.round(k.mw)} MW${k.mw + 1e-6 < k.offeredMW ? ` (of its ${Math.round(k.offeredMW)} MW, capped at the campus's design load)` : ''} from month ${k.month} (${ym(k.month)}), ${eurM(k.cost)} at €${Math.round(k.costPerMW / 1000)}k/MW. An assumption, not a confirmed right: whether a closing plant's connection can pass to a new user depends on the country's rules and the network operator, not researched yet. Size, date (${k.plant.takeoverLagMonths} months after the plant stops) and cost are judgement defaults (OPEN-QUESTIONS 120).`, { plant: k.plant.id, value: k.mw }));
   }
 
   // Site fit flags come from the layout (sitefit.js) and are added in the flags stage of the run.

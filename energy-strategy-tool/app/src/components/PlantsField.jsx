@@ -28,7 +28,8 @@ export default function PlantsField({ inputs, norm, update }) {
     <div className="plants-field">
       <ToggleField label="Existing gas plants near the site (from the bundled list)" checked={P.auto !== false}
         onCommit={(v) => { update('plants.auto', v); resetChoices(); }} path="plants.auto" inputs={inputs}
-        hint={`Every gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site enters the analysis: its power leased or bought, as bridging or firm plant, and its grid connection taken over when it closes. Values come from the list and labelled defaults; check them with the plant's owner. ${PLANT_SOURCE.credit}.`} />
+        hint={`Every gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site enters the analysis: its power leased or bought, as bridging or firm plant, and its grid connection taken over when it closes. Values come from the list and labelled defaults; check them with the plant's owner. ${PLANT_SOURCE.credit}: ${PLANT_SOURCE.url}.`} />
+      <p className="note">Changing, leaving out or splitting a plant resets choices C2, C4 and C21 to their defaults, so every plant's values are offered again.</p>
       {P.auto !== false ? (
         list.length === 0 ? <p className="note">No gas plant of {PLANT_DEFAULTS.minMW} MW or more within {PLANT_DEFAULTS.radiusKm} km of the pin in the bundled list ({PLANT_SOURCE.count} plants, {PLANT_SOURCE.builtAt}).</p> : <>
           <div className="table-wrap">
@@ -82,6 +83,10 @@ export default function PlantsField({ inputs, norm, update }) {
               <div className="row2">
                 <NumberField label="Grid connection to take over" unit="MW" value={val(p.id, 'takeoverMW')} placeholder={String(Math.round(p.takeoverMW))} onCommit={(v) => edit(p.id, 'takeoverMW', v)} nullable min={0} />
                 <NumberField label="Takeover cost" unit="€/MW" value={val(p.id, 'takeoverCostPerMW')} placeholder={String(Math.round(p.takeoverCostPerMW))} onCommit={(v) => edit(p.id, 'takeoverCostPerMW', v)} nullable min={0} step={1000} />
+              </div>
+              <div className="row2">
+                <NumberField label="Months from closure to using its connection" unit="months" value={val(p.id, 'takeoverLagMonths')} placeholder={String(p.takeoverLagMonths)} onCommit={(v) => edit(p.id, 'takeoverLagMonths', v == null ? null : Math.max(0, Math.round(v)))} nullable min={0} step={1} />
+                <NumberField label="Years the refurbishment adds when bought" unit="years" value={val(p.id, 'buyExtraYears')} placeholder={String(p.buyExtraYears)} onCommit={(v) => edit(p.id, 'buyExtraYears', v == null ? null : Math.max(0, Math.round(v)))} nullable min={0} step={1} />
               </div>
               {p.mergedFrom.length ? <ToggleField label="Keep the merged entries apart" checked={!!val(p.id, 'split')} onCommit={(v) => { const ids = [p.id, ...p.mergedFrom.map((m) => m.id)]; const next = { ...edits }; for (const id of ids) { const e = { ...(next[id] || {}) }; if (v) e.split = true; else delete e.split; if (Object.keys(e).length) next[id] = e; else delete next[id]; } update('plants.edits', next); resetChoices(); }}
                 hint="The list may hold one plant twice; the tool merges entries that are close, of the same type and of similar size. Tick to treat them as separate plants." /> : null}

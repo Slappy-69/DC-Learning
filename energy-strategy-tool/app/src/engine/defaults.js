@@ -355,7 +355,7 @@ export const EXISTING_TYPES = {
 };
 // Plausible efficiency by type, to decide whether the bundled list's value is used (work package 19): outside the range
 // the type's value is used and the plant's note says so.
-const EFF_RANGE = { ccgt: [0.45, 0.63], ocgt: [0.28, 0.42], engines: [0.38, 0.5], steam: [0.3, 0.45] };
+const EFF_RANGE = rec('plants.effRange', { ccgt: [0.45, 0.63], ocgt: [0.28, 0.42], engines: [0.38, 0.5], steam: [0.3, 0.45] }, 'plausible electrical efficiency by type (low, high)', { basis: 'judgement', ref: '§5.4', note: 'Work package 19: the bundled list\'s efficiency is used only inside this range; outside it the type\'s value is used (some list values are far below what the type can reach). Opus review finding 16.' });
 TECH.existing = {
   id: 'existing', name: 'Existing plant (lease)', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true,
   ownConsent: true, offsite: true, lease: true, fixedUnits: 1, existingPlant: true, plantKey: 'manual', verify: 'The plant owner',
@@ -447,7 +447,9 @@ function candidateFrom(p, edit, inputs, opts) {
   const km = p.km ?? 0;
   const link = pick(edit, 'linkCapex', Math.round(km * sp.cablePerKm), 'default');
   const tkMW = pick(edit, 'takeoverMW', mw.v, 'default');
-  const tkLag = PLANT_DEFAULTS.takeoverLagMonths;
+  // Editable per plant (OPEN-QUESTIONS 120–121; Opus review finding 10).
+  const tkLag = pick(edit, 'takeoverLagMonths', PLANT_DEFAULTS.takeoverLagMonths, 'default').v;
+  const extraYears = pick(edit, 'buyExtraYears', PLANT_DEFAULTS.buyExtraYears, 'default').v;
   const tkCost = pick(edit, 'takeoverCostPerMW', PLANT_DEFAULTS.takeoverCostFrac * sp.connCapexPerMW_ehv, 'default');
   const status = closeM <= 0 ? 'closed' : closeYear.basis === 'list' || closeYear.basis === 'entered' ? 'closure dated' : closeYear.v == null ? 'running, no closure date' : 'running';
   const periodM = inputs.economics.periodYears * 12;
@@ -461,7 +463,7 @@ function candidateFrom(p, edit, inputs, opts) {
     leasePerKWMonth: pick(edit, 'leasePerKWMonth', opts.lease ?? PLANT_DEFAULTS.leasePerKWMonth, 'default').v,
     buyPerKW: pick(edit, 'buyPerKW', PLANT_DEFAULTS.buyPerKW, 'default').v, refurbPerKW: pick(edit, 'refurbPerKW', PLANT_DEFAULTS.refurbPerKW, 'default').v,
     fomPerKW: pick(edit, 'fomPerKW', PLANT_DEFAULTS.fomPerKW, 'default').v, linkCapex: link.v,
-    takeoverMW: tkMW.v, takeoverM, takeoverCostPerMW: tkCost.v, availM: opts.availM || 0,
+    takeoverMW: tkMW.v, takeoverM, takeoverCostPerMW: tkCost.v, takeoverLagMonths: tkLag, buyExtraYears: extraYears, availM: opts.availM || 0,
     offersPower: include && status !== 'closed', offersTakeover: include && !opts.noTakeover && takeoverM < periodM && tkMW.v > 0,
     basis: { mw: mw.basis, units: units.basis, unitMW: unitMW.basis, firstYear: firstYear.basis, closeYear: closeYear.basis, eff: eff.basis, linkCapex: link.basis, takeoverMW: tkMW.basis, takeoverCostPerMW: tkCost.basis },
     values: { lease: opts.manual ? 'existing' : plantValue.lease(p.id), buy: plantValue.buy(p.id), takeover: plantValue.takeover(p.id) },
@@ -485,7 +487,8 @@ export function plantCandidates(inputs) {
   if (existingEntered(inputs)) {
     const x = inputs.existing;
     const m = { id: 'manual', name: x.name || 'Existing plant', type: x.type, mw: Number(x.units) * Number(x.unitMW), dateIn: null, dateOut: finite(x.closeYear) ? Number(x.closeYear) : null, km: 0, sources: [] };
-    const c = candidateFrom(m, { units: x.units, unitMW: x.unitMW, eff: x.eff, msl: x.msl, vomPerMWh: x.vomPerMWh, linkCapex: x.linkCapex, closeYear: x.closeYear, leasePerKWMonth: x.leasePerKWMonth }, inputs,
+    const c = candidateFrom(m, { units: x.units, unitMW: x.unitMW, eff: x.eff, msl: x.msl, vomPerMWh: x.vomPerMWh, linkCapex: x.linkCapex, closeYear: x.closeYear, leasePerKWMonth: x.leasePerKWMonth,
+      buyPerKW: x.buyPerKW, refurbPerKW: x.refurbPerKW, fomPerKW: x.fomPerKW, buyExtraYears: x.buyExtraYears, takeoverMW: x.takeoverMW, takeoverCostPerMW: x.takeoverCostPerMW, takeoverLagMonths: x.takeoverLagMonths }, inputs,
       { manual: true, lease: x.leasePerKWMonth, availM: x.availableDate ? Math.max(0, monthsBetween(inputs.project.analysisStart, x.availableDate)) : 0 });
     all.unshift(c);
   }
@@ -527,7 +530,7 @@ export function applyPlants(inputs) {
     const p = { unitMW: c.unitMW, eff: c.eff, msl: c.msl, vomPerMWh: c.vomPerMWh, linkCapex: c.linkCapex, planM: c.availM, procM: 0, buildM: 0, m2PerMW: 0, stackM: 0, capexPerKW: 0, fomPerKW: 0, life: 25 };
     if (!c.manual) TECH[c.values.lease] = { ...base, id: c.values.lease, name: `${c.name} (lease)`, lease: true, p: { ...p, rentalPerKWMonth: c.leasePerKWMonth, endM: c.closeM } };
     else TECH.existing.p.endM = c.closeM;
-    const endB = c.closeM === Infinity ? Infinity : c.closeM + PLANT_DEFAULTS.buyExtraYears * 12;
+    const endB = c.closeM === Infinity ? Infinity : c.closeM + c.buyExtraYears * 12;
     const lifeB = endB === Infinity ? 40 : Math.max(1, Math.ceil((endB - c.availM) / 12));
     TECH[c.values.buy] = { ...base, id: c.values.buy, name: `${c.name} (bought)`, lease: false, bought: true,
       p: { ...p, capexPerKW: c.buyPerKW + c.refurbPerKW, buyPerKW: c.buyPerKW, refurbPerKW: c.refurbPerKW, fomPerKW: c.fomPerKW, life: lifeB, endM: endB } };
@@ -1110,6 +1113,14 @@ export function buildDefaultInputs(opts = {}) {
     linkCapex: rec('existing.linkCapex', 0, '€', { basis: 'judgement', ref: '§5.4', note: 'One-off: the connection from the plant to the campus (lines, bays). Booked when the lease starts.' }),
     // Work package 19: optional closure year; with it the plant's grid connection can be taken over (OPEN-QUESTIONS 120).
     closeYear: rec('existing.closeYear', null, 'year', { basis: 'judgement', ref: '§5.4', note: 'Empty = the plant runs for the whole study and its grid connection is not offered.' }),
+    // Work package 19 (OPEN-QUESTIONS 119–121): bought and taken-over values of the manual plant; empty = the plant defaults (plants.*).
+    buyPerKW: rec('existing.buyPerKW', null, '€/kW', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.buyPerKW.' }),
+    refurbPerKW: rec('existing.refurbPerKW', null, '€/kW', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.refurbPerKW.' }),
+    fomPerKW: rec('existing.fomPerKW', null, '€/kW/yr', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.fomPerKW.' }),
+    buyExtraYears: rec('existing.buyExtraYears', null, 'years', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.buyExtraYears.' }),
+    takeoverMW: rec('existing.takeoverMW', null, 'MW', { basis: 'judgement', ref: '§5.4', note: 'Empty = the plant\'s output.' }),
+    takeoverCostPerMW: rec('existing.takeoverCostPerMW', null, '€/MW', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.takeoverCostFrac × the extra-high-voltage connection rate.' }),
+    takeoverLagMonths: rec('existing.takeoverLagMonths', null, 'months', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.takeoverLagMonths.' }),
   };
   // Existing gas plants from the bundled list (work package 19, OPEN-QUESTIONS 116–123): found automatically; the
   // engineer's corrections are kept per list entry (edits[<id>] = { include, name, type, mw, units, unitMW, firstYear,
@@ -1151,7 +1162,7 @@ export function normalizeInputs(inputs) {
   if (b != null) { out.site.areaHa = b; out.site.areaFromBoundary = true; }
   out.requirements.landTakeCeilingHa = out.requirements.landTakeCeilingHa ?? null;
   // Inputs saved before work package 12 have no existing plant.
-  out.existing = { include: false, name: 'Existing plant', type: 'ccgt', units: null, unitMW: null, availableDate: null, eff: null, msl: null, vomPerMWh: null, leasePerKWMonth: 6, linkCapex: 0, closeYear: null, ...(out.existing || {}) };
+  out.existing = { include: false, name: 'Existing plant', type: 'ccgt', units: null, unitMW: null, availableDate: null, eff: null, msl: null, vomPerMWh: null, leasePerKWMonth: 6, linkCapex: 0, closeYear: null, buyPerKW: null, refurbPerKW: null, fomPerKW: null, buyExtraYears: null, takeoverMW: null, takeoverCostPerMW: null, takeoverLagMonths: null, ...(out.existing || {}) };
   // Inputs saved before work package 19 have no plant list settings: the list is read (OPEN-QUESTIONS 118).
   out.plants = { auto: true, edits: {}, ...(out.plants || {}) };
   // Inputs saved before the weather work have none: the synthetic profile.

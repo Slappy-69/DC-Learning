@@ -452,14 +452,16 @@ export function sizeOption(ctx, v) {
   // Leased existing plant follows the same rule (work package 12, OPEN-QUESTIONS 81).
   const lead = inputs.settings.rentalLeadMonths ?? 1;
   const leadTxt = `${lead} month${lead === 1 ? '' : 's'}`;
-  if (bridge && TECH[bridge.tech].lease) {
+  // A bought existing plant is bought by the same rule, a lead before it is first needed (H1 check of package 19).
+  const hiredLater = (t) => t.lease || t.existingPlant;
+  if (bridge && hiredLater(TECH[bridge.tech])) {
     const need = v.C1 === 'islanded' ? loadM : shortM(0);
     if (need != null) {
       const hire = Math.max(bridge.availMonth, need - lead);
       if (hire > bridge.availMonth) {
         sentences.push(bridge.tech === 'rented'
           ? `Rented generation could be on site from month ${bridge.availMonth}; it is hired from month ${hire}, ${leadTxt} before it is first needed (month ${need}).`
-          : `${TECH[bridge.tech].name} could be available from month ${bridge.availMonth}; the lease starts in month ${hire}, ${leadTxt} before it is first needed (month ${need}).`);
+          : `${TECH[bridge.tech].name} could be available from month ${bridge.availMonth}; the ${TECH[bridge.tech].bought ? 'purchase' : 'lease'} starts in month ${hire}, ${leadTxt} before it is first needed (month ${need}).`);
         bridge.earliestMonth = bridge.availMonth;
         bridge.availMonth = hire;
       }
@@ -467,7 +469,7 @@ export function sizeOption(ctx, v) {
   }
   // Leased existing plant as firm plant (C4): the lease starts a lead before the first month the design load exceeds the
   // grid and any bridging plant still on site (baseload: before the first load).
-  if (prime && TECH[prime.tech].lease) {
+  if (prime && hiredLater(TECH[prime.tech])) {
     let need = null;
     for (let m = 0; m < ctx.nMonthsTimeline; m++) {
       const g = v.C1 === 'islanded' ? 0 : gridByMonth[m];
@@ -478,7 +480,7 @@ export function sizeOption(ctx, v) {
     if (need != null) {
       const hire = Math.max(prime.availMonth, need - lead);
       if (hire > prime.availMonth) {
-        sentences.push(`${TECH[prime.tech].name} could be available from month ${prime.availMonth}; the lease starts in month ${hire}, ${leadTxt} before it is first needed (month ${need}).`);
+        sentences.push(`${TECH[prime.tech].name} could be available from month ${prime.availMonth}; the ${TECH[prime.tech].bought ? 'purchase' : 'lease'} starts in month ${hire}, ${leadTxt} before it is first needed (month ${need}).`);
         prime.earliestMonth = prime.availMonth;
         prime.availMonth = hire;
       }
@@ -699,7 +701,7 @@ function makePlant(ctx, s, v, role, T) {
     else if (bridgeActive(v, m, T)) mode[m] = 1;
   }
   return {
-    role, tech: s.tech, mw: s.mw, unitMW: s.unitMW, msl: t.p.msl || 0, eff: t.p.eff || 1, fuel: t.fuel || null,
+    role, tech: s.tech, mw: s.mw, unitMW: s.unitMW, msl: t.p.msl || 0, eff: t.p.eff || 1, fuel: t.fuel || null, endMonth: s.endMonth ?? Infinity,
     mode,
   };
 }

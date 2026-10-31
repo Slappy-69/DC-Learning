@@ -233,17 +233,19 @@ export function buildContext(inputs, opts = {}) {
 // demand cache included). Without a takeover it is the run's context itself.
 export function ctxFor(ctx, v) {
   if (!v || !isTakeover(v.C21) || ctx.takeover) return ctx;
+  // Cached first (Opus review finding 19): the key holds everything the derived context depends on in this run.
+  const own0 = [v.C2, v.C4].map(parsePlantValue).find((p) => p && p.id === parsePlantValue(v.C21).id && p.mode !== 'takeover');
+  const key = `${v.C21}|${own0 ? own0.mode : '-'}|${v.C8}`;
+  if (!ctx.takeoverCache) ctx.takeoverCache = new Map();
+  const hit = ctx.takeoverCache.get(key);
+  if (hit) return hit;
   const plant = plantOf(ctx.inputs, v.C21);
   if (!plant) return ctx;
   // The same plant's power, used in this option: it runs until its connection is ready (lease: the listed closure,
   // bought: the refurbished life), then the campus takes the connection over.
   const own = [v.C2, v.C4].map(parsePlantValue).find((p) => p && p.id === plant.id && p.mode !== 'takeover');
-  const closeM = own && own.mode === 'buy' && plant.closeM !== Infinity ? plant.closeM + PLANT_DEFAULTS.buyExtraYears * 12 : plant.closeM;
-  const month = Math.max(0, closeM) + PLANT_DEFAULTS.takeoverLagMonths;
-  const key = `${v.C21}|${own ? own.mode : '-'}|${v.C8}`;
-  if (!ctx.takeoverCache) ctx.takeoverCache = new Map();
-  const hit = ctx.takeoverCache.get(key);
-  if (hit) return hit;
+  const closeM = own && own.mode === 'buy' && plant.closeM !== Infinity ? plant.closeM + plant.buyExtraYears * 12 : plant.closeM;
+  const month = Math.max(0, closeM) + plant.takeoverLagMonths;
   const { arr } = designDemandByMonth(ctx, v.C8);
   let need = 0;
   for (let m = 0; m < arr.length; m++) if (arr[m] > need) need = arr[m];

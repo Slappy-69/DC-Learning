@@ -19,7 +19,7 @@ import { GUARDRAIL, sig, money, monthLabel, pct, perMWh, cur, displayCurrency } 
 
 // Input sections in the order of the inputs panel; site geometry belongs to the Site tab (Beta) and is left out.
 const SECTIONS = [
-  ['project', 'Project'], ['site', 'Site (area and land)'], ['load', 'Load'], ['grid', 'Grid'], ['utilities', 'Utilities and PPA'], ['existing', 'Existing plant near the site (lease)'], ['plants', 'Existing gas plants near the site (bundled list)'],
+  ['project', 'Project'], ['site', 'Site (area and land)'], ['load', 'Load'], ['grid', 'Grid'], ['utilities', 'Utilities and PPA'], ['existing', 'Existing plant near the site (not in the list)'], ['plants', 'Existing gas plants near the site (bundled list)'],
   ['requirements', 'Requirements'], ['economics', 'Economics'], ['weights', 'Weights'], ['deliverability', 'Deliverability'], ['settings', 'Run settings'],
 ];
 export const SITE_BETA_KEYS = ['site.boundary', 'site.setbackByEdge', 'site.heightZones', 'site.exclusions', 'site.poc', 'site.gasMain', 'site.access', 'site.receptors',
@@ -182,7 +182,7 @@ export function buildReport(run, view = {}) {
       doc.heading('Existing gas plants found near the site', 2);
       const B = { list: 'list', default: 'default', type: 'by type', entered: 'entered', none: 'not known' };
       doc.para(pc.length
-        ? `Every gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site, from the bundled list (${PLANT_SOURCE.credit}; built ${PLANT_SOURCE.builtAt}). Values in brackets say where each came from; check every one with the plant's owner.`
+        ? `Every gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site, from the bundled list (${PLANT_SOURCE.credit}, ${PLANT_SOURCE.url}; built ${PLANT_SOURCE.builtAt}). Values in brackets say where each came from; check every one with the plant's owner.`
         : `No gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site in the bundled list (${PLANT_SOURCE.credit}).`, { size: 8.5 });
       if (pc.length) doc.table([{ label: 'Plant', w: 1.3 }, { label: 'km', w: 0.35 }, { label: 'MW (units)', w: 0.9 }, { label: 'First year · closes', w: 1.1 }, { label: 'In the analysis', w: 1.6 }],
         pc.map((p) => [`${p.name}${p.mergedFrom.length ? ` (merged with ${p.mergedFrom.map((m) => m.name).join(', ')})` : ''}`, p.km.toFixed(1),

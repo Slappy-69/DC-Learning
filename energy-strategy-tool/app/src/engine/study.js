@@ -8,7 +8,7 @@
 // is deterministic, and compares the new result with the record, so the engineer sees whether the tool's defaults or
 // engine have changed since the study was saved. Pure: no UI, no browser APIs.
 
-import { buildDefaultInputs, normalizeInputs } from './defaults.js';
+import { buildDefaultInputs, normalizeInputs, plantCandidates } from './defaults.js';
 import { hashInputs } from './runlog.js';
 import { ENGINE_VERSION } from './run.js';
 
@@ -97,6 +97,12 @@ export function readStudyFile(text) {
   if (added.length) warnings.push(`Saved by an earlier version: ${added.length} input${added.length === 1 ? '' : 's'} not in the file take${added.length === 1 ? 's' : ''} today's defaults (${added.slice(0, 6).join(', ')}${added.length > 6 ? ', …' : ''}).`);
   if (dropped.length) warnings.push(`${dropped.length} input${dropped.length === 1 ? '' : 's'} in the file ${dropped.length === 1 ? 'is' : 'are'} not known to this version and ${dropped.length === 1 ? 'was' : 'were'} left out (${dropped.slice(0, 6).join(', ')}${dropped.length > 6 ? ', …' : ''}).`);
   if (nulled.length) warnings.push(`${nulled.length} number${nulled.length === 1 ? ' was' : 's were'} empty in the file and take${nulled.length === 1 ? 's' : ''} today's default${nulled.length === 1 ? '' : 's'} (${nulled.slice(0, 6).join(', ')}${nulled.length > 6 ? ', …' : ''}).`);
+  // Saved before work package 19: the plants near the site from the bundled list now enter the analysis (Opus review
+  // finding 14), so the results can differ; the notice names them.
+  if (added.includes('plants')) {
+    const pc = plantCandidates(normalizeInputs(inputs)).plants.filter((p) => !p.manual);
+    if (pc.length) warnings.push(`Saved before the plant list: ${pc.length} gas plant${pc.length === 1 ? '' : 's'} near the site from the bundled list now enter the analysis (${pc.map((p) => p.name).join(', ')}); switch them off in section 4 to compare with the saved result.`);
+  }
   if (f.engineVersion && f.engineVersion !== ENGINE_VERSION) warnings.push(`Saved with engine ${f.engineVersion}; this is engine ${ENGINE_VERSION}.`);
   // The summary note (work package 16): kept when it is a text; a damaged note is dropped with a warning.
   // A notes section that is not a set of notes, or a summary note that is not a text, is dropped with a warning (H5, L7);
