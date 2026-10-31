@@ -74,6 +74,10 @@ Not researched yet: the PVGIS licence text; how close ERA5's hottest hours come 
 against a few stations is needed before using ERA5 extremes for design); the grid spacing the owner wants (size against
 accuracy); whether solar and wind profiles should come from the same data (they are synthetic today too).
 
+## Owner's decision (2026-10-30)
+
+Route C, NOAA station records, with the EPW upload (OPEN-QUESTIONS 106). In the owner's words: "I'd like the NOAA and despite this being for a consultant at this point is not commercial usage by no means". The WMO Resolution 40 condition stays recorded; if the tool's use becomes commercial, the bundled source must be revisited (ERA5 is the fallback with a clear licence).
+
 ## Sources (accessed 2026-10-30)
 
 - NOAA NESDIS, "Global Historical Climate Network hourly / Integrated Surface Data global hourly" (2023 notice):
