@@ -118,7 +118,7 @@ Interpretations taken without asking (reversible, recorded in `app/BUILD-NOTES.m
 
 ## Known open items
 
-- **Hourly weather research** (package 0, owner's request 2026-10-30, branch `feature/weather-research`): `docs/research/hourly-weather-2026-10-30.md`. Recommends an EPW upload in every case and a bundled typical year built from ERA5 (CC-BY 4.0) by ISO 15927-4; NOAA station cleaning not recommended for bundling (WMO Resolution 40: no commercial redistribution of non-US data); PVGIS licence to confirm. **Owner chose NOAA (2026-10-30, OPEN-QUESTIONS 106)**, non-commercial use stated; plus the EPW upload. Nothing built yet.
+- **Hourly weather research** (package 0, owner's request 2026-10-30, branch `feature/weather-research`): `docs/research/hourly-weather-2026-10-30.md`. Recommends an EPW upload in every case and a bundled typical year built from ERA5 (CC-BY 4.0) by ISO 15927-4; NOAA station cleaning not recommended for bundling (WMO Resolution 40: no commercial redistribution of non-US data); PVGIS licence to confirm. **Owner chose NOAA (2026-10-30, OPEN-QUESTIONS 106)**, non-commercial use stated; plus the EPW upload; every usable station bundled (OPEN-QUESTIONS 107). Nothing built yet.
 
 - Packaging Opus review not done (usage limit). Resume it, or run a fresh one, before further packaging work.
 - Screen-reader walk-through with NVDA not done yet (VoiceOver no longer applies with the Windows-only scope).
