@@ -245,7 +245,8 @@ export function ctxFor(ctx, v) {
   // bought: the refurbished life), then the campus takes the connection over.
   const own = [v.C2, v.C4].map(parsePlantValue).find((p) => p && p.id === plant.id && p.mode !== 'takeover');
   const closeM = own && own.mode === 'buy' && plant.closeM !== Infinity ? plant.closeM + plant.buyExtraYears * 12 : plant.closeM;
-  const month = Math.max(0, closeM) + plant.takeoverLagMonths;
+  // A plant whose default closure has passed (OPEN-QUESTIONS 125): its connection from the transfer months after the start.
+  const month = plant.defaultPassed ? plant.takeoverM : Math.max(0, closeM) + plant.takeoverLagMonths;
   const { arr } = designDemandByMonth(ctx, v.C8);
   let need = 0;
   for (let m = 0; m < arr.length; m++) if (arr[m] > need) need = arr[m];

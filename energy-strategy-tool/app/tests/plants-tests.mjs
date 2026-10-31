@@ -79,7 +79,12 @@ export async function plantTests(test) {
     assert.ok(eem && mag && old, Object.keys(by).join(', '));
     assert.equal(eem.closeYear, 2030); assert.equal(eem.basis.closeYear, 'list'); assert.equal(eem.status, 'closure dated');
     assert.equal(mag.closeYear, 2013 + PLANT_DEFAULTS.lifeYears); assert.equal(mag.basis.closeYear, 'default');
-    assert.equal(old.status, 'closed'); assert.ok(!old.offersPower && old.offersTakeover, 'a closed plant offers its connection only');
+    // OPEN-QUESTIONS 125 ("C"): the 1976 entry's 40-year default has passed, so it counts as running (closure unknown),
+    // offers its power, and its connection from 12 months after the start; only a dated closure makes a plant closed.
+    assert.equal(old.status, 'running, default closure passed'); assert.ok(old.offersPower && old.offersTakeover && old.closeM === Infinity);
+    const Ic = normalizeInputs(eemSmall({ edits: { [old.id]: { closeYear: 2020 } } }));
+    const oc = plantCandidates(Ic).plants.find((p) => p.id === old.id);
+    assert.equal(oc.status, 'closed'); assert.ok(!oc.offersPower && oc.offersTakeover && oc.takeoverM === 12, 'a closed plant offers its connection only');
     assert.equal(eem.takeoverM, monthsBetween('2027-01', '2030-01') + 12);
     assert.equal(old.takeoverM, 12, 'closed before the start: from 12 months after the start');
     assert.ok(!mag.offersTakeover, 'Magnum closes after the 20-year period');
@@ -148,7 +153,7 @@ export async function plantTests(test) {
     const I = normalizeInputs(eemSmall());
     const ctx = buildContext(I);
     const c = plantCandidates(I).plants;
-    const eem = c.find((p) => Math.round(p.mw) === 3210), old = c.find((p) => p.status === 'closed' && Math.round(p.mw) === 1410);
+    const eem = c.find((p) => Math.round(p.mw) === 3210), old = c.find((p) => Math.round(p.mw) === 1410);
     const base = { C1: 'bridge', C3: 'remove', C4: 'none', C4s: NA, C5: 'hvo', C5a: 'perBuilding', C6: 'N+1', C7: '48', C8: 'evap', C9: 'roof', C10: 'none', C11: 'none', C12: 'none', C12r: NA, C13: 'none', C14: NA, C15: 'none', C16: 'off', C17: 'AIS', C18: 'single', C19: 'perPhase', C20: 'none', C21: 'none' };
     const out = [];
     // Bought as bridging, kept as prime.
@@ -248,7 +253,7 @@ export async function plantTests(test) {
     const o3 = evaluateOption(ctx, v3, { skipLayout: true });
     assert.ok(!/retained bridging/.test(o3.res.items.find((i) => i.item === 'Backed load').text), 'leased plant counted as backup');
     // (7) The campus's own connection is booked in the same year with and without a takeover.
-    const old = plantCandidates(I).plants.find((p) => p.status === 'closed' && Math.round(p.mw) === 1410);
+    const old = plantCandidates(I).plants.find((p) => Math.round(p.mw) === 1410);
     const sub = (o) => o.eco.capexLines.find((l) => /^Substation/.test(l.item));
     const a = evaluateOption(ctx, canonical({ ...base, C2: 'gasRecip' }), { skipLayout: true });
     const b = evaluateOption(ctx, canonical({ ...base, C2: 'gasRecip', C21: old.values.takeover }), { skipLayout: true });

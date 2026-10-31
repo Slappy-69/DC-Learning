@@ -439,7 +439,12 @@ function candidateFrom(p, edit, inputs, opts) {
   else if (finite(p.dateOut)) closeYear = { v: Number(p.dateOut), basis: 'list' };
   else if (firstYear.v != null) closeYear = { v: firstYear.v + PLANT_DEFAULTS.lifeYears, basis: 'default' };
   else closeYear = { v: null, basis: 'none' };
-  const closeM = closeYear.v == null ? Infinity : monthsBetween(start, `${closeYear.v}-01`);
+  const closeM0 = closeYear.v == null ? Infinity : monthsBetween(start, `${closeYear.v}-01`);
+  // OPEN-QUESTIONS 125 (owner, 2026-10-31, "C"): a plant is closed only on a closure date from the list or the engineer.
+  // When only the 40-year default has passed, the plant counts as running with its closure unknown (power for the whole
+  // study), and its grid connection is still offered from the transfer months after the analysis start, flagged.
+  const defaultPassed = closeYear.basis === 'default' && closeM0 <= 0;
+  const closeM = defaultPassed ? Infinity : closeM0;
   const range = EFF_RANGE[type] || [0, 1];
   const effList = finite(p.eff) && p.eff >= range[0] && p.eff <= range[1] ? Number(p.eff) : null;
   const eff = edit && finite(edit.eff) ? { v: Number(edit.eff), basis: 'entered' } : effList != null ? { v: effList, basis: 'list' } : { v: ty.eff, basis: 'type' };
@@ -451,14 +456,14 @@ function candidateFrom(p, edit, inputs, opts) {
   const tkLag = pick(edit, 'takeoverLagMonths', PLANT_DEFAULTS.takeoverLagMonths, 'default').v;
   const extraYears = pick(edit, 'buyExtraYears', PLANT_DEFAULTS.buyExtraYears, 'default').v;
   const tkCost = pick(edit, 'takeoverCostPerMW', PLANT_DEFAULTS.takeoverCostFrac * sp.connCapexPerMW_ehv, 'default');
-  const status = closeM <= 0 ? 'closed' : closeYear.basis === 'list' || closeYear.basis === 'entered' ? 'closure dated' : closeYear.v == null ? 'running, no closure date' : 'running';
+  const status = defaultPassed ? 'running, default closure passed' : closeM <= 0 ? 'closed' : closeYear.basis === 'list' || closeYear.basis === 'entered' ? 'closure dated' : closeYear.v == null ? 'running, no closure date' : 'running';
   const periodM = inputs.economics.periodYears * 12;
-  const takeoverM = closeM === Infinity ? Infinity : Math.max(0, closeM) + tkLag;
+  const takeoverM = defaultPassed ? tkLag : closeM === Infinity ? Infinity : Math.max(0, closeM) + tkLag;
   const include = !(edit && edit.include === false);
   return {
     id: p.id, name: (edit && edit.name) || p.name, listName: p.name, type, typeLabel: ty.label, tech: p.tech || '', cc: p.cc, km, lat: p.lat, lon: p.lon,
     sources: p.sources || [], eic: p.eic || [], mergedFrom: p.mergedFrom || [], dateRetrofit: p.dateRetrofit ?? null, manual: !!opts.manual,
-    mw: mw.v, units: units.v, unitMW: unitMW.v, firstYear: firstYear.v, closeYear: closeYear.v, closeM, status, include,
+    mw: mw.v, units: units.v, unitMW: unitMW.v, firstYear: firstYear.v, closeYear: closeYear.v, closeM, defaultPassed, status, include,
     eff: eff.v, msl: pick(edit, 'msl', ty.msl, 'type').v, vomPerMWh: pick(edit, 'vomPerMWh', ty.vomPerMWh, 'type').v,
     leasePerKWMonth: pick(edit, 'leasePerKWMonth', opts.lease ?? PLANT_DEFAULTS.leasePerKWMonth, 'default').v,
     buyPerKW: pick(edit, 'buyPerKW', PLANT_DEFAULTS.buyPerKW, 'default').v, refurbPerKW: pick(edit, 'refurbPerKW', PLANT_DEFAULTS.refurbPerKW, 'default').v,

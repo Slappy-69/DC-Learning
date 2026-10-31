@@ -6,7 +6,7 @@ import { plantCandidates, PLANT_DEFAULTS, PLANT_SOURCE, addMonths } from '../eng
 // The tool finds them; the engineer sees each value with its source, and can correct it, leave a plant out, or keep two
 // merged entries apart. Corrections are kept per list entry in inputs.plants.edits.
 const BASIS = { list: 'list', default: 'default', type: 'by type', entered: 'entered', none: '—' };
-const STATUS = { closed: 'closed (connection only)', 'closure dated': 'running, closure dated', running: 'running', 'running, no closure date': 'running, no closure date' };
+const STATUS = { 'running, default closure passed': 'running; closure unknown (40-year default passed)', closed: 'closed (connection only)', 'closure dated': 'running, closure dated', running: 'running', 'running, no closure date': 'running, no closure date' };
 
 export default function PlantsField({ inputs, norm, update }) {
   const P = inputs.plants || { auto: true, edits: {} };
