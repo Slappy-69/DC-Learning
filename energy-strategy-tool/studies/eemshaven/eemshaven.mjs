@@ -41,7 +41,7 @@ function brief(run, tag) {
   const rows = by.slice(0, 8).map((o) => ({
     rank: o.rank, id: o.id, name: o.name, score: +o.score.toFixed(2), lcoe: +o.eco.lcoe.toFixed(1), capexM: Math.round(o.eco.capex / 1e6),
     npvM: Math.round(o.eco.npvCost / 1e6), carbonLoc: Math.round(o.carbon.locationG), ttp: o.ttp, adequate: o.adequacy.adequate,
-    designMW: +o.sz.designMW.toFixed(1), peakPUE: +o.sz.peakPUE.toFixed(3), check50: o.sz.check50 ? { MW: +o.sz.check50.designMW.toFixed(1), pue: +o.sz.check50.peakPUE.toFixed(3) } : null,
+    designMW: +o.sizing.designMW.toFixed(1), peakPUE: +o.sizing.peakPUE.toFixed(3), check50: o.sizing.check50 ? { MW: +o.sizing.check50.designMW.toFixed(1), pue: +o.sizing.check50.peakPUE.toFixed(3) } : null,
     majorFlags: o.flags.filter((f) => f.severity === 'major').map((f) => f.message), minorFlags: o.flags.filter((f) => f.severity === 'minor').map((f) => f.message),
   }));
   return { tag, options: run.options.length, adequate, runFlags: run.runFlags.map((f) => f.message), top: rows };
@@ -54,7 +54,7 @@ const base = eemshavenInputs({ weather: epw ? epw.weather : null });
 const run = runModel(base);
 const out = { base: brief(run, epw ? 'measured weather (EPW)' : 'synthetic weather'), seconds: (Date.now() - t0) / 1000 };
 const L = run.options.find((o) => o.rank === 1);
-out.leaderSizing = L.sz.sentences;
+out.leaderSizing = L.sizing.sentences;
 out.leaderFlags = L.flags.map((f) => `${f.severity} · ${f.category}: ${f.message}`);
 const site = run.ctx.site;
 const tor = tornado(run, L.id, { site, drivers: TORNADO_DRIVERS.filter((d) => DEFAULT_DRIVER_IDS.includes(d.id)) });
