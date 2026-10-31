@@ -15,7 +15,7 @@ export default function WeatherField({ inputs, update }) {
     try {
       const r = readEpw(await f.text(), f.name);
       if (!r.ok) { setMsg(`Not loaded: ${r.error}`); return; }
-      update('weather', { ...r.weather, notes: r.warnings });
+      update('weather', r.weather);
       setMsg('');
     } catch (err) { setMsg(`Not loaded: ${err && err.message ? err.message : err}`); }
   };

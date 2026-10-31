@@ -78,7 +78,9 @@ function num(x, missing) {
 // weather: { source: 'epw', name, country, lat, lon, elevationM, years, dryBulb[8760], wetBulb[8760], designDB, designWB,
 //            designBasis, hoursFilled }.
 export function readEpw(text, fileName = 'weather.epw') {
-  const lines = String(text || '').replace(/^﻿/, '').split(/\r?\n/);
+  let src = String(text || '');
+  if (src.charCodeAt(0) === 0xfeff) src = src.slice(1); // a byte-order mark
+  const lines = src.split(/\r?\n/);
   const loc = (lines[0] || '').split(',');
   if (!/^LOCATION$/i.test((loc[0] || '').trim())) return { ok: false, error: `${fileName} is not an EPW weather file (its first line does not start with LOCATION).` };
   const lat = Number(loc[6]), lon = Number(loc[7]), elev = Number(loc[9]);
@@ -146,7 +148,7 @@ export function readEpw(text, fileName = 'weather.epw') {
     weather: {
       source: 'epw', name, country: (loc[3] || '').trim(), file: fileName, lat, lon, elevationM: Number.isFinite(elev) ? elev : null,
       years: yr.length ? (yr.length === 1 ? String(yr[0]) : `${yr[0]}–${yr[yr.length - 1]} (${yr.length > 2 ? 'months from several years' : 'two years'})`) : '',
-      dataSource: (loc[4] || '').trim(), dryBulb, wetBulb: wet, designDB, designWB, designBasis,
+      dataSource: (loc[4] || '').trim(), dryBulb, wetBulb: wet, designDB, designWB, designBasis, notes: warnings,
     },
   };
 }
