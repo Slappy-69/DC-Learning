@@ -31,7 +31,11 @@ jobs:
         run: npm ci || npm install --no-audit --no-fund
       - name: Build station years
         working-directory: energy-strategy-tool/weather-data
-        run: node build-stations.mjs --countries ${{ matrix.countries }} --years ${{ inputs.years || '2010-2024' }} --min-years ${{ inputs.min_years || '10' }} --concurrency 16 ${{ github.event_name == 'push' && '--limit 3' || (inputs.limit && format('--limit {0}', inputs.limit) || '') }}
+        # On a push: a 3-station trial, or every station when the file FULL-RUN is present (it records who asked and when).
+        run: |
+          LIMIT="${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}"
+          if [ "${{ github.event_name }}" = "push" ] && [ ! -f FULL-RUN ]; then LIMIT="--limit 3"; fi
+          node build-stations.mjs --countries ${{ matrix.countries }} --years ${{ inputs.years || '2010-2024' }} --min-years ${{ inputs.min_years || '10' }} --concurrency 16 $LIMIT
       - name: Report as notes (readable from the public API)
         if: always()
         working-directory: energy-strategy-tool/weather-data
