@@ -173,6 +173,13 @@ export async function plantTests(test) {
     assert.ok(ob.flags.some((f) => f.id === 'plant-closes'), 'closes within the period');
     assert.ok(!permittingTriggers(ob.sz, vb, I.requirements).combustion.some((x) => x.name === t.name), 'not in the campus combustion total');
     out.push(`bought ${units} × ${Math.round(eem.unitMW)} MW, €${(line.amount / 1e6).toFixed(0)} m, stops month ${ob.sz.bridge.endMonth}`);
+    // Bought whole (OPEN-QUESTIONS 124, "C"): every unit paid for.
+    const ow = evaluateOption(ctx, canonical({ ...base, C2: eem.values.buyWhole, C3: 'prime' }), { skipLayout: true });
+    const lw = ow.eco.capexLines.find((l) => l.item === `${TECH[eem.values.buyWhole].name} (bridging)`);
+    assert.equal(ow.sz.bridge.units, eem.units);
+    assert.ok(lw && Math.abs(lw.amount - eem.units * eem.unitMW * 1000 * (eem.buyPerKW + eem.refurbPerKW)) < 1, 'whole purchase');
+    assert.ok(ow.flags.some((f) => f.id === 'plant-values' && /bought whole/.test(f.message)) && ob.flags.some((f) => f.id === 'plant-values' && /assumes the owner sells only the units used/.test(f.message)));
+    out.push(`bought whole ${eem.units} units, €${(lw.amount / 1e6).toFixed(0)} m`);
     // Leased: the lease stops at the closure (no rental after 2030).
     const vl = canonical({ ...base, C2: eem.values.lease, C3: 'prime' });
     const ol = evaluateOption(ctx, vl, { skipLayout: true });

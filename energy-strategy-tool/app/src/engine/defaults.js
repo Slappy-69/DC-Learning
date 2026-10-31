@@ -471,7 +471,7 @@ function candidateFrom(p, edit, inputs, opts) {
     takeoverMW: tkMW.v, takeoverM, takeoverCostPerMW: tkCost.v, takeoverLagMonths: tkLag, buyExtraYears: extraYears, availM: opts.availM || 0,
     offersPower: include && status !== 'closed', offersTakeover: include && !opts.noTakeover && takeoverM < periodM && tkMW.v > 0,
     basis: { mw: mw.basis, units: units.basis, unitMW: unitMW.basis, firstYear: firstYear.basis, closeYear: closeYear.basis, eff: eff.basis, linkCapex: link.basis, takeoverMW: tkMW.basis, takeoverCostPerMW: tkCost.basis },
-    values: { lease: opts.manual ? 'existing' : plantValue.lease(p.id), buy: plantValue.buy(p.id), takeover: plantValue.takeover(p.id) },
+    values: { lease: opts.manual ? 'existing' : plantValue.lease(p.id), buy: plantValue.buy(p.id), buyWhole: plantValue.buyWhole(p.id), takeover: plantValue.takeover(p.id) },
   };
 }
 
@@ -501,7 +501,8 @@ export function plantCandidates(inputs) {
   CAND.set(inputs, { sig, out });
   return out;
 }
-export const plantPowerValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersPower).flatMap((c) => [c.values.lease, c.values.buy]);
+// Bought whole is a value of its own only for a list plant of more than one unit (otherwise it is the same as in part).
+export const plantPowerValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersPower).flatMap((c) => [c.values.lease, c.values.buy, ...(!c.manual && c.units > 1 ? [c.values.buyWhole] : [])]);
 export const plantTakeoverValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersTakeover).map((c) => c.values.takeover);
 export function plantOf(inputs, val) {
   const pv = parsePlantValue(val);
@@ -519,12 +520,13 @@ function plantLabel(val) {
 // Technology records for the plants of this run (called by buildContext for every run, as applyExistingPlant).
 // xl:<id> leased, xb:<id> bought; the manual plant keeps TECH.existing for the lease and gets xb:manual.
 export function applyPlants(inputs) {
-  for (const k of Object.keys(TECH)) if (/^x[lb]:/.test(k)) delete TECH[k];
+  for (const k of Object.keys(TECH)) if (/^x[lbw]:/.test(k)) delete TECH[k];
   TECH.existing.p.endM = Infinity;
   const cands = plantCandidates(inputs);
   for (const c of cands.all) {
     PLANT_LABELS.set(c.values.lease, `${c.name} (lease)`);
-    PLANT_LABELS.set(c.values.buy, `${c.name} (bought)`);
+    PLANT_LABELS.set(c.values.buy, c.manual ? `${c.name} (bought)` : `${c.name} (bought, units used)`);
+    PLANT_LABELS.set(c.values.buyWhole, `${c.name} (bought whole)`);
     PLANT_LABELS.set(c.values.takeover, `${c.name}: its grid connection`);
     if (!c.offersPower) continue;
     const ty = EXISTING_TYPES[c.type];
@@ -537,8 +539,10 @@ export function applyPlants(inputs) {
     else TECH.existing.p.endM = c.closeM;
     const endB = c.closeM === Infinity ? Infinity : c.closeM + c.buyExtraYears * 12;
     const lifeB = endB === Infinity ? 40 : Math.max(1, Math.ceil((endB - c.availM) / 12));
-    TECH[c.values.buy] = { ...base, id: c.values.buy, name: `${c.name} (bought)`, lease: false, bought: true,
-      p: { ...p, capexPerKW: c.buyPerKW + c.refurbPerKW, buyPerKW: c.buyPerKW, refurbPerKW: c.refurbPerKW, fomPerKW: c.fomPerKW, life: lifeB, endM: endB } };
+    const pB = { ...p, capexPerKW: c.buyPerKW + c.refurbPerKW, buyPerKW: c.buyPerKW, refurbPerKW: c.refurbPerKW, fomPerKW: c.fomPerKW, life: lifeB, endM: endB };
+    TECH[c.values.buy] = { ...base, id: c.values.buy, name: c.manual ? `${c.name} (bought)` : `${c.name} (bought, units used)`, lease: false, bought: true, p: pB };
+    // Bought whole (OPEN-QUESTIONS 124): every unit bought, refurbished and maintained; the campus uses what it needs.
+    if (!c.manual && c.units > 1) TECH[c.values.buyWhole] = { ...base, id: c.values.buyWhole, name: `${c.name} (bought whole)`, lease: false, bought: true, wholePlant: true, capUnits: false, p: { ...pB } };
   }
   return cands;
 }

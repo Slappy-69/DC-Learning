@@ -47,6 +47,7 @@ const PRIME_TECH = { chp: 'chp', gasRecip: 'gasRecip', fuelCell: 'fuelCell', smr
 // (work package 19, capUnits): the units the need takes, up to the plant's units, no redundancy added.
 const fixedNote = (t) => (!t.existingPlant ? '' : t.capUnits
   ? ` (existing plant: the units needed, of the plant's ${t.fixedUnits}; no N+1 added, the standby gensets cover a unit trip)`
+  : t.wholePlant ? ` (existing plant bought whole: all ${t.fixedUnits} units; no N+1 added)`
   : ` (existing plant: exactly the ${t.fixedUnits} unit${t.fixedUnits === 1 ? '' : 's'} offered, no N+1 added; the standby gensets cover a unit trip)`);
 // Units of an existing plant for a need of `units` (work package 19): the manual plant gives exactly what was offered.
 const plantUnits = (t, need) => (t.capUnits ? Math.max(1, Math.min(t.fixedUnits, need)) : t.fixedUnits);

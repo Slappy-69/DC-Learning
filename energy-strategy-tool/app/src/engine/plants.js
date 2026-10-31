@@ -59,12 +59,13 @@ export function mergeDuplicates(list, { mergeKm = 1, sizeFrac = 0.25, split = ne
 }
 
 // Option values for a plant: power leased, power bought, grid connection taken over (C2, C4, C21).
-export const plantValue = { lease: (id) => `xl:${id}`, buy: (id) => `xb:${id}`, takeover: (id) => `tk:${id}` };
+// OPEN-QUESTIONS 124 (owner, 2026-10-31, "C"): bought in part (xb:, the units used) and bought whole (xw:).
+export const plantValue = { lease: (id) => `xl:${id}`, buy: (id) => `xb:${id}`, buyWhole: (id) => `xw:${id}`, takeover: (id) => `tk:${id}` };
 // The manual plant of work package 12 keeps its value "existing" for the lease (study files from before stay valid).
 export function parsePlantValue(val) {
   if (val === 'existing') return { id: 'manual', mode: 'lease' };
-  const m = /^(xl|xb|tk):(.+)$/.exec(String(val || ''));
-  return m ? { id: m[2], mode: m[1] === 'xl' ? 'lease' : m[1] === 'xb' ? 'buy' : 'takeover' } : null;
+  const m = /^(xl|xb|xw|tk):(.+)$/.exec(String(val || ''));
+  return m ? { id: m[2], mode: m[1] === 'xl' ? 'lease' : m[1] === 'xb' ? 'buy' : m[1] === 'xw' ? 'buyWhole' : 'takeover' } : null;
 }
 export const isPlantPower = (val) => { const p = parsePlantValue(val); return !!p && p.mode !== 'takeover'; };
 export const isTakeover = (val) => { const p = parsePlantValue(val); return !!p && p.mode === 'takeover'; };
