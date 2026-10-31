@@ -17,7 +17,7 @@ export default function SummaryPanel({ run, sensitivity = null, breakevens = nul
     const t = draft.trim();
     setEditing(false);
     if (!t || t === s.text.trim()) { if (onDiscardNote) onDiscardNote(); return; }
-    if (onSaveNote) onSaveNote({ text: t, key, leaderId: s.leaderId, leaderName: s.leaderName, editedAt: new Date().toISOString(), siteBeta: !!siteBeta });
+    if (onSaveNote) onSaveNote({ text: t, key, leaderId: s.leaderId, leaderName: s.leaderName, editedAt: new Date().toISOString(), siteBeta: !!siteBeta || !!(note && note.siteBeta) || /(^|[.\n]\s*)Site fit\b/.test(t) });  // N-6: a note once written with the Site tab on stays marked
   };
   const generated = (
     <div className="sum-text">

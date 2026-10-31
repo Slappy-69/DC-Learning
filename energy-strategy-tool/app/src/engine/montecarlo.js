@@ -101,7 +101,7 @@ export function* monteCarloSteps(run, { site = null, samples = mcSamples(), nOpt
   const widened = new Set(drivers.filter((d) => { const [lo, hi] = d.range(inputs); const b0 = driverBase(d, inputs); return b0 < lo || b0 > hi; }).map((d) => d.id));
   const baseSite = site && site.key === siteKey(inputs) ? site : buildSiteModel(inputs);
   // The layout changes no figure the ranking reads unless site fit can rank (the rule of run.js, work package 13).
-  const skipLayout = !(inputs.deliverability.siteFitPenalty || inputs.settings.rankCompliantFirst) || !!(run.layoutSummary && run.layoutSummary.onDemand);
+  const skipLayout = !inputs.deliverability.siteFitPenalty || !!(run.layoutSummary && run.layoutSummary.onDemand); // N-9
   const ctx0 = buildContext(normalizeInputs(inputs), { site: baseSite });
   const lineScore = (m) => SCORE_KEYS.reduce((a, k) => a + weights[k] * (ranges[k] ? axisScore(k, m[k], ranges[k].lo, ranges[k].hi) : 0), 0);
   const per = new Map(opts.map((o) => [o.id, { lcoe: [], npv: [], capex: [], carbon: [], firstPowerM: [], fullLoadM: [], score: [], rank1: 0, top3: 0, robust: 0, adequate: 0 }]));
@@ -165,11 +165,21 @@ function summariseMC(run, opts, per, n, values, drivers, meta) {
   const byRobust = rows.slice().sort((a, b) => b.pRobust - a.pRobust || b.pRank1 - a.pRank1 || a.rank - b.rank);
   const byRank1 = rows.slice().sort((a, b) => b.pRank1 - a.pRank1 || a.rank - b.rank);
   const leader = rows.find((r) => r.rank === Math.min(...rows.map((x) => x.rank)));
+  // Another option is named as the robust pick only when it is clearly ahead of the leader, beyond sampling noise
+  // (Opus review N-3, owner 2026-10-30, OPEN-QUESTIONS 110): its count must exceed the leader's by more than two
+  // standard errors of the difference, sqrt(n (p1 (1 - p1) + p2 (1 - p2))), and by at least 2 samples (judgement).
+  // Otherwise the leader is the robust pick, level with that option.
+  let robustPick = byRobust.length ? byRobust[0] : null, robustLevelWithId = null;
+  if (robustPick && leader && robustPick.id !== leader.id) {
+    const p1 = robustPick.pRobust, p2 = leader.pRobust;
+    const margin = Math.max(2, 2 * Math.sqrt(n * (p1 * (1 - p1) + p2 * (1 - p2))));
+    if (robustPick.nRobust - leader.nRobust <= margin) { robustLevelWithId = robustPick.id; robustPick = leader; }
+  }
   return {
     samples: n, samplesPlanned: meta.samples, seed: meta.seed, screening: meta.screening, skipLayout: meta.skipLayout, band: mcRobustBand(),
     complete: n === meta.samples, correlations: mcCorrelations().map(([a, b, r]) => ({ a, b, rho: r })),
     leaderId: leader ? leader.id : null, rows,
-    robustPickId: byRobust.length ? byRobust[0].id : null, mostOftenFirstId: byRank1.length ? byRank1[0].id : null,
+    robustPickId: robustPick ? robustPick.id : null, robustLevelWithId, mostOftenFirstId: byRank1.length ? byRank1[0].id : null,
     drivers: drivers.map((d) => ({ id: d.id, label: d.label, record: d.record, widened: meta.widened.has(d.id), values: band(values.map((v) => v[d.id])) })),
   };
 }

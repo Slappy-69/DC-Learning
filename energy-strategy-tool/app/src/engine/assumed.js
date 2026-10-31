@@ -16,6 +16,9 @@ const combusts = (v, sz) => [sz.prime, sz.bridge].some((p) => p && TECH[p.tech] 
 const hasBackup = (v, sz) => !!(sz.backup && sz.backup.tech);
 const flexOn = (v) => v.C16 === 'on';
 const hasPpa = (v) => v.C13 && v.C13 !== 'none';
+// Existing plant (leased) and rented plant (Opus review N-4, owner 2026-10-30, OPEN-QUESTIONS 111).
+const usesExisting = (v, sz) => [sz.prime, sz.bridge].some((p) => p && p.tech === 'existing');
+const leasesOrRents = (v, sz) => [sz.prime, sz.bridge].some((p) => p && TECH[p.tech] && TECH[p.tech].lease);
 
 // Key inputs: [path, name, when the option uses it].
 export const KEY_INPUTS = [
@@ -44,6 +47,12 @@ export const KEY_INPUTS = [
   ['load.flexMaxPct', 'Flexibility: maximum curtailment', flexOn],
   ['load.flexHours', 'Flexibility: hours a year', flexOn],
   ['load.flexTriggerPrice', 'Flexibility: price trigger', (v) => flexOn(v)],
+  ['existing.leasePerKWMonth', 'Existing plant: lease rate', usesExisting],
+  ['existing.eff', 'Existing plant: efficiency', usesExisting],
+  ['existing.msl', 'Existing plant: minimum stable load', usesExisting],
+  ['existing.vomPerMWh', 'Existing plant: variable O&M', usesExisting],
+  ['existing.linkCapex', 'Existing plant: connection to the campus', usesExisting],
+  ['settings.rentalLeadMonths', 'Lease or hire starts before need', leasesOrRents],
 ];
 
 function valueText(path, x, rec, inputs) {
@@ -76,7 +85,14 @@ export function assumedBase(ctx) {
     const cur = getPath(inputs, path);
     let text = null;
     if (A[path]) text = `${A[path]} (indicative — unverified)`;
-    else if (path === 'load.coolingApproach') { if (cur === 'open') text = 'not chosen, so all four types are compared in this run (OPEN-QUESTIONS 28; judgement, indicative — unverified)'; }
+    else if (/^existing\.(eff|msl|vomPerMWh)$/.test(path)) {
+      // Empty = by type: the type's judgement record is used.
+      if (cur == null) {
+        const k = path.split('.')[1], ty = (inputs.existing && inputs.existing.type) || 'ccgt';
+        const tr = reg[`existing.types.${ty}.${k}`];
+        text = tr ? `${valueText(path, tr.value, tr, inputs)}, the ${ty.toUpperCase()} default (${tr.basis}, ${tr.label})` : `by type (${ty}), not entered (judgement, ${LABEL})`;
+      }
+    } else if (path === 'load.coolingApproach') { if (cur === 'open') text = 'not chosen, so all four types are compared in this run (OPEN-QUESTIONS 28; judgement, indicative — unverified)'; }
     else if (r && !RESOLVED.includes(path)) {
       if (r.derived && typeof r.value === 'string' && r.value.startsWith('by ')) {
         if (cur == null || cur === r.value) text = `${cname} default (${r.basis}, ${r.label})`;

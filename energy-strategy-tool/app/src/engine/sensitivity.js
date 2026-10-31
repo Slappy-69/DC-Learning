@@ -170,9 +170,11 @@ export function* tornadoSteps(run, optionId, { site = null, drivers = TORNADO_DR
   const baseSite = site && site.key === siteKey(inputs) ? site : buildSiteModel(inputs);
   const total = 1 + 2 * drivers.length;
   let done = 0;
+  // Lay out only when site fit can change the score (Opus review N-8).
+  const skipLayout = !inputs.deliverability.siteFitPenalty || !!(run.layoutSummary && run.layoutSummary.onDemand);
   const evalWith = (inp) => {
     const ctx = buildContext(inp, { site: siteKey(inp) === baseSite.key ? baseSite : null });
-    const e = evaluateOption(ctx, opt.v);
+    const e = evaluateOption(ctx, opt.v, { skipLayout });
     const metrics = axisMetrics({ eco: e.eco, carbon: e.carb, ttp: e.ttp, deliv: e.deliv }, settings);
     return { ctx, s: summary(e, metrics, scoreAgainstRun(metrics, ranges, weights)) };
   };

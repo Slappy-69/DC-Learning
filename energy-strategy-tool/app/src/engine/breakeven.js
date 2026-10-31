@@ -91,8 +91,10 @@ export function* breakevenSteps(run, { site = null } = {}) {
     d.apply(inp, x, ctx0);
     return buildContext(inp, { site: siteKey(inp) === baseSite.key ? baseSite : null });
   };
+  // Lay out only when site fit can change the score, as the Monte Carlo does (Opus review N-8).
+  const skipLayout = !inputs.deliverability.siteFitPenalty || !!(run.layoutSummary && run.layoutSummary.onDemand);
   const scoreOf = (ctx, o) => {
-    const e = evaluateOption(ctx, o.v);
+    const e = evaluateOption(ctx, o.v, { skipLayout });
     const metrics = axisMetrics({ eco: e.eco, carbon: e.carb, ttp: e.ttp, deliv: e.deliv }, settings);
     return { score: scoreAgainstRun(metrics, ranges, weights).score, line: lineScore(metrics), adequate: e.adequacy ? e.adequacy.adequate !== false : true, compliant: !(e.res && e.res.status === 'Does not meet'), lcoe: e.eco.lcoe };
   };

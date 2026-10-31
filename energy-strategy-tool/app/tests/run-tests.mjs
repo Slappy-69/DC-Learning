@@ -87,6 +87,7 @@ import { archetypeTests } from './archetype-tests.mjs';
 import { studyTests } from './study-tests.mjs';
 import { summaryTests } from './summary-tests.mjs';
 import { breakevenTests } from './breakeven-tests.mjs';
+import { reviewFixTests } from './review-fixes-tests.mjs';
 import { monteCarloTests } from './montecarlo-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
@@ -1252,6 +1253,9 @@ await breakevenTests(test, siteRuns);
 
 // 46. Work package 18: uncertainty by Monte Carlo (tests/montecarlo-tests.mjs)
 await monteCarloTests(test, siteRuns);
+
+// 47. Fixes from the Opus review of H4–H6 (tests/review-fixes-tests.mjs)
+await reviewFixTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

@@ -161,7 +161,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     addCapex(`${t.name} (prime)`, yearOfMonth(sz.prime.availMonth), sz.prime.mw * 1000 * t.p.capexPerKW, t.p.life);
     // Existing plant (work package 12): the one-off connection to the campus, when the lease starts.
     if (t.p.linkCapex) addCapex(`${t.name}: connection to the campus`, yearOfMonth(sz.prime.availMonth), t.p.linkCapex, t.p.life);
-    if (t.p.stackLife) assets.push({ item: `${t.name} stack replacement`, year: yearOfMonth(sz.prime.availMonth), amount: sz.prime.mw * 1000 * t.p.capexPerKW * t.p.stackFraction, life: t.p.stackLife, stackOnly: true });
+    if (t.p.stackLife) assets.push({ item: `${t.name} stack replacement`, year: yearOfMonth(sz.prime.availMonth), amount: sz.prime.mw * 1000 * t.p.capexPerKW * t.p.stackFraction * capF, life: t.p.stackLife, stackOnly: true });
   }
   // Bridging plant
   const T = sz.T;
@@ -188,7 +188,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     const t = TECH[sz.bridge.tech];
     if (rp) bridgeBuys.forEach((b) => addCapex(`${t.name} (${b.label})`, b.year, b.units * sz.bridge.unitMW * 1000 * t.p.capexPerKW, t.p.life, { removeYear: bridgeRemoveYear }));
     else addCapex(`${t.name} (bridging)`, yearOfMonth(sz.bridge.availMonth), sz.bridge.mw * 1000 * t.p.capexPerKW, t.p.life, { removeYear: bridgeRemoveYear });
-    if (t.p.stackLife && bridgeRemoveYear === null) assets.push({ item: `${t.name} stack replacement`, year: yearOfMonth(sz.bridge.availMonth), amount: sz.bridge.mw * 1000 * t.p.capexPerKW * t.p.stackFraction, life: t.p.stackLife, stackOnly: true });
+    if (t.p.stackLife && bridgeRemoveYear === null) assets.push({ item: `${t.name} stack replacement`, year: yearOfMonth(sz.bridge.availMonth), amount: sz.bridge.mw * 1000 * t.p.capexPerKW * t.p.stackFraction * capF, life: t.p.stackLife, stackOnly: true });
   }
   // Gas connection pipe from the gas main (§5.2), for options that burn gas on site and only when a gas main
   // location is given (sizing.js): booked when the first gas plant is available (gas gensets only: phase 1).
@@ -212,7 +212,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   if (coolDelta !== 0) {
     for (const ps of (perPhase ? phaseShares : [{ year: phaseShares[0] ? phaseShares[0].year : 0, share: 1 }])) {
       if (ps.year > N - 1) continue;
-      const amt = coolDelta * ps.share;
+      const amt = coolDelta * ps.share * capF; // the "capex (every line)" factor scales this line too (known issue 22)
       capexLines.push({ item: 'Cooling capex delta vs air', year: ps.year, amount: amt });
       ledger[ps.year].capex += amt;
       ledger[ps.year].contingency += amt * cont;
@@ -333,7 +333,9 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     }
     L.carbon += scope1 * cPrice;
     L.revenue += d.exportRevenue * elecEsc;
-    L.deliveredMWh += d.grossDemandMWh - d.unmetMWh;
+    // Delivered energy: demand less unmet load and less IT load shed by flexibility (owner 2026-10-30, OPEN-QUESTIONS 113):
+    // shed load is not supplied, as it is not for adequacy (OPEN-QUESTIONS 61).
+    L.deliveredMWh += d.grossDemandMWh - d.unmetMWh - (d.flexMWh || 0);
     L.netDemandMWh += d.netDemandMWh;
     L.unmetMWh += d.unmetMWh;
     L.scope1T += scope1;

@@ -25,7 +25,8 @@ import { layoutForOption } from './siteapi.js';
 import { adequacyOf, shortfallAnalysis } from './adequacy.js';
 import { triggerAnalysis } from './triggers.js';
 
-export const ENGINE_VERSION = '0.2.0-site';
+// Raised when results change (Opus review N-11): 0.3.0 for the fixes of 2026-10-30 (capex factor, delivered energy).
+export const ENGINE_VERSION = '0.3.0';
 
 // Items between "progress" events for the per-option stages other than dispatch (dispatch reports
 // every option). Count-based, so the log content does not depend on machine speed.
@@ -150,7 +151,9 @@ export function* runModelSteps(rawInputs, opts = {}) {
       sW += bs.ground.length * bs.ground.length; sN++;
     }
     const work = Math.round((sW * gen.options.length) / Math.max(1, sN));
-    const fitRanks = !!(inputs.deliverability.siteFitPenalty || inputs.settings.rankCompliantFirst);
+    // Only the Beta site-fit penalty lets site fit move the ranking; compliance reads the resilience status only since the
+    // walkthrough (scoring.js), so "compliant first" no longer forces a full layout (Opus review N-9).
+    const fitRanks = !!inputs.deliverability.siteFitPenalty;
     const layAll = inputs.settings.siteLayoutScope === 'all' || fitRanks || work <= (inputs.settings.siteLayoutWorkLimit ?? 2e7);
     if (!layAll) {
       const netM2 = Math.round(site.areas.netM2 || 0);

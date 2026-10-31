@@ -1950,7 +1950,7 @@ OPEN-QUESTIONS 93–97 (Claude's recommendations accepted in advance by the owne
 - Order (`lead`): adequacy, then compliance when "rank requirement-compliant first" is on, then the weighted score on the run's axis ranges **without clipping** (`lineScore`), ties to the lower option code. Clipping would let both options score 100 on an axis once a driver moves them past the run's range (every LCOE below the run's lowest at grid price × 0.7).
 - `driverBase(d, inputs)`: the current value on the driver's scale (factors 1, grid date 0 months, WACC, period, escalation and test hours from the inputs). `nearestFlips(be, n)`: flips sorted by |flip − current| ÷ range; `flipText` gives "#7 would lead if the grid full-connection date slipped by 14 months or more".
 - UI: `BreakevenPanel.jsx` under the tornado on the Sensitivity tab; results cached by run, weights and scoring settings; `latestBreakevens(run)` for the PDF (section 7, "Breakevens") and the summary.
-- T1 (analysis start 2027-01): competitors #2, #5, #7, #11, #16; drivers escalation, grid price, grid date, grid carbon, period, capex, WACC, battery capex; 224 re-runs, 4–6 s in Node; two flips: #7 if the grid date slips 14 months or more, #2 if capex rises to × 1.41 (checked by direct evaluation: at × 1.5 the leader's LCOE is €158.57 against #2's €158.07/MWh, the leader's capex lines growing faster).
+- T1 (analysis start 2027-01): competitors #2, #5, #7, #11, #16; drivers escalation, grid price, grid date, grid carbon, period, capex, WACC, battery capex; 224 re-runs, 4–6 s in Node; two flips: #7 if the grid date slips 14 months or more, #2 if capex rises to × 1.41 (checked by direct evaluation: at × 1.5 the leader's LCOE is €158.57 against #2's €158.07/MWh, the leader's capex lines growing faster). *Corrected 2026-10-30 (Opus review N-1, KNOWN-ISSUES 22):* the capex flip was an artefact of the cooling capex line not being scaled; with every line scaled, T1 has only the grid-date flip.
 - §17 target ≤ 3 s: not met (full engine on the main thread): 224 re-runs in 6.8 s in Chromium on this machine (check B39).
 - Three new run-setting and judgement records: the registry has 566 records (appendix A regenerated).
 - Tests: Node test 45 (`tests/breakeven-tests.mjs`: competitors, drivers against the leader's full tornado, every flip re-run on both sides of its bracket, every "no flip" re-run at the range end, determinism, the run unchanged, the PDF); browser check B39.
@@ -2023,3 +2023,25 @@ Same check: `tests/breakeven-tests.mjs` (test 45) and `tests/montecarlo-tests.mj
 Full runs on the fixed code (commit a4f531c, 2026-10-26, one after the other on a 2-core machine): `npm test` 77/77 (about 22 minutes with the browser run following; Node alone about 8 minutes) and `npm run test:browser` 40/40, axe with no violations.
 
 Full runs after the owner's three answers (commit 856dba7, 2026-10-26, the app rebuilt and `energy-tool-single-file.html` copied): `npm test` 77/77 (test 31 now also asserts that the grid connection capex factor doubles the charge and leaves the substation unchanged) and `npm run test:browser` 40/40, axe with no violations.
+
+## Fixes from the Opus review of H4–H6 (2026-10-30, branch feature/review-fixes)
+
+Report: `verification/review-h4-h6/OPUS-review.md`. The owner took Claude's recommendation on each decision ("I'm happy to follow your recommendation for each of them", 2026-10-30; OPEN-QUESTIONS 108–113; KNOWN-ISSUES 22–27).
+
+| Finding | Change |
+|---|---|
+| N-1 (high), KI 22 | `evaluate.js`: the cooling capex delta and fuel-cell stack replacements are multiplied by the "capex (every line)" factor. Every line now scales by exactly the factor (test 47a, all four cooling types and a fuel cell, × 1.5 and × 0.7). T1: the capex flip "#2 at × 1.41" is gone; tornado capex swing €10.2/MWh (was €10.7); Monte Carlo 300 samples: leader first in 86.3 % (was 83.3 %) |
+| N-2 (high), KI 23 | `summary.js` word fit: optional sentences move first; then sentences after the first of each part, from the last part back, except the flags part and sentences marked keep (the breakevens, the Monte Carlo's rank probability and robust pick); only then is the flags part condensed to its count line. T1 with tornado, breakevens and Monte Carlo: 239 words, IED flag, breakevens and rank probability in the text (test 47b) |
+| N-3 (medium), KI 24 | `montecarlo.js`: another option is the robust pick only if its count beats the leader's by more than 2 standard errors of the difference and at least 2 samples (judgement); else the leader, with `robustLevelWithId`. Panel and summary say "level … within the noise of sampling". T1: the leader for six seeds and for the top 20 and top 60 |
+| N-4 (medium), KI 25 | `assumed.js`: existing-plant lease rate, efficiency, minimum stable load, variable O&M (by type when empty), connection to the campus, and the lease or hire lead are key inputs flagged on the options that use them. T1 + 2 × 40 MW CCGT: 446 of 446 options flagged (test 47c) |
+| N-5 (medium), KI 26 | `App.jsx` `openStudy`: with the Site tab off, a study's site-fit penalty is cleared and the status line says so (also after the re-run). The site is kept |
+| N-6 (medium) | `SummaryPanel.jsx`: a re-saved note stays marked as written with the Site tab on if the earlier note was, or if it holds a "Site fit" sentence, so the PDF leaves it out |
+| Owner question 6, KI 27 | `evaluate.js`: delivered energy (LCOE denominator) = demand − unmet − IT load shed by flexibility (test 47d) |
+| N-7 (low) | Summary "In 300 Monte Carlo samples (top 20 options) …"; header "Leads in 86 % of 300 samples, top 20" |
+| N-8 (low) | Breakeven and tornado re-runs skip the layout when site fit cannot change the score, as the Monte Carlo does |
+| N-9 (low) | "Rank requirement-compliant options first" no longer forces a full layout (compliance reads resilience only); test 40 updated |
+| N-10 (low) | `study.js`: a number left null in a study file takes today's default, listed in the warnings (test 47d) |
+| N-11 (low) | `ENGINE_VERSION` 0.3.0 (results changed) |
+| N-12 (low) | Guide chapters 22, 27 and 46 (`03-part3b.md`, `04-part4b.md`), BUILD-NOTES work package 17, OPEN-QUESTIONS 103 and the Run summary's compliant-first sentence corrected |
+
+Not changed: N-13 (market-based carbon on the contract volume; owner's earlier rule). Development aid: `tests/only-tests.mjs` runs tests 40, 46 and 47 alone.

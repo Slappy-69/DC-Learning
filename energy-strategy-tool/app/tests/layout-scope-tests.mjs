@@ -48,15 +48,22 @@ export async function layoutScopeTests(test, ctxRuns) {
     const I = inspectOption(run.inputs, lead.v, { site: run.ctx.site });
     assert.ok(!compareWithRun(I, lead).diffs.some((d) => d.label === 'site-fit status'));
     out.push(`the leader laid out on demand: "${L.siteFit.status}", as in the full run; the inspector matches`);
-    // Site fit that can change the ranking: every option is laid out.
-    for (const [label, set] of [['site-fit penalty', (i) => { i.deliverability.siteFitPenalty = true; }], ['compliant-first ranking', (i) => { i.settings.rankCompliantFirst = true; }], ['"every option"', (i) => { i.settings.siteLayoutScope = 'all'; }]]) {
+    // Site fit that can change the ranking: every option is laid out. "Compliant first" no longer forces it, because
+    // compliance reads the resilience status only (Opus review N-9, 2026-10-30).
+    for (const [label, set] of [['site-fit penalty', (i) => { i.deliverability.siteFitPenalty = true; }], ['"every option"', (i) => { i.settings.siteLayoutScope = 'all'; }]]) {
       const i2 = referenceT1({ analysisStart: ctxRuns.START });
       i2.settings.siteLayoutWorkLimit = 1000; i2.settings.generationCap = 40;
       set(i2);
       const r2 = runModel(i2);
       assert.ok(!r2.layoutSummary.onDemand && r2.options.every((o) => o.siteFit.status !== 'Not laid out'), `${label}: not laid out`);
     }
-    out.push('with the site-fit penalty, compliant-first ranking or "every option", every option is laid out');
+    {
+      const i3 = referenceT1({ analysisStart: ctxRuns.START });
+      i3.settings.siteLayoutWorkLimit = 1000; i3.settings.generationCap = 40; i3.settings.rankCompliantFirst = true;
+      const r3 = runModel(i3);
+      assert.ok(r3.options.some((o) => o.siteFit.status === 'Not laid out'), 'compliant-first ranking still forced the full layout');
+    }
+    out.push('with the site-fit penalty or "every option", every option is laid out; compliant-first ranking alone does not force it (N-9)');
     return out.join('; ') + '.';
   });
 }

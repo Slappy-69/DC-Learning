@@ -14,7 +14,7 @@ export function siteFitEffect(inputs) {
     ? `The site-fit penalty is on, so the status lowers deliverability (${d.siteFitFlagsPenalty} points for "Fits with flags", ${d.siteFitNoFitPenalty} for "Does not fit").`
     : 'The status changes no score.';
   const order = s.rankCompliantFirst
-    ? 'No option is hidden for not fitting; "Rank requirement-compliant options first" is on, so options that do not fit rank after those that do.'
+    ? 'No option is hidden or demoted for not fitting; "Rank requirement-compliant options first" is on, but compliance reads the resilience status only, not site fit.'
     : 'No option is hidden or demoted for not fitting.';
   return `${status} ${order} The layout never resizes an option: ground solar comes from the ground area for PV. The POC and gas-main positions set the cable and gas-pipe route costs.`;
 }
