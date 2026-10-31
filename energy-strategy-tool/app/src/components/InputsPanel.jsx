@@ -3,6 +3,7 @@ import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTa
 import { COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
 import MapPicker from './MapPicker.jsx';
 import WeatherField from './WeatherField.jsx';
+import PlantsField from './PlantsField.jsx';
 
 const YM = '^\\d{4}-(0[1-9]|1[0-2])$';
 
@@ -194,12 +195,12 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
             options={[['25', '25 %'], ['50', '50 %'], ['75', '75 %'], ['80', '80 %'], ['100', '100 %']]} />
         </div> : null}
         <ToggleField label="Existing plant near the site (lease)" checked={!!(inputs.existing && inputs.existing.include)} onCommit={(v) => { update('existing.include', v); update('choices.C2', null); update('choices.C4', null); }} path="existing.include" inputs={inputs}
-          hint="A power plant beside the site whose owner would lease it to the campus (work package 12). On: it is offered as bridging plant (handed back when the grid arrives, or kept running) and as firm plant, with exactly the units entered and the lease paid from a month before it is first needed. It stands outside the campus: not on the site plan, not in the campus's emissions permit." />
+          hint="A power plant beside the site that is not in the bundled list (work package 12). On: it is offered leased and bought (work package 19), as bridging plant (handed back when the grid arrives, or kept running) and as firm plant, with exactly the units entered and the lease paid from a month before it is first needed. It stands outside the campus: not on the site plan, not in the campus's emissions permit." />
         {inputs.existing && inputs.existing.include ? <>
           <div className="row2">
             <TextField label="Plant name" value={inputs.existing.name} onCommit={set('existing.name')} path="existing.name" inputs={inputs} />
             <SelectField label="Plant type" value={inputs.existing.type} onCommit={set('existing.type')} path="existing.type" inputs={inputs}
-              options={[['ccgt', 'Combined-cycle gas turbine (CCGT)'], ['ocgt', 'Open-cycle gas turbines'], ['engines', 'Gas engines']]} />
+              options={[['ccgt', 'Combined-cycle gas turbine (CCGT)'], ['ocgt', 'Open-cycle gas turbines'], ['engines', 'Gas engines'], ['steam', 'Gas-fired steam plant']]} />
           </div>
           <div className="row2">
             <NumberField label="Units offered" unit="units" value={inputs.existing.units} onCommit={(v) => update('existing.units', v == null ? null : Math.max(1, Math.round(v)))} path="existing.units" inputs={inputs} nullable min={1} step={1} placeholder="Required" />
@@ -217,7 +218,10 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
             <NumberField label="Variable O&M" unit="€/MWh" value={inputs.existing.vomPerMWh} onCommit={set('existing.vomPerMWh')} path="existing.vomPerMWh" inputs={inputs} nullable min={0} placeholder="By type" />
             <NumberField label="Connection to the campus" unit="€" value={inputs.existing.linkCapex} onCommit={set('existing.linkCapex')} path="existing.linkCapex" inputs={inputs} min={0} step={100000} />
           </div>
+          <NumberField label="Closure year" unit="year" value={inputs.existing.closeYear} onCommit={(v) => { update('existing.closeYear', v == null ? null : Math.round(v)); update('choices.C21', null); }} path="existing.closeYear" inputs={inputs} nullable step={1} placeholder="Runs for the whole study"
+            hint="Optional (work package 19). With a closure year the plant stops then (bought: 10 years later), and its grid connection is offered to the campus 12 months after it stops." />
         </> : null}
+        <PlantsField inputs={inputs} norm={norm} update={update} />
         <SelectField label="District heating offtake nearby" value={inputs.utilities.districtHeating} onCommit={(v) => { update('utilities.districtHeating', v); update('choices.C15', null); }} path="utilities.districtHeating" inputs={inputs}
           options={[['No', 'No'], ['Yes', 'Yes']]} hint="Heat reuse is not costed in this slice." />
       </Section>

@@ -66,7 +66,8 @@ function fillFromDefaults(def, saved, path, added, dropped, nulled = []) {
   for (const [k, dv] of Object.entries(def)) {
     const p = path ? `${path}.${k}` : k;
     if (!(k in saved)) { out[k] = dv; added.push(p); }
-    else if (isObj(dv) && isObj(saved[k]) && k !== 'choices') out[k] = fillFromDefaults(dv, saved[k], p, added, dropped, nulled);
+    // The plant corrections (work package 19) are keyed by list entry: kept as saved, like the choices.
+    else if (isObj(dv) && isObj(saved[k]) && k !== 'choices' && p !== 'plants.edits') out[k] = fillFromDefaults(dv, saved[k], p, added, dropped, nulled);
   }
   return out;
 }

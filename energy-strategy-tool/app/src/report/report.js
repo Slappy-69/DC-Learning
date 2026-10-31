@@ -6,7 +6,9 @@
 // Pure: built from the run and the view state handed in; no browser APIs.
 
 import { PdfDoc, INK, MUTED, ACCENT, FLAG, LINE } from './pdf.js';
-import { getRegistry, normalizeInputs, CHOICES, choiceLabel, LABEL, LABEL_SOURCED, REQUIRED_EXAMPLE } from '../engine/defaults.js';
+import { getRegistry, normalizeInputs, CHOICES, choiceLabel, LABEL, LABEL_SOURCED, REQUIRED_EXAMPLE, plantCandidates, PLANT_DEFAULTS } from '../engine/defaults.js';
+import { PLANT_SOURCE } from '../engine/plants.js';
+import { addMonths } from '../engine/dates.js';
 import { NA } from '../engine/generator.js';
 import { weatherSummary } from '../engine/weather.js';
 import { topCards } from '../engine/cards.js';
@@ -17,7 +19,7 @@ import { GUARDRAIL, sig, money, monthLabel, pct, perMWh, cur, displayCurrency } 
 
 // Input sections in the order of the inputs panel; site geometry belongs to the Site tab (Beta) and is left out.
 const SECTIONS = [
-  ['project', 'Project'], ['site', 'Site (area and land)'], ['load', 'Load'], ['grid', 'Grid'], ['utilities', 'Utilities and PPA'], ['existing', 'Existing plant near the site (lease)'],
+  ['project', 'Project'], ['site', 'Site (area and land)'], ['load', 'Load'], ['grid', 'Grid'], ['utilities', 'Utilities and PPA'], ['existing', 'Existing plant near the site (lease)'], ['plants', 'Existing gas plants near the site (bundled list)'],
   ['requirements', 'Requirements'], ['economics', 'Economics'], ['weights', 'Weights'], ['deliverability', 'Deliverability'], ['settings', 'Run settings'],
 ];
 export const SITE_BETA_KEYS = ['site.boundary', 'site.setbackByEdge', 'site.heightZones', 'site.exclusions', 'site.poc', 'site.gasMain', 'site.access', 'site.receptors',
@@ -171,6 +173,23 @@ export function buildReport(run, view = {}) {
     if (!rs.length) continue;
     doc.heading(title, 2);
     doc.table([{ label: 'Input', w: 1.3 }, { label: 'Value', w: 1.7 }, { label: 'Entered or default', w: 1.5 }], rs.map((r) => [r.path, r.value, r.status]), { size: 7.5, headSize: 8 });
+  }
+  // Existing gas plants near the site (work package 19): each with its values and where they came from.
+  {
+    const I = normalizeInputs(run.inputs);
+    const pc = plantCandidates(I).all.filter((p) => !p.manual);
+    if (I.plants && I.plants.auto !== false) {
+      doc.heading('Existing gas plants found near the site', 2);
+      const B = { list: 'list', default: 'default', type: 'by type', entered: 'entered', none: 'not known' };
+      doc.para(pc.length
+        ? `Every gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site, from the bundled list (${PLANT_SOURCE.credit}; built ${PLANT_SOURCE.builtAt}). Values in brackets say where each came from; check every one with the plant's owner.`
+        : `No gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site in the bundled list (${PLANT_SOURCE.credit}).`, { size: 8.5 });
+      if (pc.length) doc.table([{ label: 'Plant', w: 1.3 }, { label: 'km', w: 0.35 }, { label: 'MW (units)', w: 0.9 }, { label: 'First year · closes', w: 1.1 }, { label: 'In the analysis', w: 1.6 }],
+        pc.map((p) => [`${p.name}${p.mergedFrom.length ? ` (merged with ${p.mergedFrom.map((m) => m.name).join(', ')})` : ''}`, p.km.toFixed(1),
+          `${Math.round(p.mw)} (${B[p.basis.mw]}); ${p.units} × ${Math.round(p.unitMW)} (${B[p.basis.units]})`,
+          `${p.firstYear ?? '—'} (${B[p.basis.firstYear]}) · ${p.closeYear ?? '—'} (${p.basis.closeYear === 'default' ? `${PLANT_DEFAULTS.lifeYears} years` : B[p.basis.closeYear]})`,
+          !p.include ? 'left out by the engineer' : [p.offersPower ? 'power, leased or bought' : null, p.offersTakeover ? `grid connection from ${addMonths(I.project.analysisStart, p.takeoverM)}` : null].filter(Boolean).join('; ') || 'nothing within the study']), { size: 7.5, headSize: 8 });
+    }
   }
   doc.heading('Technology choices generated', 2);
   doc.table([{ label: 'Choice', w: 1.5 }, { label: 'State', w: 0.6 }, { label: 'Values generated', w: 2.4 }], choiceRows(run.inputs), { size: 7.5, headSize: 8 });

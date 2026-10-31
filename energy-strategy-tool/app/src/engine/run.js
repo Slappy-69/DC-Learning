@@ -14,7 +14,8 @@ import { timeToPower, economics, carbon, resilience, allOptionFlags, unmetSummar
 import { scoreOptions } from './scoring.js';
 import { hashString } from './prng.js';
 import { PROFILE_LABEL } from './profiles.js';
-import { getRegistry } from './defaults.js';
+import { getRegistry, PLANT_DEFAULTS } from './defaults.js';
+import { PLANT_SOURCE } from './plants.js';
 import { createRunLog, STAGE, hashInputs, shortHash, mergeLogs } from './runlog.js';
 import { paretoView } from './pareto.js';
 import { siteSummary } from './site.js';
@@ -318,6 +319,14 @@ export function* runModelSteps(rawInputs, opts = {}) {
   if (layoutSummary && layoutSummary.onDemand) runFlags.push(flag('site-layout-on-demand', 'info', 'Site', `Site layout (Beta): this large campus was not laid out option by option in the run (layout work ${(layoutSummary.work / 1e6).toFixed(1)} million block², limit ${Number(((inputs.settings.siteLayoutWorkLimit ?? 2e7) / 1e6).toPrecision(3)).toLocaleString('en-GB')} million), because site fit does not change the ranking. The Site tab lays out each option it shows. To lay out every option in the run, set "Site layout in the run" to every option`));
   // Existing plant ticked but incomplete (work package 12): not generated, and the run says why.
   if (ctx.existing && ctx.existing.include && !ctx.existing.entered) runFlags.push(flag('existing-incomplete', 'minor', 'Technology', `Existing plant near the site is ticked but not generated: enter its ${ctx.existing.missing.join(' and ')}`));
+  // Existing gas plants near the site (work package 19): what the bundled list found, and how the sample was shared.
+  if (ctx.plants && inputs.plants && inputs.plants.auto !== false) {
+    const pl = ctx.plants.all.filter((p) => !p.manual);
+    const share = s.plantSampling || {};
+    runFlags.push(flag('plants-found', pl.length ? 'minor' : 'info', 'Existing plant', pl.length
+      ? `${pl.length} gas plant${pl.length === 1 ? '' : 's'} of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site, from the bundled list (${PLANT_SOURCE.credit}): ${pl.map((p) => `${p.name} (${Math.round(p.mw)} MW, ${p.km.toFixed(1)} km, ${p.include ? `${p.status}${share[p.id] ? `; ${share[p.id].drawn.toLocaleString('en-GB')} of ${share[p.id].combinations.toLocaleString('en-GB')} combinations screened` : ''}` : 'left out by the engineer'})`).join('; ')}. Their values come from the list and labelled defaults: check them with the plants' owners.`
+      : `No gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site in the bundled list (${PLANT_SOURCE.credit}).`));
+  }
   if (truncated.length) {
     const maxNeed = Math.max(...truncated.map((t) => t.needY)), ex = truncated[0].explicit;
     runFlags.push(flag('dispatch-truncated', 'minor', 'Model', `Dispatch covers only the first ${ex} model years (the run setting "Most dispatch years") for ${truncated.length.toLocaleString('en-GB')} configuration${truncated.length === 1 ? '' : 's'} that need up to ${maxNeed} before nothing changes: the later years repeat a year that is not yet steady (load, grid or plant still changing). Raise the setting to ${maxNeed}`));

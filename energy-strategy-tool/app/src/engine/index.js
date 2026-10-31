@@ -26,4 +26,6 @@ export { plainSummary, summaryKey, weightChanges, wordCount, shortFlag, SUMMARY_
 export { inspectOption, compareWithRun, balanceFromHourly, weekRange, weekPresets, plantSource, HOURS_PER_WEEK, WEEKS_PER_YEAR } from './inspect.js';
 export { allOptionFlags, unmetSummary, expectedConnectionCharge } from './evaluate.js';
 export { SOURCE_OF_TECH } from './blocks.js';
+export { PLANT_SOURCE, plantList, nearbyPlants, mergeDuplicates, parsePlantValue, isPlantPower, isTakeover } from './plants.js';
+export { ctxFor } from './context.js';
 export { tornado, tornadoSteps, TORNADO_DRIVERS, DEFAULT_DRIVER_IDS, TORNADO_MEASURES, measureById, sortRows, tornadoTopN, scoreAgainstRun } from './sensitivity.js';
