@@ -671,11 +671,11 @@ await check('B40. Monte Carlo (work package 18, BRIEF §13.2): "Run uncertainty"
   const lead = await page.locator('.mc-lead').innerText();
   ok(/#1 leads in \d+ %/.test(lead) && /Robust pick/.test(lead), lead.slice(0, 160));
   const hs = await page.locator('.header-strip .hs-item').nth(1).innerText();
-  ok(/Leads in \d+ % of 100 Monte Carlo samples/.test(hs), `header: ${hs.replace(/\s+/g, ' ').slice(0, 160)}`);
+  ok(/Leads in \d+ % of 100 samples, top 20/.test(hs), `header: ${hs.replace(/\s+/g, ' ').slice(0, 160)}`);
   const ax = await runAxe(page, 'Sensitivity tab with the Monte Carlo table');
   await page.getByRole('tab', { name: /^Options/ }).click();
   const conf = await page.locator('.sum-text p[data-part=confidence]').innerText();
-  ok(/In 100 Monte Carlo samples it leads in \d+ %/.test(conf), `summary part 4: ${conf.slice(0, 200)}`);
+  ok(/In 100 Monte Carlo samples \(top 20 options\) it leads in \d+ %/.test(conf), `summary part 4: ${conf.slice(0, 200)}`);
   const maxGap = Math.max(...gaps);
   ok(maxGap < 250, `a timer waited ${maxGap.toFixed(0)} ms while the Monte Carlo ran`);
   const bad = ax.skipped ? [] : serious(ax).map((v) => `${v.impact} ${v.id} ×${v.nodes} (${v.target})`);

@@ -2044,4 +2044,6 @@ Report: `verification/review-h4-h6/OPUS-review.md`. The owner took Claude's reco
 | N-11 (low) | `ENGINE_VERSION` 0.3.0 (results changed) |
 | N-12 (low) | Guide chapters 22, 27 and 46 (`03-part3b.md`, `04-part4b.md`), BUILD-NOTES work package 17, OPEN-QUESTIONS 103 and the Run summary's compliant-first sentence corrected |
 
+**Test runs (2026-10-30).** `npm test` 81/81 (77 + test 47a–d). `npm run test:browser`: 40 of 41, B40 failing only on the old wording ("of 100 Monte Carlo samples"); B40 updated and passing on its own; the other 40 passed in the full run.
+
 Not changed: N-13 (market-based carbon on the contract volume; owner's earlier rule). Development aid: `tests/only-tests.mjs` runs tests 40, 46 and 47 alone.
