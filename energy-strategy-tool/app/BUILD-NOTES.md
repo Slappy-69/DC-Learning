@@ -2028,7 +2028,7 @@ Full runs after the owner's three answers (commit 856dba7, 2026-10-26, the app r
 
 The owner asked on 2026-10-30, in writing: "Create a proper working phone version" (the phone had been dropped on 2026-10-21). Built from `main` (commit 3eb59a9) by Claude Opus 5.5.
 
-**Form.** The hosted page (`dist/energy-tool-hosted.html`), republished to the existing private Claude link "Concept Energy Optioneering" (https://claude.ai/artifact/KZ5isQcoksrwHY1AqTHU55, version 5, readable only by the owner) with the host's `downloads` capability. The earlier version on that link was the 2026-10-21 build (810 KB, no capabilities). The installable web app (PWA) was not chosen: hosting it needs a repository setting (GitHub Pages) and makes the tool public.
+**Form.** The hosted page (`dist/energy-tool-hosted.html`), republished to the existing private Claude link "Concept Energy Optioneering" (https://claude.ai/artifact/KZ5isQcoksrwHY1AqTHU55, version 6, readable only by the owner) with the host's `downloads` capability. The earlier version on that link was the 2026-10-21 build (810 KB, no capabilities). The installable web app (PWA) was not chosen: hosting it needs a repository setting (GitHub Pages) and makes the tool public.
 
 **What was wrong on a phone and what changed.**
 

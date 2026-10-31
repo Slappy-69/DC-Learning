@@ -5,7 +5,7 @@ The owner chose **Windows and phone only** (2026-10-21):
 | Form | How to get it | State |
 |---|---|---|
 | **Windows program** (Electron 44.9.0) | Download from GitHub (below) | Built on GitHub by the **Desktop builds** workflow |
-| **Phone** | The private Claude artifact link "Concept Energy Optioneering" (https://claude.ai/artifact/KZ5isQcoksrwHY1AqTHU55), published from `app/dist/energy-tool-hosted.html` with the host's `downloads` capability | Dropped 2026-10-21; **asked for again by the owner on 2026-10-30** and republished (version 5) the same day. Opens in the Claude app or a phone browser; private until shared. Saves (PDF, study, run log) go through the host, which asks the viewer to confirm each one |
+| **Phone** | The private Claude artifact link "Concept Energy Optioneering" (https://claude.ai/artifact/KZ5isQcoksrwHY1AqTHU55), published from `app/dist/energy-tool-hosted.html` with the host's `downloads` capability | Dropped 2026-10-21; **asked for again by the owner on 2026-10-30** and republished (version 6) the same day. Opens in the Claude app or a phone browser; private until shared. Saves (PDF, study, run log) go through the host, which asks the viewer to confirm each one |
 
 The model is the same in every form: it runs entirely on the device, with no server, no account and no telemetry.
 
