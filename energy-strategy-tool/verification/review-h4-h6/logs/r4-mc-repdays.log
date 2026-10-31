@@ -1,0 +1,23 @@
+(a) Representative days (49 days a year)
+  #1 OP13Y1Y: LCOE full 151.91 rep 151.83 (-0.05 %); carbon full 121.3 rep 122.5; adequate full true rep true
+  #2 O67PEWY: LCOE full 152.62 rep 152.52 (-0.06 %); carbon full 122.4 rep 123.6; adequate full true rep true
+  #3 OFJGFIL: LCOE full 153.45 rep 153.36 (-0.06 %); carbon full 122.2 rep 123.4; adequate full true rep true
+  #4 OAXIGME: LCOE full 153.55 rep 153.45 (-0.06 %); carbon full 122.0 rep 123.2; adequate full true rep true
+  #5 OLT2B3Y: LCOE full 153.73 rep 153.63 (-0.06 %); carbon full 121.9 rep 123.1; adequate full true rep true
+  #6 OKNYLWE: LCOE full 153.73 rep 153.62 (-0.07 %); carbon full 122.5 rep 123.8; adequate full true rep true
+  #7 O3ODMT4: LCOE full 154.24 rep 154.13 (-0.07 %); carbon full 122.4 rep 123.7; adequate full true rep true
+  #8 OZR125S: LCOE full 154.63 rep 154.34 (-0.19 %); carbon full 121.6 rep 122.6; adequate full true rep true
+  #9 O1HIDU20: LCOE full 155.06 rep 154.97 (-0.06 %); carbon full 121.6 rep 122.9; adequate full true rep true
+  #10 OP6ZFF0: LCOE full 155.06 rep 154.96 (-0.06 %); carbon full 121.9 rep 123.1; adequate full true rep true
+  #11 O62QAZZ: LCOE full 156.02 rep 155.93 (-0.06 %); carbon full 122.4 rep 123.7; adequate full true rep true
+  #12 OR78E49: LCOE full 156.02 rep 155.92 (-0.06 %); carbon full 122.5 rep 123.8; adequate full true rep true
+  #13 OPV3O1M: LCOE full 156.26 rep 156.16 (-0.06 %); carbon full 122.1 rep 123.3; adequate full true rep true
+  #14 O1O4JBIN: LCOE full 156.63 rep 156.35 (-0.18 %); carbon full 121.5 rep 122.6; adequate full true rep true
+  #15 O14T8EKG: LCOE full 156.62 rep 156.34 (-0.18 %); carbon full 121.8 rep 122.8; adequate full true rep true
+  #16 OYNUBY1: LCOE full 156.55 rep 156.46 (-0.06 %); carbon full 122.0 rep 123.2; adequate full true rep true
+  #17 O1KKP9SA: LCOE full 156.53 rep 156.44 (-0.06 %); carbon full 122.2 rep 123.5; adequate full true rep true
+  #18 O1AJ4IU0: LCOE full 157.59 rep 157.49 (-0.06 %); carbon full 122.4 rep 123.6; adequate full true rep true
+  #19 ONXOWB0: LCOE full 154.07 rep 153.98 (-0.05 %); carbon full 135.6 rep 137.1; adequate full true rep true
+  #20 OYXLBZE: LCOE full 154.32 rep 154.25 (-0.05 %); carbon full 134.8 rep 136.2; adequate full true rep true
+(b) representative days (3.8 s): leader LCOE P10 145.3 P50 158.1 P90 171.1; leads 82 %, top3 98 %; robust #1 (100/100, #1 100); adequate in 100 %
+(b) full year (9.0 s): leader LCOE P10 145.4 P50 158.2 P90 171.2; leads 83 %, top3 98 %; robust #1 (100/100, #1 100); adequate in 100 %

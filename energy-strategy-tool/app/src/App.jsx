@@ -1,4 +1,5 @@
 /* global __HOSTED__ */
+import { setStations, nearestStations, stationWeather } from './engine/stations.js';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputsPanel from './components/InputsPanel.jsx';
 import RankedList from './components/RankedList.jsx';
@@ -106,6 +107,26 @@ export default function App() {
   const prevRunRules = useRef(null);
 
   const update = useCallback((path, val) => setInputs((cur) => setIn(cur, path, val)), []);
+  // Bundled NOAA station years (OPEN-QUESTIONS 114): only the Windows program carries them, next to the page. Loaded
+  // once; nothing happens in the single-file or phone page, where the fetch is not even tried.
+  const [stationsReady, setStationsReady] = useState(false);
+  useEffect(() => {
+    if (typeof location === 'undefined' || location.protocol !== 'app:' || typeof DecompressionStream === 'undefined') return;
+    fetch('weather-stations.json.gz').then((r) => (r.ok ? r.body.pipeThrough(new DecompressionStream('gzip')) : null))
+      .then((s) => (s ? new Response(s).json() : null))
+      .then((b) => { if (b && setStations(b) > 0) setStationsReady(true); })
+      .catch(() => {});
+  }, []);
+  // With the bundle, the station nearest the pin is the weather unless an EPW file was uploaded.
+  useEffect(() => {
+    if (!stationsReady) return;
+    const w = inputs.weather || {};
+    if (w.source === 'epw') return;
+    const n = nearestStations(inputs.project.lat, inputs.project.lon, 1)[0];
+    if (!n || w.id === n.s.id) return;
+    const sw = stationWeather(n.s);
+    if (sw) update('weather', sw);
+  }, [stationsReady, inputs.project.lat, inputs.project.lon, inputs.weather && inputs.weather.source, inputs.weather && inputs.weather.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // Turning the Site tab off removes every site-fit part of the main flow: the tab, site-fit view filters and the
   // optional site-fit penalty (which belongs to the Beta settings only, BRIEF §9.9).
   const setSiteBeta = (on) => {
@@ -153,16 +174,23 @@ export default function App() {
     try {
       const r = readStudyFile(await file.text());
       if (!r.ok) { setStudyMsg(`Could not open ${file.name}: ${r.error}`); return; }
-      setInputs(r.inputs);
+      // With the Site tab (Beta) off, the Beta site-fit penalty is cleared, as switching the tab off does, so the ranking
+      // never uses site fit unseen (Opus review N-5, owner 2026-10-30, OPEN-QUESTIONS 112). The site itself is kept.
+      let ins = r.inputs, betaNote = '';
+      if (!siteBeta && ins.deliverability && ins.deliverability.siteFitPenalty) {
+        ins = setIn(ins, 'deliverability.siteFitPenalty', false);
+        betaNote = 'The study used the site-fit penalty from the Site tab (Beta), which is off, so the penalty was cleared; turn the Site tab on in General settings to use it.';
+      }
+      setInputs(ins);
       setSummaryNote(r.notes && r.notes.summary ? r.notes.summary : null);
-      setOpenedStudy({ file: r.file, hash: hashInputs(normalizeInputs(r.inputs)) });
-      setStudyMsg(`Opened "${r.file.name}" (saved ${String(r.file.savedAt || '').slice(0, 10)}). ${r.warnings.join(' ')} Running it…`.replace(/\s+/g, ' '));
+      setOpenedStudy({ file: r.file, hash: hashInputs(normalizeInputs(ins)), betaNote });
+      setStudyMsg(`Opened "${r.file.name}" (saved ${String(r.file.savedAt || '').slice(0, 10)}). ${r.warnings.join(' ')} ${betaNote} Running it…`.replace(/\s+/g, ' '));
     } catch (err) { setStudyMsg(`Could not open ${file.name}: ${err && err.message ? err.message : err}`); }
   };
   useEffect(() => {
     if (!openedStudy || compute.status !== 'done' || !compute.run || compute.run.inputHash !== openedStudy.hash) return;
     const c = compareWithSaved(openedStudy.file, compute.run);
-    setStudyMsg(`Opened "${openedStudy.file.name}". ${c ? c.message : 'The file holds no saved result to compare with.'}`);
+    setStudyMsg(`Opened "${openedStudy.file.name}". ${c ? c.message : 'The file holds no saved result to compare with.'}${openedStudy.betaNote ? ` ${openedStudy.betaNote}` : ''}`);
     setOpenedStudy(null);
   }, [compute.status, compute.run, openedStudy]);
   useEffect(() => { setPdfMsg(''); }, [run]);
@@ -304,7 +332,7 @@ export default function App() {
         <main id="results" className="main" tabIndex={-1}>
           <div className="header-strip" role="region" aria-label="Results header">
             <div className="hs-item"><span className="hs-k">Options</span><span className="hs-v">{run ? `${shown.toLocaleString('en-GB')} shown / ${run.options.length.toLocaleString('en-GB')} screened / ${run.generation.totalCombinations.toLocaleString('en-GB')} combinations · ${dominated.toLocaleString('en-GB')} dominated` : '—'}</span></div>
-            <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">{(() => { const mc = run ? latestMonteCarlo(run) : null; const r = mc && leader ? mc.rows.find((x) => x.id === leader.id) : null; return r ? `Leads in ${Math.round(r.pRank1 * 100)} % of ${mc.samples.toLocaleString('en-GB')} Monte Carlo samples` : 'Rank probability: run the Monte Carlo (Sensitivity tab)'; })()}</span></div>
+            <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">{(() => { const mc = run ? latestMonteCarlo(run) : null; const r = mc && leader ? mc.rows.find((x) => x.id === leader.id) : null; return r ? `Leads in ${Math.round(r.pRank1 * 100)} % of ${mc.samples.toLocaleString('en-GB')} samples, top ${mc.rows.length}` : 'Rank probability: run the Monte Carlo (Sensitivity tab)'; })()}</span></div>
             <div className="hs-item"><span className="hs-k">Power adequacy</span><span className="hs-v">{run ? <>✓ {adequate.toLocaleString('en-GB')} adequate · ✗ {(run.options.length - adequate).toLocaleString('en-GB')} not adequate</> : '—'}</span><span className="hs-sub">Adequate options rank first; none is hidden.</span></div>
             {siteBeta ? <div className="hs-item"><span className="hs-k">Site fit (Beta)</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit.' : 'Status only: it changes no score or rank.'} Site inputs set the POC and gas-main route costs.</span></div> : null}
             <div className="hs-item"><span className="hs-k">Model</span><span className="hs-v">{run && run.verification ? `Screening (representative days); best ${run.verification.verified} verified with the full year` : 'Full-year hourly (8760 h)'}</span><span className="hs-sub">Synthetic profiles · {run ? COUNTRIES[run.country].name : ''}</span></div>

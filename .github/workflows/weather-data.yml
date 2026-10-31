@@ -1,0 +1,71 @@
+# Weather data: builds the bundled NOAA (GHCNh) station years at release time (owner 2026-10-30, OPEN-QUESTIONS
+# 106–107). Started by hand only; uploads the result as a download; commits nothing.
+name: Weather data
+on:
+  # A small trial (3 stations per group) whenever this branch's weather-data code changes; the full build is by hand.
+  push:
+    branches: ['feature/weather']
+    paths: ['energy-strategy-tool/weather-data/**', 'energy-strategy-tool/app/src/engine/weathertmy.js', 'energy-strategy-tool/app/src/engine/weather.js', '.github/workflows/weather-data.yml']
+  workflow_dispatch:
+    inputs:
+      years: { description: 'Years to read (first-last)', default: '2010-2024', required: true }
+      min_years: { description: 'Usable years needed for every calendar month', default: '10', required: true }
+      limit: { description: 'Stations per group (blank = all; e.g. 5 for a trial run)', default: '', required: false }
+permissions:
+  contents: read
+# A newer push cancels an older build of the same branch, so NOAA is never read twice at once.
+concurrency:
+  group: weather-data-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  stations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 9
+      matrix:
+        countries: ['FR', 'DE', 'SE,NO', 'ES,PT', 'GB,IE,IS', 'IT,AT,CH,MT', 'FI,EE,LV,LT,DK', 'PL,CZ,SK,HU,RO,BG', 'NL,BE,LU,GR,CY,HR,SI']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Install
+        working-directory: energy-strategy-tool/weather-data
+        run: npm ci || npm install --no-audit --no-fund
+      - name: Build station years
+        working-directory: energy-strategy-tool/weather-data
+        # On a push: a 3-station trial, or every station when the file FULL-RUN is present (it records who asked and when).
+        run: |
+          LIMIT="${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}"
+          if [ "${{ github.event_name }}" = "push" ] && [ ! -f FULL-RUN ]; then LIMIT="--limit 3"; fi
+          node build-stations.mjs --countries ${{ matrix.countries }} --years ${{ inputs.years || '2010-2024' }} --min-years ${{ inputs.min_years || '10' }} --concurrency 16 $LIMIT
+      - name: Report as notes (readable from the public API)
+        if: always()
+        working-directory: energy-strategy-tool/weather-data
+        run: |
+          for f in out/report-*.json; do node -e "const r=require('./'+process.argv[1]); console.log('::notice title=Weather '+r.countries+'::'+JSON.stringify({stations:r.stations,usable:r.usable,skipped:r.skipped,errors:r.errorCount,firstErrors:r.errors.slice(0,3),codes:r.qualityCodesSeen,MB:r.megabytesRead,min:r.minutes,schema:(r.schemaSeen||[]).slice(0,60)}).slice(0,3500))" "$f"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stations-${{ strategy.job-index }}
+          path: energy-strategy-tool/weather-data/out/
+  merge:
+    needs: stations
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - uses: actions/download-artifact@v4
+        with: { path: parts, pattern: 'stations-*', merge-multiple: true }
+      - name: Merge
+        run: |
+          mkdir -p out && cp parts/*.json out/ && node energy-strategy-tool/weather-data/merge-bundle.mjs out
+          node -e "const s=require('./out/weather-summary.json'); console.log('::notice title=Weather bundle::'+JSON.stringify({stations:s.stations,byCountry:s.byCountry,MB:s.megabytes,MBgzip:s.megabytesGzip}))"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: weather-stations
+          path: |
+            out/weather-stations.json.gz
+            out/weather-summary.json

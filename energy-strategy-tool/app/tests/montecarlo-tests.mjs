@@ -90,7 +90,7 @@ export async function monteCarloTests(test, ctxRuns) {
     // The summary and the PDF.
     const sm = plainSummary(run, { monteCarlo: mc });
     assert.ok(sm.usedMonteCarlo && sm.words <= SUMMARY_WORD_LIMIT && !sm.notRun.includes('the Monte Carlo'));
-    assert.ok(sm.parts[3].text.includes(`In 100 Monte Carlo samples it leads in ${Math.round(lr.pRank1 * 100)} %`), sm.parts[3].text);
+    assert.ok(sm.parts[3].text.includes(`In 100 Monte Carlo samples (top 20 options) it leads in ${Math.round(lr.pRank1 * 100)} %`), sm.parts[3].text);
     assert.ok(sm.parts[0].text.includes('Monte Carlo samples its LCOE is') || sm.details.leader.some((t) => /Monte Carlo samples its LCOE/.test(t)));
     assert.ok(!plainSummary(run, { monteCarlo: { ...mc, complete: false } }).usedMonteCarlo, 'a partial Monte Carlo used');
     const created = new Date('2026-10-25T12:00:00Z');

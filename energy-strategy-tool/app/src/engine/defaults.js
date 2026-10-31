@@ -947,6 +947,13 @@ export function buildDefaultInputs(opts = {}) {
     leasePerKWMonth: rec('existing.leasePerKWMonth', 6, '€/kW/month', { low: 3, high: 9, basis: 'judgement', ref: '§5.4', note: 'Capacity payment for the lease, paid from a month before the plant is first needed (settings.rentalLeadMonths). Assumed in the Pego study (2026-10-24); replace with the owner\'s offer.' }),
     linkCapex: rec('existing.linkCapex', 0, '€', { basis: 'judgement', ref: '§5.4', note: 'One-off: the connection from the plant to the campus (lines, bays). Booked when the lease starts.' }),
   };
+  // Measured hourly weather (owner 2026-10-30, OPEN-QUESTIONS 106–107): an uploaded EPW file or a NOAA station year.
+  // None = the synthetic country profile. The arrays are 8,760 hourly values in °C to 0.1 (engine/weather.js).
+  inputs.weather = {
+    source: rec('weather.source', 'none', 'none / epw / station', { basis: 'judgement', ref: '§9.3', note: 'none: the synthetic country temperatures (indicative — unverified). epw: a file the engineer uploads. station: the nearest bundled NOAA station (not built yet).' }),
+    name: null, country: null, file: null, lat: null, lon: null, elevationM: null, years: null, dataSource: null,
+    dryBulb: null, wetBulb: null, designDB: null, designWB: null, designBasis: null, notes: null,
+  };
   inputs.load.phases = rec('load.phases', null, 'list of {itMW, date}', { basis: 'judgement', derived: true, ref: '§5.3', note: 'null = 1 phase, 100 % of IT at the grid full-connection date' });
   // Choice states: null = default state (§8 table), which may follow other inputs (C6, C7, C8, C11, C15).
   inputs.choices = {};
@@ -971,6 +978,8 @@ export function normalizeInputs(inputs) {
   out.requirements.landTakeCeilingHa = out.requirements.landTakeCeilingHa ?? null;
   // Inputs saved before work package 12 have no existing plant.
   out.existing = { include: false, name: 'Existing plant', type: 'ccgt', units: null, unitMW: null, availableDate: null, eff: null, msl: null, vomPerMWh: null, leasePerKWMonth: 6, linkCapex: 0, ...(out.existing || {}) };
+  // Inputs saved before the weather work have none: the synthetic profile.
+  if (!out.weather || typeof out.weather !== 'object') out.weather = { source: 'none' };
   out.choices = out.choices || {};
   for (const c of CHOICES) {
     if (!out.choices[c.id]) out.choices[c.id] = defaultChoiceState(c.id, out);

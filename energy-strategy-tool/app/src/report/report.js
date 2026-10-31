@@ -8,6 +8,7 @@
 import { PdfDoc, INK, MUTED, ACCENT, FLAG, LINE } from './pdf.js';
 import { getRegistry, normalizeInputs, CHOICES, choiceLabel, LABEL, LABEL_SOURCED, REQUIRED_EXAMPLE } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
+import { weatherSummary } from '../engine/weather.js';
 import { topCards } from '../engine/cards.js';
 import { measureById, sortRows } from '../engine/sensitivity.js';
 import { plainSummary, summaryKey } from '../engine/summary.js';
@@ -59,6 +60,11 @@ export function inputRows(inputs) {
       out.push({ section: title, path, value: `${valueText(v)}${r && r.unit && typeof v === 'number' ? ` ${r.unit}` : ''}`, status, note: r && r.note ? noSiteNote(r.note) : '', isDefault: !!((r && same(r.value, v) && !(path in REQUIRED_EXAMPLE)) || A[path]) });
     }
   }
+  // Hourly weather: one row (the 8,760-hour arrays are not printed).
+  const ws = weatherSummary(I);
+  out.push(ws
+    ? { section: 'Weather', path: 'weather', value: ws.text, status: 'Entered', note: '', isDefault: false }
+    : { section: 'Weather', path: 'weather', value: 'synthetic country profile (made-up hourly temperatures)', status: 'Default: indicative — unverified (judgement)', note: 'Upload an EPW file (inputs section 1) to use measured weather.', isDefault: true });
   return out;
 }
 

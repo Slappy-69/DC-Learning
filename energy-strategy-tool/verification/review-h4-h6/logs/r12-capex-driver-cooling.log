@@ -1,0 +1,4 @@
+#1 evap: cooling delta EUR -4.00 m at x1 and -4.00 m at x1.5; other lines x1.500; total capex x1.526; LCOE 151.91 -> 158.57
+#2 dlc: cooling delta EUR 15.00 m at x1 and 15.00 m at x1.5; other lines x1.500; total capex x1.418; LCOE 152.62 -> 158.07
+#7 immersion: cooling delta EUR 25.00 m at x1 and 25.00 m at x1.5; other lines x1.500; total capex x1.370; LCOE 154.24 -> 159.49
+#3 air: cooling delta EUR 0.00 m at x1 and 0.00 m at x1.5; other lines x1.500; total capex x1.500; LCOE 153.45 -> 160.42

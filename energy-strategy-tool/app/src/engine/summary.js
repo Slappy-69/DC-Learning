@@ -174,6 +174,9 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
   const add = (id, heading, sentences, more = [], condensed = null) => parts.push({ id, heading, sentences: sentences.filter((x) => x && x.t), more, condensed });
   const req = (t) => ({ t, p: 0 });
   const opt = (t, p) => ({ t, p });
+  // A required sentence the word fit never removes (Opus review N-2, owner 2026-10-30, OPEN-QUESTIONS 109): the
+  // nearest breakevens and the Monte Carlo's rank probability and robust pick. The flags part (its first sentence and its count line) is kept whole as well.
+  const keep = (t) => ({ t, p: 0, keep: true });
   // The cost figure is named (LCOE or NPV); a carbon figure is already named by figureName ("hourly CFE").
   const vs = (k, f, a, b) => {
     const tag = k === 'cost' && f.tag ? `${f.tag} ` : '';
@@ -289,7 +292,7 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     more.push(`Other ${groupName} close to the leader: ${within.map(([d, n]) => `${n.toLocaleString('en-GB')} within ${d} point${d === 1 ? '' : 's'}`).join(', ')}.`);
     add('confidence', 'Confidence', [
       req(close ? `${plural(close, `other ${kind}option`)} score${close === 1 ? 's' : ''} within 1 point of it.` : `No other ${kind}option scores within 1 point of it.`),
-      mcL ? req(`In ${mc.samples.toLocaleString('en-GB')} Monte Carlo samples it leads in ${Math.round(mcL.pRank1 * 100)} % and is in the top three in ${Math.round(mcL.pTop3 * 100)} %; ${(() => { const rb = mc.rows.find((r) => r.id === mc.robustPickId); return rb && rb.id !== L.id ? `the robust pick (most often within ${Math.round(mc.band * 100)} % of the best) is #${rb.rank}, not the leader (${rb.nRobust} of ${mc.samples.toLocaleString('en-GB')} samples against ${mcL.nRobust})` : `it is also the robust pick (most often within ${Math.round(mc.band * 100)} % of the best)`; })()}.`)
+      mcL ? keep(`In ${mc.samples.toLocaleString('en-GB')} Monte Carlo samples (top ${mc.rows.length} options) it leads in ${Math.round(mcL.pRank1 * 100)} % and is in the top three in ${Math.round(mcL.pTop3 * 100)} %; ${(() => { const rb = mc.rows.find((r) => r.id === mc.robustPickId); return rb && rb.id !== L.id ? `the robust pick (most often within ${Math.round(mc.band * 100)} % of the best) is #${rb.rank}, not the leader (${rb.nRobust} of ${mc.samples.toLocaleString('en-GB')} samples against ${mcL.nRobust})` : (mc.robustLevelWithId ? `it is also the robust pick (most often within ${Math.round(mc.band * 100)} % of the best), level with another option within the noise of sampling` : `it is also the robust pick (most often within ${Math.round(mc.band * 100)} % of the best)`); })()}.`)
         : opt('Rank probability and the robust pick come from the Monte Carlo, not run for this result.', 3),
       req(`${assumed.length ? `It uses ${plural(assumed.length, 'key input')} left at ${assumed.length === 1 ? 'its default' : 'their defaults'}` : 'No key input it uses is left at its default'}; ${unv.toLocaleString('en-GB')} of ${reg.length.toLocaleString('en-GB')} default records are ${LABEL}.`),
     ], more);
@@ -317,9 +320,9 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     const be = breakevens && breakevens.leaderId === L.id && Array.isArray(breakevens.rows) ? breakevens : null;
     if (be) {
       const nf = nearestFlips(be, 2);
-      if (nf.length) s.push(req(`Breakevens: ${nf.map((f) => f.text).join('; ')}.`));
-      else if (!be.competitors.length) s.push(req('Breakevens: no other option with different figures was available to test against.'));
-      else s.push(req(`Breakevens: none of the ${plural(be.competitors.length, 'competitor')} overtakes it on the ${plural(be.rows.length, 'driver')} tested, within their ranges.`));
+      if (nf.length) s.push(keep(`Breakevens: ${nf.map((f) => f.text).join('; ')}.`));
+      else if (!be.competitors.length) s.push(keep('Breakevens: no other option with different figures was available to test against.'));
+      else s.push(keep(`Breakevens: none of the ${plural(be.competitors.length, 'competitor')} overtakes it on the ${plural(be.rows.length, 'driver')} tested, within their ranges.`));
       for (const f of nearestFlips(be, Infinity)) more.push(`${cap(f.text)} (${Math.round(f.distance * 100)} % of the driver's range from today's value).`);
       more.push('The breakeven search checks a grid of points on each side of today\'s value: a swap that reverses again between two checked points is not seen.');
     } else {
@@ -397,9 +400,19 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
       }
     }
   }
-  // Still over the limit with required sentences only (H5, M1: several major flags, a long option name): part 6 is
-  // condensed to its first sentence and a count; then each part, from the last back, keeps only its first sentence
-  // until the text fits. The sentences moved go to the detail.
+  // Still over the limit with required sentences only: first, from the last part back, move sentences after the first to the detail, but never the flags part or a
+  // sentence marked keep (Opus review N-2): the leader's open flags and the nearest breakevens stay in the text, even
+  // if that leaves it over the limit (reported as overLimit).
+  for (let i = parts.length - 1; i >= 0 && count() > wordLimit; i--) {
+    const p = parts[i];
+    if (p.id === 'flags') continue;
+    for (let j = p.sentences.length - 1; j >= 1 && count() > wordLimit; j--) {
+      if (p.sentences[j].keep) continue;
+      const [x] = p.sentences.splice(j, 1); p.more.unshift(x.t); moved.push(x.t);
+    }
+  }
+  // Then, only if still over the limit (H5, M1: several major flags, a long option name), part 6 is condensed to its
+  // first sentence and a count line, which stays (Opus review N-2). The sentences moved go to the detail.
   if (count() > wordLimit) {
     const fp = parts.find((p) => p.id === 'flags');
     if (fp && fp.condensed && fp.sentences.length > 1) {
@@ -407,10 +420,6 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
       fp.more.unshift(...gone); moved.push(...gone);
       fp.sentences = [fp.sentences[0], req(fp.condensed)];
     }
-  }
-  for (let i = parts.length - 1; i >= 0 && count() > wordLimit; i--) {
-    const p = parts[i];
-    while (p.sentences.length > 1 && count() > wordLimit) { const x = p.sentences.pop(); p.more.unshift(x.t); moved.push(x.t); }
   }
   const out = parts.map((p) => ({ id: p.id, heading: p.heading, text: p.sentences.map((x) => x.t).join(' ') }));
   const details = Object.fromEntries(parts.map((p) => [p.id, p.more]));

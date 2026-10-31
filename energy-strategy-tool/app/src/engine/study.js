@@ -54,16 +54,19 @@ export function studyFileName(inputs, date = new Date()) {
 
 // Fills what the file lacks from the current defaults (inputs saved by an older version) and lists the paths filled;
 // drops inputs this version does not know and lists them (Haiku check H4, L-2: they would change the input hash).
-function fillFromDefaults(def, saved, path, added, dropped) {
+function fillFromDefaults(def, saved, path, added, dropped, nulled = []) {
   const out = {};
   for (const [k, sv] of Object.entries(saved)) {
-    if (k in def) out[k] = sv;
+    // A number left empty (null) in a damaged or hand-edited file takes today's default and is listed (Opus review
+    // N-10): a null WACC, for example, would otherwise discount nothing, silently.
+    if (k in def && sv === null && typeof def[k] === 'number') { out[k] = def[k]; nulled.push(path ? `${path}.${k}` : k); }
+    else if (k in def) out[k] = sv;
     else dropped.push(path ? `${path}.${k}` : k);
   }
   for (const [k, dv] of Object.entries(def)) {
     const p = path ? `${path}.${k}` : k;
     if (!(k in saved)) { out[k] = dv; added.push(p); }
-    else if (isObj(dv) && isObj(saved[k]) && k !== 'choices') out[k] = fillFromDefaults(dv, saved[k], p, added, dropped);
+    else if (isObj(dv) && isObj(saved[k]) && k !== 'choices') out[k] = fillFromDefaults(dv, saved[k], p, added, dropped, nulled);
   }
   return out;
 }
@@ -84,14 +87,15 @@ export function readStudyFile(text) {
     if (isObj(dv) && k in f.inputs && !isObj(f.inputs[k]) && k !== 'choices') return { ok: false, error: `This study file is damaged: the input section "${k}" is ${f.inputs[k] === null ? 'empty (null)' : `a ${Array.isArray(f.inputs[k]) ? 'list' : typeof f.inputs[k]}`}, not a set of inputs.` };
   }
   if ('choices' in f.inputs && f.inputs.choices !== null && !isObj(f.inputs.choices)) return { ok: false, error: 'This study file is damaged: the choices are not a set of choices.' };
-  const added = [], dropped = [];
-  const inputs = fillFromDefaults(def, f.inputs, '', added, dropped);
+  const added = [], dropped = [], nulled = [];
+  const inputs = fillFromDefaults(def, f.inputs, '', added, dropped, nulled);
   const savedChoices = isObj(f.inputs.choices) ? f.inputs.choices : {};
   for (const k of Object.keys(savedChoices)) if (!(k in def.choices)) dropped.push(`choices.${k}`);
   inputs.choices = { ...def.choices, ...Object.fromEntries(Object.entries(savedChoices).filter(([k]) => k in def.choices)) };
   const warnings = [];
   if (added.length) warnings.push(`Saved by an earlier version: ${added.length} input${added.length === 1 ? '' : 's'} not in the file take${added.length === 1 ? 's' : ''} today's defaults (${added.slice(0, 6).join(', ')}${added.length > 6 ? ', …' : ''}).`);
   if (dropped.length) warnings.push(`${dropped.length} input${dropped.length === 1 ? '' : 's'} in the file ${dropped.length === 1 ? 'is' : 'are'} not known to this version and ${dropped.length === 1 ? 'was' : 'were'} left out (${dropped.slice(0, 6).join(', ')}${dropped.length > 6 ? ', …' : ''}).`);
+  if (nulled.length) warnings.push(`${nulled.length} number${nulled.length === 1 ? ' was' : 's were'} empty in the file and take${nulled.length === 1 ? 's' : ''} today's default${nulled.length === 1 ? '' : 's'} (${nulled.slice(0, 6).join(', ')}${nulled.length > 6 ? ', …' : ''}).`);
   if (f.engineVersion && f.engineVersion !== ENGINE_VERSION) warnings.push(`Saved with engine ${f.engineVersion}; this is engine ${ENGINE_VERSION}.`);
   // The summary note (work package 16): kept when it is a text; a damaged note is dropped with a warning.
   // A notes section that is not a set of notes, or a summary note that is not a text, is dropped with a warning (H5, L7);

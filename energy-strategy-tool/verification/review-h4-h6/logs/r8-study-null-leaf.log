@@ -1,0 +1,3 @@
+readStudyFile: ok true; warnings []
+T1: leader OP13Y1Y LCOE 151.9 NPV 940 m; with WACC null: leader O67PEWY LCOE 145.3 NPV 1909 m; run.inputs.economics.wacc = null
+run flags mentioning WACC: 0; leader flags mentioning WACC: none

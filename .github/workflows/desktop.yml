@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: read
+  actions: read   # to fetch the bundled weather stations from the latest full "Weather data" run
 
 env:
   PLAYWRIGHT_VERSION: 1.56.0
@@ -47,6 +48,19 @@ jobs:
       - name: Install packaging dependencies
         working-directory: energy-strategy-tool/packaging
         run: npm ci
+      - name: Fetch the bundled weather stations (latest full "Weather data" run; skipped when there is none)
+        working-directory: energy-strategy-tool/packaging
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p weather
+          for id in $(gh run list -R "$GITHUB_REPOSITORY" --workflow weather-data.yml --status success --limit 30 --json databaseId -q '.[].databaseId'); do
+            rm -rf /tmp/w && mkdir -p /tmp/w
+            gh run download "$id" -R "$GITHUB_REPOSITORY" -n weather-stations -D /tmp/w 2>/dev/null || continue
+            n=$(node -e "try{console.log(require('/tmp/w/weather-summary.json').stations)}catch{console.log(0)}")
+            if [ "$n" -ge 500 ]; then cp /tmp/w/weather-stations.json.gz /tmp/w/weather-summary.json weather/; echo "::notice title=Weather stations::$n stations from run $id"; break; fi
+          done
+          ls -la weather || true
       - name: Build ${{ matrix.target }}
         working-directory: energy-strategy-tool/packaging
         run: node desktop/build-desktop.mjs --platforms ${{ matrix.target }}

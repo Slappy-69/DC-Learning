@@ -18,6 +18,7 @@ import { existsSync, readdirSync, writeFileSync, unlinkSync, readFileSync as rea
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
+import { fakeEpw } from './weather-tests.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -671,11 +672,11 @@ await check('B40. Monte Carlo (work package 18, BRIEF §13.2): "Run uncertainty"
   const lead = await page.locator('.mc-lead').innerText();
   ok(/#1 leads in \d+ %/.test(lead) && /Robust pick/.test(lead), lead.slice(0, 160));
   const hs = await page.locator('.header-strip .hs-item').nth(1).innerText();
-  ok(/Leads in \d+ % of 100 Monte Carlo samples/.test(hs), `header: ${hs.replace(/\s+/g, ' ').slice(0, 160)}`);
+  ok(/Leads in \d+ % of 100 samples, top 20/.test(hs), `header: ${hs.replace(/\s+/g, ' ').slice(0, 160)}`);
   const ax = await runAxe(page, 'Sensitivity tab with the Monte Carlo table');
   await page.getByRole('tab', { name: /^Options/ }).click();
   const conf = await page.locator('.sum-text p[data-part=confidence]').innerText();
-  ok(/In 100 Monte Carlo samples it leads in \d+ %/.test(conf), `summary part 4: ${conf.slice(0, 200)}`);
+  ok(/In 100 Monte Carlo samples \(top 20 options\) it leads in \d+ %/.test(conf), `summary part 4: ${conf.slice(0, 200)}`);
   const maxGap = Math.max(...gaps);
   ok(maxGap < 250, `a timer waited ${maxGap.toFixed(0)} ms while the Monte Carlo ran`);
   const bad = ax.skipped ? [] : serious(ax).map((v) => `${v.impact} ${v.id} ×${v.nodes} (${v.target})`);
@@ -1423,6 +1424,30 @@ await check('B30. Site tab (Beta): hidden by default; turned on in the general s
   ok(errors.length === 0, errors.join('; '));
   await ctx.close();
   return `default tabs: ${off1.tabs.join(', ')}; on: ${on.tabs.join(', ')} (no re-run); top ${off1.rows.length} rows and leader identical off → on → off; site fit in the header strip and the table only when on; turning it off from the Site tab returns to Options.`;
+});
+
+await check('B42. Hourly weather (owner 2026-10-30): "Upload EPW file…" in section 1 reads the file on this computer, says what it loaded (station, distance, design temperatures), re-runs, and the options carry the weather; "Use the synthetic profile" removes it; no outside request, no console error', async () => {
+  const { ctx, page, errors } = await openPage();
+  const outside = [];
+  page.on('request', (r) => { if (/^https?:/.test(r.url())) outside.push(r.url()); });
+  const before = (await page.locator('.header-strip').innerText()).replace(/\s+/g, ' ');
+  const path = join(tmpdir(), 'b42-test.epw');
+  writeFileSync(path, fakeEpw({ offset: 6, lat: 52.0, lon: -0.5 }));
+  await page.locator('input[aria-label="EPW weather file"]').setInputFiles(path);
+  unlinkSync(path);
+  await page.waitForFunction(() => /Measured: uploaded EPW file "b42-test\.epw"/.test(document.querySelector('.weather-field').textContent), null, { timeout: 10000 });
+  const txt = (await page.locator('.weather-field').innerText()).replace(/\s+/g, ' ');
+  ok(/Measured: uploaded EPW file "b42-test\.epw".*km from the pin.*design 30\.5 °C dry bulb and 21\.2 °C wet bulb/.test(txt), txt.slice(0, 300));
+  await page.waitForFunction(() => { const t = document.querySelector('.status').textContent; return /Last run/.test(t) && !/Screening options/.test(t); }, null, { timeout: 180000, polling: 250 });
+  // The hotter year moves the results shown in the header (the option flags are checked in Node test 48b).
+  const after = (await page.locator('.header-strip').innerText()).replace(/\s+/g, ' ');
+  ok(after !== before, `the header did not change: ${after.slice(0, 200)}`);
+  await page.getByRole('button', { name: 'Use the synthetic profile' }).click();
+  await page.waitForFunction(() => /Synthetic country profile/.test(document.querySelector('.weather-field').textContent), null, { timeout: 10000 });
+  ok(!outside.length, `outside requests: ${outside.slice(0, 3).join(', ')}`);
+  ok(!errors.length, errors.join(' | '));
+  await ctx.close();
+  return `loaded: "${txt.slice(0, 160)}…"; re-run, header changed; removed again`;
 });
 
 await browser.close();

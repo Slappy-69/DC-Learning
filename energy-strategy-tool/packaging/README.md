@@ -104,7 +104,8 @@ the macOS and Windows builds' launch.
     traced the program at start-up and found DNS lookups for `redirector.gvt1.com`, where Electron fetches spell-check
     dictionaries, made before the session's spell checker could be switched off. The page-level blocks could not stop
     them. With the two switches, nothing resolves and no proxy is used; D12 traces every process to prove it.
-16. Downloads are accepted only from the app's page: a `blob:` URL of the app's origin, or a `data:` URL started by an
+16. Bundled weather stations (OPEN-QUESTIONS 114): `weather/weather-stations.json.gz` (from the latest full "Weather data" run, fetched by the Desktop builds workflow) is copied next to the page as `web/weather-stations.json.gz` and recorded in `build-info.json`. The page reads it from `app://bundle` (allowed by `connect-src 'self'`; no network). Without it the program uses the EPW upload or the synthetic profile. Check D5b.
+17. Downloads are accepted only from the app's page: a `blob:` URL of the app's origin, or a `data:` URL started by an
     app page.
 
 ## Not done

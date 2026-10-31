@@ -166,6 +166,13 @@ await check('D5. A model run completes inside the desktop window, with no page e
   return status;
 });
 
+await check('D5b. Bundled weather stations (OPEN-QUESTIONS 114): when the build carries weather-stations.json.gz, the page loads it from app://bundle and uses the NOAA station nearest the pin as its hourly weather', async () => {
+  ok(page, 'no window');
+  if (!info || !info.weatherStations) return 'not tested: this build carries no weather stations (no full "Weather data" run was available)';
+  await page.waitForFunction(() => /Measured: NOAA station/.test((document.querySelector('.weather-field') || {}).textContent || ''), null, { timeout: 60000, polling: 250 });
+  return (await page.locator('.weather-field').innerText()).replace(/\s+/g, ' ').slice(0, 220);
+});
+
 await check('D6. Offline, page level: the page made no request while loading and running; a request it tries is refused (the whole program is traced in D12)', async () => {
   ok(page, 'no window');
   const before = app.log.filter((l) => /^\[net\] blocked/.test(l));

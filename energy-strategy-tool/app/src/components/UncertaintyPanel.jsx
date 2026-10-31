@@ -100,7 +100,7 @@ export default function UncertaintyPanel({ run, onResult = null }) {
           {leaderRow ? (
             <p className="small mc-lead">
               {busy ? <em>Partial, {mc.samples} of {mc.samplesPlanned} samples. </em> : null}
-              <strong>#1 leads in {pc(leaderRow.pRank1)}</strong> of the samples and is in the top three in {pc(leaderRow.pTop3)}. Robust pick (most often within {Math.round(mc.band * 100)} % of the best score in its sample): <strong>#{robust.rank}</strong>{robust.id === mc.leaderId ? ', the leader itself' : `, not the leader (within the band in ${robust.nRobust} of ${mc.samples} samples, against ${leaderRow.nRobust} for #1; read the margin in samples, a gap of a few samples is within the noise of sampling)`}.
+              <strong>#1 leads in {pc(leaderRow.pRank1)}</strong> of the samples and is in the top three in {pc(leaderRow.pTop3)}. Robust pick (most often within {Math.round(mc.band * 100)} % of the best score in its sample): <strong>#{robust.rank}</strong>{robust.id === mc.leaderId ? (mc.robustLevelWithId ? (() => { const lv = mc.rows.find((r) => r.id === mc.robustLevelWithId); return `, the leader itself, level with #${lv ? lv.rank : '?'} (within the band in ${lv ? lv.nRobust : '?'} of ${mc.samples} samples, against ${leaderRow.nRobust} for #1: a gap within the noise of sampling)`; })() : ', the leader itself') : `, not the leader (within the band in ${robust.nRobust} of ${mc.samples} samples, against ${leaderRow.nRobust} for #1; read the margin in samples, a gap of a few samples is within the noise of sampling)`}.
             </p>
           ) : null}
           <div className="dv-scroll" role="region" aria-label="Monte Carlo results" tabIndex={0}>

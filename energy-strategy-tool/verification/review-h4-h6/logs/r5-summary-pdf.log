@@ -1,0 +1,19 @@
+T1 summary with tornado, breakevens and Monte Carlo: 247 words (limit 250), overLimit false, moved 8
+Leading option. The option that leads under the current weights (cost 35 %, carbon 25 %, time-to-power 25 %, deliverability 15 %) is #1, Grid + hvo-diesel prime bridge → retain as prime · retained-plant backup · Evaporative-adiabatic · PV 5.6 MWp · PPA hybrid 100 %, with a score of 94.1. LCOE €152/MWh, capex €84.9 m, carbon 121 g/kWh (location-based), power on time. In 300 Monte Carlo samples its LCOE is €145 to €173/MWh (P10 to P90; P50 €159/MWh).
+Why it leads. It is 0.15 points ahead of #2: 0.11 points from cost (LCOE €152 against €153/MWh) and 0.04 points from carbon (121 against 122 g/kWh).
+What it gives up. On deliverability it has 89 points; the best of the adequate options, #595, has 96.8 points.
+Confidence. 21 other adequate options score within 1 point of it. In 300 Monte Carlo samples it leads in 83 % and is in the top three in 98 %; the robust pick (most often within 1 % of the best) is #7, not the leader (300 of 300 samples against 299). It uses 13 key inputs left at their defaults; 549 of 573 default records are indicative — unverified.
+What would change the answer. #26 would lead if the deliverability weight fell from 15 % to 0 %, the other weights scaled in proportion.
+Open flags on the leader. Resilience: meets the requirement.
+Inputs with most influence. Of the 7 inputs tested on #1, grid import price (confidence C) moves LCOE by up to €30.7/MWh across its range.
+Concept-stage screening only. Figures are indicative and must be verified with project-specific data and specialist advice before any design or investment decision. This tool is decision support, not financial or engineering advice.
+--- detail, confidence:
+  - The Monte Carlo ran on representative days: adequacy and the order of the options are approximate, and now and then a full-year run would put a different option first in a sample.
+  - Key inputs at their defaults: Analysis start; Average IT utilisation; Ramp; Load shape; Cooling type; Grid non-commodity adder; Electricity price escalation; Carbon price (Scope 1); WACC (real); Evaluation period; UPS ride-through; PPA type; Design temperatures.
+  - Other adequate options close to the leader: 0 within 0.1 points, 21 within 1 point, 337 within 5 points.
+--- PDF, Monte Carlo paragraph:
+arlo) 300 Latin hypercube samples (seed 20261025) of 13 inputs drawn together, each triangular between its low and high value around the current one; grid and gas price correlated, and the capex factors. The 20 leading options re-run in each sample with representative-day dispatch and put in the ranking's order. #1 leads in 83 % of samples and is in the top three in 98 %; the robust pick (most often within 1 % of the best score) is #7 (within the band in 300 of 300 samples, against 299 for #1). Representative-day dispatch makes adequacy and the order of the options approximate: now and then a full-year run would put a different option first in a sample. Option Leads · top 3 Within 1 % LCOE P10 · P50 · P90 Carbon P50 Full load P10  P90 Adequate #1 83 % · 98 % 99.7 % 145/MWh · 159/MWh · 173/MWh 125 g/kWh 2029-01  2029-01 100 % #2 0 % · 55 % 94.7 % 147/MWh · 161/MWh · 175/MWh 127 g/kWh 2029-0
+
+T2 leader OP13Y1Y: 2 site-fit flags; summary with the Site tab on mentions site fit: true; off: false
+PDF, note saved with the Site tab on: note printed false; site-fit wording in the PDF false
+PDF, same text re-saved with the Site tab off: note printed true; site-fit wording in the PDF true

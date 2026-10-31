@@ -1,0 +1,14 @@
+(a) round trip: ok true; warnings []; note kept true; same true (Re-run matches the saved study: leader #1 Grid + hvo-diesel prime bridge → keep shortfall )
+(b) unknown keys: dropped ["economics.futureThing","choices.C99"]; hash same as saved true
+(c) grid = null: ok false; This study file is damaged: the input section "grid" is empty (null), not a set of inputs.
+(c) grid = []: ok false; This study file is damaged: the input section "grid" is a list, not a set of inputs.
+(c) grid = "x": ok false; This study file is damaged: the input section "grid" is a string, not a set of inputs.
+(d) older file: ok true; added ["settings.rentalLeadMonths","settings.maxDispatchYears","existing"]; settings filled: rentalLeadMonths 1, maxDispatchYears 15
+(e) site.areaHa = null in the file: accepted true; after normalizeInputs null; registry default "no record"
+(e) economics.wacc = null in the file: accepted true; after normalizeInputs null; registry default 0.07
+(e) existing.leasePerKWMonth = null in the file: accepted true; after normalizeInputs null; registry default 6
+(f) registry 573 records; by label {"sourced — not independently checked":24,"indicative — unverified":549}; by confidence {"B":24,"C":549}; verified true: 0
+(f) run log line counts 549 as indicative and 24 as sourced; label count of indicative 549
+(g) land-take ceiling 10 ha: kept A,B; chip "Land take ≤ 10 ha (1 not laid out, kept)"; site-fit filter Fits: kept A,B
+(h) screening run: baseModel "full-year re-run"; base points against an independent full-year re-run: max difference 0.00e+0; against the run's own (screening) scores: max 0.0394 points
+(i) WACC 13 %: breakeven row not among the eight drivers; Monte Carlo WACC P10 0.0687 P90 0.1253 widened true

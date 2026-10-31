@@ -1,0 +1,20 @@
+T1 17.4 s; leader OP13Y1Y 94.1497
+normalised-input run: leader OP13Y1Y 94.1497 (same: true)
+breakevens 6.4 s; competitors #2 O67PEWY, #5 OLT2B3Y, #7 O3ODMT4, #11 O62QAZZ, #16 OYNUBY1
+2 flips
+
+FLIP #7 would lead if the grid full-connection date slipped by 14 months or more  [bracket 13 .. 14]
+  full re-run at +13 months (17.5 s): leader OP13Y1Y (the T1 leader); T1 leader now #1, competitor #7 now #2
+  full re-run at +14 months (16.1 s): leader O3ODMT4 (the competitor #7); T1 leader now #2, competitor #7 now #1
+
+FLIP #2 would lead if capex rose to × 1.41  [bracket 1.40625 .. 1.421875]
+  full re-run at × 1.41 (14.9 s): leader OP13Y1Y (the T1 leader); T1 leader now #1, competitor #2 now #2
+  full re-run at × 1.42 (12.8 s): leader O67PEWY (the competitor #2); T1 leader now #2, competitor #2 now #1
+
+MC 300 x 20 13.2 s
+sample 1: values grid-date=7 grid-price=1.16 grid-carbon=0.889 gas-price=0.91 carbon-price=0.893 wacc=0.0844 capex=0.816 capacity-factors=1.06 pue=0.912 bess-capex=0.753 grid-capex=1.04 escalation=0.0174 test-hours=18
+  MC first OP13Y1Y (T1 #1); full re-run (14.4 s) leader OP13Y1Y (T1 #1); MC first is #1 in the full re-run; T1 leader #1
+sample 2: values grid-date=5 grid-price=1.24 grid-carbon=0.923 gas-price=1.13 carbon-price=0.809 wacc=0.0741 capex=1.23 capacity-factors=0.982 pue=0.942 bess-capex=1.08 grid-capex=1.35 escalation=-0.00568 test-hours=18
+  MC first OP13Y1Y (T1 #1); full re-run (14.4 s) leader OP13Y1Y (T1 #1); MC first is #1 in the full re-run; T1 leader #1
+sample 3: values grid-date=9 grid-price=1.28 grid-carbon=1.02 gas-price=1.09 carbon-price=0.633 wacc=0.0579 capex=0.981 capacity-factors=1.08 pue=1.12 bess-capex=0.868 grid-capex=1.22 escalation=-0.00201 test-hours=21
+  MC first OP13Y1Y (T1 #1); full re-run (16.0 s) leader OP13Y1Y (T1 #1); MC first is #1 in the full re-run; T1 leader #1

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTag } from './Field.jsx';
 import { COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
 import MapPicker from './MapPicker.jsx';
+import WeatherField from './WeatherField.jsx';
 
 const YM = '^\\d{4}-(0[1-9]|1[0-2])$';
 
@@ -31,6 +32,7 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           hint={`Results and the PDF are shown in this currency at the fixed ECB reference rate of the release (1 € = ${FX[!inputs.project.currency || inputs.project.currency === 'by country' ? COUNTRIES[countryNow].currency : inputs.project.currency] ?? 1} ${!inputs.project.currency || inputs.project.currency === 'by country' ? COUNTRIES[countryNow].currency : inputs.project.currency}). Inputs stay in euro.`} />
         <TextField label="Analysis start (YYYY-MM)" value={inputs.project.analysisStart} onCommit={set('project.analysisStart')} pattern={YM} path="project.analysisStart" inputs={inputs} />
         <NumberField label="Seed" value={inputs.project.seed} onCommit={(v) => update('project.seed', Math.round(v))} path="project.seed" inputs={inputs} step={1} />
+        <WeatherField inputs={inputs} update={update} />
       </Section>
 
       <Section title="2 · Site" defaultOpen>

@@ -6,6 +6,7 @@
 
 import { getRegistry, COUNTRIES, TECH, LABEL, buildDefaultInputs } from './defaults.js';
 import { pinCountryInfo } from './context.js';
+import { weatherSummary } from './weather.js';
 
 const getPath = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -16,6 +17,9 @@ const combusts = (v, sz) => [sz.prime, sz.bridge].some((p) => p && TECH[p.tech] 
 const hasBackup = (v, sz) => !!(sz.backup && sz.backup.tech);
 const flexOn = (v) => v.C16 === 'on';
 const hasPpa = (v) => v.C13 && v.C13 !== 'none';
+// Existing plant (leased) and rented plant (Opus review N-4, owner 2026-10-30, OPEN-QUESTIONS 111).
+const usesExisting = (v, sz) => [sz.prime, sz.bridge].some((p) => p && p.tech === 'existing');
+const leasesOrRents = (v, sz) => [sz.prime, sz.bridge].some((p) => p && TECH[p.tech] && TECH[p.tech].lease);
 
 // Key inputs: [path, name, when the option uses it].
 export const KEY_INPUTS = [
@@ -44,6 +48,12 @@ export const KEY_INPUTS = [
   ['load.flexMaxPct', 'Flexibility: maximum curtailment', flexOn],
   ['load.flexHours', 'Flexibility: hours a year', flexOn],
   ['load.flexTriggerPrice', 'Flexibility: price trigger', (v) => flexOn(v)],
+  ['existing.leasePerKWMonth', 'Existing plant: lease rate', usesExisting],
+  ['existing.eff', 'Existing plant: efficiency', usesExisting],
+  ['existing.msl', 'Existing plant: minimum stable load', usesExisting],
+  ['existing.vomPerMWh', 'Existing plant: variable O&M', usesExisting],
+  ['existing.linkCapex', 'Existing plant: connection to the campus', usesExisting],
+  ['settings.rentalLeadMonths', 'Lease or hire starts before need', leasesOrRents],
 ];
 
 function valueText(path, x, rec, inputs) {
@@ -76,7 +86,14 @@ export function assumedBase(ctx) {
     const cur = getPath(inputs, path);
     let text = null;
     if (A[path]) text = `${A[path]} (indicative — unverified)`;
-    else if (path === 'load.coolingApproach') { if (cur === 'open') text = 'not chosen, so all four types are compared in this run (OPEN-QUESTIONS 28; judgement, indicative — unverified)'; }
+    else if (/^existing\.(eff|msl|vomPerMWh)$/.test(path)) {
+      // Empty = by type: the type's judgement record is used.
+      if (cur == null) {
+        const k = path.split('.')[1], ty = (inputs.existing && inputs.existing.type) || 'ccgt';
+        const tr = reg[`existing.types.${ty}.${k}`];
+        text = tr ? `${valueText(path, tr.value, tr, inputs)}, the ${ty.toUpperCase()} default (${tr.basis}, ${tr.label})` : `by type (${ty}), not entered (judgement, ${LABEL})`;
+      }
+    } else if (path === 'load.coolingApproach') { if (cur === 'open') text = 'not chosen, so all four types are compared in this run (OPEN-QUESTIONS 28; judgement, indicative — unverified)'; }
     else if (r && !RESOLVED.includes(path)) {
       if (r.derived && typeof r.value === 'string' && r.value.startsWith('by ')) {
         if (cur == null || cur === r.value) text = `${cname} default (${r.basis}, ${r.label})`;
@@ -94,7 +111,12 @@ export function assumedBase(ctx) {
   }
   // Design temperatures (work package 1): no ASHRAE station data is bundled (licensed data), so the design day is the
   // hottest hour of the synthetic country profile.
-  list.push({ path: 'project.climate', name: 'Design temperatures', when: () => true, text: `from the synthetic ${cname} profile (hottest hour of the year), not from a design station; ASHRAE station data is licensed and not bundled (judgement, indicative — unverified)` });
+  const ws = weatherSummary(inputs);
+  if (!ws) {
+    list.push({ path: 'project.climate', name: 'Hourly weather and design temperatures', when: () => true, text: `from the synthetic ${cname} profile (made-up hourly temperatures; design from its hottest hour), not measured weather; upload an EPW file in section 1 to use measured weather (judgement, indicative — unverified)` });
+  } else if (!/design conditions \(/.test(inputs.weather.designBasis || '')) {
+    list.push({ path: 'project.climate', name: 'Design temperatures', when: () => true, text: `${inputs.weather.designDB} °C dry bulb and ${inputs.weather.designWB} °C wet bulb, the 0.4 % hottest hours of the weather year, which understates design conditions when the year is a typical year (judgement)` });
+  }
   // Every other record the run reads is a default too (technology, cost, carbon, spatial); counted once.
   const all = Object.values(reg);
   const unverified = all.filter((x) => x.label === LABEL).length;
@@ -106,6 +128,9 @@ export function assumedFlags(ctx, v, sz, flag) {
   const b = assumedBase(ctx);
   const out = [];
   for (const a of b.list) if (a.when(v, sz)) out.push(flag(`assumed:${a.path}`, 'info', 'Assumed default', `Assumed ${a.name}: ${a.text}`, { assumed: true, path: a.path }));
+  // The measured weather in use, on every option (not an assumed default: the engineer entered it).
+  const ws = weatherSummary(ctx.inputs);
+  if (ws) out.push(flag('weather', 'info', 'Weather', `Weather: ${ws.text}`, { path: 'weather' }));
   out.push(flag('assumed-records', 'info', 'Assumed default', `Technology, cost, carbon and other defaults: ${b.unverified} of ${b.total} registry records are ${LABEL} (PDF report section 2; user guide appendix)`, { assumed: true }));
   return out;
 }
