@@ -952,7 +952,7 @@ export function buildDefaultInputs(opts = {}) {
   inputs.weather = {
     source: rec('weather.source', 'none', 'none / epw / station', { basis: 'judgement', ref: '§9.3', note: 'none: the synthetic country temperatures (indicative — unverified). epw: a file the engineer uploads. station: the nearest bundled NOAA station (not built yet).' }),
     name: null, country: null, file: null, lat: null, lon: null, elevationM: null, years: null, dataSource: null,
-    dryBulb: null, wetBulb: null, designDB: null, designWB: null, designBasis: null,
+    dryBulb: null, wetBulb: null, designDB: null, designWB: null, designBasis: null, notes: null,
   };
   inputs.load.phases = rec('load.phases', null, 'list of {itMW, date}', { basis: 'judgement', derived: true, ref: '§5.3', note: 'null = 1 phase, 100 % of IT at the grid full-connection date' });
   // Choice states: null = default state (§8 table), which may follow other inputs (C6, C7, C8, C11, C15).

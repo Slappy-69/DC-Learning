@@ -18,14 +18,17 @@ import { hourlyFromObs, prepareYear, typicalYear, offsetFor, FIPS_TO_ISO } from 
 
 export const BASE = 'https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly';
 const VARS = { temp: 'temperature', dew: 'dew_point_temperature', rh: 'relative_humidity', p: 'station_level_pressure', wind: 'wind_speed' };
-// Quality codes that keep a value. GHCNh leaves the code empty for a value that passed its checks (to confirm on the
-// first real run: the report lists every code seen, with counts). Override with --accept-codes A,B.
-let ACCEPT = new Set(['']);
+// Quality codes that keep a value. The first trial run (2026-10-31) showed GHCNh carrying the ISD quality codes for
+// European stations ("1" on almost every value, a few "4"). ISD's codes: 0 passed gross limits, 1 passed all checks,
+// 2 suspect, 3 erroneous, 4 and 5 as 0 and 1 from an NCEI source, 6 and 7 as 2 and 3 from an NCEI source, 9 passed gross
+// limits. Kept: empty, 0, 1, 4, 5, 9; dropped: 2, 3, 6, 7 and any other code (the report lists every code seen, with
+// counts). Override with --accept-codes A,B (added to the kept set).
+let ACCEPT = new Set(['', '0', '1', '4', '5', '9']);
 
 function args() {
   const a = Object.fromEntries(process.argv.slice(2).join(' ').split('--').filter(Boolean).map((s) => { const [k, ...v] = s.trim().split(/\s+/); return [k, v.join(' ')]; }));
   const [y0, y1] = (a.years || '2010-2024').split('-').map(Number);
-  if (a['accept-codes'] !== undefined) ACCEPT = new Set(['', ...a['accept-codes'].split(',').map((x) => x.trim())]);
+  if (a['accept-codes'] !== undefined) for (const c of a['accept-codes'].split(',')) ACCEPT.add(c.trim());
   return {
     countries: (a.countries || 'all').toUpperCase(), y0, y1, minYears: Number(a['min-years'] || 10), concurrency: Number(a.concurrency || 16),
     limit: a.limit ? Number(a.limit) : Infinity, out: a.out || 'out', stationList: a['station-list'] || null,
@@ -82,7 +85,7 @@ async function readYear(id, year, stats) {
   const qcols = Object.values(VARS).map((v) => `${v}_Quality_Code`).filter((c) => names.has(c));
   if (!names.has('DATE') || !names.has('temperature')) { stats.errors.push(`${id} ${year}: no DATE or temperature column`); return null; }
   const rows = await parquetReadObjects({ file, metadata: meta, columns: [...cols, ...qcols], compressors });
-  stats.bytes += file.byteLength || 0;
+  stats.bytes += file.byteLength || (meta && meta.metadata_length) || 0;
   const obs = [];
   for (const r of rows) {
     const t = Date.parse(String(r.DATE).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(String(r.DATE)) ? '' : 'Z'));
@@ -134,7 +137,9 @@ async function main() {
   fs.mkdirSync(a.out, { recursive: true });
   const t0 = Date.now();
   const csv = a.stationList ? fs.readFileSync(a.stationList, 'utf8') : await fetchText(`${BASE}/doc/ghcnh-station-list.csv`);
-  const list = europeanStations(csv, a.countries).slice(0, a.limit);
+  // Airports (ICAO) and WMO stations first: most are long-running and still reporting, so a limited trial finds them.
+  const rankOf = (s) => (s.icao ? 0 : s.wmo ? 1 : 2);
+  const list = europeanStations(csv, a.countries).sort((x, y) => rankOf(x) - rankOf(y) || (x.id < y.id ? -1 : 1)).slice(0, a.limit);
   console.log(`${list.length} stations in ${a.countries}; years ${a.y0}–${a.y1}; at least ${a.minYears} usable years per month`);
   const stats = { bytes: 0, codes: {}, errors: [], skipped: {}, schemaSeen: null };
   const out = [];

@@ -15,8 +15,8 @@ export default function WeatherField({ inputs, update }) {
     try {
       const r = readEpw(await f.text(), f.name);
       if (!r.ok) { setMsg(`Not loaded: ${r.error}`); return; }
-      update('weather', r.weather);
-      setMsg(`Loaded ${f.name}.${r.warnings.length ? ` ${r.warnings.join(' ')}` : ''}`);
+      update('weather', { ...r.weather, notes: r.warnings });
+      setMsg('');
     } catch (err) { setMsg(`Not loaded: ${err && err.message ? err.message : err}`); }
   };
   const clear = () => { update('weather', { source: 'none' }); setMsg('Weather file removed: the synthetic country profile is used.'); };
@@ -25,7 +25,7 @@ export default function WeatherField({ inputs, update }) {
       <span className="label" id="weather-label">Hourly weather</span>
       <p className="small" aria-describedby="weather-label">
         {on
-          ? <>Measured: {ws.text}.{ws.km != null && ws.km > 50 ? <strong> The station is more than 50 km from the pin: check that its climate is representative.</strong> : null}</>
+          ? <>Measured: {ws.text}.{ws.km != null && ws.km > 50 ? <strong> The station is more than 50 km from the pin: check that its climate is representative.</strong> : null}{Array.isArray(inputs.weather.notes) && inputs.weather.notes.length ? ` ${inputs.weather.notes.join(' ')}` : ''}</>
           : <>Synthetic country profile (made-up hourly temperatures, indicative — unverified). Upload an EPW weather file (EnergyPlus format, for example a TMYx or PVGIS file) to use measured weather for hourly PUE, the design load and the weather trigger.</>}
       </p>
       <div className="btn-row">
