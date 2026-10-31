@@ -1425,6 +1425,75 @@ await check('B30. Site tab (Beta): hidden by default; turned on in the general s
   return `default tabs: ${off1.tabs.join(', ')}; on: ${on.tabs.join(', ')} (no re-run); top ${off1.rows.length} rows and leader identical off → on → off; site fit in the header strip and the table only when on; turning it off from the Site tab returns to Options.`;
 });
 
+await check('B41. Phone version (owner 2026-10-30): the hosted page inside a host-like document with the host\'s downloads capability, on a 390 × 844 touch screen: runs T1; no sideways page scroll with the run details open; "Save PDF report", "Save study" and the run log save through the host (a declined save says so and saves nothing); the saved study reopens through the file field and matches; fields at 16 px or more; the inputs drawer closes from its own "Done" button (focus back on "Inputs") and from a tap beside it; no browser download, no outside request, no console error', async () => {
+  const content = readFileBytes(HOSTED_FILE, 'utf8');
+  // The host's document as the publish skeleton writes it, with a stand-in for window.claude that records each save;
+  // window.__decline makes the next save rejected as the viewer declining it.
+  const hostFile = join(tmpdir(), `phone-host-${process.pid}.html`);
+  writeFileSync(hostFile, `<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style><script>window.__saves=[];window.__decline=false;window.claude=Object.freeze({use(n){return new Promise((r)=>setTimeout(()=>r(n==='downloads'?Object.freeze({save(q){if(window.__decline){window.__decline=false;return Promise.reject({code:'declined',message:'declined'});}const t=typeof q.data==='string'?q.data:null;const u=t===null?new Uint8Array(q.data.buffer||q.data):null;window.__saves.push({filename:q.filename,text:t,head:t!==null?t.slice(0,40):String.fromCharCode(...u.slice(0,5)),size:t!==null?t.length:u.length});return Promise.resolve({status:'saved'});}}):null),30));}});</script></head><body>${content}</body></html>`);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  page.setDefaultTimeout(60000);
+  const errors = [], requests = [], downloads = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(`console: ${m.text()}`); });
+  page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+  page.on('request', (r) => requests.push(r.url()));
+  page.on('download', (d) => downloads.push(d.suggestedFilename()));
+  const ran = () => page.waitForFunction(() => { const t = (document.querySelector('.status') || {}).textContent || ''; return /Run failed/.test(t) || (/Last run/.test(t) && !/Screening options/.test(t)); }, null, { timeout: 240000, polling: 250 });
+  const sideways = () => page.evaluate(() => ({ sw: document.scrollingElement.scrollWidth, w: innerWidth }));
+  try {
+    await page.goto(pathToFileURL(hostFile).href, { waitUntil: 'load' });
+    await ran();
+    ok(!/Run failed/.test(await page.locator('.status').innerText()), 'run failed');
+    await page.evaluate(() => { for (const q of ['details.run-details', 'details.run-progress', 'details.run-summary']) { const d = document.querySelector(q); if (d) d.open = true; } });
+    const w1 = await sideways();
+    ok(w1.sw <= w1.w && w1.w === 390, `page scrolls sideways with the run details open (${w1.sw} px in ${w1.w} px)`);
+    await page.waitForSelector('#save-pdf', { timeout: 15000 });
+    await page.locator('#save-pdf').tap();
+    await page.waitForFunction(() => /PDF report saved/.test(document.body.innerText), null, { timeout: 60000 });
+    const pdf = await page.evaluate(() => window.__saves.find((s) => /\.pdf$/.test(s.filename)));
+    ok(pdf && pdf.head === '%PDF-', `PDF not saved through the host: ${JSON.stringify(pdf)}`);
+    const n0 = await page.evaluate(() => { window.__decline = true; return window.__saves.length; });
+    await page.locator('#save-pdf').tap();
+    await page.waitForFunction(() => /PDF report not saved: the save was declined/.test(document.body.innerText), null, { timeout: 60000 });
+    ok(await page.evaluate(() => window.__saves.length) === n0, 'a declined save was kept');
+    await page.locator('#save-study').tap();
+    await page.waitForFunction(() => /Study saved/.test(document.body.innerText), null, { timeout: 15000 });
+    const study = await page.evaluate(() => window.__saves.find((s) => /\.json$/.test(s.filename)));
+    ok(study && /dc-energy-study/.test(study.text), 'study file not saved through the host');
+    const label = (await page.locator('.rp-dl-label').first().innerText()).trim();
+    ok(/^Save run log/.test(label), `run-log label "${label}"`);
+    await page.locator('.rp-log-head').getByRole('button', { name: 'JSON' }).first().tap();
+    await page.waitForFunction(() => window.__saves.filter((s) => /\.json$/.test(s.filename)).length === 2, null, { timeout: 15000 });
+    await page.getByRole('button', { name: 'Inputs' }).first().tap();
+    await page.waitForTimeout(300);
+    const fonts = await page.evaluate(() => [...document.querySelectorAll('#inputs-panel input[type=number], #inputs-panel input[type=text], #inputs-panel select')].map((e) => parseFloat(getComputedStyle(e).fontSize)));
+    ok(fonts.length > 20 && Math.min(...fonts) >= 16, `fields below 16 px (smallest ${Math.min(...fonts)} px): a phone zooms into them`);
+    const done = await page.evaluate(() => { const b = document.querySelector('#inputs-done'); const q = b.getBoundingClientRect(); const t = document.elementFromPoint(q.x + q.width / 2, q.y + q.height / 2); return q.width > 0 && (t === b || b.contains(t)); });
+    ok(done, '"Done" is not reachable in the open drawer');
+    await page.locator('#inputs-done').tap();
+    await page.waitForTimeout(300);
+    const c1 = await page.evaluate(() => ({ open: document.querySelector('#inputs-panel').classList.contains('open'), focus: !!(document.activeElement && document.activeElement.classList.contains('panel-toggle')) }));
+    ok(!c1.open && c1.focus, `"Done" left the drawer ${c1.open ? 'open' : 'closed'} with focus ${c1.focus ? 'on' : 'off'} "Inputs"`);
+    await page.getByRole('button', { name: 'Inputs' }).first().tap();
+    await page.waitForTimeout(300);
+    await page.touchscreen.tap(385, 600);
+    await page.waitForTimeout(300);
+    ok(!(await page.evaluate(() => document.querySelector('#inputs-panel').classList.contains('open'))), 'a tap beside the drawer did not close it');
+    await page.setInputFiles('#open-study-file', { name: study.filename, mimeType: 'application/json', buffer: Buffer.from(study.text) });
+    await page.waitForFunction(() => /Re-run matches the saved study|differs/.test(document.body.innerText), null, { timeout: 240000, polling: 500 });
+    ok(/Re-run matches the saved study/.test(await page.evaluate(() => document.body.innerText)), 'the reopened study does not match its saved result');
+    ok(downloads.length === 0, `a browser download started: ${downloads.join(', ')}`);
+    const outside = requests.filter((u) => !/^(file:|blob:|data:)/.test(u));
+    ok(outside.length === 0, `requests outside the page: ${outside.slice(0, 3).join(', ')}`);
+    ok(errors.length === 0, errors.join(' | '));
+    return `390 px touch: no sideways scroll with the run details open; PDF (${Math.round(pdf.size / 1024)} kB), study and run log saved through the host, a declined save kept nothing; fields ≥ 16 px (${fonts.length}); drawer closed by "Done" and by a tap beside it; study reopened and matched`;
+  } finally {
+    await ctx.close();
+    try { unlinkSync(hostFile); } catch { /* ignore */ }
+  }
+});
+
 await browser.close();
 const passed = results.filter((r) => r.status === 'PASS').length;
 const skipped = results.filter((r) => r.status === 'SKIP').length;

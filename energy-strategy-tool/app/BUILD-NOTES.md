@@ -2023,3 +2023,24 @@ Same check: `tests/breakeven-tests.mjs` (test 45) and `tests/montecarlo-tests.mj
 Full runs on the fixed code (commit a4f531c, 2026-10-26, one after the other on a 2-core machine): `npm test` 77/77 (about 22 minutes with the browser run following; Node alone about 8 minutes) and `npm run test:browser` 40/40, axe with no violations.
 
 Full runs after the owner's three answers (commit 856dba7, 2026-10-26, the app rebuilt and `energy-tool-single-file.html` copied): `npm test` 77/77 (test 31 now also asserts that the grid connection capex factor doubles the charge and leaves the substation unchanged) and `npm run test:browser` 40/40, axe with no violations.
+
+## Phone version (2026-10-30, branch feature/phone-2026-10-30)
+
+The owner asked on 2026-10-30, in writing: "Create a proper working phone version" (the phone had been dropped on 2026-10-21). Built from `main` (commit 3eb59a9) by Claude Opus 5.5.
+
+**Form.** The hosted page (`dist/energy-tool-hosted.html`), republished to the existing private Claude link "Concept Energy Optioneering" (https://claude.ai/artifact/KZ5isQcoksrwHY1AqTHU55, version 5, readable only by the owner) with the host's `downloads` capability. The earlier version on that link was the 2026-10-21 build (810 KB, no capabilities). The installable web app (PWA) was not chosen: hosting it needs a repository setting (GitHub Pages) and makes the tool public.
+
+**What was wrong on a phone and what changed.**
+
+| Found | Change |
+|---|---|
+| The hosted page could not save anything: the host ignores downloads a page starts itself, so "Save PDF report" and "Save study" were hidden and the run log could only be copied | `saveFile.js`: in the hosted build, saves go through `claude.use('downloads').save({ filename, data })`; the host asks the viewer to confirm each save. The buttons appear once the host answers; without the capability the page behaves as before (no save buttons, run log copied). A declined or refused save says so in plain words (`saveRefusal`). The single file and the Windows program keep the browser download; each bundle carries only its own save code (test 14) |
+| Fields at 14 px: iOS zooms the page into any field below 16 px, on every tap | Fields at 16 px below 768 px wide or on a touch screen (`pointer: coarse`) |
+| Buttons 30 px high | 40 px on touch screens; tick boxes 22 px |
+| The inputs drawer covered the "Inputs" / "Close inputs" button, so on a phone it could not be closed without a keyboard | The drawer has its own head with "Done" (sticky at its top), a backdrop that closes it when tapped, and Escape; focus returns to "Inputs". Below 1280 px only; wider screens unchanged |
+| With "Run details" open, three run-summary tables (shortfall, grid periods, phasing; up to 464 px) widened the whole page, so a phone zoomed out to 502 px | `.rs-wide` scrolls sideways inside itself; grid children `min-width: 0`. B19 checked this section only closed |
+| The drawer's first and last controls could sit under the status bar or home indicator | Safe-area padding on the drawer below 1280 px |
+
+Mouse-driven screens, and so the Windows program, are unchanged except for the drawer's "Done" head and backdrop below 1280 px wide.
+
+**Checks.** New browser check B41: the hosted page in a host-like document with a stand-in for the downloads capability, 390 × 844 touch screen: T1 runs; no sideways scroll with the run details open; PDF, study and run log saved through the host; a declined save keeps nothing and says so; fields ≥ 16 px; "Done" reachable, closes the drawer and returns focus; a tap beside the drawer closes it; the saved study reopens through the file field and matches; no browser download, outside request or console error. Test 14 now requires the capability call in the hosted page and its absence from the single file. A longer phone check outside the suite (`/home/claude/review/phone-check.mjs` in the session, not committed) also ran the breakevens (5.5 s) and the Monte Carlo with 300 samples (21.8 s) at 390 px with no sideways scroll, and every results tab. Not checked: a real phone, and the real host's save prompt (the stand-in resolves at once).

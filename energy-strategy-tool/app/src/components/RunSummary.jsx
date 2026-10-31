@@ -28,7 +28,7 @@ function ShortfallSection({ sf, start }) {
     ? <>peak {sig(x.peakMW, 3)} MW in {monthLabel(start, x.peakMonth)}; {x.months} month{x.months === 1 ? '' : 's'} from {monthLabel(start, x.firstMonth)}</>
     : 'none');
   return (
-    <section aria-labelledby="rs-shortfall" className="rs-wide">
+    <section aria-labelledby="rs-shortfall" className="rs-wide" tabIndex={0}>
       <h3 id="rs-shortfall">Grid shortfall against the design load</h3>
       <p className="small">Design load: the full contracted IT, phased, at the design-day PUE plus ancillary load, against the offered grid capacity. Temporary shortfall is before the full grid connection ({monthLabel(start, sf.fullGridMonth)}); permanent shortfall is from it on. On-site generation must close both for an option to be adequate.</p>
       <table className="mini">

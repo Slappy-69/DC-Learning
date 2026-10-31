@@ -10,7 +10,7 @@ Read these before doing anything, in this order:
 2. `energy-strategy-tool/docs/BUILD-PLAN.md`: the agreed changes as work packages, in order, each with the brief sections, the questions to ask the owner first, the acceptance tests and the user-guide chapters and mock-ups that show the agreed design.
 3. `energy-strategy-tool/brief-v2/BRIEF.md` (revision 5): the specification. Everything the owner's walkthrough of 2026-10-21 changed is marked "(walkthrough, 2026-10-21)", with "as built" notes where the code still follows an earlier rule. Read it with `OPEN-QUESTIONS.md`, `ASSUMPTIONS.md` and `CHANGELOG.md` in the same folder.
 4. `energy-strategy-tool/docs/walkthrough-decisions-2026-10-21.md`: the owner's decision log. Where anything disagrees with it, the log is newer; ask the owner.
-5. `energy-strategy-tool/docs/KNOWN-ISSUES.md`: defects found in the built engine. None is fixed; each needs the owner's decision.
+5. `energy-strategy-tool/docs/KNOWN-ISSUES.md`: defects found in the built engine. All 21 listed so far are resolved; add new ones there, each with the owner's decision.
 6. `energy-strategy-tool/app/BUILD-NOTES.md`: architecture, every default with its label, decisions and test runs.
 7. The user guide, `energy-strategy-tool/docs/user-guide/`: how every number is worked out (Part IV), the defaults checked against published sources (chapter 50), and drawings of the agreed screens (`mock/*.html`).
 
@@ -27,13 +27,14 @@ Read these before doing anything, in this order:
 
 - **Branches.** Work on a `feature/<short-name>` branch and push it as the work goes. Never merge into `main` or change repository settings without the owner's yes.
 - **Verification.** Builder and reviewer: Claude Opus. Verifier: Claude Haiku. After every three Haiku checks, one Opus review. Reports go in `energy-strategy-tool/verification/<slice>/`, with a line in `verification/HISTORY.md`.
-- **Defaults.** Every default has a source record (brief §18). Until it is researched it stays labelled "indicative — unverified" (today every default is); once researched it carries its source, year, link and access date, or the label "judgement" with a reason. Never present an indicative value as verified. Every value the engineer did not enter is flagged on each option that uses it, with its source.
+- **Defaults.** Every default has a source record (brief §18). Until it is researched it stays labelled "indicative — unverified" (today 549 of 573 records are; 24 carry a source and the label "sourced — not independently checked"); once researched it carries its source, year, link and access date, or the label "judgement" with a reason. Never present an indicative value as verified. Every value the engineer did not enter is flagged on each option that uses it, with its source.
 - **Flag, never enforce** (brief §2, principle 5): a breached constraint raises a flag. It never hides, demotes or resizes an option.
 - **One ledger.** LCOE, NPV and every cost breakdown come from the same yearly cash-flow ledger.
 - **Offline.** The Windows program must make no network connection (packaging check D12 traces every process). Data is prepared at each release and bundled.
 - **Site tab.** Keep it working as a Beta feature: hidden by default, labelled Beta, kept out of the ranking and the PDF.
 - **Records.** Update `STATUS.md` after every completed step; `app/BUILD-NOTES.md` for defaults, decisions and test runs; the user guide when a feature is built (`docs/user-guide/README.md` says how).
 - After changing the app, copy `app/dist/energy-tool-single-file.html` over `energy-strategy-tool/energy-tool-single-file.html`.
+- **Phone version** (owner, 2026-10-30): the hosted page (`app/dist/energy-tool-hosted.html`) published to the private Claude link in `STATUS.md`, with the `downloads` capability. Republish it after the app changes and the checks pass (a session with the Artifact tool; read the link first, then publish to the same link).
 
 ## Commands
 

@@ -51,5 +51,5 @@ for (const f of ['app.js', 'worker.js', 'app.css', 'index.html']) console.log(`d
   const hostedHtml = `${title}\n${style}\n${body}\n`;
   if (/<!doctype|<html[\s>]|<head[\s>]|<body[\s>]/i.test(hostedHtml.replace(/<script>[\s\S]*?<\/script>/g, ''))) throw new Error('hosted page still carries document tags');
   writeFileSync('dist/energy-tool-hosted.html', hostedHtml);
-  console.log(`dist/energy-tool-hosted.html: ${(statSync('dist/energy-tool-hosted.html').size / 1024).toFixed(1)} KB (page content for the host's document; run log copied, not downloaded)`);
+  console.log(`dist/energy-tool-hosted.html: ${(statSync('dist/energy-tool-hosted.html').size / 1024).toFixed(1)} KB (page content for the host's document: the phone version; saves through the host's downloads capability, or copies the run log without it)`);
 }

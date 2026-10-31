@@ -602,12 +602,15 @@ export async function hostedPageTests(test) {
       assert.equal(stringLiteralAt(app, blob[0].index + blob[0][0].length), workerJs, `${label}: inlined worker differs from dist/worker.js`);
       for (const sc of scripts) new Function(sc); // both parse
     }
-    // Copy instead of download, decided at build time: the hosted page has the copy control and fallback and no
-    // download code; the single file has the download and no copy control.
-    assert.ok(hosted.includes('Copy run log') && !hosted.includes('Download run log'), 'hosted page label');
+    // Decided at build time. The hosted page (the phone version, 2026-10-30) saves through the host's downloads
+    // capability when it is offered and copies the run log without it, and carries no browser download code; the single
+    // file has the browser download and neither the copy control nor the capability call.
+    assert.ok(hosted.includes('Save run log') && hosted.includes('Copy run log') && !hosted.includes('Download run log'), 'hosted page label');
     assert.ok(hosted.includes('did not allow copying') && hosted.includes('rp-copy-text'), 'hosted page has no select-the-text fallback');
+    assert.ok(/\.use\("downloads"\)/.test(hosted), 'hosted page does not ask the host for its downloads capability');
     assert.ok(!/\.download=/.test(hosted) && !/revokeObjectURL/.test(hosted), 'hosted page still carries the download code');
     assert.ok(single.includes('Download run log') && !single.includes('Copy run log') && /\.download=/.test(single), 'single file label or download code');
+    assert.ok(!/\.use\("downloads"\)/.test(single), 'single file carries the host capability call');
     return `index.html: loading message in #root, noscript, startup handler (error + unhandledrejection, quiet once the app runs); single file ${(single.length / 1024).toFixed(1)} KB and hosted page ${(hosted.length / 1024).toFixed(1)} KB: 2 inline scripts each, worker inlined and equal to dist/worker.js, no <script src>, <link href> or other reference, ASCII only; hosted page starts with <title> then <style>, no doctype/<html>/<head>/<body>/<meta>, "Copy run log" with the select-the-text fallback and no download code; single file keeps "Download run log".`;
   });
 }

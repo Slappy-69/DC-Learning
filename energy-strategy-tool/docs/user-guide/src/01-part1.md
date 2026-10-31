@@ -84,7 +84,13 @@ The single file is handy for a quick look or for testing. It runs the model in b
 
 ## Phone
 
-The walkthrough dropped the phone version. An earlier private link for phones still exists but is no longer maintained.
+The walkthrough dropped the phone version on 21 October 2026; the owner asked for it again on 30 October 2026. It is the same program as the Windows version, published as a private Claude page ("Concept Energy Optioneering"). Open the link in the Claude app or a phone browser while signed in to Claude. The model runs on the phone itself: nothing is sent anywhere.
+
+- **Saving.** "Save PDF report", "Save study" and the run log ask you to confirm each save. You can decline; nothing is then saved and the page says so.
+- **Opening a study.** "Open study…" opens a study file from the phone's files.
+- **Inputs.** "Inputs" opens a drawer over the page. Close it with "Done" at its top, or by tapping beside it.
+- **Speed.** A full T1 run took about 15–20 s on a two-core test machine (17 s in the browser check); a phone may take longer. The run progress shows every stage while it works.
+- **What it does not have.** The Windows program's save dialog and offline start: the page needs a connection to open, and then runs without one.
 
 ## What your computer needs
 
