@@ -9,8 +9,13 @@ started by hand), never inside the app or a Claude session.
   all years. The method is `../app/src/engine/weathertmy.js`, tested in the app's Node suite (test 49).
 - `merge-bundle.mjs`: joins the country groups into `weather-stations.json` (and `.gz`) with a summary.
 
-Usable station (judgement, labelled as such): every calendar month has at least 10 complete years (gaps of up to 6 hours
-filled) within the years read (default 2010–2024).
+Usable station (judgement, labelled as such): every calendar month has at least 10 usable years within the years read
+(default 2010–2024). A month of one year is usable when at least 80 % of its hours have a reading after gaps of up to
+6 hours are filled by straight lines; the rest are filled from the same hour on the nearest days. Design conditions
+(0.4 % dry bulb and wet bulb) use only readings and the short fills, from every usable year.
+
+Quality codes: GHCNh carries ISD's codes for European stations (first trial run, 2026-10-31). Kept: empty, 0, 1, 4, 5,
+9 (passed); dropped: 2, 3, 6, 7 (suspect or erroneous) and anything else. Each run's report lists every code seen.
 
 **Not done yet:** how the bundle reaches the app. It is about 35 kB a station before compression (2 × 8,760 values),
 so a few thousand stations are tens of MB: too large for the single-file page and the phone page (16 MB limit). The

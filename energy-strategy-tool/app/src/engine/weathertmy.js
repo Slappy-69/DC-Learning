@@ -5,8 +5,10 @@
 // Steps:
 //  1. Observations (UTC) → one value per local-standard-time hour: the observation nearest the top of the hour, within
 //     30 minutes. The value at hh:00 goes to the hour ending hh:00, as in EPW files (engine/weather.js).
-//  2. Gaps of up to 6 hours filled by straight lines; a calendar month of one year is usable only if nothing is missing
-//     after that (judgement, as for EPW files).
+//  2. Gaps of up to 6 hours filled by straight lines; a calendar month of one year is usable when at least 80 % of its
+//     hours are then present (judgement, the plan given to the owner on 2026-10-30); the remaining hours are filled from
+//     the same hour on the nearest days of that month (keeping the daily cycle). Design conditions use only readings
+//     and the short straight-line fills, never these longer fills.
 //  3. Typical year by ISO 15927-4: per calendar month, the Finkelstein–Schafer statistic of daily mean dry bulb and
 //     daily mean humidity (station records carry no solar radiation, so it is left out: a departure from the standard,
 //     recorded); ranks summed; of the three best years, the one whose mean wind speed is closest to the long-term mean
@@ -84,31 +86,58 @@ export function fillRange(arr, a, b, maxGap = 6) {
   return missing;
 }
 
-// One station-year → per month: usable?, and the hourly dry bulb, humidity ratio, wet bulb, wind.
-export function prepareYear(hourly, elevationM, maxGap = 6) {
+// Fills the hours still missing from the same hour on the nearest days (up to 15 days away). Returns hours left.
+export function fillSameHour(arr) {
+  const n = arr.length / 24;
+  const src = Float64Array.from(arr);
+  let left = 0;
+  for (let h = 0; h < arr.length; h++) {
+    if (Number.isFinite(arr[h])) continue;
+    const d = Math.floor(h / 24), hr = h % 24;
+    let v = NaN;
+    for (let k = 1; k <= 15 && !Number.isFinite(v); k++) {
+      const a = d - k >= 0 ? src[(d - k) * 24 + hr] : NaN, b = d + k < n ? src[(d + k) * 24 + hr] : NaN;
+      v = Number.isFinite(a) && Number.isFinite(b) ? (a + b) / 2 : Number.isFinite(a) ? a : b;
+    }
+    if (Number.isFinite(v)) arr[h] = v; else left++;
+  }
+  return left;
+}
+
+// One station-year → per month: usable?, and the hourly dry bulb, humidity ratio, wet bulb, wind, and which hours are
+// readings (or short fills) rather than same-hour fills.
+export function prepareYear(hourly, elevationM, maxGap = 6, minShare = 0.8) {
   const pStd = pressureAtElevation(elevationM || 0);
   const months = [];
   for (let m = 0; m < 12; m++) {
     const a = DAYS_BEFORE[m] * 24, b = a + MONTH_HOURS[m];
     const t = hourly.temp.slice(a, b);
-    const missingT = fillRange(t, 0, t.length, maxGap);
-    if (missingT > 0) { months.push(null); continue; }
     const dew = hourly.dew.slice(a, b), rh = hourly.rh.slice(a, b), p = hourly.p.slice(a, b), wind = hourly.wind.slice(a, b);
+    const missingT = fillRange(t, 0, t.length, maxGap);
+    if (missingT > t.length * (1 - minShare)) { months.push(null); continue; }
+    const real = Uint8Array.from(t, (x) => (Number.isFinite(x) ? 1 : 0));
+    if (fillSameHour(t) > 0) { months.push(null); continue; }
     fillRange(dew, 0, dew.length, maxGap); fillRange(rh, 0, rh.length, maxGap); fillRange(p, 0, p.length, 24); fillRange(wind, 0, wind.length, maxGap);
+    // Humidity as complete as temperature: same-hour fill for the longer gaps; a month with too little humidity is dropped.
+    const dewMiss = dew.filter((x) => !Number.isFinite(x)).length, rhMiss = rh.filter((x) => !Number.isFinite(x)).length;
+    const useDew = dewMiss <= rhMiss;
+    if ((useDew ? dewMiss : rhMiss) > t.length * (1 - minShare)) { months.push(null); continue; }
+    if (useDew) { fillSameHour(dew); for (let i = 0; i < t.length; i++) if (dew[i] > t[i]) dew[i] = t[i]; } else fillSameHour(rh);
     const W = new Float64Array(t.length), wb = new Float64Array(t.length);
     let noHum = 0;
     for (let i = 0; i < t.length; i++) {
       const pp = Number.isFinite(p[i]) && p[i] > 500 ? p[i] * 100 : pStd;
       let w;
-      if (Number.isFinite(dew[i])) w = humidityRatio(t[i], dew[i], null, pp);
-      else if (Number.isFinite(rh[i])) w = humidityRatio(t[i], null, rh[i], pp);
+      if (useDew && Number.isFinite(dew[i])) w = humidityRatio(t[i], dew[i], null, pp);
+      else if (!useDew && Number.isFinite(rh[i])) w = humidityRatio(t[i], null, rh[i], pp);
+      else if (Number.isFinite(dew[i])) w = humidityRatio(t[i], dew[i], null, pp);
       else { noHum++; w = NaN; }
       W[i] = w;
       wb[i] = Number.isFinite(w) ? wetBulb(t[i], w, pp) : NaN;
     }
     // Humidity must be as complete as temperature for the month to be used (wet bulb drives evaporative cooling).
     if (noHum > 0) { months.push(null); continue; }
-    months.push({ t, W, wb, wind });
+    months.push({ t, W, wb, wind, real });
   }
   return months;
 }
@@ -164,7 +193,7 @@ export function typicalYear(years, { minYears = 10 } = {}) {
   for (let h = 0; h < HOURS; h++) if (wbArr[h] > db[h]) wbArr[h] = db[h];
   // Design: 0.4 % of all usable hours of all years.
   const allDB = [], allWB = [];
-  for (const y of years) for (const mo of y.months) if (mo) { for (const x of mo.t) allDB.push(x); for (const x of mo.wb) allWB.push(x); }
+  for (const y of years) for (const mo of y.months) if (mo) for (let i = 0; i < mo.t.length; i++) if (!mo.real || mo.real[i]) { allDB.push(mo.t[i]); allWB.push(mo.wb[i]); }
   const yrs = years.map((y) => y.year).sort();
   return {
     ok: true, picks: picks.map(({ month, year, candidates }) => ({ month, year, candidates })),
