@@ -7,7 +7,7 @@ Checkpoint, updated after every completed step so any session can resume from he
 ## Where things stand
 
 - **`main` holds everything built:** work packages 0 to 19 and 3b, the hourly weather work, the phone version and the Eemshaven study. Each was merged with the owner's yes (dates under "Work packages"). Nothing is built and waiting on another branch.
-- **GitHub checks (CI):** passed on 0ec8849 (`feature/existing-plant`, 2026-11-02). The app, tests, packaging and workflows on `main` are identical to that commit. On `main` itself, the runs on the merge (3b607e8) and the next note (991e85e) were cancelled, each by the next push; the run on 39442fb was still going when this was written.
+- **GitHub checks (CI):** passed on `main` at 39442fb (run 41474468291, 2026-11-02: Node tests, build, installable web app tests and browser tests). The earlier runs on the merge (3b607e8) and the next note (991e85e) were cancelled, each by the next push.
 - **Windows program:** "Desktop builds" run 41474031494 (from `main` 991e85e, 2026-11-02) passed on Windows and Linux, with 2,926 NOAA stations bundled from "Weather data" run 41470033736. Download: GitHub → Actions → Desktop builds → that run → Artifacts → `desktop-win32-x64` (219 MB, kept until 2027-01-31). A duplicate run, 41474599019 (from 39442fb, which changed only records), also passed.
 - **Phone page:** version 8 (2026-10-30). It does not have the weather work or package 19. Republishing is dropped for now (owner, 2026-11-02).
 - **Eemshaven study:** made before the plant list, so its figures leave out existing plants. The re-run is dropped for now (owner, 2026-11-02).
