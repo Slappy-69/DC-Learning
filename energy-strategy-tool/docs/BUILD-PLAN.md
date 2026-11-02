@@ -207,7 +207,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 
 Ask the owner before starting any of these:
 
-- Known issues: none open (all 33 resolved by 2026-10-31).
+- Known issues: 1–34 resolved; 35 open (a Windows build without weather stations fails launch check D5; logged 2026-11-02, fix not decided).
 - From the package 19 work, suggested by Claude and not asked for: a second search around the leaders (local search) to find the best option more surely than sampling (put to the owner as option A of OPEN-QUESTIONS 130; the owner chose a bigger sample); research of each country's rules for taking over a closing plant's grid connection (every takeover is flagged as an assumption until then); a link from the plant list's "Eemshaven" 1976 entry to Eemscentrale (the list may hold it twice).
 - Scenarios (§13.3); every numeric parameter's own range in the Monte Carlo (§13.1); its automatic re-run in a worker (§13.2).
 - Parallel coordinates, the choice-impact chart, the schematic, key quantities, presentation mode, snapshots, undo and redo (§12, §16).

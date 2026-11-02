@@ -124,7 +124,7 @@ Reports in `verification/walkthrough-build/`. The owner asked for Haiku checks o
 | R3, integration in the engine, app and Windows program (`R3-integration.md`) | Opus | 0 high, 5 medium, 7 low. Engine sound; study files with a station, contradictory design flags, a chosen station printed as "Entered", desktop build may take a trial or no bundle |
 | H-records, records against code (`H-records.md`) | Haiku | 60 verified, 26 failed, 7 not verifiable: station count (11,470 not 10,705), stale "not built" text, workflow described as by hand, a wrong design flag with a station |
 
-Not fixed yet: waiting for the owner's decisions.
+Fixed on `feature/weather-fixes` with the owner's decision OPEN-QUESTIONS 115 (known issues 28–32); merged into `main` on 2026-11-02.
 
 ## Work package 19: existing gas plants near the site (2026-10-31, branch feature/existing-plant)
 
