@@ -227,6 +227,13 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     if (sz.backup.bessMW > 0) bookPhased('BESS for UPS augmentation', bessCapex(sz.backup.bessMW, sz.backup.bessMWh), bp.life);
   }
   if (sz.backup.fuelM3 > 0) bookPhased('Bulk fuel storage', sz.backup.fuelM3 * TECH.fuelStorage.p.capexPerM3, 30);
+  // Replacement backup after a bought existing plant stops (OPEN-QUESTIONS 129).
+  const rb = sz.replacementBackup;
+  if (rb) {
+    const t = TECH[rb.tech];
+    addCapex(`${t.name} (replacing ${TECH[sz.bridge.tech].name} as backup)`, yearOfMonth(rb.fromMonth), rb.mw * 1000 * t.p.capexPerKW, t.p.life);
+    if (rb.fuelM3 > 0) addCapex('Bulk fuel storage (replacement backup)', yearOfMonth(rb.fromMonth), rb.fuelM3 * TECH.fuelStorage.p.capexPerM3, 30);
+  }
   // Cooling capex delta vs air baseline (may be negative: booked as a negative line)
   const coolDelta = sz.itMW * 1000 * COOLING[sz.coolingId].p.capexDeltaPerKW;
   if (coolDelta !== 0) {
@@ -275,6 +282,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     if (y >= bessYear) L.fom += bessCapex(sz.storage.mw, sz.storage.mwh) * bp.fomPct;
     if (sz.reserve && sz.reserve.mwh > 0) L.fom += itShareYear(y) * sz.reserve.mwh * 1000 * ur.capexPerKWh * ur.fomPct;
     if (sz.prime && y >= yearOfMonth(sz.prime.availMonth) && y * 12 < (sz.prime.endMonth ?? Infinity)) L.fom += sz.prime.mw * 1000 * TECH[sz.prime.tech].p.fomPerKW;
+    if (sz.replacementBackup && y >= yearOfMonth(sz.replacementBackup.fromMonth)) L.fom += sz.replacementBackup.mw * 1000 * TECH[sz.replacementBackup.tech].p.fomPerKW;
     if (sz.bridge && !TECH[sz.bridge.tech].lease && y >= yearOfMonth(sz.bridge.availMonth) && (bridgeRemoveYear === null || y < bridgeRemoveYear)) L.fom += bridgeOwnedMW(y) * 1000 * TECH[sz.bridge.tech].p.fomPerKW;
     if (sz.backup.tech) {
       L.fom += itShareYear(y) * sz.backup.mw * 1000 * TECH[sz.backup.tech].p.fomPerKW;
@@ -510,6 +518,11 @@ export function resilience(ctx, v, sz) {
       // Only when the rest of the backed load falls short without it.
       const part = p === sz.prime ? (TOPO_RANK[req.topology] >= 1 ? Math.max(0, p.units - Math.ceil(p.units / bs)) : p.units) * p.unitMW : p.nUnits * p.unitMW;
       if (firmMW - part + 1e-9 >= crit) continue;
+      if (p === sz.bridge && sz.replacementBackup) {
+        const rb = sz.replacementBackup;
+        items.push({ item: 'Backup after the plant stops', ok: rb.nUnits * rb.unitMW + 1e-9 >= crit, text: `${rb.units} × ${rb.unitMW} MW ${TECH[rb.tech].name} from month ${rb.fromMonth} (OPEN-QUESTIONS 129)` });
+        continue;
+      }
       items.push({ item: 'Backup after the plant stops', ok: false, text: `${TECH[p.tech].name} stops in month ${p.endMonth}` });
       flags.push(flag('res-plant-ends', 'major', 'Resilience', `Requirement not met from month ${p.endMonth} (${addMonths(ctx.inputs.project.analysisStart, p.endMonth)}): ${TECH[p.tech].name}, counted in the backed load, stops then, and no other plant takes its place (none is costed)`));
     }

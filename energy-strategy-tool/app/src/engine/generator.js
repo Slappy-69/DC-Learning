@@ -65,6 +65,13 @@ function plantSets(inputs) {
 }
 
 export const NA = 'n/a';
+// Does the bought existing plant of C2 stop within the evaluation period (its closure plus the refurbished years)?
+function boughtEndsInPeriod(v, inputs) {
+  const pv = parsePlantValue(v.C2);
+  if (!pv || (pv.mode !== 'buy' && pv.mode !== 'buyWhole')) return false;
+  const c = plantCandidates(inputs).all.find((x) => x.id === pv.id);
+  return !!c && c.closeM !== Infinity && c.closeM + c.buyExtraYears * 12 < inputs.economics.periodYears * 12;
+}
 const IDS = CHOICES.map((c) => c.id);
 
 // When is a choice irrelevant (n/a) given the values of earlier choices? (rule d)
@@ -79,6 +86,8 @@ export function isNA(id, v) {
     case 'C18': return v.C5 === 'none' || v.C5 === 'retained';
     // Work package 19: an islanded campus has no grid connection to take over.
     case 'C21': return v.C1 === 'islanded';
+    // OPEN-QUESTIONS 129: only for a bought existing plant kept as the backup.
+    case 'C22': return !(v.C5 === 'retained' && /^x[bw]:/.test(String(v.C2 || '')));
     default: return false;
   }
 }
@@ -133,6 +142,10 @@ export const RULES = [
   { id: 'p', name: '(p) A grid connection is taken over only from a plant that offers it',
     detail: 'C21 = a plant\'s grid connection is generated only for a plant within reach whose closure falls within the study period (or that has closed), with a connection to take over.',
     fails: (v, inputs) => isTakeover(v.C21) && !plantSets(inputs).takeover.has(v.C21) },
+  // OPEN-QUESTIONS 129: a replacement backup only where the bought plant kept as the backup stops within the period.
+  { id: 'r', name: '(r) A replacement backup needs a bought backup plant that stops within the period',
+    detail: 'C22 = New standby gensets is generated only when the bought existing plant kept as the backup (C5 = Retained) stops before the end of the evaluation period; otherwise it would repeat C22 = Flag only.',
+    fails: (v, inputs) => v.C22 === 'replace' && !boughtEndsInPeriod(v, inputs) },
   // OPEN-QUESTIONS 118: an option uses one plant or two together (Opus review of package 19, finding 9).
   { id: 'q', name: '(q) An option uses at most two existing plants',
     detail: 'Bridging plant, firm plant and a taken-over grid connection from three different existing plants are not generated: options use one plant or two together (OPEN-QUESTIONS 118).',
@@ -184,7 +197,7 @@ export function canonical(v) {
 // C21 (work package 19) is left out of the key while it is None or n/a, so option keys and ids of studies without a
 // takeover are unchanged from before.
 export function choiceKey(v) {
-  return IDS.filter((id) => !(id === 'C21' && (v[id] === 'none' || v[id] === NA || v[id] === undefined))).map((id) => `${id}=${v[id]}`).join('|');
+  return IDS.filter((id) => !((id === 'C21' || id === 'C22') && (v[id] === 'none' || v[id] === NA || v[id] === undefined))).map((id) => `${id}=${v[id]}`).join('|');
 }
 
 function firstFailingRule(v, inputs) {
@@ -240,13 +253,15 @@ function splitDomains(inputs) {
   const base = all.map((d, i) => {
     const id = IDS[i];
     if (id === 'C21') return ['none'];
+    if (id === 'C22') return d.includes('none') ? ['none'] : d.slice(0, 1);
     if (!P[id] || !P[id].length) return d;
     return [...d.filter((x) => !P[id].includes(x)), PLANT_TOKEN];
   });
   // The base space without the stand-in, for the Latin hypercube over base options.
-  const lhs = base.map((d, i) => (IDS[i] === 'C21' ? ['none'] : d.filter((x) => x !== PLANT_TOKEN)));
+  const lhs = base.map((d, i) => (IDS[i] === 'C21' || IDS[i] === 'C22' ? ['none'] : d.filter((x) => x !== PLANT_TOKEN)));
+  const c22 = all[IDS.indexOf('C22')];
   const hasPlants = P.C2.length + P.C4.length + P.C21.length > 0;
-  return { all, base, lhs, P, noneC21, hasPlants };
+  return { all, base, lhs, P, noneC21, hasPlants, c22 };
 }
 
 // Visit the valid combinations of the base space (fn(v) for each; v is reused, copy it to keep it).
@@ -284,10 +299,16 @@ function expandPlants(r, sd, inputs, fn, stats, maxLeaves) {
     if (stats.truncated) return;
     if (!isPlantPower(C2) && !isPlantPower(C4) && !isTakeover(C21)) continue; // that is the base row itself
     if (++stats.plantCollapsed + stats.collapsed > maxLeaves) { stats.truncated = true; return; }
-    const v = canonical({ ...r, C2, C4, C21 });
-    const f = firstFailingRule(v, inputs);
-    if (f) stats.removed[f] = (stats.removed[f] || 0) + 1;
-    else fn(v);
+    const v0 = canonical({ ...r, C2, C4, C21, C22: 'none' });
+    // C22 (OPEN-QUESTIONS 129) is n/a in every base row (it needs a bought plant), so its values are taken here.
+    const c22s = v0.C22 === NA ? [NA] : sd.c22;
+    for (const C22 of c22s) {
+      const v = C22 === v0.C22 ? v0 : { ...v0, C22 };
+      if (C22 !== c22s[0] && ++stats.plantCollapsed + stats.collapsed > maxLeaves) { stats.truncated = true; return; }
+      const f = firstFailingRule(v, inputs);
+      if (f) stats.removed[f] = (stats.removed[f] || 0) + 1;
+      else fn(v);
+    }
   }
 }
 
@@ -349,7 +370,7 @@ export function enumerate(inputs, maxLeaves = 3000000) {
         if (ri < 0) { ri = reps.length; reps.push(v); }
         const j = pRow.length;
         pRow.push(ri);
-        pCode.push(ix(c.C2) | (ix(c.C4) << 10) | (ix(c.C21) << 20));
+        pCode.push(ix(c.C2) | (ix(c.C4) << 10) | (ix(c.C21) << 20) | (c.C22 === 'replace' ? 1 << 30 : 0));
         for (const id of plantsOfOption(c)) { if (!byPlant.has(id)) byPlant.set(id, []); byPlant.get(id).push(j); }
       }, stats, maxLeaves);
     }
@@ -357,7 +378,7 @@ export function enumerate(inputs, maxLeaves = 3000000) {
   const plant = {
     count: pRow.length,
     byPlant,
-    get: (j) => { const c = pCode.get(j); return canonical({ ...reps[pRow.get(j)], C2: dict[c & 1023], C4: dict[(c >> 10) & 1023], C21: dict[(c >> 20) & 1023] }); },
+    get: (j) => { const c = pCode.get(j); return canonical({ ...reps[pRow.get(j)], C2: dict[c & 1023], C4: dict[(c >> 10) & 1023], C21: dict[(c >> 20) & 1023], C22: c & (1 << 30) ? 'replace' : 'none' }); },
   };
   const collapsedTotal = stats.collapsed + stats.plantCollapsed;
   return {
@@ -401,7 +422,7 @@ function lhsSample(valid, n, inputs, seed, exclude) {
     for (let i = 0; i < n; i++) arr.push(d[i % d.length]);
     // C21 (work package 19) with no takeover to choose draws nothing from the seeded stream, so the sample of a study
     // without plants is the one drawn before C21 existed.
-    if (IDS[j] === 'C21' && d.length === 1) return arr;
+    if ((IDS[j] === 'C21' || IDS[j] === 'C22') && d.length === 1) return arr;
     return shuffle(arr, rand);
   });
   const validByKey = new Map(valid.map((v) => [choiceKey(v), v]));
@@ -540,6 +561,7 @@ export function optionName(v, s) {
   else if (v.C12 === 'trigger') parts.push('BESS for the trigger hours');
   else if (v.C12 !== 'none') parts.push(`BESS ${v.C12.slice(0, 2).replace('h', ' h')}`);
   if (v.C13 !== 'none') parts.push(`PPA ${choiceLabel('C13', v.C13).toLowerCase()} ${v.C14} %`);
+  if (v.C22 === 'replace') parts.push('new standby gensets when the plant stops');
   // Work package 19: a nearby plant's grid connection taken over.
   if (isTakeover(v.C21)) parts.push(choiceLabel('C21', v.C21).replace(': its grid connection', '\u2019s grid connection taken over'));
   return parts.join(' · ');

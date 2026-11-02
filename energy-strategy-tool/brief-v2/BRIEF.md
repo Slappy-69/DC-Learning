@@ -414,6 +414,7 @@ Exposure in the UI: a "Choices" panel in step 6 lists every choice as a row with
 | C19 | **Phasing of energy plant** | Build all energy plant at phase 1 / Build per phase | Locked "per phase" | Capex timing, NPV |
 | C20 | **Fuel decarbonisation pathway** | None / Switch gas to biomethane or H₂ blend in year X / Diesel → HVO in year X | Locked None | Carbon trajectory, fuel cost |
 | C21 | **Grid connection taken over from a closing plant** *(as built 2026-10-31, work package 19, OPEN-QUESTIONS 119–120)* | None / each nearby plant whose connection comes free within the study | Open | Grid offered from 12 months after the plant stops, up to the design load; capex; major flag (an assumed right) |
+| C22 | **Backup after a bought existing plant stops** *(as built 2026-11-02, OPEN-QUESTIONS 129)* | Flag only / New standby gensets from then | Open (n/a unless C5 = Retained with a bought existing plant) | Replacement HVO gensets and fuel store capex and O&M from the month the plant stops; resilience |
 
 Rules:
 - A choice that is irrelevant to an option is shown as "n/a" for that option, e.g. C2 when C1 = wait.

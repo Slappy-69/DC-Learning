@@ -432,6 +432,20 @@ export function sizeOption(ctx, v) {
     }
   }
 
+  // A replacement backup (OPEN-QUESTIONS 129, C22 = New standby gensets): when the bought existing plant kept as the
+  // backup stops within the period, HVO standby gensets sized by the backup rule (critical load, required topology)
+  // take over from that month, with their fuel store.
+  let replacementBackup = null;
+  if (v.C22 === 'replace' && v.C5 === 'retained' && bridge && TECH[bridge.tech].bought && bridge.endMonth < inputs.economics.periodYears * 12) {
+    const t = TECH.backupHvo;
+    const n = Math.ceil(criticalMW / t.p.unitMW - 1e-9);
+    const red = unitsWithRedundancy(n, req.topology, req.blockSize, req.catcherN);
+    const fs = TECH.fuelStorage.p;
+    const fuelM3 = Math.max(0, (criticalMW * 1000 * req.autonomyH * fs.dieselLPerKWh) / 1000 - fs.bellyTankM3);
+    replacementBackup = { tech: t.id, units: red.total, nUnits: n, unitMW: t.p.unitMW, mw: red.total * t.p.unitMW, fromMonth: bridge.endMonth, fuelM3, autonomyH: req.autonomyH };
+    sentences.push(`Backup after ${TECH[bridge.tech].name} stops (month ${bridge.endMonth}): ${r1(criticalMW)} MW critical load ÷ ${t.p.unitMW} MW = ${n} units; ${req.topology} adds ${red.extra}; ${red.total} ${t.name} (${r1(replacementBackup.mw)} MW) from then, with ${Math.round(fuelM3).toLocaleString('en-GB')} m³ of fuel storage (OPEN-QUESTIONS 129).`);
+  }
+
   // --- Permitting outlook (OPEN-QUESTIONS 46): held plant, its outlook, and its float against the month it is first
   // needed: bridging plant at the first month of shortfall (islanded: of load); a baseload prime at the first month of
   // load; a top-up plant, and the kept share of split bridging plant, at the first month of permanent shortfall. ---
@@ -661,7 +675,7 @@ export function sizeOption(ctx, v) {
   return {
     coolingId, peakPUE, designMW, avgMW, criticalMW, itMW, check50,
     building: { whitespaceM2: whitespace, gfaM2: gfa, footprintM2: footprint, heightM },
-    backup, prime, bridge, bridgeBess, bess, storage, permitOutlook, shortfallBess, reserve,
+    backup, prime, bridge, bridgeBess, bess, storage, permitOutlook, shortfallBess, reserve, replacementBackup,
     solarMWp, solarRoofMWp, solarGroundMWp, roofPvOverFreeM2, windMW, windTurbines, ppa,
     grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })), cableKm },
     gasConnection,

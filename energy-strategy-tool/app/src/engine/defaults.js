@@ -191,6 +191,9 @@ export const CHOICES = [
   // Work package 19 (OPEN-QUESTIONS 119–120, 2026-10-31): a nearby plant's grid connection, taken over when it closes.
   // Its values (tk:<plant id>) are added per study, like the plant values of C2 and C4 (xl:, xb:).
   { id: 'C21', name: 'Grid connection taken over from a closing plant', values: [['none', 'None']] },
+  // OPEN-QUESTIONS 129 (owner, 2026-11-02, "C"): when a bought existing plant kept as the backup stops within the period,
+  // the option is generated with and without new standby gensets from that month.
+  { id: 'C22', name: 'Backup after a bought existing plant stops', values: [['none', 'Flag only'], ['replace', 'New standby gensets from then']] },
 ];
 export const CHOICE_BY_ID = Object.fromEntries(CHOICES.map((c) => [c.id, c]));
 export function choiceLabel(id, value) {
@@ -246,6 +249,7 @@ export function defaultChoiceState(id, inputs) {
     case 'C19': return { state: 'locked', values: ['perPhase'] };
     case 'C20': return { state: 'locked', values: ['none'] };
     case 'C21': return { state: 'open', values: ['none', ...(inputs ? plantTakeoverValues(inputs) : [])] };
+    case 'C22': return { state: 'open', values: ['none', 'replace'] };
     default: return { state: 'locked', values: [CHOICE_BY_ID[id].values[0][0]] };
   }
 }

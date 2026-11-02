@@ -254,7 +254,7 @@ export async function plantTests(test) {
 
   await test('50f. Fixes from the Opus review of package 19: a plant that stops after the dispatch cap is dispatched past its end; a bought plant kept as the backup is checked against the topology and fails once it stops; a leased plant kept as prime is not backup; a takeover does not move the campus connection capex; the Dispatch tab shows the option grid; the takeover lag is editable per plant; an old study file names the plants it gains', () => {
     const out = [];
-    const base = { C1: 'bridge', C3: 'remove', C4: 'none', C4s: NA, C5: 'hvo', C5a: 'perBuilding', C6: 'N+1', C7: '48', C8: 'evap', C9: 'roof', C10: 'none', C11: 'none', C12: 'none', C12r: NA, C13: 'none', C14: NA, C15: 'none', C16: 'off', C17: 'AIS', C18: 'single', C19: 'perPhase', C20: 'none', C21: 'none' };
+    const base = { C1: 'bridge', C3: 'remove', C4: 'none', C4s: NA, C5: 'hvo', C5a: 'perBuilding', C6: 'N+1', C7: '48', C8: 'evap', C9: 'roof', C10: 'none', C11: 'none', C12: 'none', C12r: NA, C13: 'none', C14: NA, C15: 'none', C16: 'off', C17: 'AIS', C18: 'single', C19: 'perPhase', C20: 'none', C21: 'none', C22: 'none' };
     // (1) Magnum closing in 2036 and bought: it stops in month 228 (year 19), after the 15 dispatch years.
     const I = normalizeInputs(eemSmall({ edits: { ppm4359: { closeYear: 2036, units: 1, unitMW: 200 } } }));
     const ctx = buildContext(I);
@@ -272,6 +272,19 @@ export async function plantTests(test) {
     assert.ok(o2.res.flags.some((f) => f.id === 'res-topology') && o2.res.status === 'Does not meet', o2.res.items.map((i) => i.text).join('; '));
     assert.ok(o2.res.flags.some((f) => f.id === 'res-plant-ends'), 'no flag after the plant stops');
     out.push(`one-unit backup: ${o2.res.status}`);
+    // OPEN-QUESTIONS 129 ("C"): the same option with new standby gensets from the month the plant stops.
+    const o2r = evaluateOption(ctx, canonical({ ...v2, C22: 'replace' }), { skipLayout: true });
+    const rb = o2r.sz.replacementBackup;
+    assert.ok(rb && rb.fromMonth === o2.sz.bridge.endMonth, 'no replacement backup');
+    const rl = o2r.eco.capexLines.find((l) => /replacing .* as backup/.test(l.item));
+    assert.ok(rl && rl.year === Math.floor(rb.fromMonth / 12) && Math.abs(rl.amount - rb.mw * 1000 * TECH[rb.tech].p.capexPerKW) < 1, 'replacement capex');
+    assert.ok(!o2r.res.flags.some((f) => f.id === 'res-plant-ends') && o2r.res.items.some((i) => i.item === 'Backup after the plant stops' && i.ok));
+    assert.ok(o2r.eco.capex > o2.eco.capex, 'the replacement costs more');
+    // Rule (r): not generated where the bought plant runs past the period.
+    const vNo = canonical({ ...base, C2: 'xb:ppm757', C3: 'backup', C5: 'retained', C22: 'replace' });
+    const Ilong = normalizeInputs(eemSmall({ edits: { ppm757: { closeYear: 2045 } } }));
+    assert.ok(RULES.find((r) => r.id === 'r').fails(vNo, Ilong) && !RULES.find((r) => r.id === 'r').fails(vNo, I), 'rule (r)');
+    out.push(`replacement ${rb.units} × ${rb.unitMW} MW from month ${rb.fromMonth}, €${(rl.amount / 1e6).toFixed(1)} m`);
     // (22 / known issue 33) A leased plant kept as prime is not counted as backup.
     const eem = plantCandidates(I).plants.find((p) => Math.round(p.mw) === 3210);
     const v3 = canonical({ ...base, C2: eem.values.lease, C3: 'prime', C5: 'hvo' });

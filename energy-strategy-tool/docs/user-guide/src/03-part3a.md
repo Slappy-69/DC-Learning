@@ -265,7 +265,7 @@ The currency is the euro; revenue options (export, battery grid services, heat r
 **Answered 23 October 2026** (OPEN-QUESTIONS 19 and 20, Claude's recommendations accepted in advance by the owner): contracted capacity is a rule per grid strategy set before the run (blank = the full offer); islanded options contract 0 MW and do not pay the connection charge.
 :::
 
-# 20. Inputs: the design choices C1–C21 {#ch20}
+# 20. Inputs: the design choices C1–C22 {#ch20}
 
 ![Current version: part of section 6, Choices. Filled values are included; outlined values are not generated.](img/s07-inputs-choices.png)
 
@@ -298,6 +298,7 @@ The table lists every choice, its values, and the values included by default (ma
 | C18 Genset arrangement | **Single-deck**; double-deck and in-building available |
 | C19 Phasing of energy plant | locked to **Build per phase**; build all at phase 1 available |
 | C20 Fuel decarbonisation pathway | locked to **None**; biomethane, HVO switch available |
+| C22 Backup after a bought existing plant stops | **Flag only**, **New standby gensets from then**; only with C5 "Retained" and a bought existing plant that stops within the period (OPEN-QUESTIONS 129, built 2 November 2026) |
 | C21 Grid connection taken over from a closing plant | **None**, and **each nearby plant's connection** that comes free within the study (work package 19, built 31 October 2026) |
 
 **Which choices do something in the current engine.** Most choices change sizing, dispatch, costs or the layout. A few are recorded but have little or no effect yet:
