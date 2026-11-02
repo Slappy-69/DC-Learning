@@ -2,7 +2,7 @@
 
 Checkpoint, updated after every completed step so any session can resume from here. New sessions: read `../CLAUDE.md` first.
 
-**Last updated: 2026-11-02**: `STATUS.md` rewritten and shortened at the owner's request (branch `feature/status-tidy`); known issue 35 logged; the four old branches not in `main` copied to `archive/` branches; deleting the 33 old branches left to the owner on GitHub (see "Old branches").
+**Last updated: 2026-11-02**: `STATUS.md` rewritten and shortened at the owner's request; known issue 35 logged; both merged into `main` from `feature/status-tidy` with the owner's yes ("Yes merge", 2026-11-02); the four old branches not in `main` copied to `archive/` branches; deleting the 33 old branches left to the owner on GitHub (see "Old branches").
 
 ## Where things stand
 
@@ -135,7 +135,7 @@ The decisions that shape the most:
 
 ## Old branches
 
-The owner asked on 2026-11-02 to archive the 33 branches below, and then said "Yes delete them". The four not in `main` were copied the same day to `archive/codex/energy-tool-experiment`, `archive/concept-sensitivity-tab`, `archive/concept-site-layout` and `archive/feature/windows-build-2026-10-30` (each checked on GitHub to point at the same commit). **The 33 originals are still on GitHub:** a Claude session's connection to GitHub refuses both tags and branch deletions (HTTP 403), so the owner deletes them on GitHub (Code → Branches → the bin icon on each row). Once they are gone, the branches left are `main`, the four `archive/` copies and any open `feature/` branch.
+The owner asked on 2026-11-02 to archive the 33 branches below, and then said "Yes delete them". The four not in `main` were copied the same day to `archive/codex/energy-tool-experiment`, `archive/concept-sensitivity-tab`, `archive/concept-site-layout` and `archive/feature/windows-build-2026-10-30` (each checked on GitHub to point at the same commit). **The 33 originals are still on GitHub:** a Claude session's connection to GitHub refuses both tags and branch deletions (HTTP 403), so the owner deletes them on GitHub (Code → Branches → the bin icon on each row). `feature/status-tidy` (this rewrite) is in `main` too and can be deleted with them. Once they are gone, the branches left are `main` and the four `archive/` copies.
 
 "In `main`" means every commit of the branch is part of `main`'s history, so nothing on it is lost if the branch goes; it can be recreated exactly from its last commit: `git push origin <commit>:refs/heads/<branch>`.
 
