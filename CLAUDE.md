@@ -10,11 +10,11 @@ Read these before doing anything, in this order:
 2. `energy-strategy-tool/docs/BUILD-PLAN.md`: the agreed changes as work packages, in order, each with the brief sections, the questions to ask the owner first, the acceptance tests and the user-guide chapters and mock-ups that show the agreed design.
 3. `energy-strategy-tool/brief-v2/BRIEF.md` (revision 5): the specification. Everything the owner's walkthrough of 2026-10-21 changed is marked "(walkthrough, 2026-10-21)", with "as built" notes where the code still follows an earlier rule. Read it with `OPEN-QUESTIONS.md`, `ASSUMPTIONS.md` and `CHANGELOG.md` in the same folder.
 4. `energy-strategy-tool/docs/walkthrough-decisions-2026-10-21.md`: the owner's decision log. Where anything disagrees with it, the log is newer; ask the owner.
-5. `energy-strategy-tool/docs/KNOWN-ISSUES.md`: defects found in the built engine. All 34 listed so far are resolved; add new ones there, each with the owner's decision.
+5. `energy-strategy-tool/docs/KNOWN-ISSUES.md`: defects found in the built program. Items 1–34 are resolved and 35 is open; add new ones there, each with the owner's decision.
 6. `energy-strategy-tool/app/BUILD-NOTES.md`: architecture, every default with its label, decisions and test runs.
 7. The user guide, `energy-strategy-tool/docs/user-guide/`: how every number is worked out (Part IV), the defaults checked against published sources (chapter 50), and drawings of the agreed screens (`mock/*.html`).
 
-**Development restarted on 2026-10-22.** Every package in the build plan (0 to 18, and 3b) is built and merged into `main` with the owner's yes (0 to 15 on 2026-10-24, 16 to 18 on 2026-10-25); `STATUS.md` has the state, the open decisions and what is waiting for the owner. Build further only when the owner asks, and follow the build plan and `STATUS.md` unless the owner says otherwise.
+**Development restarted on 2026-10-22.** Every package in the build plan (0 to 19, and 3b) is built and merged into `main` with the owner's yes (0 to 15 on 2026-10-24, 16 to 18 on 2026-10-25, 19 on 2026-11-02); `STATUS.md` has the state, the open decisions and what is waiting for the owner. Build further only when the owner asks, and follow the build plan and `STATUS.md` unless the owner says otherwise.
 
 ## Working with the owner
 

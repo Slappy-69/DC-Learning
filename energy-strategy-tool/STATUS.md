@@ -2,7 +2,7 @@
 
 Checkpoint, updated after every completed step so any session can resume from here. New sessions: read `../CLAUDE.md` first.
 
-**Last updated: 2026-11-02**: `STATUS.md` rewritten and shortened at the owner's request; known issue 35 logged; both merged into `main` from `feature/status-tidy` with the owner's yes ("Yes merge", 2026-11-02); the four old branches not in `main` copied to `archive/` branches; deleting the 33 old branches left to the owner on GitHub (see "Old branches").
+**Last updated: 2026-11-02**: branch `feature/known-issue-35` (from `main` e8e5006, the owner's choice of next steps, "2 and 3"): `CLAUDE.md` brought up to date (packages 0 to 19; known issue 35 open); the fix for known issue 35 waits for the owner's choice between two fixes. Not merged. Earlier the same day: `STATUS.md` rewritten and shortened at the owner's request; known issue 35 logged; both merged into `main` from `feature/status-tidy` with the owner's yes ("Yes merge", 2026-11-02); the four old branches not in `main` copied to `archive/` branches; deleting the 33 old branches left to the owner on GitHub (see "Old branches").
 
 ## Where things stand
 
