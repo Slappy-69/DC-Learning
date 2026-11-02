@@ -157,6 +157,7 @@ Every number in the worked examples comes from a run of the T1 example exported 
 | Monte Carlo ranges, rank probability, robust pick | Built (25 Oct 2026), on request | 27, 46 |
 | Scenarios | Not built; in the brief, not discussed in the walkthrough | 13 |
 | Work package 18: Monte Carlo on the Sensitivity tab, in the header, the summary and the PDF | Built (25 Oct 2026) | 22, 27, 29, 46 |
+| Work package 19: existing gas plants near the site from the bundled list (lease or buy, closure dates, grid connection takeover, a share of the sample per plant) | Built (31 Oct 2026) | 17, 20, 34, 35, 39 |
 | Work package 17: breakeven table on the Sensitivity tab, in the PDF and in the summary | Built (24 Oct 2026) | 27, 29, 46 |
 | Work package 16: plain-English summary on the Options tab and in the PDF (seven parts, at most 250 words, exact weight change, edit kept as a note) | Built (24 Oct 2026) | 22, 29, 44 |
 | Work package 15: study files (save and reopen, with a check that the re-run matches) | Built (24 Oct 2026) | 4, 29 |

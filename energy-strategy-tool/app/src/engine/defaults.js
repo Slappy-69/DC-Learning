@@ -11,6 +11,8 @@
 
 import { defaultAnalysisStart, addMonths } from './dates.js';
 import { makeProjection, meanLatLon, validateRing } from './geometry.js';
+import { monthsBetween } from './dates.js';
+import { nearbyPlants, mergeDuplicates, plantValue, parsePlantValue, PLANT_SOURCE } from './plants.js';
 
 export const LABEL = 'indicative — unverified';
 export const LABEL_SOURCED = 'sourced — not independently checked';
@@ -186,12 +188,20 @@ export const CHOICES = [
   { id: 'C18', name: 'Genset arrangement', values: [['single', 'Single-deck'], ['double', 'Double-deck'], ['inBuilding', 'In-building plant room']] },
   { id: 'C19', name: 'Phasing of energy plant', values: [['phase1', 'Build all at phase 1'], ['perPhase', 'Build per phase']] },
   { id: 'C20', name: 'Fuel decarbonisation pathway', values: [['none', 'None'], ['biomethane', 'Gas to biomethane in year X'], ['hvo', 'Diesel to HVO in year X']] },
+  // Work package 19 (OPEN-QUESTIONS 119–120, 2026-10-31): a nearby plant's grid connection, taken over when it closes.
+  // Its values (tk:<plant id>) are added per study, like the plant values of C2 and C4 (xl:, xb:).
+  { id: 'C21', name: 'Grid connection taken over from a closing plant', values: [['none', 'None']] },
+  // OPEN-QUESTIONS 129 (owner, 2026-11-02, "C"): when a bought existing plant kept as the backup stops within the period,
+  // the option is generated with and without new standby gensets from that month.
+  { id: 'C22', name: 'Backup after a bought existing plant stops', values: [['none', 'Flag only'], ['replace', 'New standby gensets from then']] },
 ];
 export const CHOICE_BY_ID = Object.fromEntries(CHOICES.map((c) => [c.id, c]));
 export function choiceLabel(id, value) {
+  if (value === 'existing' && PLANT_LABELS.has('existing')) return PLANT_LABELS.get('existing');
   const c = CHOICE_BY_ID[id];
   const v = c && c.values.find((x) => x[0] === value);
-  return v ? v[1] : value;
+  if (v) return v[1];
+  return plantLabel(value) || value;
 }
 
 // Choice default states (§8 table). Some depend on other inputs (C6, C7, C8, C11, C15).
@@ -200,11 +210,12 @@ export function defaultChoiceState(id, inputs) {
     case 'C1': return { state: 'open', values: ['wait', 'bridge', 'islanded'] };
     // OPEN-QUESTIONS 43 (2026-10-22): every technology is considered for bridging, gas turbines included; turbines and
     // HVO-diesel prime added to the default set after Haiku check H1 (2026-10-23). BESS + solar stays opt-in.
-    case 'C2': return { state: 'open', values: ['gasRecip', 'gasTurbine', 'fuelCell', 'dieselPrime', 'rented', ...(existingEntered(inputs) ? ['existing'] : [])] };
+    // Work package 19: every nearby plant's power, leased and bought (the manual plant's lease keeps the value "existing").
+    case 'C2': return { state: 'open', values: ['gasRecip', 'gasTurbine', 'fuelCell', 'dieselPrime', 'rented', ...(inputs ? plantPowerValues(inputs) : [])] };
     // Retain for grid services is out of the default set (work package 14, OPEN-QUESTIONS 85): with grid-service revenue not
     // modelled it repeats Retain as backup, and revenue options are off by default (walkthrough 2026-10-21).
     case 'C3': return { state: 'open', values: ['remove', 'backup', 'prime', 'split'] };
-    case 'C4': return { state: 'open', values: ['none', 'chp', 'fuelCell', ...(existingEntered(inputs) ? ['existing'] : [])] };
+    case 'C4': return { state: 'open', values: ['none', 'chp', 'fuelCell', ...(inputs ? plantPowerValues(inputs) : [])] };
     case 'C5': return { state: 'open', values: ['hvo', 'diesel', 'retained'] };
     case 'C5a': return { state: 'open', values: ['perBuilding', 'pooled'] };
     case 'C6': return { state: 'locked', values: [inputs ? inputs.requirements.topology : 'N+1'] };
@@ -237,6 +248,8 @@ export function defaultChoiceState(id, inputs) {
     case 'C18': return { state: 'open', values: ['single'] };
     case 'C19': return { state: 'locked', values: ['perPhase'] };
     case 'C20': return { state: 'locked', values: ['none'] };
+    case 'C21': return { state: 'open', values: ['none', ...(inputs ? plantTakeoverValues(inputs) : [])] };
+    case 'C22': return { state: 'open', values: ['none', 'replace'] };
     default: return { state: 'locked', values: [CHOICE_BY_ID[id].values[0][0]] };
   }
 }
@@ -338,10 +351,18 @@ export const EXISTING_TYPES = {
     vomPerMWh: rec('existing.types.ccgt.vomPerMWh', 3, '€/MWh', { low: 2, high: 5, basis: 'judgement', ref: '§6' }) },
   ocgt: { label: 'Open-cycle gas turbines', eff: TECH.gasTurbine.p.eff, msl: TECH.gasTurbine.p.msl, vomPerMWh: TECH.gasTurbine.p.vomPerMWh },
   engines: { label: 'Gas engines', eff: TECH.gasRecip.p.eff, msl: TECH.gasRecip.p.msl, vomPerMWh: TECH.gasRecip.p.vomPerMWh },
+  // Work package 19: the bundled list also holds gas-fired steam plant.
+  steam: { label: 'Gas-fired steam plant',
+    eff: rec('existing.types.steam.eff', 0.38, 'electrical efficiency (LHV)', { low: 0.32, high: 0.42, basis: 'judgement', ref: '§6', note: 'Conventional gas-fired steam units, about 35–40 % (work package 19, 2026-10-31).' }),
+    msl: rec('existing.types.steam.msl', 0.4, 'minimum stable load, fraction of one unit', { low: 0.3, high: 0.5, basis: 'judgement', ref: '§6' }),
+    vomPerMWh: rec('existing.types.steam.vomPerMWh', 3, '€/MWh', { low: 2, high: 5, basis: 'judgement', ref: '§6' }) },
 };
+// Plausible efficiency by type, to decide whether the bundled list's value is used (work package 19): outside the range
+// the type's value is used and the plant's note says so.
+const EFF_RANGE = rec('plants.effRange', { ccgt: [0.45, 0.63], ocgt: [0.28, 0.42], engines: [0.38, 0.5], steam: [0.3, 0.45] }, 'plausible electrical efficiency by type (low, high)', { basis: 'judgement', ref: '§5.4', note: 'Work package 19: the bundled list\'s efficiency is used only inside this range; outside it the type\'s value is used (some list values are far below what the type can reach). Opus review finding 16.' });
 TECH.existing = {
   id: 'existing', name: 'Existing plant (lease)', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true,
-  ownConsent: true, offsite: true, lease: true, fixedUnits: 1, verify: 'The plant owner',
+  ownConsent: true, offsite: true, lease: true, fixedUnits: 1, existingPlant: true, plantKey: 'manual', verify: 'The plant owner',
   p: { unitMW: 100, eff: 0.56, msl: 0.45, vomPerMWh: 3, rentalPerKWMonth: 6, capexPerKW: 0, fomPerKW: 0, life: 25, planM: 0, procM: 0, buildM: 0, m2PerMW: 0, stackM: 0 },
 };
 // True when an existing plant is entered completely enough to generate options with it.
@@ -371,6 +392,173 @@ export function applyExistingPlant(inputs, monthOfDate) {
     if (!(Number(x.unitMW) > 0)) missing.push('unit size');
   }
   return { include: !!x.include, entered: existingEntered(inputs), missing };
+}
+
+// ---------------------------------------------------------------------------
+// Existing gas plants from the bundled list (work package 19, owner 2026-10-31, OPEN-QUESTIONS 116–123). Every gas plant
+// of 50 MW or more within 10 km of the site enters the analysis (117, 118): its power leased or bought, as bridging or
+// firm plant, and its grid connection taken over when it closes (119), by the rules of 120–122. The list's values are
+// used as given where they are plausible; every value comes with its source and the engineer can correct it
+// (inputs.plants.edits, keyed by the list entry's id). The manual plant of work package 12 (inputs.existing) stays.
+// ---------------------------------------------------------------------------
+const J = (note) => ({ basis: 'judgement', ref: '§5.4', note });
+export const PLANT_DEFAULTS = {
+  radiusKm: rec('plants.radiusKm', 10, 'km from the site', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-10-31 (OPEN-QUESTIONS 117): only plants the campus could share a site with.' }),
+  minMW: rec('plants.minMW', 50, 'MW, smallest plant', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-10-31 (OPEN-QUESTIONS 117).' }),
+  mergeKm: rec('plants.mergeKm', 1, 'km: entries closer than this, of the same type and similar size, are one plant', J('OPEN-QUESTIONS 118: the list carries some plants twice (from different source lists).')),
+  mergeSizeFrac: rec('plants.mergeSizeFrac', 0.25, 'fraction: the smaller entry at least 75 % of the larger', J('OPEN-QUESTIONS 118.')),
+  lifeYears: rec('plants.lifeYears', 40, 'years after the first year, when the list gives no closure date', { low: 25, high: 45, ...J('OPEN-QUESTIONS 121: gas plants often run 25 to 40 years.') }),
+  buyExtraYears: rec('plants.buyExtraYears', 10, 'years added by the refurbishment when the plant is bought', { low: 5, high: 15, ...J('OPEN-QUESTIONS 121.') }),
+  leasePerKWMonth: rec('plants.leasePerKWMonth', 6, '€/kW/month', { low: 3, high: 9, ...J('As the manual plant (work package 12, Pego study, 2026-10-24); replace with the owner\'s offer.') }),
+  buyPerKW: rec('plants.buyPerKW', 150, '€/kW bought (the share the campus uses)', { low: 50, high: 400, ...J('Purchase of an ageing gas plant; no published price found (work package 19, 2026-10-31). Replace with the seller\'s price.') }),
+  refurbPerKW: rec('plants.refurbPerKW', 100, '€/kW refurbishment when bought', { low: 50, high: 250, ...J('Life-extension works for the extra years (OPEN-QUESTIONS 121); no published figure found.') }),
+  fomPerKW: rec('plants.fomPerKW', 25, '€/kW/yr fixed O&M of a bought plant', { low: 15, high: 40, ...J('Fixed O&M of an older CCGT, own staff and maintenance (work package 19).') }),
+  takeoverLagMonths: rec('plants.takeoverLagMonths', 12, 'months from the plant closing to the campus using its connection', { low: 6, high: 24, ...J('OPEN-QUESTIONS 120: transfer and works.') }),
+  takeoverCostFrac: rec('plants.takeoverCostFrac', 0.25, 'fraction of the standard extra-high-voltage connection rate', { low: 0.1, high: 0.5, ...J('OPEN-QUESTIONS 120: about €30k/MW against €120k/MW for a new connection.') }),
+  // OPEN-QUESTIONS 127 (owner, 2026-10-31, "A"): generators inside other data centre campuses are left out unless ticked.
+  dataCentreNames: rec('plants.dataCentreNames', 'data ?cent(er|re)|datacent|\\bDC\\b|echelon|profile park|winthrop|microsoft|google|amazon|\\baws\\b|equinix|digital realty|cyrus ?one|vantage|edgeconnex|pure dc|keppel|\\bmeta\\b|facebook', 'name pattern (case ignored)', J('Names in the bundled list that point to a data centre\'s own plant (in the 2026-10-07 list: six entries, all in Dublin). They are left out of the analysis unless the engineer ticks them in.')),
+  // OPEN-QUESTIONS 130 (owner, 2026-11-02, "C"): with existing plants, a bigger sample (five times the generation cap:
+  // 10,000 at the default), half of it for plant options.
+  capMultiplier: rec('plants.capMultiplier', 5, '× the generation cap when the study has options with an existing plant', { low: 1, high: 20, basis: 'judgement', ref: '§7.2', note: 'Owner, 2026-11-02 (OPEN-QUESTIONS 130): "find the best of the best"; at the default cap of 2,000, 10,000 options are screened. Run time grows about in proportion.' }),
+  sampleShare: rec('plants.sampleShare', 0.5, 'fraction of the sampled options kept for options with an existing plant', { low: 0.2, high: 0.8, ...J('OPEN-QUESTIONS 118: each plant gets its own equal share of this, so no plant is crowded out (builder, 2026-10-31).') }),
+  unitMW: {
+    ccgt: rec('plants.unitMW.ccgt', 400, 'MW per unit, when the list gives the plant total only', J('A typical CCGT block; the list gives no unit count.')),
+    ocgt: rec('plants.unitMW.ocgt', 100, 'MW per unit', J('A typical heavy-duty open-cycle turbine.')),
+    engines: rec('plants.unitMW.engines', 10, 'MW per unit', J('As the tool\'s gas recips.')),
+    steam: rec('plants.unitMW.steam', 300, 'MW per unit', J('A typical gas-fired steam unit.')),
+  },
+};
+
+const finite = (x) => x !== null && x !== undefined && x !== '' && Number.isFinite(Number(x));
+const pick = (edit, k, fallback, basis) => (edit && finite(edit[k]) ? { v: Number(edit[k]), basis: 'entered' } : { v: fallback, basis });
+
+// One candidate plant from a list entry (or the manual plant), with every value and where it came from.
+function candidateFrom(p, edit, inputs, opts) {
+  const start = inputs.project.analysisStart;
+  const type = (edit && EXISTING_TYPES[edit.type]) ? edit.type : (EXISTING_TYPES[p.type] ? p.type : 'ccgt');
+  const ty = EXISTING_TYPES[type];
+  const mw = pick(edit, 'mw', p.mw, 'list');
+  const unitDef = PLANT_DEFAULTS.unitMW[type] || 400;
+  const unitsD = Math.max(1, Math.round(mw.v / unitDef));
+  const units = pick(edit, 'units', unitsD, 'default');
+  const unitMW = pick(edit, 'unitMW', mw.v / Math.max(1, units.v), units.basis === 'entered' ? 'entered' : 'default');
+  const firstYear = pick(edit, 'firstYear', finite(p.dateIn) ? Number(p.dateIn) : null, 'list');
+  let closeYear;
+  if (edit && finite(edit.closeYear)) closeYear = { v: Number(edit.closeYear), basis: 'entered' };
+  else if (finite(p.dateOut)) closeYear = { v: Number(p.dateOut), basis: 'list' };
+  else if (firstYear.v != null) closeYear = { v: firstYear.v + PLANT_DEFAULTS.lifeYears, basis: 'default' };
+  else closeYear = { v: null, basis: 'none' };
+  const closeM0 = closeYear.v == null ? Infinity : monthsBetween(start, `${closeYear.v}-01`);
+  // OPEN-QUESTIONS 125 (owner, 2026-10-31, "C"): a plant is closed only on a closure date from the list or the engineer.
+  // When only the 40-year default has passed, the plant counts as running with its closure unknown (power for the whole
+  // study), and its grid connection is still offered from the transfer months after the analysis start, flagged.
+  const defaultPassed = closeYear.basis === 'default' && closeM0 <= 0;
+  const closeM = defaultPassed ? Infinity : closeM0;
+  const range = EFF_RANGE[type] || [0, 1];
+  const effList = finite(p.eff) && p.eff >= range[0] && p.eff <= range[1] ? Number(p.eff) : null;
+  const eff = edit && finite(edit.eff) ? { v: Number(edit.eff), basis: 'entered' } : effList != null ? { v: effList, basis: 'list' } : { v: ty.eff, basis: 'type' };
+  const sp = TECH.substation.p;
+  const km = p.km ?? 0;
+  const link = pick(edit, 'linkCapex', Math.round(km * sp.cablePerKm), 'default');
+  const tkMW = pick(edit, 'takeoverMW', mw.v, 'default');
+  // Editable per plant (OPEN-QUESTIONS 120–121; Opus review finding 10).
+  const tkLag = pick(edit, 'takeoverLagMonths', PLANT_DEFAULTS.takeoverLagMonths, 'default').v;
+  const extraYears = pick(edit, 'buyExtraYears', PLANT_DEFAULTS.buyExtraYears, 'default').v;
+  const tkCost = pick(edit, 'takeoverCostPerMW', PLANT_DEFAULTS.takeoverCostFrac * sp.connCapexPerMW_ehv, 'default');
+  const status = defaultPassed ? 'running, default closure passed' : closeM <= 0 ? 'closed' : closeYear.basis === 'list' || closeYear.basis === 'entered' ? 'closure dated' : closeYear.v == null ? 'running, no closure date' : 'running';
+  const periodM = inputs.economics.periodYears * 12;
+  const takeoverM = defaultPassed ? tkLag : closeM === Infinity ? Infinity : Math.max(0, closeM) + tkLag;
+  // A data centre's own plant (OPEN-QUESTIONS 127): left out unless the engineer ticks it in.
+  const dataCentre = !opts.manual && new RegExp(PLANT_DEFAULTS.dataCentreNames, 'i').test(p.name || '');
+  const include = edit && edit.include !== undefined && edit.include !== null ? edit.include !== false : !dataCentre;
+  return {
+    id: p.id, name: (edit && edit.name) || p.name, listName: p.name, type, typeLabel: ty.label, tech: p.tech || '', cc: p.cc, km, lat: p.lat, lon: p.lon,
+    dataCentre, sources: p.sources || [], eic: p.eic || [], mergedFrom: p.mergedFrom || [], dateRetrofit: p.dateRetrofit ?? null, manual: !!opts.manual,
+    mw: mw.v, units: units.v, unitMW: unitMW.v, firstYear: firstYear.v, closeYear: closeYear.v, closeM, defaultPassed, status, include,
+    eff: eff.v, msl: pick(edit, 'msl', ty.msl, 'type').v, vomPerMWh: pick(edit, 'vomPerMWh', ty.vomPerMWh, 'type').v,
+    leasePerKWMonth: pick(edit, 'leasePerKWMonth', opts.lease ?? PLANT_DEFAULTS.leasePerKWMonth, 'default').v,
+    buyPerKW: pick(edit, 'buyPerKW', PLANT_DEFAULTS.buyPerKW, 'default').v, refurbPerKW: pick(edit, 'refurbPerKW', PLANT_DEFAULTS.refurbPerKW, 'default').v,
+    fomPerKW: pick(edit, 'fomPerKW', PLANT_DEFAULTS.fomPerKW, 'default').v, linkCapex: link.v,
+    takeoverMW: tkMW.v, takeoverM, takeoverCostPerMW: tkCost.v, takeoverLagMonths: tkLag, buyExtraYears: extraYears, availM: opts.availM || 0,
+    offersPower: include && status !== 'closed', offersTakeover: include && !opts.noTakeover && takeoverM < periodM && tkMW.v > 0,
+    basis: { mw: mw.basis, units: units.basis, unitMW: unitMW.basis, firstYear: firstYear.basis, closeYear: closeYear.basis, eff: eff.basis, linkCapex: link.basis, takeoverMW: tkMW.basis, takeoverCostPerMW: tkCost.basis },
+    values: { lease: opts.manual ? 'existing' : plantValue.lease(p.id), buy: plantValue.buy(p.id), buyWhole: plantValue.buyWhole(p.id), takeover: plantValue.takeover(p.id), takeoverAdd: plantValue.takeoverAdd(p.id) },
+  };
+}
+
+// The plants of a study: list entries near the site (merged), plus the manual plant when entered. Memoised per inputs.
+const CAND = new WeakMap();
+export function plantCandidates(inputs) {
+  if (!inputs || !inputs.project) return { plants: [], all: [], nearby: 0 };
+  const P = inputs.plants || {};
+  const sig = JSON.stringify([inputs.project.lat, inputs.project.lon, inputs.project.analysisStart, inputs.economics && inputs.economics.periodYears, P.auto, P.edits, inputs.existing]);
+  const hit = CAND.get(inputs);
+  if (hit && hit.sig === sig) return hit.out;
+  const edits = (P.edits && typeof P.edits === 'object') ? P.edits : {};
+  const auto = P.auto !== false;
+  const near = auto ? nearbyPlants(Number(inputs.project.lat), Number(inputs.project.lon), { radiusKm: PLANT_DEFAULTS.radiusKm, minMW: PLANT_DEFAULTS.minMW }) : [];
+  const split = new Set(Object.entries(edits).filter(([, e]) => e && e.split).map(([id]) => id));
+  const merged = mergeDuplicates(near, { mergeKm: PLANT_DEFAULTS.mergeKm, sizeFrac: PLANT_DEFAULTS.mergeSizeFrac, split });
+  const all = merged.map((p) => candidateFrom(p, edits[p.id], inputs, {}));
+  if (existingEntered(inputs)) {
+    const x = inputs.existing;
+    const m = { id: 'manual', name: x.name || 'Existing plant', type: x.type, mw: Number(x.units) * Number(x.unitMW), dateIn: null, dateOut: finite(x.closeYear) ? Number(x.closeYear) : null, km: 0, sources: [] };
+    const c = candidateFrom(m, { units: x.units, unitMW: x.unitMW, eff: x.eff, msl: x.msl, vomPerMWh: x.vomPerMWh, linkCapex: x.linkCapex, closeYear: x.closeYear, leasePerKWMonth: x.leasePerKWMonth,
+      buyPerKW: x.buyPerKW, refurbPerKW: x.refurbPerKW, fomPerKW: x.fomPerKW, buyExtraYears: x.buyExtraYears, takeoverMW: x.takeoverMW, takeoverCostPerMW: x.takeoverCostPerMW, takeoverLagMonths: x.takeoverLagMonths }, inputs,
+      { manual: true, lease: x.leasePerKWMonth, availM: x.availableDate ? Math.max(0, monthsBetween(inputs.project.analysisStart, x.availableDate)) : 0 });
+    all.unshift(c);
+  }
+  const out = { plants: all.filter((c) => c.include), all, nearby: near.length, source: PLANT_SOURCE };
+  CAND.set(inputs, { sig, out });
+  return out;
+}
+// Bought whole is a value of its own only for a list plant of more than one unit (otherwise it is the same as in part).
+export const plantPowerValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersPower).flatMap((c) => [c.values.lease, c.values.buy, ...(!c.manual && c.units > 1 ? [c.values.buyWhole] : [])]);
+export const plantTakeoverValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersTakeover).flatMap((c) => [c.values.takeover, c.values.takeoverAdd]);
+export function plantOf(inputs, val) {
+  const pv = parsePlantValue(val);
+  return pv ? plantCandidates(inputs).all.find((c) => c.id === pv.id) || null : null;
+}
+
+// Labels of the plant values, for choiceLabel (kept from the last study read; values carry the plant's id).
+const PLANT_LABELS = new Map();
+function plantLabel(val) {
+  if (PLANT_LABELS.has(val)) return PLANT_LABELS.get(val);
+  const pv = parsePlantValue(val);
+  return pv ? `Existing plant ${pv.id} (${pv.mode === 'takeover' ? 'its grid connection' : pv.mode})` : null;
+}
+
+// Technology records for the plants of this run (called by buildContext for every run, as applyExistingPlant).
+// xl:<id> leased, xb:<id> bought; the manual plant keeps TECH.existing for the lease and gets xb:manual.
+export function applyPlants(inputs) {
+  for (const k of Object.keys(TECH)) if (/^x[lbw]:/.test(k)) delete TECH[k];
+  TECH.existing.p.endM = Infinity;
+  const cands = plantCandidates(inputs);
+  // Two list plants can share a name (Eem at Eemshaven): the label carries the output (unless it is the manual plant).
+  for (const c of cands.all) {
+    const nm = c.manual ? c.name : `${c.name} ${Math.round(c.mw).toLocaleString('en-GB')} MW`;
+    PLANT_LABELS.set(c.values.lease, `${nm} (lease)`);
+    PLANT_LABELS.set(c.values.buy, c.manual ? `${nm} (bought)` : `${nm} (bought, units used)`);
+    PLANT_LABELS.set(c.values.buyWhole, `${nm} (bought whole)`);
+    PLANT_LABELS.set(c.values.takeover, `${nm}: its grid connection, in place of part of the new one`);
+    PLANT_LABELS.set(c.values.takeoverAdd, `${nm}: its grid connection, as well as the new one`);
+    if (!c.offersPower) continue;
+    const ty = EXISTING_TYPES[c.type];
+    const base = {
+      role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, ownConsent: true, offsite: true, existingPlant: true, plantKey: c.id,
+      fixedUnits: c.units, capUnits: !c.manual, typeLabel: ty.label, verify: 'The plant owner',
+    };
+    const p = { unitMW: c.unitMW, eff: c.eff, msl: c.msl, vomPerMWh: c.vomPerMWh, linkCapex: c.linkCapex, planM: c.availM, procM: 0, buildM: 0, m2PerMW: 0, stackM: 0, capexPerKW: 0, fomPerKW: 0, life: 25 };
+    if (!c.manual) TECH[c.values.lease] = { ...base, id: c.values.lease, name: `${nm} (lease)`, lease: true, p: { ...p, rentalPerKWMonth: c.leasePerKWMonth, endM: c.closeM } };
+    else TECH.existing.p.endM = c.closeM;
+    const endB = c.closeM === Infinity ? Infinity : c.closeM + c.buyExtraYears * 12;
+    const lifeB = endB === Infinity ? 40 : Math.max(1, Math.ceil((endB - c.availM) / 12));
+    const pB = { ...p, capexPerKW: c.buyPerKW + c.refurbPerKW, buyPerKW: c.buyPerKW, refurbPerKW: c.refurbPerKW, fomPerKW: c.fomPerKW, life: lifeB, endM: endB };
+    TECH[c.values.buy] = { ...base, id: c.values.buy, name: c.manual ? `${nm} (bought)` : `${nm} (bought, units used)`, lease: false, bought: true, p: pB };
+    // Bought whole (OPEN-QUESTIONS 124): every unit bought, refurbished and maintained; the campus uses what it needs.
+    if (!c.manual && c.units > 1) TECH[c.values.buyWhole] = { ...base, id: c.values.buyWhole, name: `${nm} (bought whole)`, lease: false, bought: true, wholePlant: true, capUnits: false, p: { ...pB } };
+  }
+  return cands;
 }
 
 tech('backupDiesel', { name: 'Diesel standby gensets', role: 'backup', maturity: 'Commercial', fuel: 'diesel', combustion: true, verify: 'Manufacturer datasheets' }, {
@@ -730,7 +918,9 @@ export function buildDefaultInputs(opts = {}) {
       // Display currency (work package 1): results shown in this currency at the fixed release rate (project.fx); the
       // engine and the inputs work in euro. 'by country' = the country's currency.
       currency: rec('project.currency', 'by country', 'by country / EUR / GBP / CHF / NOK / SEK / DKK / ISK', { basis: 'judgement', derived: true, ref: '§5.1', note: 'Display only; converted at the ECB reference rates of the release (project.fx). Inputs stay in euro.' }),
-      analysisStart: rec('project.analysisStart', start, 'YYYY-MM', { basis: 'judgement', note: 'Today + 3 months. No source; replace with the client programme start.', ref: '§5.1' }),
+      // The record holds the default itself, today + 3 months, whatever start this call was given (known issue 34: it held the
+      // last start passed in, so whether a start counted as "assumed" depended on which inputs were built last).
+      analysisStart: (rec('project.analysisStart', defaultAnalysisStart(opts.today), 'YYYY-MM', { basis: 'judgement', note: 'Today + 3 months. No source; replace with the client programme start.', ref: '§5.1' }), start),
       seed: rec('project.seed', 20261015, 'integer', { basis: 'run setting', ref: '§4' }),
     },
     site: {
@@ -946,6 +1136,24 @@ export function buildDefaultInputs(opts = {}) {
     vomPerMWh: rec('existing.vomPerMWh', null, '€/MWh', { basis: 'judgement', ref: '§5.4', note: 'Empty = by type.' }),
     leasePerKWMonth: rec('existing.leasePerKWMonth', 6, '€/kW/month', { low: 3, high: 9, basis: 'judgement', ref: '§5.4', note: 'Capacity payment for the lease, paid from a month before the plant is first needed (settings.rentalLeadMonths). Assumed in the Pego study (2026-10-24); replace with the owner\'s offer.' }),
     linkCapex: rec('existing.linkCapex', 0, '€', { basis: 'judgement', ref: '§5.4', note: 'One-off: the connection from the plant to the campus (lines, bays). Booked when the lease starts.' }),
+    // Work package 19: optional closure year; with it the plant's grid connection can be taken over (OPEN-QUESTIONS 120).
+    closeYear: rec('existing.closeYear', null, 'year', { basis: 'judgement', ref: '§5.4', note: 'Empty = the plant runs for the whole study and its grid connection is not offered.' }),
+    // Work package 19 (OPEN-QUESTIONS 119–121): bought and taken-over values of the manual plant; empty = the plant defaults (plants.*).
+    buyPerKW: rec('existing.buyPerKW', null, '€/kW', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.buyPerKW.' }),
+    refurbPerKW: rec('existing.refurbPerKW', null, '€/kW', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.refurbPerKW.' }),
+    fomPerKW: rec('existing.fomPerKW', null, '€/kW/yr', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.fomPerKW.' }),
+    buyExtraYears: rec('existing.buyExtraYears', null, 'years', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.buyExtraYears.' }),
+    takeoverMW: rec('existing.takeoverMW', null, 'MW', { basis: 'judgement', ref: '§5.4', note: 'Empty = the plant\'s output.' }),
+    takeoverCostPerMW: rec('existing.takeoverCostPerMW', null, '€/MW', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.takeoverCostFrac × the extra-high-voltage connection rate.' }),
+    takeoverLagMonths: rec('existing.takeoverLagMonths', null, 'months', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.takeoverLagMonths.' }),
+  };
+  // Existing gas plants from the bundled list (work package 19, OPEN-QUESTIONS 116–123): found automatically; the
+  // engineer's corrections are kept per list entry (edits[<id>] = { include, name, type, mw, units, unitMW, firstYear,
+  // closeYear, eff, msl, vomPerMWh, leasePerKWMonth, buyPerKW, refurbPerKW, fomPerKW, linkCapex, takeoverMW,
+  // takeoverCostPerMW, split }).
+  inputs.plants = {
+    auto: rec('plants.auto', true, 'toggle', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-10-31 (OPEN-QUESTIONS 118): every gas plant of 50 MW or more within 10 km enters the analysis. Off = the bundled list is not read.' }),
+    edits: rec('plants.edits', {}, 'corrections per plant', { basis: 'judgement', ref: '§5.4', derived: true, note: 'Empty = the values of the bundled list and the defaults, each flagged with its source.' }),
   };
   // Measured hourly weather (owner 2026-10-30, OPEN-QUESTIONS 106–107): an uploaded EPW file or a NOAA station year.
   // None = the synthetic country profile. The arrays are 8,760 hourly values in °C to 0.1 (engine/weather.js).
@@ -979,7 +1187,9 @@ export function normalizeInputs(inputs) {
   if (b != null) { out.site.areaHa = b; out.site.areaFromBoundary = true; }
   out.requirements.landTakeCeilingHa = out.requirements.landTakeCeilingHa ?? null;
   // Inputs saved before work package 12 have no existing plant.
-  out.existing = { include: false, name: 'Existing plant', type: 'ccgt', units: null, unitMW: null, availableDate: null, eff: null, msl: null, vomPerMWh: null, leasePerKWMonth: 6, linkCapex: 0, ...(out.existing || {}) };
+  out.existing = { include: false, name: 'Existing plant', type: 'ccgt', units: null, unitMW: null, availableDate: null, eff: null, msl: null, vomPerMWh: null, leasePerKWMonth: 6, linkCapex: 0, closeYear: null, buyPerKW: null, refurbPerKW: null, fomPerKW: null, buyExtraYears: null, takeoverMW: null, takeoverCostPerMW: null, takeoverLagMonths: null, ...(out.existing || {}) };
+  // Inputs saved before work package 19 have no plant list settings: the list is read (OPEN-QUESTIONS 118).
+  out.plants = { auto: true, edits: {}, ...(out.plants || {}) };
   // Inputs saved before the weather work have none: the synthetic profile.
   if (!out.weather || typeof out.weather !== 'object') out.weather = { source: 'none' };
   out.choices = out.choices || {};

@@ -91,6 +91,7 @@ import { reviewFixTests } from './review-fixes-tests.mjs';
 import { weatherTests, stationTests } from './weather-tests.mjs';
 import { weatherTmyTests } from './weathertmy-tests.mjs';
 import { monteCarloTests } from './montecarlo-tests.mjs';
+import { plantTests } from './plants-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1265,6 +1266,9 @@ await stationTests(test);
 
 // 49. NOAA station years → typical year (tests/weathertmy-tests.mjs)
 await weatherTmyTests(test);
+
+// 50. Work package 19: existing gas plants near the site from the bundled list (tests/plants-tests.mjs)
+await plantTests(test);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

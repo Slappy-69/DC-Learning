@@ -18,7 +18,7 @@ const hasBackup = (v, sz) => !!(sz.backup && sz.backup.tech);
 const flexOn = (v) => v.C16 === 'on';
 const hasPpa = (v) => v.C13 && v.C13 !== 'none';
 // Existing plant (leased) and rented plant (Opus review N-4, owner 2026-10-30, OPEN-QUESTIONS 111).
-const usesExisting = (v, sz) => [sz.prime, sz.bridge].some((p) => p && p.tech === 'existing');
+const usesExisting = (v, sz) => [sz.prime, sz.bridge].some((p) => p && TECH[p.tech] && TECH[p.tech].plantKey === 'manual'); // the manual plant (work package 12), leased or bought (19)
 const leasesOrRents = (v, sz) => [sz.prime, sz.bridge].some((p) => p && TECH[p.tech] && TECH[p.tech].lease);
 
 // Key inputs: [path, name, when the option uses it].

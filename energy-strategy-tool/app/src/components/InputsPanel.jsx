@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTag } from './Field.jsx';
-import { COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
+import { PLANT_DEFAULTS, COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
 import MapPicker from './MapPicker.jsx';
 import WeatherField from './WeatherField.jsx';
+import PlantsField from './PlantsField.jsx';
 
 const YM = '^\\d{4}-(0[1-9]|1[0-2])$';
 
@@ -193,13 +194,13 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           <SelectField label="PPA coverage" value={String(inputs.utilities.ppaCoverage)} onCommit={(v) => { update('utilities.ppaCoverage', Number(v)); update('choices.C14', null); }} path="utilities.ppaCoverage" inputs={inputs}
             options={[['25', '25 %'], ['50', '50 %'], ['75', '75 %'], ['80', '80 %'], ['100', '100 %']]} />
         </div> : null}
-        <ToggleField label="Existing plant near the site (lease)" checked={!!(inputs.existing && inputs.existing.include)} onCommit={(v) => { update('existing.include', v); update('choices.C2', null); update('choices.C4', null); }} path="existing.include" inputs={inputs}
-          hint="A power plant beside the site whose owner would lease it to the campus (work package 12). On: it is offered as bridging plant (handed back when the grid arrives, or kept running) and as firm plant, with exactly the units entered and the lease paid from a month before it is first needed. It stands outside the campus: not on the site plan, not in the campus's emissions permit." />
+        <ToggleField label="Existing plant near the site (not in the list)" checked={!!(inputs.existing && inputs.existing.include)} onCommit={(v) => { update('existing.include', v); update('choices.C2', null); update('choices.C4', null); }} path="existing.include" inputs={inputs}
+          hint="A power plant beside the site that is not in the bundled list (work package 12). On: it is offered leased and bought (work package 19), as bridging plant (handed back when the grid arrives, or kept running) and as firm plant, with exactly the units entered and the lease paid from a month before it is first needed. It stands outside the campus: not on the site plan, not in the campus's emissions permit." />
         {inputs.existing && inputs.existing.include ? <>
           <div className="row2">
             <TextField label="Plant name" value={inputs.existing.name} onCommit={set('existing.name')} path="existing.name" inputs={inputs} />
             <SelectField label="Plant type" value={inputs.existing.type} onCommit={set('existing.type')} path="existing.type" inputs={inputs}
-              options={[['ccgt', 'Combined-cycle gas turbine (CCGT)'], ['ocgt', 'Open-cycle gas turbines'], ['engines', 'Gas engines']]} />
+              options={[['ccgt', 'Combined-cycle gas turbine (CCGT)'], ['ocgt', 'Open-cycle gas turbines'], ['engines', 'Gas engines'], ['steam', 'Gas-fired steam plant']]} />
           </div>
           <div className="row2">
             <NumberField label="Units offered" unit="units" value={inputs.existing.units} onCommit={(v) => update('existing.units', v == null ? null : Math.max(1, Math.round(v)))} path="existing.units" inputs={inputs} nullable min={1} step={1} placeholder="Required" />
@@ -217,7 +218,23 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
             <NumberField label="Variable O&M" unit="€/MWh" value={inputs.existing.vomPerMWh} onCommit={set('existing.vomPerMWh')} path="existing.vomPerMWh" inputs={inputs} nullable min={0} placeholder="By type" />
             <NumberField label="Connection to the campus" unit="€" value={inputs.existing.linkCapex} onCommit={set('existing.linkCapex')} path="existing.linkCapex" inputs={inputs} min={0} step={100000} />
           </div>
+          <NumberField label="Closure year" unit="year" value={inputs.existing.closeYear} onCommit={(v) => { update('existing.closeYear', v == null ? null : Math.round(v)); update('choices.C21', null); }} path="existing.closeYear" inputs={inputs} nullable step={1} placeholder="Runs for the whole study"
+            hint="Optional (work package 19). With a closure year the plant stops then (bought: 10 years later), and its grid connection is offered to the campus 12 months after it stops." />
+          <div className="row2">
+            <NumberField label="Purchase price (bought)" unit="€/kW" value={inputs.existing.buyPerKW} onCommit={set('existing.buyPerKW')} path="existing.buyPerKW" inputs={inputs} nullable min={0} placeholder="€150 (default)" />
+            <NumberField label="Refurbishment (bought)" unit="€/kW" value={inputs.existing.refurbPerKW} onCommit={set('existing.refurbPerKW')} path="existing.refurbPerKW" inputs={inputs} nullable min={0} placeholder="€100 (default)" />
+          </div>
+          <div className="row2">
+            <NumberField label="Fixed O&M (bought)" unit="€/kW/yr" value={inputs.existing.fomPerKW} onCommit={set('existing.fomPerKW')} path="existing.fomPerKW" inputs={inputs} nullable min={0} placeholder="€25 (default)" />
+            <NumberField label="Years the refurbishment adds" unit="years" value={inputs.existing.buyExtraYears} onCommit={set('existing.buyExtraYears')} path="existing.buyExtraYears" inputs={inputs} nullable min={0} step={1} placeholder="10 (default)" />
+          </div>
+          <div className="row2">
+            <NumberField label="Grid connection to take over" unit="MW" value={inputs.existing.takeoverMW} onCommit={set('existing.takeoverMW')} path="existing.takeoverMW" inputs={inputs} nullable min={0} placeholder="The plant's output" />
+            <NumberField label="Takeover cost" unit="€/MW" value={inputs.existing.takeoverCostPerMW} onCommit={set('existing.takeoverCostPerMW')} path="existing.takeoverCostPerMW" inputs={inputs} nullable min={0} step={1000} placeholder="€30,000 (default)" />
+          </div>
+          <NumberField label="Months from closure to using its connection" unit="months" value={inputs.existing.takeoverLagMonths} onCommit={set('existing.takeoverLagMonths')} path="existing.takeoverLagMonths" inputs={inputs} nullable min={0} step={1} placeholder="12 (default)" />
         </> : null}
+        <PlantsField inputs={inputs} norm={norm} update={update} />
         <SelectField label="District heating offtake nearby" value={inputs.utilities.districtHeating} onCommit={(v) => { update('utilities.districtHeating', v); update('choices.C15', null); }} path="utilities.districtHeating" inputs={inputs}
           options={[['No', 'No'], ['Yes', 'Yes']]} hint="Heat reuse is not costed in this slice." />
       </Section>
@@ -373,20 +390,30 @@ function PhasesEditor({ inputs, norm, update }) {
   );
 }
 
+// The count stops at a million combinations on screen (Opus review of package 19, finding 3: it runs on every change).
+const COUNT_LIMIT = 1000000;
+// The count depends on neither the weights nor the deliverability settings: a weight change does not recount (it took
+// about 0.1 s on T1 on every change, inside the weight-repaint bound of browser check B9).
+const countKey = (norm) => JSON.stringify({ ...norm, weights: null, deliverability: null, project: { ...norm.project, name: null } });
+function useCount(norm) {
+  const key = countKey(norm);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => countCombinations(norm, COUNT_LIMIT), [key]);
+}
 function ProjectedCount({ norm }) {
-  const c = useMemo(() => countCombinations(norm), [norm]);
-  const cap = norm.settings.generationCap;
+  const c = useCount(norm);
+  const cap = norm.settings.generationCap * (c.plant > 0 ? PLANT_DEFAULTS.capMultiplier : 1); // OPEN-QUESTIONS 130
   const over = c.total > cap;
-  return <span className={over ? 'warn-text' : ''}>{c.total.toLocaleString('en-GB')} combinations{over ? (norm.settings.sampleAboveCap ? ` · ${cap.toLocaleString('en-GB')} sampled` : ' · above cap, all screened') : ''}</span>;
+  return <span className={over ? 'warn-text' : ''}>{c.truncated ? 'more than ' : ''}{c.total.toLocaleString('en-GB')} combinations{over ? (norm.settings.sampleAboveCap ? ` · ${cap.toLocaleString('en-GB')} sampled` : ' · above cap, all screened') : ''}</span>;
 }
 
 function ChoicesPanel({ inputs, norm, update }) {
-  const c = useMemo(() => countCombinations(norm), [norm]);
-  const cap = norm.settings.generationCap;
+  const c = useCount(norm);
+  const cap = norm.settings.generationCap * (c.plant > 0 ? PLANT_DEFAULTS.capMultiplier : 1); // OPEN-QUESTIONS 130
   return (
     <div className="choices">
       <p className="note" role="status">
-        Projected: <strong>{c.total.toLocaleString('en-GB')}</strong> combinations after compatibility rules (cap {cap.toLocaleString('en-GB')}; sample above cap: {norm.settings.sampleAboveCap ? 'on' : 'off'}).
+        Projected: <strong>{c.truncated ? 'more than ' : ''}{c.total.toLocaleString('en-GB')}</strong> combinations after compatibility rules (cap {cap.toLocaleString('en-GB')}; sample above cap: {norm.settings.sampleAboveCap ? 'on' : 'off'}).
         {c.total > cap && norm.settings.sampleAboveCap ? ` ${cap.toLocaleString('en-GB')} will be screened (every archetype kept, seeded Latin hypercube over the rest).` : ''}
         {c.total > cap && !norm.settings.sampleAboveCap ? ' Every combination will be screened; this is slow above the cap.' : ''}
       </p>

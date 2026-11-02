@@ -2,7 +2,8 @@
 // these arrays depend only on inputs, not on the option's choices).
 
 import { applyWeather } from './weather.js';
-import { COUNTRIES, COOLING, TECH, FUEL, FX, applyExistingPlant } from './defaults.js';
+import { COUNTRIES, COOLING, TECH, FUEL, FX, applyExistingPlant, applyPlants, plantOf, PLANT_DEFAULTS } from './defaults.js';
+import { parsePlantValue, isTakeover } from './plants.js';
 import { getProfiles, coolingProfile, nearestCountry, H } from './profiles.js';
 import { monthsBetween, yearOf, parseYM } from './dates.js';
 import { mulberry32, subSeed } from './prng.js';
@@ -81,6 +82,7 @@ export function contractLimit(inputs, C1) {
   return x == null || x === '' || !Number.isFinite(Number(x)) ? Infinity : Math.max(0, Number(x));
 }
 export function contractedCap(ctx, C1) {
+  if (ctx.contractApplied) return ctx.gridCap; // already contracted (a takeover in place of part of the new connection)
   const lim = contractLimit(ctx.inputs, C1);
   if (!(lim < Infinity)) return ctx.gridCap;
   if (!ctx.contractCache) ctx.contractCache = new Map();
@@ -175,6 +177,8 @@ export function buildContext(inputs, opts = {}) {
   const nMonthsTimeline = Math.max(inputs.settings.timelineMonths, Math.ceil(needM / 12) * 12);
   // Existing plant near the site (work package 12): its technology record follows this run's inputs.
   const existing = applyExistingPlant(inputs, (d) => monthOf(inputs, d));
+  // Existing gas plants from the bundled list (work package 19): their technology records follow this run's inputs.
+  const plants = applyPlants(inputs);
   const dp = Array.isArray(inputs.economics.displayPeriods) ? inputs.economics.displayPeriods.map(Number).filter((n) => Number.isInteger(n) && n <= 60) : [];
   const maxYears = Math.max(inputs.economics.periodYears, ...dp, Math.ceil(nMonthsTimeline / 12));
   const nMonths = Math.max(nMonthsTimeline, maxYears * 12) + 12;
@@ -214,13 +218,57 @@ export function buildContext(inputs, opts = {}) {
   const gasM = inputs.utilities.gasDateMonths;
 
   const ctx = {
-    inputs, country, cdata, prof, seed, nMonths, nMonthsTimeline, existing, gridCap, itInst, shape, baseYear, startMonth,
+    inputs, country, cdata, prof, seed, nMonths, nMonthsTimeline, existing, plants, gridCap, itInst, shape, baseYear, startMonth,
     cooling, gasCommodity, gasPrice, priceMult, priceAdder, carbonMult, carbonPrice, phases, firstPhaseM, lastPhaseM, fullGridM, gasM,
     demandCache: new Map(),
     demandStats: { hits: 0, misses: 0 }, // run-log counters for the hourly demand cache
     site: opts.site || buildSiteModel(inputs), // site model and buildable-envelope raster (§10.1), shared by every option
   };
   return ctx;
+}
+
+// The context of one option (work package 19, OPEN-QUESTIONS 120): with C21 = a nearby plant's grid connection, the
+// grid offered to the campus gains that connection from the month the campus can use it, up to the campus's design
+// load; the grid "full-connection month" (when bridging plant hands over) becomes the first month the grid offered is
+// at least the full grid capacity entered (or the design load, if less), if that is earlier. Everything else is shared with the run's context (the
+// demand cache included). Without a takeover it is the run's context itself.
+export function ctxFor(ctx, v) {
+  if (!v || !isTakeover(v.C21) || ctx.takeover) return ctx;
+  // Cached first (Opus review finding 19): the key holds everything the derived context depends on in this run.
+  const own0 = [v.C2, v.C4].map(parsePlantValue).find((p) => p && p.id === parsePlantValue(v.C21).id && p.mode !== 'takeover');
+  const key = `${v.C21}|${own0 ? own0.mode : '-'}|${v.C8}|${v.C1}`;
+  if (!ctx.takeoverCache) ctx.takeoverCache = new Map();
+  const hit = ctx.takeoverCache.get(key);
+  if (hit) return hit;
+  const plant = plantOf(ctx.inputs, v.C21);
+  if (!plant) return ctx;
+  // The same plant's power, used in this option: it runs until its connection is ready (lease: the listed closure,
+  // bought: the refurbished life), then the campus takes the connection over.
+  const own = [v.C2, v.C4].map(parsePlantValue).find((p) => p && p.id === plant.id && p.mode !== 'takeover');
+  const closeM = own && (own.mode === 'buy' || own.mode === 'buyWhole') && plant.closeM !== Infinity ? plant.closeM + plant.buyExtraYears * 12 : plant.closeM;
+  // A plant whose default closure has passed (OPEN-QUESTIONS 125): its connection from the transfer months after the start.
+  const month = plant.defaultPassed ? plant.takeoverM : Math.max(0, closeM) + plant.takeoverLagMonths;
+  const { arr } = designDemandByMonth(ctx, v.C8);
+  let need = 0;
+  for (let m = 0; m < arr.length; m++) if (arr[m] > need) need = arr[m];
+  const mw = Math.max(0, Math.min(plant.takeoverMW, need));
+  // In place of part of the new connection (tk:, OPEN-QUESTIONS 126): from the takeover month the new connection is
+  // reduced by the MW taken over, and the contracted capacity caps the new connection only (so the option's grid is
+  // already contracted here). As well as the new one (ta:): added on top, and the contract caps the total, as before.
+  const add = !!parsePlantValue(v.C21).add;
+  const fullMW0 = Number(ctx.inputs.grid.fullMW) || 0;
+  const newMW = add ? fullMW0 : Math.max(0, fullMW0 - mw);
+  const lim = add ? Infinity : contractLimit(ctx.inputs, v.C1);
+  const gridCap = Float64Array.from(ctx.gridCap, (x, m) => (m >= month ? (add ? x + mw : Math.min(x, newMW, lim) + mw) : (add ? x : Math.min(x, lim))));
+  // Bridging hands over once the grid offered carries what the full grid would: the full grid capacity entered, or the
+  // campus design load if that is less.
+  const full = Math.min(Number(ctx.inputs.grid.fullMW) || 0, need);
+  let fullGridM = ctx.fullGridM;
+  for (let m = month; m < gridCap.length && m < fullGridM; m++) if (gridCap[m] + 1e-9 >= full) { fullGridM = m; break; }
+  const takeover = { value: v.C21, plant, month, mw, needMW: need, offeredMW: plant.takeoverMW, costPerMW: plant.takeoverCostPerMW, cost: mw * plant.takeoverCostPerMW, ownPower: own ? own.mode : null, closeM, add, newMW };
+  const d = { ...ctx, gridCap, fullGridM, contractCache: new Map(), takeover, baseCtx: ctx, contractApplied: !add };
+  ctx.takeoverCache.set(key, d);
+  return d;
 }
 
 // Hourly facility demand for model year y (8760 h), for one cooling approach.

@@ -22,7 +22,7 @@
 // So: supply (generation + imports + discharge) = demand + charge + curtailment + export − unmet.
 
 import { H } from './profiles.js';
-import { demandYear, contractLimit } from './context.js';
+import { demandYear, contractLimit, ctxFor } from './context.js';
 import { TECH, FUEL, PPA } from './defaults.js';
 import { techAvailMonth } from './sizing.js';
 import { triggerMask } from './triggers.js';
@@ -94,6 +94,7 @@ function ppaShape(ctx, type, Dyear) {
 
 // Build the dispatch configuration from sizing: everything the hourly loop needs.
 export function dispatchConfig(ctx, v, sz) {
+  ctx = ctxFor(ctx, v); // work package 19: a taken-over grid connection
   const inputs = ctx.inputs;
   // Supply available month of each renewable source (sizing.js techAvailMonth: ordered from day one; wind and ground
   // solar keep their own consent months, OPEN-QUESTIONS 44, 56).
@@ -122,9 +123,11 @@ export function dispatchConfig(ctx, v, sz) {
     ppaType: sz.ppa ? sz.ppa.type : null, ppaCoverage: sz.ppa ? sz.ppa.coverage : 0,
     flex: v.C16 === 'on',
     reYield: inputs.utilities.reYieldFactor ?? 1, // tornado driver "capacity factors" (work package 9)
-    gridLimit: v.C1 === 'islanded' ? Infinity : contractLimit(inputs, v.C1), // contracted capacity (work package 3)
+    gridLimit: v.C1 === 'islanded' || ctx.contractApplied ? Infinity : contractLimit(inputs, v.C1), // contracted capacity (work package 3); already applied for a takeover in place (OPEN-QUESTIONS 126)
     plants,
   };
+  // Work package 19: the option's own grid offer when it takes over a plant's connection (dispatch reads cfg.gridCap).
+  if (ctx.takeover) { cfg.gridCap = ctx.gridCap; cfg.fullGridM = ctx.fullGridM; cfg.takeover = `${ctx.takeover.value}|${ctx.takeover.month}|${+ctx.takeover.mw.toFixed(6)}`; }
   return cfg;
 }
 
@@ -132,13 +135,15 @@ export function dispatchKey(cfg) {
   return JSON.stringify([cfg.coolingId, cfg.islanded, cfg.exportMW, cfg.exceedance, cfg.respectRunHours, cfg.maxRunHours,
     +cfg.solarMWp.toFixed(6), cfg.solarAvailM, +cfg.windMW.toFixed(6), cfg.windAvailM, +cfg.bessMW.toFixed(6), +cfg.bessMWh.toFixed(6), cfg.bessAvailM, cfg.bessRole,
     cfg.ppaType, cfg.ppaCoverage, cfg.flex, cfg.reYield, cfg.gridLimit < Infinity ? cfg.gridLimit : null,
-    cfg.plants.map((p) => [p.role, p.tech, +p.mw.toFixed(6), Array.from(p.mode).join(''), p.hourMask ? p.hourMask.count : 0])]);
+    cfg.plants.map((p) => [p.role, p.tech, +p.mw.toFixed(6), Array.from(p.mode).join(''), p.hourMask ? p.hourMask.count : 0]),
+    ...(cfg.takeover ? [cfg.takeover] : [])]);
 }
 
 // Which model years must be dispatched explicitly? Years after the last change repeat (steady state).
 export function dispatchYears(ctx, cfg) {
-  let lastChangeM = Math.max(ctx.lastPhaseM + ctx.inputs.load.rampMonths, ctx.fullGridM);
-  for (let m = 1; m < ctx.gridCap.length; m++) if (ctx.gridCap[m] !== ctx.gridCap[m - 1]) lastChangeM = Math.max(lastChangeM, m);
+  const gc = cfg.gridCap || ctx.gridCap;
+  let lastChangeM = Math.max(ctx.lastPhaseM + ctx.inputs.load.rampMonths, cfg.fullGridM ?? ctx.fullGridM);
+  for (let m = 1; m < gc.length; m++) if (gc[m] !== gc[m - 1]) lastChangeM = Math.max(lastChangeM, m);
   for (const m of [cfg.solarAvailM, cfg.windAvailM, cfg.bessAvailM]) if (Number.isFinite(m)) lastChangeM = Math.max(lastChangeM, m);
   for (const p of cfg.plants) {
     for (let m = 1; m < p.mode.length; m++) if (p.mode[m] !== p.mode[m - 1]) lastChangeM = Math.max(lastChangeM, m);
@@ -146,7 +151,11 @@ export function dispatchYears(ctx, cfg) {
   // The first model year that starts after the last change is the steady one that repeats (known issue 1, work package 11):
   // a change mid-year leaves that year still ramping.
   const lastYear = Math.ceil(Math.max(0, lastChangeM) / 12);
-  return Math.min(lastYear + 1, ctx.inputs.settings.maxDispatchYears, Math.floor(ctx.nMonths / 12));
+  // An existing plant that stops (work package 19): the years up to the first full year after it stops are always
+  // dispatched, whatever the cap, so the years after it repeat a year without it (Opus review of package 19, finding 1).
+  let endYear = 0;
+  for (const p of cfg.plants) if (Number.isFinite(p.endMonth)) endYear = Math.max(endYear, Math.ceil(p.endMonth / 12) + 1);
+  return Math.min(lastYear + 1, Math.max(ctx.inputs.settings.maxDispatchYears, endYear), Math.floor(ctx.nMonths / 12));
 }
 // Model years an option needs dispatched before nothing changes (full load, grid steps, plant changes), whatever the
 // cap: compared with dispatchYears for the "dispatch stops early" flag (known issue 17).
@@ -205,7 +214,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
   const battResp = cfg.flex && LF.flexBatteryResponse !== false;
   let inEvent = false, evLen = 0, recoverLeft = 0;
   let flexEvents = 0, flexTrigHours = 0, flexTrigMWh = 0, flexShortMWh = 0, flexShortHours = 0, battRespMWh = 0;
-  const gridCap = ctx.gridCap;
+  const gridCap = cfg.gridCap || ctx.gridCap;
   const gridLimit = cfg.gridLimit ?? Infinity;
   // Hoisted locals for the hot loop
   const islanded = cfg.islanded;

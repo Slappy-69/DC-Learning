@@ -3,7 +3,7 @@
 // The grid connection is the offered capacity per period and is never resized.
 
 import { TECH, COOLING, SPATIAL, choiceLabel } from './defaults.js';
-import { designDemandByMonth, demandYear, designDayPUE, contractedCap } from './context.js';
+import { designDemandByMonth, demandYear, designDayPUE, contractedCap, ctxFor } from './context.js';
 import { NA } from './generator.js';
 import { permittingTriggers, permitRegimes, permitOutlookItem } from './permitting.js';
 import { triggerSet } from './triggers.js';
@@ -43,8 +43,24 @@ export function fuelAvailMonth(ctx, fuel) {
 
 const BRIDGE_TECH = { gasRecip: 'gasRecip', gasTurbine: 'gasTurbine', fuelCell: 'fuelCell', dieselPrime: 'dieselPrime', rented: 'rented', existing: 'existing' };
 const PRIME_TECH = { chp: 'chp', gasRecip: 'gasRecip', fuelCell: 'fuelCell', smr: 'smr', hydrogen: 'hydrogen', existing: 'existing' };
-// Existing plant (work package 12): exactly the units entered, no redundancy added.
-const fixedNote = (t) => (t.fixedUnits && t.id === 'existing' ? ` (existing plant: exactly the ${t.fixedUnits} unit${t.fixedUnits === 1 ? '' : 's'} offered, no N+1 added; the standby gensets cover a unit trip)` : '');
+// Existing plant (work package 12): exactly the units entered, no redundancy added. A plant from the bundled list
+// (work package 19, capUnits): the units the need takes, up to the plant's units, no redundancy added.
+const fixedNote = (t) => (!t.existingPlant ? '' : t.capUnits
+  ? ` (existing plant: the units needed, of the plant's ${t.fixedUnits}; no N+1 added, the standby gensets cover a unit trip)`
+  : t.wholePlant ? ` (existing plant bought whole: all ${t.fixedUnits} units; no N+1 added)`
+  : ` (existing plant: exactly the ${t.fixedUnits} unit${t.fixedUnits === 1 ? '' : 's'} offered, no N+1 added; the standby gensets cover a unit trip)`);
+// Units of an existing plant for a need of `units` (work package 19): the manual plant gives exactly what was offered.
+const plantUnits = (t, need) => (t.capUnits ? Math.max(1, Math.min(t.fixedUnits, need)) : t.fixedUnits);
+// The technology of a C2 / C4 value: the fixed maps, or an existing plant's own record (xl:, xb:, work package 19).
+const bridgeTech = (val) => TECH[BRIDGE_TECH[val] || val];
+const primeTech = (val) => TECH[PRIME_TECH[val] || val];
+// Month an existing plant stops (work package 19, OPEN-QUESTIONS 121): its closure (bought: after the refurbished life);
+// when the option also takes over its grid connection, it runs on until the campus can use the connection.
+export function plantEndMonth(ctx, t) {
+  if (!t || !t.existingPlant) return Infinity;
+  if (ctx.takeover && ctx.takeover.plant.id === t.plantKey) return ctx.takeover.month;
+  return t.p.endM ?? Infinity;
+}
 const BACKUP_TECH = { diesel: 'backupDiesel', hvo: 'backupHvo', gas: 'backupGas', bessUps: 'backupHvo' };
 
 export function voltageBand(ctx, mw) {
@@ -66,6 +82,7 @@ function unitsWithRedundancy(n, topology, blockSize, catcherN) {
 }
 
 export function sizeOption(ctx, v) {
+  ctx = ctxFor(ctx, v); // work package 19: a taken-over grid connection
   const inputs = ctx.inputs;
   const L = inputs.load;
   const req = inputs.requirements;
@@ -114,7 +131,7 @@ export function sizeOption(ctx, v) {
   // --- Firm prime (C4) ---
   let prime = null;
   if (v.C4 !== 'none') {
-    const t = TECH[PRIME_TECH[v.C4]];
+    const t = primeTech(v.C4);
     const avail = techAvailMonth(ctx, t);
     const fuelM = t.offsite ? 0 : fuelAvailMonth(ctx, t.fuel); // existing plant has its own fuel supply
     if (v.C4s === 'shortfall') {
@@ -126,7 +143,7 @@ export function sizeOption(ctx, v) {
         const s = designByMonth[m] - (v.C1 === 'islanded' ? 0 : gridByMonth[m]);
         if (s > S) { S = s; sM = m; }
       }
-      const fixed = t.id === 'existing' ? t.fixedUnits : 0;
+      const fixed = t.existingPlant ? plantUnits(t, Math.ceil(S / t.p.unitMW - 1e-9)) : 0;
       const n = fixed || Math.max(1, Math.ceil(S / t.p.unitMW - 1e-9));
       const extra = fixed ? 0 : Math.ceil(n / req.blockSize);
       const units = n + extra;
@@ -137,7 +154,7 @@ export function sizeOption(ctx, v) {
     } else {
       const frac = v.C4 === 'chp' ? t.p.sizeFraction : 1.0;
       const target = frac * avgMW;
-      const fixed = t.id === 'existing' ? t.fixedUnits : 0;
+      const fixed = t.existingPlant ? plantUnits(t, Math.max(1, Math.round(target / t.p.unitMW))) : 0;
       const units = fixed || Math.max(1, Math.round(target / t.p.unitMW));
       const mw = units * t.p.unitMW;
       prime = { role: 'prime', tech: t.id, mw, units, unitMW: t.p.unitMW, availMonth: avail, fuelMonth: fuelM, sizing: 'average' };
@@ -167,8 +184,8 @@ export function sizeOption(ctx, v) {
       bridgeBess = { mw: S, mwh: S * inputs.settings.bridgeBessHours, availMonth: bessAvailMonth };
       sentences.push(`Bridging BESS + solar: largest shortfall ${r1(S)} MW → BESS ${r1(S)} MW / ${r1(bridgeBess.mwh)} MWh (${inputs.settings.bridgeBessHours} h), PV per C10; supplies from month ${bessAvailMonth} (BESS planning, procurement and construction, §9.8), the month time-to-power and dispatch use.`);
     } else if (S > 0) {
-      const t = TECH[BRIDGE_TECH[v.C2]];
-      const fixed = t.id === 'existing' ? t.fixedUnits : 0;
+      const t = bridgeTech(v.C2);
+      const fixed = t.existingPlant ? plantUnits(t, Math.ceil(S / t.p.unitMW - 1e-9)) : 0;
       const n = fixed || Math.ceil(S / t.p.unitMW - 1e-9);
       const extra = fixed ? 0 : Math.ceil(n / req.blockSize);
       const total = n + extra;
@@ -195,14 +212,22 @@ export function sizeOption(ctx, v) {
         }
         bridgeBess = { mw: needMW, mwh: needMWh, availMonth: bessAvailMonth };
       } else {
-        const t = TECH[BRIDGE_TECH[v.C2]];
+        const t = bridgeTech(v.C2);
         const nCrit = Math.ceil(criticalMW / t.p.unitMW - 1e-9);
         const red = unitsWithRedundancy(nCrit, topo, req.blockSize, req.catcherN);
         if (!bridge) {
           bridge = { role: 'bridge', tech: t.id, mw: 0, units: 0, nUnits: 0, unitMW: t.p.unitMW, availMonth: techAvailMonth(ctx, t), fuelMonth: fuelAvailMonth(ctx, t.fuel), shortfallMW: 0, shortfallMonth: -1 };
         }
         const bridgingUnits = bridge.units;
-        if (red.total > bridge.units || nCrit > bridge.nUnits) {
+        if (t.existingPlant && (red.total > bridge.units || nCrit > bridge.nUnits)) {
+          // A bought existing plant kept as the campus backup (work package 19, OPEN-QUESTIONS 122): bought once, up to the
+          // plant's units; a shortfall against the requirement is left for the resilience check to flag.
+          const units = Math.min(t.fixedUnits, red.total);
+          sentences.push(`Retained ${t.name} as backup: ${r1(criticalMW)} MW critical load ÷ ${r1(t.p.unitMW)} MW = ${nCrit} units; ${topo} on blocks of ${req.blockSize} adds ${red.extra}; ${red.total} units needed, ${units} used (the plant has ${t.fixedUnits})${units < red.total ? `, ${red.total - units} short of the requirement` : ''}.`);
+          bridge.units = Math.max(bridge.units, units);
+          bridge.nUnits = Math.max(bridge.nUnits, Math.min(nCrit, units));
+          bridge.mw = bridge.units * t.p.unitMW;
+        } else if (red.total > bridge.units || nCrit > bridge.nUnits) {
           // Bought in step with the buildings (known issue 16, work package 11, 2026-10-24): the bridging units first, then
           // the units each later building's critical load needs, at that building's date.
           const totIT = ctx.phases.reduce((a, p) => a + p.it, 0) || itMW;
@@ -233,11 +258,11 @@ export function sizeOption(ctx, v) {
     // units that cover the permanent shortfall (N+1 per block) keep running as prime; the rest are retired into
     // backup. The plant is bought large enough for both its bridging and its kept share.
     if (v.C1 === 'bridge' && v.C3 === 'split' && v.C2 !== 'bessSolar') {
-      const t = TECH[BRIDGE_TECH[v.C2]];
+      const t = bridgeTech(v.C2);
       let SP = 0, spM = -1;
       for (let m = Math.max(0, T); m < ctx.nMonthsTimeline; m++) { const s = designByMonth[m] - gridByMonth[m]; if (s > SP) { SP = s; spM = m; } }
       const nP = Math.ceil(SP / t.p.unitMW - 1e-9);
-      const keep = nP + Math.ceil(nP / req.blockSize);
+      const keep = t.existingPlant ? plantUnits(t, nP) : nP + Math.ceil(nP / req.blockSize);
       if (!bridge) bridge = { role: 'bridge', tech: t.id, mw: 0, units: 0, nUnits: 0, unitMW: t.p.unitMW, availMonth: techAvailMonth(ctx, t), fuelMonth: fuelAvailMonth(ctx, t.fuel), shortfallMW: 0, shortfallMonth: -1 };
       if (keep > bridge.units) {
         sentences.push(`Bridging ${t.name} enlarged to its kept share: ${keep} units (${r1(keep * t.p.unitMW)} MW) cover the permanent shortfall, more than the ${bridge.units} units sized for bridging.`);
@@ -386,13 +411,39 @@ export function sizeOption(ctx, v) {
     p.permitRegimes = permitRegimes(p, permits);
     p.permitM = p.permitRegimes.length ? req.permitAllowanceM : 0;
     p.availMonth = techAvailMonth(ctx, t, p.permitM);
-    const steps = t.id === 'existing'
-      ? `the date entered for the existing plant (${t.p.planM}`
+    const steps = t.existingPlant
+      ? `${t.plantKey === 'manual' ? 'the date entered for the existing plant' : 'an existing plant, available now'} (${t.p.planM}`
       : t.ownConsent
       ? `${t.p.planM} planning and consent + ${t.p.procM} procurement + ${t.p.buildM} construction`
       : `${p.permitM ? `${p.permitM} permitting allowance (${p.permitRegimes.join(', ')}) + ` : 'ordered from day one: '}${t.p.procM} procurement + ${t.p.buildM} construction`;
     const early = t.p.earliestYear && p.availMonth > programmeMonths(t, p.permitM) ? `, not before ${t.p.earliestYear}` : '';
-    sentences.push(`${t.name} (${p.role === 'prime' ? (p.sizing === 'shortfall' ? 'firm top-up' : 'firm prime') : 'bridging'}) available from month ${p.availMonth}: ${steps} months${t.id === 'existing' ? ')' : ''}${early}${p.fuelMonth === Infinity ? '; fuel not available at current inputs, so it does not run' : p.fuelMonth > p.availMonth ? ` (fuel from month ${p.fuelMonth})` : ''}.`);
+    sentences.push(`${t.name} (${p.role === 'prime' ? (p.sizing === 'shortfall' ? 'firm top-up' : 'firm prime') : 'bridging'}) available from month ${p.availMonth}: ${steps} months${t.existingPlant ? ')' : ''}${early}${p.fuelMonth === Infinity ? '; fuel not available at current inputs, so it does not run' : p.fuelMonth > p.availMonth ? ` (fuel from month ${p.fuelMonth})` : ''}.`);
+  }
+
+  // Existing plant stops at its closure (work package 19, OPEN-QUESTIONS 121); every reader of the plant's months
+  // (firm supply, dispatch, time-to-power, the ledger) reads endMonth.
+  for (const p of [prime, bridge]) {
+    if (!p) continue;
+    const t = TECH[p.tech];
+    p.endMonth = plantEndMonth(ctx, t);
+    if (t.existingPlant && p.endMonth < Infinity) {
+      const own = ctx.takeover && ctx.takeover.plant.id === t.plantKey;
+      sentences.push(`${t.name} stops in month ${p.endMonth}${own ? `, when the campus takes over its grid connection (the plant runs on until then)` : t.bought ? ': its closure plus the life the refurbishment adds' : ': its closure'}${p.endMonth <= p.availMonth ? '; it never supplies the campus' : ''}.`);
+    }
+  }
+
+  // A replacement backup (OPEN-QUESTIONS 129, C22 = New standby gensets): when the bought existing plant kept as the
+  // backup stops within the period, HVO standby gensets sized by the backup rule (critical load, required topology)
+  // take over from that month, with their fuel store.
+  let replacementBackup = null;
+  if (v.C22 === 'replace' && v.C5 === 'retained' && bridge && TECH[bridge.tech].bought && bridge.endMonth < inputs.economics.periodYears * 12) {
+    const t = TECH.backupHvo;
+    const n = Math.ceil(criticalMW / t.p.unitMW - 1e-9);
+    const red = unitsWithRedundancy(n, req.topology, req.blockSize, req.catcherN);
+    const fs = TECH.fuelStorage.p;
+    const fuelM3 = Math.max(0, (criticalMW * 1000 * req.autonomyH * fs.dieselLPerKWh) / 1000 - fs.bellyTankM3);
+    replacementBackup = { tech: t.id, units: red.total, nUnits: n, unitMW: t.p.unitMW, mw: red.total * t.p.unitMW, fromMonth: bridge.endMonth, fuelM3, autonomyH: req.autonomyH };
+    sentences.push(`Backup after ${TECH[bridge.tech].name} stops (month ${bridge.endMonth}): ${r1(criticalMW)} MW critical load ÷ ${t.p.unitMW} MW = ${n} units; ${req.topology} adds ${red.extra}; ${red.total} ${t.name} (${r1(replacementBackup.mw)} MW) from then, with ${Math.round(fuelM3).toLocaleString('en-GB')} m³ of fuel storage (OPEN-QUESTIONS 129).`);
   }
 
   // --- Permitting outlook (OPEN-QUESTIONS 46): held plant, its outlook, and its float against the month it is first
@@ -416,14 +467,16 @@ export function sizeOption(ctx, v) {
   // Leased existing plant follows the same rule (work package 12, OPEN-QUESTIONS 81).
   const lead = inputs.settings.rentalLeadMonths ?? 1;
   const leadTxt = `${lead} month${lead === 1 ? '' : 's'}`;
-  if (bridge && TECH[bridge.tech].lease) {
+  // A bought existing plant is bought by the same rule, a lead before it is first needed (H1 check of package 19).
+  const hiredLater = (t) => t.lease || t.existingPlant;
+  if (bridge && hiredLater(TECH[bridge.tech])) {
     const need = v.C1 === 'islanded' ? loadM : shortM(0);
     if (need != null) {
       const hire = Math.max(bridge.availMonth, need - lead);
       if (hire > bridge.availMonth) {
         sentences.push(bridge.tech === 'rented'
           ? `Rented generation could be on site from month ${bridge.availMonth}; it is hired from month ${hire}, ${leadTxt} before it is first needed (month ${need}).`
-          : `${TECH[bridge.tech].name} could be available from month ${bridge.availMonth}; the lease starts in month ${hire}, ${leadTxt} before it is first needed (month ${need}).`);
+          : `${TECH[bridge.tech].name} could be available from month ${bridge.availMonth}; the ${TECH[bridge.tech].bought ? 'purchase' : 'lease'} starts in month ${hire}, ${leadTxt} before it is first needed (month ${need}).`);
         bridge.earliestMonth = bridge.availMonth;
         bridge.availMonth = hire;
       }
@@ -431,7 +484,7 @@ export function sizeOption(ctx, v) {
   }
   // Leased existing plant as firm plant (C4): the lease starts a lead before the first month the design load exceeds the
   // grid and any bridging plant still on site (baseload: before the first load).
-  if (prime && TECH[prime.tech].lease) {
+  if (prime && hiredLater(TECH[prime.tech])) {
     let need = null;
     for (let m = 0; m < ctx.nMonthsTimeline; m++) {
       const g = v.C1 === 'islanded' ? 0 : gridByMonth[m];
@@ -442,7 +495,7 @@ export function sizeOption(ctx, v) {
     if (need != null) {
       const hire = Math.max(prime.availMonth, need - lead);
       if (hire > prime.availMonth) {
-        sentences.push(`${TECH[prime.tech].name} could be available from month ${prime.availMonth}; the lease starts in month ${hire}, ${leadTxt} before it is first needed (month ${need}).`);
+        sentences.push(`${TECH[prime.tech].name} could be available from month ${prime.availMonth}; the ${TECH[prime.tech].bought ? 'purchase' : 'lease'} starts in month ${hire}, ${leadTxt} before it is first needed (month ${need}).`);
         prime.earliestMonth = prime.availMonth;
         prime.availMonth = hire;
       }
@@ -552,8 +605,8 @@ export function sizeOption(ctx, v) {
   const firmByMonth = new Float64Array(ctx.nMonths);
   for (let m = 0; m < ctx.nMonths; m++) {
     let f = 0;
-    if (prime && m >= prime.availMonth && m >= prime.fuelMonth) f += prime.mw;
-    if (bridge && m >= bridge.availMonth && m >= bridge.fuelMonth) f += bridgeMWAt(v, m, T, bridge);
+    if (prime && m >= prime.availMonth && m >= prime.fuelMonth && m < (prime.endMonth ?? Infinity)) f += prime.mw;
+    if (bridge && m >= bridge.availMonth && m >= bridge.fuelMonth && m < (bridge.endMonth ?? Infinity)) f += bridgeMWAt(v, m, T, bridge);
     firmByMonth[m] = f;
   }
   const periods = [];
@@ -622,7 +675,7 @@ export function sizeOption(ctx, v) {
   return {
     coolingId, peakPUE, designMW, avgMW, criticalMW, itMW, check50,
     building: { whitespaceM2: whitespace, gfaM2: gfa, footprintM2: footprint, heightM },
-    backup, prime, bridge, bridgeBess, bess, storage, permitOutlook, shortfallBess, reserve,
+    backup, prime, bridge, bridgeBess, bess, storage, permitOutlook, shortfallBess, reserve, replacementBackup,
     solarMWp, solarRoofMWp, solarGroundMWp, roofPvOverFreeM2, windMW, windTurbines, ppa,
     grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })), cableKm },
     gasConnection,
@@ -655,7 +708,7 @@ function makePlant(ctx, s, v, role, T) {
   const t = TECH[s.tech];
   const mode = new Int8Array(ctx.nMonths);
   for (let m = 0; m < ctx.nMonths; m++) {
-    if (m < s.availMonth || m < s.fuelMonth) continue;
+    if (m < s.availMonth || m < s.fuelMonth || m >= (s.endMonth ?? Infinity)) continue;
     if (role === 'backupPrime') mode[m] = 2; // must-run in its chosen hours only (dispatch.js hour mask)
     else if (role === 'prime') mode[m] = v.C1 === 'islanded' ? 2 : 1;
     else if (v.C1 === 'islanded') mode[m] = 2;
@@ -663,7 +716,7 @@ function makePlant(ctx, s, v, role, T) {
     else if (bridgeActive(v, m, T)) mode[m] = 1;
   }
   return {
-    role, tech: s.tech, mw: s.mw, unitMW: s.unitMW, msl: t.p.msl || 0, eff: t.p.eff || 1, fuel: t.fuel || null,
+    role, tech: s.tech, mw: s.mw, unitMW: s.unitMW, msl: t.p.msl || 0, eff: t.p.eff || 1, fuel: t.fuel || null, endMonth: s.endMonth ?? Infinity,
     mode,
   };
 }

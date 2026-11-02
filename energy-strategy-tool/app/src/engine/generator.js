@@ -13,7 +13,8 @@
 //    decision with the screened and total counts: run flag gen-sampling, and warning
 //    cap-sampling in the run event log. Switching sampling off screens them all.
 
-import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel, existingEntered } from './defaults.js';
+import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel, existingEntered, plantPowerValues, plantTakeoverValues, plantCandidates, registryValue } from './defaults.js';
+import { parsePlantValue, isPlantPower, isTakeover } from './plants.js';
 import { mulberry32, subSeed, shuffle, hashString } from './prng.js';
 import { permanentShortfallCoolings, shortfallAnalysis } from './adequacy.js';
 import { COOLING } from './defaults.js';
@@ -55,7 +56,22 @@ function permSet(inputs) {
   return s;
 }
 
+// Plant values offered by the inputs (work package 19), once per inputs object, as permSet.
+const PSETS = new WeakMap();
+function plantSets(inputs) {
+  let x = PSETS.get(inputs);
+  if (!x) { x = { power: new Set(plantPowerValues(inputs)), takeover: new Set(plantTakeoverValues(inputs)) }; PSETS.set(inputs, x); }
+  return x;
+}
+
 export const NA = 'n/a';
+// Does the bought existing plant of C2 stop within the evaluation period (its closure plus the refurbished years)?
+function boughtEndsInPeriod(v, inputs) {
+  const pv = parsePlantValue(v.C2);
+  if (!pv || (pv.mode !== 'buy' && pv.mode !== 'buyWhole')) return false;
+  const c = plantCandidates(inputs).all.find((x) => x.id === pv.id);
+  return !!c && c.closeM !== Infinity && c.closeM + c.buyExtraYears * 12 < inputs.economics.periodYears * 12;
+}
 const IDS = CHOICES.map((c) => c.id);
 
 // When is a choice irrelevant (n/a) given the values of earlier choices? (rule d)
@@ -68,6 +84,10 @@ export function isNA(id, v) {
     case 'C12r': return v.C12 === 'none';
     case 'C14': return v.C13 === 'none';
     case 'C18': return v.C5 === 'none' || v.C5 === 'retained';
+    // Work package 19: an islanded campus has no grid connection to take over.
+    case 'C21': return v.C1 === 'islanded';
+    // OPEN-QUESTIONS 129: only for a bought existing plant kept as the backup.
+    case 'C22': { const c = v.C2; return !(v.C5 === 'retained' && typeof c === 'string' && c.charCodeAt(0) === 120 && (c.charCodeAt(1) === 98 || c.charCodeAt(1) === 119) && c.charCodeAt(2) === 58); } // xb: or xw:
     default: return false;
   }
 }
@@ -104,13 +124,32 @@ export const RULES = [
   { id: 'k', name: '(k) A PPA requires a grid to deliver it',
     detail: 'C13 ≠ None is not generated when islanded, or when there is no grid capacity at any time: the PPA could never be delivered, and the option would repeat its no-PPA twin (O1; OPEN-QUESTIONS 22, 2026-10-23).',
     fails: (v, inputs) => v.C13 !== 'none' && v.C13 !== NA && (v.C1 === 'islanded' || noGridEver(inputs)) },
-  // Work package 12 (OPEN-QUESTIONS 79, 2026-10-24): existing plant near the site, leased.
-  { id: 'l', name: '(l) Existing plant requires an entered plant, used in one role',
-    detail: 'C2 or C4 = Existing plant (lease) is generated only when an existing plant is entered with its units and unit size, and never as both bridging and firm plant in one option (it is one plant).',
-    fails: (v, inputs) => (v.C2 === 'existing' || v.C4 === 'existing') && (!existingEntered(inputs) || (v.C2 === 'existing' && v.C4 === 'existing')) },
-  { id: 'm', name: '(m) Existing plant as bridging plant is handed back or kept running',
-    detail: 'C2 = Existing plant is generated only with C3 = Remove (the lease ends when the grid arrives) or Retain as prime (the lease continues), and never with C5 = Retained bridging plant: it stands outside the campus and is not its standby.',
-    fails: (v) => v.C2 === 'existing' && ((v.C3 !== 'remove' && v.C3 !== 'prime' && v.C3 !== NA) || v.C5 === 'retained') },
+  // Work package 12 (OPEN-QUESTIONS 79, 2026-10-24): existing plant near the site, leased; generalised by work package 19
+  // (OPEN-QUESTIONS 118–119, 2026-10-31) to every nearby plant from the bundled list, leased (xl:) or bought (xb:).
+  { id: 'l', name: '(l) Existing plant requires a plant that offers power, used in one role',
+    detail: 'C2 or C4 = an existing plant is generated only for a plant that offers power (entered, or from the bundled list and not closed), and never as both bridging and firm plant in one option (it is one plant).',
+    fails: (v, inputs) => {
+      const a = isPlantPower(v.C2), b = isPlantPower(v.C4);
+      if (!a && !b) return false;
+      const ok = plantSets(inputs).power;
+      if ((a && !ok.has(v.C2)) || (b && !ok.has(v.C4))) return true;
+      return a && b && parsePlantValue(v.C2).id === parsePlantValue(v.C4).id;
+    } },
+  { id: 'm', name: '(m) Leased existing plant as bridging plant is handed back or kept running',
+    detail: 'C2 = a leased existing plant is generated only with C3 = Remove (the lease ends when the grid arrives) or Retain as prime (the lease continues), and never with C5 = Retained bridging plant: it stands outside the campus and is not its standby. A bought plant may be kept as backup (OPEN-QUESTIONS 122).',
+    fails: (v) => isPlantPower(v.C2) && parsePlantValue(v.C2).mode === 'lease' && ((v.C3 !== 'remove' && v.C3 !== 'prime' && v.C3 !== NA) || v.C5 === 'retained') },
+  // Work package 19 (OPEN-QUESTIONS 119–120): the grid connection of a plant that closes within the study period.
+  { id: 'p', name: '(p) A grid connection is taken over only from a plant that offers it',
+    detail: 'C21 = a plant\'s grid connection is generated only for a plant within reach whose closure falls within the study period (or that has closed), with a connection to take over.',
+    fails: (v, inputs) => isTakeover(v.C21) && !plantSets(inputs).takeover.has(v.C21) },
+  // OPEN-QUESTIONS 129: a replacement backup only where the bought plant kept as the backup stops within the period.
+  { id: 'r', name: '(r) A replacement backup needs a bought backup plant that stops within the period',
+    detail: 'C22 = New standby gensets is generated only when the bought existing plant kept as the backup (C5 = Retained) stops before the end of the evaluation period; otherwise it would repeat C22 = Flag only.',
+    fails: (v, inputs) => v.C22 === 'replace' && !boughtEndsInPeriod(v, inputs) },
+  // OPEN-QUESTIONS 118: an option uses one plant or two together (Opus review of package 19, finding 9).
+  { id: 'q', name: '(q) An option uses at most two existing plants',
+    detail: 'Bridging plant, firm plant and a taken-over grid connection from three different existing plants are not generated: options use one plant or two together (OPEN-QUESTIONS 118).',
+    fails: (v) => { const a = parsePlantValue(v.C2), b = parsePlantValue(v.C4), c = parsePlantValue(v.C21); return !!(a && b && c) && a.id !== b.id && a.id !== c.id && b.id !== c.id; } },
   // Work package 14 (OPEN-QUESTIONS 85, 2026-10-24; known issue 5): a rule rather than an n/a collapse, because C9 comes
   // before C10 in the choice order and the Site tab (Beta) still needs a location to draw.
   { id: 'o', name: '(o) Heat rejection location matters only with rooftop solar',
@@ -118,10 +157,10 @@ export const RULES = [
     fails: (v, inputs) => v.C10 === 'none' && v.C9 !== NA && v.C9 !== openValues(inputs, 'C9')[0] },
   { id: 'n', name: '(n) Existing plant as firm plant is sized once',
     detail: 'C4 = Existing plant is the units offered whatever the sizing rule, so only one C4 sizing is generated: Permanent shortfall where there is one (islanded included), otherwise Average load.',
-    fails: (v, inputs) => v.C4 === 'existing' && v.C4s === 'average' && (v.C1 === 'islanded' || permSet(inputs).has(v.C8)) },
+    fails: (v, inputs) => isPlantPower(v.C4) && v.C4s === 'average' && (v.C1 === 'islanded' || permSet(inputs).has(v.C8)) },
 ];
 export const RULE_D = { id: 'd', name: '(d) Choices that are n/a collapse to "n/a" rather than multiplying options',
-  detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, the backup arrangement when there are no gensets, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets.' };
+  detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, the backup arrangement when there are no gensets, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets, C21 when islanded.' };
 
 // Archetype baselines (BRIEF §7.3). Values not listed take the first open value of the choice.
 export const ARCHETYPES = [
@@ -147,13 +186,18 @@ function openValues(inputs, id) {
 
 // Canonicalise: apply n/a collapse in choice order.
 export function canonical(v) {
+  // isNA reads only earlier choices, so one working copy updated in choice order gives the same result as merging the
+  // earlier outputs into v for every choice (and is much faster: work package 19 checks many more combinations).
   const out = {};
-  for (const id of IDS) out[id] = isNA(id, { ...v, ...out }) ? NA : v[id];
+  const m = { ...v };
+  for (const id of IDS) { const x = isNA(id, m) ? NA : v[id]; out[id] = x; m[id] = x; }
   return out;
 }
 
+// C21 (work package 19) is left out of the key while it is None or n/a, so option keys and ids of studies without a
+// takeover are unchanged from before.
 export function choiceKey(v) {
-  return IDS.map((id) => `${id}=${v[id]}`).join('|');
+  return IDS.filter((id) => !((id === 'C21' || id === 'C22') && (v[id] === 'none' || v[id] === NA || v[id] === undefined))).map((id) => `${id}=${v[id]}`).join('|');
 }
 
 function firstFailingRule(v, inputs) {
@@ -171,6 +215,7 @@ export function valuesNotGenerated(inputs) {
     const omitted = c.values.filter(([val]) => !current.has(val)).map(([val, label]) => {
       let reason;
       if (val === 'existing' && !existingEntered(inputs)) reason = 'no existing plant entered';
+      else if (parsePlantValue(val)) reason = 'plant not offered';
       else if (def.values.includes(val)) reason = 'excluded by user';
       else if (c.id === 'C11' && def.windDefault) reason = `wind default (site ≤ ${inputs.settings.windSiteThresholdHa} ha)`;
       else if (c.id === 'C10' && def.groundDefault && val === 'roofGround') reason = 'ground area for PV is 0';
@@ -193,16 +238,43 @@ export function valuesNotGenerated(inputs) {
   return out;
 }
 
-// Fast count of valid combinations (no storage) for the Choices panel projected count.
-export function countCombinations(inputs) {
-  const domains = IDS.map((id) => openValues(inputs, id));
-  let collapsed = 0;
-  let valid = 0;
+// Choice domains split into the base space (no existing plant) and the plant values (work package 19). The plant values
+// of C2, C4 and C21 would multiply the whole space (each nearby plant adds two C2, two C4 and one C21 value), so the
+// combinations with a plant are not enumerated as a product: each is reached from exactly one base row, its
+// representative, in which every C2 or C4 plant value is replaced by a stand-in value (PLANT_TOKEN, named by no rule)
+// and C21 by None. Every combination is still checked against every rule, and plant combinations count against the
+// leaf limit like base ones (Opus review of package 19, findings 3–5).
+export const PLANT_TOKEN = '__plant__';
+function splitDomains(inputs) {
+  const all = IDS.map((id) => openValues(inputs, id));
+  const plantIn = (id, d) => (id === 'C2' || id === 'C4' ? d.filter(isPlantPower) : id === 'C21' ? d.filter(isTakeover) : []);
+  const P = { C2: plantIn('C2', all[IDS.indexOf('C2')]), C4: plantIn('C4', all[IDS.indexOf('C4')]), C21: plantIn('C21', all[IDS.indexOf('C21')]) };
+  const noneC21 = all[IDS.indexOf('C21')].includes('none');
+  const base = all.map((d, i) => {
+    const id = IDS[i];
+    if (id === 'C21') return ['none'];
+    if (id === 'C22') return d.includes('none') ? ['none'] : d.slice(0, 1);
+    if (!P[id] || !P[id].length) return d;
+    return [...d.filter((x) => !P[id].includes(x)), PLANT_TOKEN];
+  });
+  // The base space without the stand-in, for the Latin hypercube over base options.
+  const lhs = base.map((d, i) => (IDS[i] === 'C21' || IDS[i] === 'C22' ? ['none'] : d.filter((x) => x !== PLANT_TOKEN)));
+  const c22 = all[IDS.indexOf('C22')];
+  const hasPlants = P.C2.length + P.C4.length + P.C21.length > 0;
+  return { all, base, lhs, P, noneC21, hasPlants, c22 };
+}
+
+// Visit the valid combinations of the base space (fn(v) for each; v is reused, copy it to keep it).
+function visitBase(inputs, domains, fn, maxLeaves, stats) {
   const cur = {};
   const rec = (i) => {
+    if (stats.truncated) return;
     if (i === IDS.length) {
-      collapsed++;
-      if (!firstFailingRule(cur, inputs)) valid++;
+      stats.collapsed++;
+      if (stats.collapsed + stats.plantCollapsed > maxLeaves) { stats.truncated = true; return; }
+      const r = firstFailingRule(cur, inputs);
+      if (r) stats.removed[r] = (stats.removed[r] || 0) + 1;
+      else fn(cur);
       return;
     }
     const id = IDS[i];
@@ -210,6 +282,54 @@ export function countCombinations(inputs) {
     for (const val of domains[i]) { cur[id] = val; rec(i + 1); }
   };
   rec(0);
+}
+
+// A base row that is not itself an option: a stand-in value, or C21 = None when the engineer excluded None.
+const isStandInRow = (v, sd) => v.C2 === PLANT_TOKEN || v.C4 === PLANT_TOKEN || (v.C21 === 'none' && !sd.noneC21);
+
+// The plant combinations reached from one base row r: fn(v) for each valid one (v is a fresh canonical object).
+function expandPlants(r, sd, inputs, fn, stats, maxLeaves) {
+  const { P } = sd;
+  const c2s = r.C2 === PLANT_TOKEN ? P.C2 : [r.C2];
+  const c4s = r.C4 === PLANT_TOKEN ? P.C4 : [r.C4];
+  const standIn = r.C2 === PLANT_TOKEN || r.C4 === PLANT_TOKEN;
+  // C21 from the engineer's domain: None only where the row stands in for a plant value (else it is the base row).
+  const c21s = isNA('C21', r) ? [NA] : [...(standIn && sd.noneC21 ? ['none'] : []), ...P.C21];
+  for (const C2 of c2s) for (const C4 of c4s) for (const C21 of c21s) {
+    if (stats.truncated) return;
+    if (!isPlantPower(C2) && !isPlantPower(C4) && !isTakeover(C21)) continue; // that is the base row itself
+    if (++stats.plantCollapsed + stats.collapsed > maxLeaves) { stats.truncated = true; return; }
+    const v0 = canonical({ ...r, C2, C4, C21, C22: 'none' });
+    // C22 (OPEN-QUESTIONS 129) is n/a in every base row (it needs a bought plant), so its values are taken here.
+    const c22s = v0.C22 === NA ? [NA] : sd.c22;
+    for (const C22 of c22s) {
+      const v = C22 === v0.C22 ? v0 : { ...v0, C22 };
+      if (C22 !== c22s[0] && ++stats.plantCollapsed + stats.collapsed > maxLeaves) { stats.truncated = true; return; }
+      const f = firstFailingRule(v, inputs);
+      if (f) stats.removed[f] = (stats.removed[f] || 0) + 1;
+      else fn(v);
+    }
+  }
+}
+
+// Plants an option uses (power or connection), by plant id.
+export function plantsOfOption(v) {
+  const ids = new Set();
+  for (const id of ['C2', 'C4', 'C21']) { const p = parsePlantValue(v[id]); if (p) ids.add(p.id); }
+  return [...ids];
+}
+
+// Fast count of valid combinations (no storage) for the Choices panel projected count. Stops at maxLeaves (then
+// `truncated`, and the count is a lower bound).
+export function countCombinations(inputs, maxLeaves = 3000000) {
+  const sd = splitDomains(inputs);
+  const stats = { collapsed: 0, plantCollapsed: 0, removed: {}, truncated: false };
+  let valid = 0, plant = 0;
+  visitBase(inputs, sd.base, (v) => {
+    if (!isStandInRow(v, sd)) valid++;
+    if (sd.hasPlants) expandPlants(v, sd, inputs, () => { plant++; }, stats, maxLeaves);
+  }, maxLeaves, stats);
+  const domains = sd.all;
   const archetypeExtra = ARCHETYPES.reduce((acc, a) => {
     const v = archetypeVector(a, inputs);
     const k = choiceKey(v);
@@ -220,47 +340,55 @@ export function countCombinations(inputs) {
     if (!inSpace) acc.n++;
     return acc;
   }, { n: 0, seen: new Set() }).n;
-  return { collapsed, valid, total: valid + archetypeExtra };
+  return { collapsed: stats.collapsed + stats.plantCollapsed, valid: valid + plant, plant, total: valid + plant + archetypeExtra, truncated: stats.truncated };
 }
 
-// Count and enumerate. Returns valid canonical combinations as plain objects.
+// Growable Int32 store for the plant combinations (Opus review of package 19, finding 3: compact, within the leaf limit).
+function intStore() {
+  let a = new Int32Array(1024), n = 0;
+  return { push(x) { if (n === a.length) { const b = new Int32Array(a.length * 2); b.set(a); a = b; } a[n++] = x; }, get: (i) => a[i], get length() { return n; } };
+}
+
+// Count and enumerate. Returns the valid canonical base combinations as plain objects, and the combinations with an
+// existing plant (work package 19) as a compact store (plant.get(i) gives the i-th; plant.byPlant lists them per plant).
 export function enumerate(inputs, maxLeaves = 3000000) {
-  const domains = IDS.map((id) => openValues(inputs, id));
-  const rawTotal = domains.reduce((p, d) => p * d.length, 1);
-  const removed = Object.fromEntries(RULES.map((r) => [r.id, 0]));
+  const sd = splitDomains(inputs);
+  const rawTotal = sd.all.reduce((p, d) => p * d.length, 1);
+  const stats = { collapsed: 0, plantCollapsed: 0, removed: Object.fromEntries(RULES.map((r) => [r.id, 0])), truncated: false };
   const valid = [];
-  let collapsedTotal = 0;
-  let truncated = false;
-  const cur = {};
-  const rec = (i) => {
-    if (truncated) return;
-    if (i === IDS.length) {
-      collapsedTotal++;
-      if (collapsedTotal > maxLeaves) { truncated = true; return; }
-      const r = firstFailingRule(cur, inputs);
-      if (r) removed[r]++;
-      else valid.push({ ...cur });
-      return;
+  const reps = [];
+  const pRow = intStore(), pCode = intStore();
+  const dict = [], dictIx = new Map();
+  const ix = (x) => { let k = dictIx.get(x); if (k === undefined) { k = dict.length; dict.push(x); dictIx.set(x, k); } return k; };
+  const byPlant = new Map();
+  visitBase(inputs, sd.base, (cur) => {
+    const v = { ...cur };
+    if (!isStandInRow(v, sd)) valid.push(v);
+    if (sd.hasPlants) {
+      let ri = -1;
+      expandPlants(v, sd, inputs, (c) => {
+        if (ri < 0) { ri = reps.length; reps.push(v); }
+        const j = pRow.length;
+        pRow.push(ri);
+        pCode.push(ix(c.C2) | (ix(c.C4) << 10) | (ix(c.C21) << 20) | (c.C22 === 'replace' ? 1 << 30 : 0));
+        for (const id of plantsOfOption(c)) { if (!byPlant.has(id)) byPlant.set(id, []); byPlant.get(id).push(j); }
+      }, stats, maxLeaves);
     }
-    const id = IDS[i];
-    if (isNA(id, cur)) {
-      cur[id] = NA;
-      rec(i + 1);
-      return;
-    }
-    for (const val of domains[i]) {
-      cur[id] = val;
-      rec(i + 1);
-    }
+  }, maxLeaves, stats);
+  const plant = {
+    count: pRow.length,
+    byPlant,
+    get: (j) => { const c = pCode.get(j); return canonical({ ...reps[pRow.get(j)], C2: dict[c & 1023], C4: dict[(c >> 10) & 1023], C21: dict[(c >> 20) & 1023], C22: c & (1 << 30) ? 'replace' : 'none' }); },
   };
-  rec(0);
+  const collapsedTotal = stats.collapsed + stats.plantCollapsed;
   return {
     rawTotal,
     collapsedTotal,
-    removedByRule: { d: rawTotal - collapsedTotal, ...removed },
+    removedByRule: { d: Math.max(0, rawTotal - collapsedTotal), ...stats.removed },
     valid,
-    truncated,
-    domains: Object.fromEntries(IDS.map((id, i) => [id, domains[i]])),
+    plant,
+    truncated: stats.truncated,
+    domains: Object.fromEntries(IDS.map((id, i) => [id, sd.all[i]])),
   };
 }
 
@@ -288,10 +416,13 @@ function archetypeVector(a, inputs) {
 // Seeded Latin hypercube over choice dimensions, with repair to valid unique combinations.
 function lhsSample(valid, n, inputs, seed, exclude) {
   const rand = mulberry32(subSeed(seed, 'lhs'));
-  const domains = IDS.map((id) => openValues(inputs, id));
-  const strata = domains.map((d) => {
+  const domains = splitDomains(inputs).lhs;
+  const strata = domains.map((d, j) => {
     const arr = [];
     for (let i = 0; i < n; i++) arr.push(d[i % d.length]);
+    // C21 (work package 19) with no takeover to choose draws nothing from the seeded stream, so the sample of a study
+    // without plants is the one drawn before C21 existed.
+    if ((IDS[j] === 'C21' || IDS[j] === 'C22') && d.length === 1) return arr;
     return shuffle(arr, rand);
   });
   const validByKey = new Map(valid.map((v) => [choiceKey(v), v]));
@@ -315,7 +446,8 @@ function lhsSample(valid, n, inputs, seed, exclude) {
 
 export function generateOptions(inputs) {
   const en = enumerate(inputs);
-  const cap = inputs.settings.generationCap;
+  // With options that use an existing plant, the cap is plants.capMultiplier times the generation cap (OPEN-QUESTIONS 130).
+  const cap = inputs.settings.generationCap * (en.plant.count > 0 ? registryValue('plants.capMultiplier') : 1);
   const sampling = inputs.settings.sampleAboveCap;
   const seed = inputs.project.seed;
 
@@ -332,19 +464,58 @@ export function generateOptions(inputs) {
   }
   const validKeys = new Set(en.valid.map(choiceKey));
   const archetypesOutsideSpace = list.filter((o) => !validKeys.has(o.key)).length;
-  const totalCombinations = en.valid.length + archetypesOutsideSpace;
+  const plantN = en.plant.count;
+  const totalCombinations = en.valid.length + plantN + archetypesOutsideSpace;
 
   let rest;
   let sampled = false;
   let repaired = 0;
+  let plantDrawn = [];
+  const perPlant = {};
   const projected = totalCombinations;
   if (sampling && projected > cap) {
     sampled = true;
-    const r = lhsSample(en.valid, Math.max(0, cap - list.length), inputs, seed, new Set(archetypeTags.keys()));
-    rest = r.sample;
+    const room = Math.max(0, cap - list.length);
+    // Combinations with an existing plant (work package 19, OPEN-QUESTIONS 118): a share of the sample
+    // (plants.sampleShare), split equally between the plants, so each plant gets its own share; drawn at random (seeded)
+    // from that plant's combinations. A share a plant cannot fill goes to the next plants, then to the base space.
+    if (plantN > 0) {
+      const share = Math.min(plantN, Math.floor(room * registryValue('plants.sampleShare')));
+      const ids = [...en.plant.byPlant.keys()].sort();
+      const rand = mulberry32(subSeed(seed, 'plants'));
+      const taken = new Set();
+      let left = share;
+      ids.forEach((id, i) => {
+        const want = Math.floor(left / (ids.length - i));
+        const pool = shuffle(en.plant.byPlant.get(id).filter((j) => !taken.has(j)), rand);
+        let got = 0;
+        for (const j of pool) { if (got >= want) break; taken.add(j); got++; }
+        perPlant[id] = { combinations: en.plant.byPlant.get(id).length, drawn: got };
+        left -= got;
+      });
+      plantDrawn = [...taken].sort((x, y) => x - y).map((j) => en.plant.get(j)).filter((v) => !archetypeTags.has(choiceKey(v)));
+    }
+    const r = lhsSample(en.valid, Math.max(0, room - plantDrawn.length), inputs, seed, new Set(archetypeTags.keys()));
+    // Room the base space cannot fill goes back to the plant combinations (Opus review of package 19, finding 6).
+    let spare = room - plantDrawn.length - r.sample.length;
+    if (spare > 0 && plantN > plantDrawn.length) {
+      const have = new Set(plantDrawn.map(choiceKey));
+      const rand2 = mulberry32(subSeed(seed, 'plants-spare'));
+      const order = shuffle(Array.from({ length: plantN }, (_, j) => j), rand2);
+      for (const j of order) {
+        if (spare <= 0) break;
+        const v = en.plant.get(j), k = choiceKey(v);
+        if (have.has(k) || archetypeTags.has(k)) continue;
+        have.add(k); plantDrawn.push(v); spare--;
+        for (const id of plantsOfOption(v)) if (perPlant[id]) perPlant[id].drawn++;
+      }
+    }
+    rest = [...r.sample, ...plantDrawn];
     repaired = r.repaired;
   } else {
     rest = en.valid.filter((v) => !archetypeTags.has(choiceKey(v)));
+    for (let j = 0; j < plantN; j++) rest.push(en.plant.get(j));
+    for (const [id, js] of en.plant.byPlant) perPlant[id] = { combinations: js.length, drawn: js.length };
   }
   for (const v of rest) list.push({ v, key: choiceKey(v), archetype: null, archetypeName: null });
 
@@ -357,7 +528,9 @@ export function generateOptions(inputs) {
       rawTotal: en.rawTotal,
       collapsedTotal: en.collapsedTotal,
       removedByRule: en.removedByRule,
-      validCombinations: en.valid.length,
+      validCombinations: en.valid.length + plantN,
+      plantCombinations: plantN,
+      plantSampling: perPlant,
       archetypes: archetypeTags.size,
       archetypesOutsideSpace,
       totalCombinations,
@@ -375,8 +548,9 @@ export function generateOptions(inputs) {
 export function optionName(v, s) {
   const parts = [];
   if (v.C1 === 'wait') parts.push('Grid');
-  else if (v.C1 === 'bridge') parts.push(`Grid + ${choiceLabel('C2', v.C2).toLowerCase()} bridge → ${choiceLabel('C3', v.C3).toLowerCase()}`);
-  else if (v.C1 === 'islanded') parts.push(`Islanded ${choiceLabel('C2', v.C2).toLowerCase()}`);
+  const c2 = isPlantPower(v.C2) ? choiceLabel('C2', v.C2) : choiceLabel('C2', v.C2).toLowerCase(); // plant names keep their case
+  if (v.C1 === 'bridge') parts.push(`Grid + ${c2} bridge → ${choiceLabel('C3', v.C3).toLowerCase()}`);
+  else if (v.C1 === 'islanded') parts.push(`Islanded ${c2}`);
   else if (v.C1 === 'export') parts.push('Grid + export');
   if (v.C4 !== 'none') parts.push(`${choiceLabel('C4', v.C4)}${v.C4s === 'shortfall' ? ' top-up' : ''}`);
   const backup = v.C5 === 'none' ? 'no backup' : v.C5 === 'retained' ? 'retained-plant backup' : `${choiceLabel('C5', v.C5).replace(' gensets', '')} ${v.C6}${v.C5a === 'pooled' ? ' pooled' : ''}`;
@@ -388,6 +562,9 @@ export function optionName(v, s) {
   else if (v.C12 === 'trigger') parts.push('BESS for the trigger hours');
   else if (v.C12 !== 'none') parts.push(`BESS ${v.C12.slice(0, 2).replace('h', ' h')}`);
   if (v.C13 !== 'none') parts.push(`PPA ${choiceLabel('C13', v.C13).toLowerCase()} ${v.C14} %`);
+  if (v.C22 === 'replace') parts.push('new standby gensets when the plant stops');
+  // Work package 19: a nearby plant's grid connection taken over.
+  if (isTakeover(v.C21)) parts.push(choiceLabel('C21', v.C21).replace(': its grid connection', '\u2019s grid connection taken over'));
   return parts.join(' · ');
 }
 

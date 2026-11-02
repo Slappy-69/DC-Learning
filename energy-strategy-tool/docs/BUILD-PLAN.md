@@ -193,11 +193,22 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **User guide:** chapters 13, 22, 27, 29, 46, 54 and 56; appendix A.
 - **Progress:** built 2026-10-25 on `feature/plain-summary`; merged into `main` on 2026-10-25 with the owner's yes.
 
+### 19. Existing gas plant near the site, in the analysis (added 2026-10-31)
+
+- **Why:** the owner, 2026-10-31: "I want the app to use local assets as more and more gas plants get decommissioned from the grid and can be used to data centres … They should be part of the analysis." Work package 12 handles one plant, typed in, leased; the owner wants every suitable plant near the site found and explored in every way it could be used.
+- **Research:** `docs/research/existing-plant-2026-10-31.md`.
+- **What (draft, to be settled by the decisions):** (1) buy as well as lease, with purchase price and refurbishment; (2) taking over the plant's grid connection when it closes; (3) a closure date and remaining life; (4) several plants per study; (5) a list of European gas plants bundled at each release, with the plants near the site proposed automatically. The generator makes options for each plant and each way of using it, ranked with the new-build strategies; every value taken from the list or a default is flagged with its source.
+- **Decisions:** OPEN-QUESTIONS 116–123, all answered by the owner on 2026-10-31.
+- **User guide:** chapters 17, 34, 35, 39 and 56 (as for package 12), and the research note.
+- **Acceptance tests:** Node test 50 (`app/tests/plants-tests.mjs`, 50a–e).
+- **Progress:** research done, decisions taken and built 2026-10-31 on `feature/existing-plant` (owner's go-ahead the same day); verified the same day (`verification/existing-plant/`: three Haiku checks and an Opus review); the review's findings fixed and its seven owner decisions (OPEN-QUESTIONS 124–130) built by 2026-11-02 (choices C21 two ways, C22, rules (q) and (r), bought whole, data-centre plants left out, five times the cap with plants). Not merged.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:
 
-- Known issues: none open (all 20 resolved by 2026-10-24).
+- Known issues: none open (all 33 resolved by 2026-10-31).
+- From the package 19 work, suggested by Claude and not asked for: a second search around the leaders (local search) to find the best option more surely than sampling (put to the owner as option A of OPEN-QUESTIONS 130; the owner chose a bigger sample); research of each country's rules for taking over a closing plant's grid connection (every takeover is flagged as an assumption until then); a link from the plant list's "Eemshaven" 1976 entry to Eemscentrale (the list may hold it twice).
 - Scenarios (§13.3); every numeric parameter's own range in the Monte Carlo (§13.1); its automatic re-run in a worker (§13.2).
 - Parallel coordinates, the choice-impact chart, the schematic, key quantities, presentation mode, snapshots, undo and redo (§12, §16).
 - Code signing for the Windows program (`../packaging/README.md`).
