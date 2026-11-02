@@ -201,7 +201,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Decisions:** OPEN-QUESTIONS 116–123, all answered by the owner on 2026-10-31.
 - **User guide:** chapters 17, 34, 35, 39 and 56 (as for package 12), and the research note.
 - **Acceptance tests:** Node test 50 (`app/tests/plants-tests.mjs`, 50a–e).
-- **Progress:** research done, decisions taken and built 2026-10-31 on `feature/existing-plant` (owner's go-ahead the same day); verified the same day (`verification/existing-plant/`: three Haiku checks and an Opus review); the review's findings fixed and its seven owner decisions (OPEN-QUESTIONS 124–130) built by 2026-11-02 (choices C21 two ways, C22, rules (q) and (r), bought whole, data-centre plants left out, five times the cap with plants). Not merged.
+- **Progress:** research done, decisions taken and built 2026-10-31 on `feature/existing-plant` (owner's go-ahead the same day); verified the same day (`verification/existing-plant/`: three Haiku checks and an Opus review); the review's findings fixed and its seven owner decisions (OPEN-QUESTIONS 124–130) built by 2026-11-02 (choices C21 two ways, C22, rules (q) and (r), bought whole, data-centre plants left out, five times the cap with plants). Merged into `main` on 2026-11-02 with the owner's yes.
 
 ## Not scheduled
 
