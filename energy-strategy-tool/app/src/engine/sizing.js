@@ -76,7 +76,16 @@ export function sizeOption(ctx, v) {
   const { arr: designByMonth, peakPUE } = designDemandByMonth(ctx, coolingId);
   const itMW = L.itMW;
   const designMW = itMW * (peakPUE + L.ancillaryFrac);
-  sentences.push(`Design facility load: ${r1(itMW)} MW IT × peak PUE ${peakPUE.toFixed(3)} (${cool.name}, design-day ${cool.p.tempBasis === 'wetbulb' ? 'wet-bulb' : 'dry-bulb'} ${(cool.p.tempBasis === 'wetbulb' ? ctx.prof.designWetbulb : ctx.prof.designTemp).toFixed(1)} °C) + ancillary ${(L.ancillaryFrac * 100).toFixed(0)} % = ${r1(designMW)} MW.`);
+  const basisWord = cool.p.tempBasis === 'wetbulb' ? 'wet-bulb' : 'dry-bulb';
+  sentences.push(`Design facility load: ${r1(itMW)} MW IT × peak PUE ${peakPUE.toFixed(3)} (${cool.name}, design ${basisWord} ${(cool.p.tempBasis === 'wetbulb' ? ctx.prof.designWetbulb : ctx.prof.designTemp).toFixed(1)} °C${ctx.prof.designTemp50 != null ? ', n = 20' : ''}) + ancillary ${(L.ancillaryFrac * 100).toFixed(0)} % = ${r1(designMW)} MW.`);
+  // The n = 50 check (owner 2026-10-31, OPEN-QUESTIONS 115): shown, not used for sizing.
+  let check50 = null;
+  if (cp.coolPeak50 != null) {
+    const peakPUE50 = 1 + cp.coolPeak50 + cp.lossFrac; // as designDemandByMonth's peak PUE, at the n = 50 temperature
+    const mw50 = itMW * (peakPUE50 + L.ancillaryFrac);
+    check50 = { designT: cp.designT50, peakPUE: peakPUE50, designMW: mw50, extraMW: mw50 - designMW };
+    sentences.push(`Check at n = 50 (design ${basisWord} ${cp.designT50.toFixed(1)} °C): peak PUE ${peakPUE50.toFixed(3)}, design facility load ${r1(mw50)} MW (${mw50 >= designMW ? '+' : ''}${r1(mw50 - designMW)} MW); not used for sizing.`);
+  }
 
   // Steady-state year average facility load (for firm prime and PPA sentences).
   const lastChangeM = Math.max(ctx.lastPhaseM + L.rampMonths, 0);
@@ -611,7 +620,7 @@ export function sizeOption(ctx, v) {
   }
 
   return {
-    coolingId, peakPUE, designMW, avgMW, criticalMW, itMW,
+    coolingId, peakPUE, designMW, avgMW, criticalMW, itMW, check50,
     building: { whitespaceM2: whitespace, gfaM2: gfa, footprintM2: footprint, heightM },
     backup, prime, bridge, bridgeBess, bess, storage, permitOutlook, shortfallBess, reserve,
     solarMWp, solarRoofMWp, solarGroundMWp, roofPvOverFreeM2, windMW, windTurbines, ppa,

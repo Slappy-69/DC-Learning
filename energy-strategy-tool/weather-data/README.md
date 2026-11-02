@@ -1,8 +1,8 @@
 # Weather data (release-time)
 
 Builds the bundled NOAA station weather years (owner's decision 2026-10-30, OPEN-QUESTIONS 106–107; research in
-`../docs/research/hourly-weather-2026-10-30.md`). Needs internet, so it runs on GitHub (workflow **Weather data**,
-started by hand), never inside the app or a Claude session.
+`../docs/research/hourly-weather-2026-10-30.md`). Needs internet, so it runs on GitHub (workflow **Weather data**:
+by hand for a full build, or a 3-station trial on pushes to a weather branch), never inside the app or a Claude session.
 
 - `build-stations.mjs`: reads the GHCNh station list, keeps stations in the tool's 31 countries, reads each station's
   yearly Parquet files (only the columns needed), and makes a typical year by ISO 15927-4 plus design conditions from
@@ -17,9 +17,7 @@ Usable station (judgement, labelled as such): every calendar month has at least 
 Quality codes: GHCNh carries ISD's codes for European stations (first trial run, 2026-10-31). Kept: empty, 0, 1, 4, 5,
 9 (passed); dropped: 2, 3, 6, 7 (suspect or erroneous) and anything else. Each run's report lists every code seen.
 
-**Not done yet:** how the bundle reaches the app. It is about 35 kB a station before compression (2 × 8,760 values),
-so a few thousand stations are tens of MB: too large for the single-file page and the phone page (16 MB limit). The
-Windows program can carry it as a separate file. Decision for the owner.
+**Delivery (OPEN-QUESTIONS 114):** the Windows program only. A station is about 35 kB as binary data and about 47 kB as JSON (base64); the first full build (1,942 stations) was 91 MB as JSON and 39 MB compressed, too large for the single-file and phone pages, which use the EPW upload. The Desktop builds workflow takes only a full build (`weather-summary.json`: not a trial, default years and minimum years, nine groups, at least 1,500 stations).
 
 **Licence:** NOAA's non-US data carry the WMO Resolution 40 condition (use for non-commercial international activities
 without restriction; no redistribution for commercial purposes). The owner states the tool's use is non-commercial at

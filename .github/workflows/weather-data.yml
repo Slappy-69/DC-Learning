@@ -1,5 +1,6 @@
 # Weather data: builds the bundled NOAA (GHCNh) station years at release time (owner 2026-10-30, OPEN-QUESTIONS
-# 106–107). Started by hand only; uploads the result as a download; commits nothing.
+# 106–107, 114, 115). A full build by hand, or a 3-station trial on pushes to feature/weather; uploads the result as
+# a download; commits nothing.
 name: Weather data
 on:
   # A small trial (3 stations per group) whenever this branch's weather-data code changes; the full build is by hand.

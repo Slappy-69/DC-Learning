@@ -28,7 +28,13 @@ export const STANDARD_OFFSET = {
   GB: 0, IE: 0, PT: 0, IS: 0,
   FI: 2, EE: 2, LV: 2, LT: 2, RO: 2, BG: 2, GR: 2, CY: 2,
 };
-export const offsetFor = (cc) => STANDARD_OFFSET[cc] ?? 1;
+// Islands on another clock than their mainland (R2 M2): the Canary Islands (Spain, west of 12° W) keep UTC+0 and the
+// Azores (Portugal, west of 20° W) UTC−1. Madeira keeps UTC+0, as mainland Portugal.
+export const offsetFor = (cc, lon) => {
+  if (cc === 'ES' && Number.isFinite(lon) && lon < -12) return 0;
+  if (cc === 'PT' && Number.isFinite(lon) && lon < -20) return -1;
+  return STANDARD_OFFSET[cc] ?? 1;
+};
 
 // FIPS 10-4 country codes in GHCNh station IDs → the tool's ISO codes.
 export const FIPS_TO_ISO = {
@@ -104,24 +110,33 @@ export function fillSameHour(arr) {
   return left;
 }
 
-// One station-year → per month: usable?, and the hourly dry bulb, humidity ratio, wet bulb, wind, and which hours are
-// readings (or short fills) rather than same-hour fills.
-export function prepareYear(hourly, elevationM, maxGap = 6, minShare = 0.8) {
+// One station-year → per month: usable?, the hourly dry bulb, humidity ratio, wet bulb and wind, and which hours are
+// readings (real) and which have a reading of humidity too (realHum). Changed after the weather review (R2 H1,
+// 2026-10-31): straight-line fills only for gaps of up to 2 hours (so 3-hourly stations still count, 6-hourly ones
+// do not), and "real" marks readings only, never fills, so design values come from readings. The array also carries
+// the reason for each month left out (R2 M3), and the median number of readings a day.
+export function prepareYear(hourly, elevationM, maxGap = 2, minShare = 0.8) {
   const pStd = pressureAtElevation(elevationM || 0);
   const months = [];
+  months.reasons = [];
+  let perDay = [];
   for (let m = 0; m < 12; m++) {
     const a = DAYS_BEFORE[m] * 24, b = a + MONTH_HOURS[m];
     const t = hourly.temp.slice(a, b);
     const dew = hourly.dew.slice(a, b), rh = hourly.rh.slice(a, b), p = hourly.p.slice(a, b), wind = hourly.wind.slice(a, b);
-    const missingT = fillRange(t, 0, t.length, maxGap);
-    if (missingT > t.length * (1 - minShare)) { months.push(null); continue; }
     const real = Uint8Array.from(t, (x) => (Number.isFinite(x) ? 1 : 0));
-    if (fillSameHour(t) > 0) { months.push(null); continue; }
+    const realHum = Uint8Array.from(t, (x, i) => (Number.isFinite(x) && (Number.isFinite(dew[i]) || Number.isFinite(rh[i])) ? 1 : 0));
+    for (let d = 0; d < t.length / 24; d++) { let n = 0; for (let k = 0; k < 24; k++) n += real[d * 24 + k]; if (n) perDay.push(n); }
+    const nReal = real.reduce((x, y) => x + y, 0);
+    if (nReal === 0) { months.push(null); months.reasons.push('no readings'); continue; }
+    const missingT = fillRange(t, 0, t.length, maxGap);
+    if (missingT > t.length * (1 - minShare)) { months.push(null); months.reasons.push('under 80 % of hours after short fills'); continue; }
+    if (fillSameHour(t) > 0) { months.push(null); months.reasons.push('an hour of the day never reported'); continue; }
     fillRange(dew, 0, dew.length, maxGap); fillRange(rh, 0, rh.length, maxGap); fillRange(p, 0, p.length, 24); fillRange(wind, 0, wind.length, maxGap);
     // Humidity as complete as temperature: same-hour fill for the longer gaps; a month with too little humidity is dropped.
     const dewMiss = dew.filter((x) => !Number.isFinite(x)).length, rhMiss = rh.filter((x) => !Number.isFinite(x)).length;
     const useDew = dewMiss <= rhMiss;
-    if ((useDew ? dewMiss : rhMiss) > t.length * (1 - minShare)) { months.push(null); continue; }
+    if ((useDew ? dewMiss : rhMiss) > t.length * (1 - minShare)) { months.push(null); months.reasons.push('humidity under 80 % of hours'); continue; }
     if (useDew) { fillSameHour(dew); for (let i = 0; i < t.length; i++) if (dew[i] > t[i]) dew[i] = t[i]; } else fillSameHour(rh);
     const W = new Float64Array(t.length), wb = new Float64Array(t.length);
     let noHum = 0;
@@ -135,11 +150,24 @@ export function prepareYear(hourly, elevationM, maxGap = 6, minShare = 0.8) {
       W[i] = w;
       wb[i] = Number.isFinite(w) ? wetBulb(t[i], w, pp) : NaN;
     }
-    // Humidity must be as complete as temperature for the month to be used (wet bulb drives evaporative cooling).
-    if (noHum > 0) { months.push(null); continue; }
-    months.push({ t, W, wb, wind, real });
+    if (noHum > 0) { months.push(null); months.reasons.push('humidity missing after fills'); continue; }
+    months.push({ t, W, wb, wind, real, realHum });
+    months.reasons.push(null);
   }
+  perDay.sort((x, y) => x - y);
+  months.readingsPerDay = perDay.length ? perDay[Math.floor(perDay.length / 2)] : 0;
   return months;
+}
+
+// n-year return-period maximum from annual maxima, by the Gumbel method ASHRAE uses for its n-year extremes:
+// T_n = M + I_n s, I_n = −(√6/π) (0.5772 + ln(ln(n/(n−1)))); n = 20 → I = 1.866, n = 50 → I = 2.592.
+export function returnPeriodMax(annualMax, n) {
+  const x = annualMax.filter(Number.isFinite);
+  if (x.length < 2) return NaN;
+  const M = x.reduce((a, b) => a + b, 0) / x.length;
+  const s = Math.sqrt(x.reduce((a, b) => a + (b - M) ** 2, 0) / (x.length - 1));
+  const I = -(Math.sqrt(6) / Math.PI) * (0.5772 + Math.log(Math.log(n / (n - 1))));
+  return M + I * s;
 }
 
 const dailyMeans = (arr) => { const out = []; for (let d = 0; d < arr.length / 24; d++) { let s = 0; for (let k = 0; k < 24; k++) s += arr[d * 24 + k]; out.push(s / 24); } return out; };
@@ -191,14 +219,53 @@ export function typicalYear(years, { minYears = 10 } = {}) {
     }
   }
   for (let h = 0; h < HOURS; h++) if (wbArr[h] > db[h]) wbArr[h] = db[h];
-  // Design: 0.4 % of all usable hours of all years.
-  const allDB = [], allWB = [];
-  for (const y of years) for (const mo of y.months) if (mo) for (let i = 0; i < mo.t.length; i++) if (!mo.real || mo.real[i]) { allDB.push(mo.t[i]); allWB.push(mo.wb[i]); }
+  // Design (owner 2026-10-31, OPEN-QUESTIONS 115): n = 20 and n = 50-year return-period maxima of dry bulb and wet
+  // bulb from each year's highest reading (readings only, never fills), over the years whose three warmest calendar
+  // months are usable (the annual maximum falls in them); at least minExtremeYears such years (default 8, judgement),
+  // otherwise the highest readings seen, labelled. The 0.4 % values of the readings are kept for information, each
+  // calendar month weighted equally whatever its number of usable years (R2 M4).
+  const monthMean = Array.from({ length: 12 }, (v, m) => mean(years.filter((y) => y.months[m]).map((y) => mean(y.months[m].t))));
+  const warm = monthMean.map((v, m) => m).sort((x, y) => monthMean[y] - monthMean[x]).slice(0, 3);
+  const annual = [];
+  for (const y of years) {
+    if (!warm.every((m) => y.months[m])) continue;
+    let dbx = -Infinity, wbx = -Infinity;
+    for (const mo of y.months) if (mo) for (let i = 0; i < mo.t.length; i++) {
+      if (mo.real[i] && mo.t[i] > dbx) dbx = mo.t[i];
+      if (mo.realHum[i] && mo.wb[i] > wbx) wbx = mo.wb[i];
+    }
+    if (Number.isFinite(dbx) && Number.isFinite(wbx)) annual.push({ year: y.year, db: dbx, wb: wbx });
+  }
+  const minExtremeYears = 8;
+  let design;
+  if (annual.length >= minExtremeYears) {
+    design = {
+      kind: 'extreme', nYears: annual.length,
+      db20: r1(returnPeriodMax(annual.map((a) => a.db), 20)), db50: r1(returnPeriodMax(annual.map((a) => a.db), 50)),
+      wb20: r1(returnPeriodMax(annual.map((a) => a.wb), 20)), wb50: r1(returnPeriodMax(annual.map((a) => a.wb), 50)),
+    };
+  } else {
+    const dbx = Math.max(...annual.map((a) => a.db), -Infinity), wbx = Math.max(...annual.map((a) => a.wb), -Infinity);
+    design = { kind: 'max-observed', nYears: annual.length, db20: r1(dbx), db50: r1(dbx), wb20: r1(wbx), wb50: r1(wbx) };
+  }
+  if (design.wb20 > design.db20) design.wb20 = design.db20;
+  if (design.wb50 > design.db50) design.wb50 = design.db50;
+  const pDB = [], pWB = [];
+  for (let m = 0; m < 12; m++) {
+    const ys = years.filter((y) => y.months[m]);
+    const w = 1 / ys.length;
+    for (const y of ys) { const mo = y.months[m]; for (let i = 0; i < mo.t.length; i++) { if (mo.real[i]) pDB.push([mo.t[i], w]); if (mo.realHum[i]) pWB.push([mo.wb[i], w]); } }
+  }
+  const weighted = (arr, share) => { arr.sort((x, y) => y[0] - x[0]); const tot = arr.reduce((a, x) => a + x[1], 0); let acc = 0; for (const [v, w] of arr) { acc += w; if (acc >= tot * share) return v; } return NaN; };
+  design.db04 = r1(weighted(pDB, 0.004)); design.wb04 = r1(weighted(pWB, 0.004));
+  design.hours = pDB.length;
+  const usedYearsList = annual.map((a) => a.year).sort();
+  design.years = usedYearsList.length ? `${usedYearsList[0]}–${usedYearsList[usedYearsList.length - 1]}` : '';
   const yrs = years.map((y) => y.year).sort();
   return {
     ok: true, picks: picks.map(({ month, year, candidates }) => ({ month, year, candidates })),
     tmy: { dryBulb: Array.from(db, r1), wetBulb: Array.from(wbArr, r1) },
-    design: { db: r1(exceeded(allDB)), wb: r1(exceeded(allWB)), hours: allDB.length },
+    design,
     usedYears: `${yrs[0]}–${yrs[yrs.length - 1]}`,
   };
 }

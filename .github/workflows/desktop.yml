@@ -48,19 +48,25 @@ jobs:
       - name: Install packaging dependencies
         working-directory: energy-strategy-tool/packaging
         run: npm ci
-      - name: Fetch the bundled weather stations (latest full "Weather data" run; skipped when there is none)
+      - name: Fetch the bundled weather stations (latest full "Weather data" run)
+        # Only a full build: not a trial, the default years (2010-2024) and minimum years (10), all nine country groups,
+        # and at least 1,500 stations (R3 M4). A tagged release fails without one; other builds go on with a warning,
+        # and the program then says the stations are missing (R3 M5).
         working-directory: energy-strategy-tool/packaging
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p weather
-          for id in $(gh run list -R "$GITHUB_REPOSITORY" --workflow weather-data.yml --status success --limit 30 --json databaseId -q '.[].databaseId'); do
+          for id in $(gh run list -R "$GITHUB_REPOSITORY" --workflow weather-data.yml --status success --limit 40 --json databaseId -q '.[].databaseId'); do
             rm -rf /tmp/w && mkdir -p /tmp/w
             gh run download "$id" -R "$GITHUB_REPOSITORY" -n weather-stations -D /tmp/w 2>/dev/null || continue
-            n=$(node -e "try{console.log(require('/tmp/w/weather-summary.json').stations)}catch{console.log(0)}")
-            if [ "$n" -ge 500 ]; then cp /tmp/w/weather-stations.json.gz /tmp/w/weather-summary.json weather/; echo "::notice title=Weather stations::$n stations from run $id"; break; fi
+            ok=$(node -e "try{const s=require('/tmp/w/weather-summary.json'); const r=s.runInputs||{}; console.log(s.trial===false && r.years==='2010-2024' && r.minYears===10 && s.groups===9 && s.stations>=1500 ? 'yes':'no')}catch{console.log('no')}")
+            if [ "$ok" = "yes" ]; then cp /tmp/w/weather-stations.json.gz /tmp/w/weather-summary.json weather/; echo "::notice title=Weather stations::$(node -e "console.log(require('/tmp/w/weather-summary.json').stations)") stations from run $id"; break; fi
           done
-          ls -la weather || true
+          if [ ! -f weather/weather-stations.json.gz ]; then
+            if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then echo "::error title=Weather stations::no full Weather data build found; a release needs one"; exit 1; fi
+            echo "::warning title=Weather stations::no full Weather data build found; this program has no NOAA stations"
+          fi
       - name: Build ${{ matrix.target }}
         working-directory: energy-strategy-tool/packaging
         run: node desktop/build-desktop.mjs --platforms ${{ matrix.target }}

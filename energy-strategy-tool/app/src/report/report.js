@@ -63,7 +63,7 @@ export function inputRows(inputs) {
   // Hourly weather: one row (the 8,760-hour arrays are not printed).
   const ws = weatherSummary(I);
   out.push(ws
-    ? { section: 'Weather', path: 'weather', value: ws.text, status: 'Entered', note: '', isDefault: false }
+    ? { section: 'Weather', path: 'weather', value: ws.text, status: I.weather.source === 'station' ? 'Default: nearest NOAA station, chosen by the program' : 'Entered', note: '', isDefault: I.weather.source === 'station' }
     : { section: 'Weather', path: 'weather', value: 'synthetic country profile (made-up hourly temperatures)', status: 'Default: indicative — unverified (judgement)', note: 'Upload an EPW file (inputs section 1) to use measured weather.', isDefault: true });
   return out;
 }

@@ -1,7 +1,7 @@
 // 49. NOAA station records → typical year (release-time method, engine/weathertmy.js), on made-up observations.
 
 import assert from 'node:assert/strict';
-import { hourlyFromObs, prepareYear, typicalYear, fsStatistic, offsetFor, FIPS_TO_ISO } from '../src/engine/weathertmy.js';
+import { hourlyFromObs, prepareYear, typicalYear, fsStatistic, offsetFor, FIPS_TO_ISO, returnPeriodMax } from '../src/engine/weathertmy.js';
 import { HOURS, exceeded } from '../src/engine/weather.js';
 
 // Made-up station: METAR-style readings at hh:20 and hh:50 UTC; each year's temperature = climate + that year's anomaly
@@ -63,8 +63,22 @@ export async function weatherTmyTests(test) {
     assert.equal(r.tmy.dryBulb.length, HOURS); assert.equal(r.tmy.wetBulb.length, HOURS);
     assert.ok(r.tmy.wetBulb.every((x, h) => x <= r.tmy.dryBulb[h]), 'wet bulb above dry bulb');
     // Design from all years: above the typical year's own 0.4 % (warm anomalies in other years).
-    assert.ok(r.design.db > exceeded(r.tmy.dryBulb) + 0.5, `design ${r.design.db} against typical ${exceeded(r.tmy.dryBulb)}`);
-    assert.ok(r.design.hours > 14 * 8000);
+    // Design (OPEN-QUESTIONS 115): n = 20 and n = 50 return-period maxima from the annual maxima of readings, above the
+    // typical year's own hottest hour; n = 50 above n = 20; the 0.4 % value kept for information.
+    assert.equal(r.design.kind, 'extreme');
+    assert.ok(r.design.db20 > Math.max(...r.tmy.dryBulb), `n = 20 ${r.design.db20} against the typical year's hottest ${Math.max(...r.tmy.dryBulb)}`);
+    assert.ok(r.design.db50 > r.design.db20 && r.design.wb50 >= r.design.wb20 && r.design.wb20 <= r.design.db20);
+    assert.ok(r.design.db04 < r.design.db20 && r.design.hours > 14 * 8000);
+    // Gumbel factors as ASHRAE: n = 20 → 1.866 s, n = 50 → 2.592 s above the mean of the annual maxima.
+    const ann = [30, 31, 32, 33, 34];
+    const m = 32, sd = Math.sqrt(2.5);
+    assert.ok(Math.abs(returnPeriodMax(ann, 20) - (m + 1.866 * sd)) < 0.002 && Math.abs(returnPeriodMax(ann, 50) - (m + 2.592 * sd)) < 0.002);
+    // Islands on their own clocks (R2 M2): Canary Islands UTC+0, Azores UTC−1, Madeira and mainland Spain as before.
+    assert.equal(offsetFor('ES', -15.4), 0); assert.equal(offsetFor('ES', -3.7), 1); assert.equal(offsetFor('PT', -25.7), -1); assert.equal(offsetFor('PT', -16.9), 0);
+    // 6-hourly readings (R2 H1): gaps of 5 hours are not filled by lines, so such a station's months are not usable.
+    const six = station({ years: [2015], anomaly: () => 0 }).map((y) => ({ year: y.year, months: prepareYear(hourlyFromObs(y.obs.filter((o) => new Date(o.t).getUTCHours() % 6 === 0 && new Date(o.t).getUTCMinutes() === 50), y.year, 1), 50) }));
+    assert.ok(six[0].months.every((mo) => mo === null), '6-hourly months were used');
+    assert.ok(six[0].months.reasons.every((x) => /never reported|80 %/.test(x)), six[0].months.reasons.join(' | '));
     // Joins smoothed: no step larger than the hour-to-hour changes within months.
     const steps = r.tmy.dryBulb.slice(1).map((x, h) => Math.abs(x - r.tmy.dryBulb[h]));
     assert.ok(Math.max(...steps) < 2, `largest hour-to-hour step ${Math.max(...steps)}`);
@@ -75,6 +89,6 @@ export async function weatherTmyTests(test) {
     // Too few years.
     const few = typicalYear(prepared.slice(0, 9));
     assert.ok(!few.ok && /fewer than 10/.test(few.reason));
-    return `15 made-up years: every month picks 2017 or the ±1 K pair (${r.picks.filter((p) => p.year === 2017).length} months 2017); 5 h gap filled by a line, 7 h gap from the same hour on nearby days (left out of the design values), 23 % missing drops the month; design ${r.design.db} °C dry bulb from ${r.design.hours.toLocaleString('en-GB')} hours (typical year's own 0.4 %: ${exceeded(r.tmy.dryBulb)} °C); wind breaks a three-way tie; 9 years refused`;
+    return `15 made-up years: every month picks 2017 or the ±1 K pair (${r.picks.filter((p) => p.year === 2017).length} months 2017); 5 h and 7 h gaps filled from the same hour on nearby days (lines only up to 2 h; fills left out of the design values), 23 % missing drops the month; design n = 20 ${r.design.db20} °C and n = 50 ${r.design.db50} °C from ${r.design.nYears} annual maxima (0.4 % ${r.design.db04} °C; typical year's hottest hour ${Math.max(...r.tmy.dryBulb)} °C); island clocks; 6-hourly months refused; wind breaks a three-way tie; 9 years refused`;
   });
 }
