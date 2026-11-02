@@ -918,7 +918,9 @@ export function buildDefaultInputs(opts = {}) {
       // Display currency (work package 1): results shown in this currency at the fixed release rate (project.fx); the
       // engine and the inputs work in euro. 'by country' = the country's currency.
       currency: rec('project.currency', 'by country', 'by country / EUR / GBP / CHF / NOK / SEK / DKK / ISK', { basis: 'judgement', derived: true, ref: '§5.1', note: 'Display only; converted at the ECB reference rates of the release (project.fx). Inputs stay in euro.' }),
-      analysisStart: rec('project.analysisStart', start, 'YYYY-MM', { basis: 'judgement', note: 'Today + 3 months. No source; replace with the client programme start.', ref: '§5.1' }),
+      // The record holds the default itself, today + 3 months, whatever start this call was given (known issue 34: it held the
+      // last start passed in, so whether a start counted as "assumed" depended on which inputs were built last).
+      analysisStart: (rec('project.analysisStart', defaultAnalysisStart(opts.today), 'YYYY-MM', { basis: 'judgement', note: 'Today + 3 months. No source; replace with the client programme start.', ref: '§5.1' }), start),
       seed: rec('project.seed', 20261015, 'integer', { basis: 'run setting', ref: '§4' }),
     },
     site: {
