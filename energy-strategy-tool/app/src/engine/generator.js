@@ -87,7 +87,7 @@ export function isNA(id, v) {
     // Work package 19: an islanded campus has no grid connection to take over.
     case 'C21': return v.C1 === 'islanded';
     // OPEN-QUESTIONS 129: only for a bought existing plant kept as the backup.
-    case 'C22': return !(v.C5 === 'retained' && /^x[bw]:/.test(String(v.C2 || '')));
+    case 'C22': { const c = v.C2; return !(v.C5 === 'retained' && typeof c === 'string' && c.charCodeAt(0) === 120 && (c.charCodeAt(1) === 98 || c.charCodeAt(1) === 119) && c.charCodeAt(2) === 58); } // xb: or xw:
     default: return false;
   }
 }
@@ -149,7 +149,7 @@ export const RULES = [
   // OPEN-QUESTIONS 118: an option uses one plant or two together (Opus review of package 19, finding 9).
   { id: 'q', name: '(q) An option uses at most two existing plants',
     detail: 'Bridging plant, firm plant and a taken-over grid connection from three different existing plants are not generated: options use one plant or two together (OPEN-QUESTIONS 118).',
-    fails: (v) => plantsOfOption(v).length > 2 },
+    fails: (v) => { const a = parsePlantValue(v.C2), b = parsePlantValue(v.C4), c = parsePlantValue(v.C21); return !!(a && b && c) && a.id !== b.id && a.id !== c.id && b.id !== c.id; } },
   // Work package 14 (OPEN-QUESTIONS 85, 2026-10-24; known issue 5): a rule rather than an n/a collapse, because C9 comes
   // before C10 in the choice order and the Site tab (Beta) still needs a location to draw.
   { id: 'o', name: '(o) Heat rejection location matters only with rooftop solar',

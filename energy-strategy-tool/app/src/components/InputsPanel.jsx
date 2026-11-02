@@ -392,15 +392,23 @@ function PhasesEditor({ inputs, norm, update }) {
 
 // The count stops at a million combinations on screen (Opus review of package 19, finding 3: it runs on every change).
 const COUNT_LIMIT = 1000000;
+// The count depends on neither the weights nor the deliverability settings: a weight change does not recount (it took
+// about 0.1 s on T1 on every change, inside the weight-repaint bound of browser check B9).
+const countKey = (norm) => JSON.stringify({ ...norm, weights: null, deliverability: null, project: { ...norm.project, name: null } });
+function useCount(norm) {
+  const key = countKey(norm);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => countCombinations(norm, COUNT_LIMIT), [key]);
+}
 function ProjectedCount({ norm }) {
-  const c = useMemo(() => countCombinations(norm, COUNT_LIMIT), [norm]);
+  const c = useCount(norm);
   const cap = norm.settings.generationCap * (c.plant > 0 ? PLANT_DEFAULTS.capMultiplier : 1); // OPEN-QUESTIONS 130
   const over = c.total > cap;
   return <span className={over ? 'warn-text' : ''}>{c.truncated ? 'more than ' : ''}{c.total.toLocaleString('en-GB')} combinations{over ? (norm.settings.sampleAboveCap ? ` · ${cap.toLocaleString('en-GB')} sampled` : ' · above cap, all screened') : ''}</span>;
 }
 
 function ChoicesPanel({ inputs, norm, update }) {
-  const c = useMemo(() => countCombinations(norm, COUNT_LIMIT), [norm]);
+  const c = useCount(norm);
   const cap = norm.settings.generationCap * (c.plant > 0 ? PLANT_DEFAULTS.capMultiplier : 1); // OPEN-QUESTIONS 130
   return (
     <div className="choices">

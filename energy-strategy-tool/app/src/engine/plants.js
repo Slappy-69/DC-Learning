@@ -66,6 +66,8 @@ export const plantValue = { lease: (id) => `xl:${id}`, buy: (id) => `xb:${id}`, 
 // The manual plant of work package 12 keeps its value "existing" for the lease (study files from before stay valid).
 export function parsePlantValue(val) {
   if (val === 'existing') return { id: 'manual', mode: 'lease' };
+  // Fast path: every plant value has ':' as its third character (the rules call this for every combination).
+  if (typeof val !== 'string' || val.charCodeAt(2) !== 58) return null;
   const m = /^(xl|xb|xw|tk|ta):(.+)$/.exec(String(val || ''));
   return m ? { id: m[2], mode: m[1] === 'xl' ? 'lease' : m[1] === 'xb' ? 'buy' : m[1] === 'xw' ? 'buyWhole' : 'takeover', ...(m[1] === 'ta' ? { add: true } : m[1] === 'tk' ? { add: false } : {}) } : null;
 }
