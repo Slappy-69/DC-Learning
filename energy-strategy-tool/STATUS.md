@@ -2,7 +2,7 @@
 
 Checkpoint, updated after every completed step so any session can resume from here. New sessions: read `../CLAUDE.md` first.
 
-**Last updated: 2026-11-02**: `STATUS.md` rewritten and shortened at the owner's request; known issue 35 logged; old branches: see "Old branches".
+**Last updated: 2026-11-02**: `STATUS.md` rewritten and shortened at the owner's request (branch `feature/status-tidy`); known issue 35 logged; the four old branches not in `main` copied to `archive/` branches; deleting the 33 old branches left to the owner on GitHub (see "Old branches").
 
 ## Where things stand
 
@@ -135,7 +135,7 @@ The decisions that shape the most:
 
 ## Old branches
 
-The owner asked on 2026-11-02 to archive the 33 branches below. A Claude session cannot push tags (the connection to GitHub refuses them), and deleting a branch needs the owner's yes, asked the same day. Until then the branches stay on GitHub.
+The owner asked on 2026-11-02 to archive the 33 branches below, and then said "Yes delete them". The four not in `main` were copied the same day to `archive/codex/energy-tool-experiment`, `archive/concept-sensitivity-tab`, `archive/concept-site-layout` and `archive/feature/windows-build-2026-10-30` (each checked on GitHub to point at the same commit). **The 33 originals are still on GitHub:** a Claude session's connection to GitHub refuses both tags and branch deletions (HTTP 403), so the owner deletes them on GitHub (Code → Branches → the bin icon on each row). Once they are gone, the branches left are `main`, the four `archive/` copies and any open `feature/` branch.
 
 "In `main`" means every commit of the branch is part of `main`'s history, so nothing on it is lost if the branch goes; it can be recreated exactly from its last commit: `git push origin <commit>:refs/heads/<branch>`.
 
