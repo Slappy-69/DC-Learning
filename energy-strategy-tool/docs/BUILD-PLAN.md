@@ -201,13 +201,14 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Decisions:** OPEN-QUESTIONS 116–123, all answered by the owner on 2026-10-31.
 - **User guide:** chapters 17, 34, 35, 39 and 56 (as for package 12), and the research note.
 - **Acceptance tests:** Node test 50 (`app/tests/plants-tests.mjs`, 50a–e).
-- **Progress:** research done, decisions taken and built 2026-10-31 on `feature/existing-plant` (owner's go-ahead the same day); not verified independently; not merged.
+- **Progress:** research done, decisions taken and built 2026-10-31 on `feature/existing-plant` (owner's go-ahead the same day); verified the same day (`verification/existing-plant/`: three Haiku checks and an Opus review); the review's findings fixed and its seven owner decisions (OPEN-QUESTIONS 124–130) built by 2026-11-02 (choices C21 two ways, C22, rules (q) and (r), bought whole, data-centre plants left out, five times the cap with plants). Not merged.
 
 ## Not scheduled
 
 Ask the owner before starting any of these:
 
-- Known issues: none open (all 20 resolved by 2026-10-24).
+- Known issues: none open (all 33 resolved by 2026-10-31).
+- From the package 19 work, suggested by Claude and not asked for: a second search around the leaders (local search) to find the best option more surely than sampling (put to the owner as option A of OPEN-QUESTIONS 130; the owner chose a bigger sample); research of each country's rules for taking over a closing plant's grid connection (every takeover is flagged as an assumption until then); a link from the plant list's "Eemshaven" 1976 entry to Eemscentrale (the list may hold it twice).
 - Scenarios (§13.3); every numeric parameter's own range in the Monte Carlo (§13.1); its automatic re-run in a worker (§13.2).
 - Parallel coordinates, the choice-impact chart, the schematic, key quantities, presentation mode, snapshots, undo and redo (§12, §16).
 - Code signing for the Windows program (`../packaging/README.md`).
