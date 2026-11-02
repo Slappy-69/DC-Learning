@@ -173,6 +173,14 @@ await check('D5b. Bundled weather stations (OPEN-QUESTIONS 114): when the build 
   return (await page.locator('.weather-field').innerText()).replace(/\s+/g, ' ').slice(0, 220);
 });
 
+await check('D5c. A build without weather stations carries an empty station list instead (OPEN-QUESTIONS 131, known issue 35): the page loads it with no "not found" error (D5) and says the stations are missing', async () => {
+  ok(page, 'no window');
+  if (info && info.weatherStations) return 'not tested: this build carries weather stations (D5b)';
+  ok(info && info.weatherPlaceholder && info.weatherPlaceholder.stations === 0, 'build-info.json records neither stations nor the empty station list');
+  await page.waitForFunction(() => /no NOAA station file/.test((document.querySelector('.weather-field') || {}).textContent || ''), null, { timeout: 60000, polling: 250 });
+  return (await page.locator('.weather-field').innerText()).replace(/\s+/g, ' ').slice(0, 220);
+});
+
 await check('D6. Offline, page level: the page made no request while loading and running; a request it tries is refused (the whole program is traced in D12)', async () => {
   ok(page, 'no window');
   const before = app.log.filter((l) => /^\[net\] blocked/.test(l));

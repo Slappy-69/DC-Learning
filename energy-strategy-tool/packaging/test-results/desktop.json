@@ -1,18 +1,18 @@
 {
-  "date": "2026-10-21T17:49:46.974Z",
-  "archive": "Concept-Energy-Optioneering-0.2.0-site-linux-x64.tar.gz",
-  "version": "0.2.0-site",
+  "date": "2026-11-02T17:08:49.187Z",
+  "archive": "Concept-Energy-Optioneering-0.3.0-linux-x64.tar.gz",
+  "version": "0.3.0",
   "sandboxFlag": "--no-sandbox (tests run as root)",
   "results": [
     {
       "name": "D1. Archive: checksum listed in SHA256SUMS.txt, folder holds the executable and resources/app.asar only (no loose app folder)",
       "status": "PASS",
-      "info": "Concept-Energy-Optioneering-0.2.0-site-linux-x64.tar.gz: 117.9 MB (unpacked 285 MB); folder Concept Energy Optioneering-linux-x64"
+      "info": "Concept-Energy-Optioneering-0.3.0-linux-x64.tar.gz: 118.3 MB (unpacked 286 MB); folder Concept Energy Optioneering-linux-x64"
     },
     {
       "name": "D2. app.asar holds the unmodified web app (SHA-256 equals the input build) and build-info.json with the CSP",
       "status": "PASS",
-      "info": "11 files; web app 774d9a2641e4; version 0.2.0-site; 2 script hashes"
+      "info": "12 files; web app 0d655e910b59; version 0.3.0; 2 script hashes"
     },
     {
       "name": "D3. Electron fuses in the binary are as configured (no run-as-Node, no NODE_OPTIONS, no --inspect, app only from asar)",
@@ -27,7 +27,17 @@
     {
       "name": "D5. A model run completes inside the desktop window, with no page errors",
       "status": "PASS",
-      "info": "Options updated. Leader unchanged. Last run 18 s on 1 worker."
+      "info": "Options updated. Leader unchanged. Last run 27 s on 1 worker."
+    },
+    {
+      "name": "D5b. Bundled weather stations (OPEN-QUESTIONS 114): when the build carries weather-stations.json.gz, the page loads it from app://bundle and uses the NOAA station nearest the pin as its hourly weather",
+      "status": "PASS",
+      "info": "not tested: this build carries no weather stations (no full \"Weather data\" run was available)"
+    },
+    {
+      "name": "D5c. A build without weather stations carries an empty station list instead (OPEN-QUESTIONS 131, known issue 35): the page loads it with no \"not found\" error (D5) and says the stations are missing",
+      "status": "PASS",
+      "info": "Hourly weather Synthetic country profile (made-up hourly temperatures, indicative — unverified). This copy of the Windows program has no NOAA station file, so the nearest station cannot be used. Upload an EPW weather fil"
     },
     {
       "name": "D6. Offline, page level: the page made no request while loading and running; a request it tries is refused (the whole program is traced in D12)",
@@ -66,45 +76,45 @@
     }
   ],
   "processLog": [
-    "mozilla: not found",
-    "/usr/bin/xdg-open: 882: chromium: not found",
+    "/usr/bin/xdg-open: 882: chromium-browser: not found",
     "/usr/bin/xdg-open: 882: ",
-    "/usr/bin/xdg-open: 882: epiphany: not found",
-    "chromium-browser: not found",
+    "firefox: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "iceweasel: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "seamonkey: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "mozilla: not found",
+    "/usr/bin/xdg-open: 882: ",
+    "epiphany: not found",
     "/usr/bin/xdg-open: 882: ",
     "konqueror: not found",
     "/usr/bin/xdg-open: 882: ",
-    "google-chrome: not found",
-    "/usr/bin/xdg-open: 882: ",
     "chromium: not found",
     "/usr/bin/xdg-open: 882: ",
-    "www-browser: not found",
-    "/usr/bin/xdg-open: 882: ",
     "chromium-browser: not found",
-    "/usr/bin/xdg-open: 882: ",
-    "links2: not found",
-    "/usr/bin/xdg-open: 882: ",
-    "google-chrome: not found",
-    "/usr/bin/xdg-open: 882: ",
-    "elinks: not found",
-    "/usr/bin/xdg-open: 882: ",
-    "www-browser: not found",
-    "/usr/bin/xdg-open: 882: ",
-    "/usr/bin/xdg-open: 882: links2: not found",
-    "links: not found",
-    "/usr/bin/xdg-open: 882: ",
-    "elinks: not found",
-    "/usr/bin/xdg-open: 882: ",
-    "lynx: not found",
-    "/usr/bin/xdg-open: 882: ",
-    "links: not found",
-    "/usr/bin/xdg-open: 882: ",
-    "w3m: not found",
-    "xdg-open: no method available for opening 'https://example.com/'",
-    "/usr/bin/xdg-open: 882: lynx: not found",
-    "/usr/bin/xdg-open: 882: ",
-    "w3m: not found",
-    "xdg-open: no method available for opening 'https://example.com/'",
-    "[app] a second copy was started: showing this window instead"
+    "[1450:1490:1102/140807.134980:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory",
+    "[1450:1490:1102/140807.135162:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")",
+    "[1450:1490:1102/140807.135212:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory",
+    "[1450:1490:1102/140807.135328:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory",
+    "[1450:1490:1102/140807.135339:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")",
+    "Opening in existing browser session.",
+    "[1450:1450:1102/140807.209070:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: ",
+    "[1450:1450:1102/140807.209303:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: ",
+    "[1450:1490:1102/140807.214775:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")",
+    "[1450:1490:1102/140807.215052:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")",
+    "[1450:1490:1102/140807.215156:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory",
+    "[1450:1490:1102/140807.215221:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory",
+    "[1450:1450:1102/140807.218461:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: ",
+    "[1450:1450:1102/140807.218730:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: ",
+    "[1450:1450:1102/140807.218895:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.Properties.GetAll: object_path= /org/freedesktop/UPower/devices/DisplayDevice: unknown error type: ",
+    "[1450:1490:1102/140807.226885:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")",
+    "[1450:1450:1102/140807.227185:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: ",
+    "[1450:1490:1102/140807.227392:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")",
+    "[1450:1450:1102/140807.227503:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: ",
+    "[1450:1490:1102/140807.227586:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")",
+    "[1450:1450:1102/140807.227638:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: ",
+    "[app] a second copy was started: showing this window instead",
+    "[1505:1536:1102/140808.644167:ERROR:ui/gfx/x/connection.cc:66] X connection error received."
   ]
 }

@@ -2,7 +2,7 @@
 
 Checkpoint, updated after every completed step so any session can resume from here. New sessions: read `../CLAUDE.md` first.
 
-**Last updated: 2026-11-02**: branch `feature/known-issue-35` (from `main` e8e5006, the owner's choice of next steps, "2 and 3"): `CLAUDE.md` brought up to date (packages 0 to 19; known issue 35 open); the fix for known issue 35 waits for the owner's choice between two fixes. Not merged. Earlier the same day: `STATUS.md` rewritten and shortened at the owner's request; known issue 35 logged; both merged into `main` from `feature/status-tidy` with the owner's yes ("Yes merge", 2026-11-02); the four old branches not in `main` copied to `archive/` branches; deleting the 33 old branches left to the owner on GitHub (see "Old branches").
+**Last updated: 2026-11-02**: branch `feature/known-issue-35` (from `main` e8e5006, the owner's choice of next steps, "2 and 3"): known issue 35 fixed by the owner's choice "B" (OPEN-QUESTIONS 131: an empty station list in a build without stations; new launch check D5c) and `CLAUDE.md` brought up to date. Not merged. Earlier the same day: `STATUS.md` rewritten and shortened at the owner's request; known issue 35 logged; both merged into `main` from `feature/status-tidy` with the owner's yes ("Yes merge", 2026-11-02); the four old branches not in `main` copied to `archive/` branches; deleting the 33 old branches left to the owner on GitHub (see "Old branches").
 
 ## Where things stand
 
@@ -11,15 +11,15 @@ Checkpoint, updated after every completed step so any session can resume from he
 - **Windows program:** "Desktop builds" run 41474031494 (from `main` 991e85e, 2026-11-02) passed on Windows and Linux, with 2,926 NOAA stations bundled from "Weather data" run 41470033736. Download: GitHub → Actions → Desktop builds → that run → Artifacts → `desktop-win32-x64` (219 MB, kept until 2027-01-31). A duplicate run, 41474599019 (from 39442fb, which changed only records), also passed.
 - **Phone page:** version 8 (2026-10-30). It does not have the weather work or package 19. Republishing is dropped for now (owner, 2026-11-02).
 - **Eemshaven study:** made before the plant list, so its figures leave out existing plants. The re-run is dropped for now (owner, 2026-11-02).
-- **Known issues:** 1 to 34 resolved; 35 open (`docs/KNOWN-ISSUES.md`).
-- **Waiting for the owner:** the next step (candidates under "Next"), the fix for known issue 35, and the rest of the notes on the user guide ("Open items").
+- **Known issues:** all 35 resolved (`docs/KNOWN-ISSUES.md`); 35 on `feature/known-issue-35`, not merged.
+- **Waiting for the owner:** the merge of `feature/known-issue-35`, the next step (candidates under "Next"), and the rest of the notes on the user guide ("Open items").
 
 ## Where to look
 
 - **Brief (authoritative):** `brief-v2/BRIEF.md` (revision 5), with `CHANGELOG.md`, `ASSUMPTIONS.md` and `OPEN-QUESTIONS.md` (1–130).
 - **Decision log of the walkthrough:** `docs/walkthrough-decisions-2026-10-21.md`. Where this file or the brief disagrees with it, the log is newer.
 - **Build plan:** `docs/BUILD-PLAN.md`: each work package with its questions, acceptance tests and guide chapters, and the "Not scheduled" list.
-- **Known issues:** `docs/KNOWN-ISSUES.md` (35 items: 1–34 resolved, 35 open).
+- **Known issues:** `docs/KNOWN-ISSUES.md` (35 items, all resolved).
 - **Build notes:** `app/BUILD-NOTES.md`: architecture, every default with its label, decisions and test runs.
 - **Verification:** `verification/HISTORY.md`, with one folder of reports per slice.
 - **User guide:** `docs/user-guide/` (text, figures, mock-ups of the agreed screens, and the tools that build the EPUB and PDF).
@@ -89,7 +89,7 @@ Last full local test runs (2026-11-02): Node 90/91 and browser 41/43, the failur
 ## Builds on GitHub
 
 - **CI** (`.github/workflows/ci.yml`): Node tests, build, installable web app tests and browser tests, on every push to `main` or a `feature/` branch and on pull requests. A newer push to the same branch cancels the older run.
-- **Desktop builds** (`desktop.yml`): the Windows program, with a Linux copy built only to launch-test it under a virtual display. Runs when the packaging or the workflow changes, on a `v*` tag, or by hand. It bundles the stations of the latest full "Weather data" run (not a trial, 2010–2024, 10 years, all nine groups, at least 1,500 stations). Without one it warns, and a tag fails; but see known issue 35.
+- **Desktop builds** (`desktop.yml`): the Windows program, with a Linux copy built only to launch-test it under a virtual display. Runs when the packaging or the workflow changes, on a `v*` tag, or by hand. It bundles the stations of the latest full "Weather data" run (not a trial, 2010–2024, 10 years, all nine groups, at least 1,500 stations). Without one it warns and bundles an empty station list instead, and the program says the stations are missing (known issue 35, check D5c); a tag fails.
 - **Weather data** (`weather-data.yml`): by hand. Full build of 2026-11-02 (run 41470033736): 24 minutes, 2,926 stations in 30 countries (none in Malta), 137.9 MB, 59.7 MB compressed. The first full build (2026-10-31, 1,942 stations) predates the summary fields and no longer qualifies.
 - **Starting a workflow from a Claude session:** POST to `https://api.github.com/repos/Slappy-69/DC-Learning/actions/workflows/<file>/dispatches` with the body `{"ref":"main"}`. Results can be read from the public API.
 
@@ -102,14 +102,13 @@ The owner chooses. Candidates (2026-11-02):
 - a second search around the leaders (local search), to find the best option more surely than sampling (a cheap trial first);
 - research of each country's rules for taking over a closing plant's grid connection (every takeover is flagged as an assumption until then);
 - the defaults research (585 of 609 records "indicative — unverified"), starting with the values that move the ranking most;
-- a first tagged release (version 1.0), after known issue 35 and the packaging Opus review.
+- a first tagged release (version 1.0), after the packaging Opus review.
 
 Not scheduled (ask the owner first): `docs/BUILD-PLAN.md`, "Not scheduled".
 
 ## Open items
 
-- **Known issue 35:** a Windows build without weather stations fails launch check D5 instead of going on with a warning. Fix not decided.
-- **Packaging Opus review** not done (stopped 2026-10-19). Run one before further packaging work or a release.
+- **Packaging Opus review** not done (stopped 2026-10-19). Run one before further packaging work or a release. The packaging has changed since then (weather stations, known issue 35), each change tested by the launch checks but not reviewed.
 - **Windows program:** launch-tested only on its Linux copy, never automatically on Windows itself. Not code-signed.
 - **Screen reader:** the NVDA walk-through has not been done.
 - **Defaults:** 585 of 609 records "indicative — unverified", 24 "sourced — not independently checked", none verified. Some core run constants have no §18 default record yet.

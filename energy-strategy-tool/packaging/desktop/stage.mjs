@@ -8,6 +8,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
 import { APP_ID, APP_NAME, DEFAULT_SINGLE_FILE, ICONS_DIR, PACKAGING_ROOT, args, engineVersionFromHtml, numericVersion, sha256, sha256b64 } from '../lib/common.mjs';
 
 export const CONFIG = JSON.parse(readFileSync(join(PACKAGING_ROOT, 'desktop', 'desktop-config.json'), 'utf8'));
@@ -40,8 +41,11 @@ export function cspFor(html) {
 }
 
 // Bundled NOAA station years (OPEN-QUESTIONS 114: the Windows program only), from the latest full "Weather data" run.
-// Copied next to the page when present; the program works without it (EPW upload or the synthetic profile).
+// Copied next to the page when present. Without one, an empty station list goes there instead (owner's choice B,
+// OPEN-QUESTIONS 131, known issue 35), so the page never asks for a missing file: it finds no stations, says they are
+// missing (R3 M5) and uses the EPW upload or the synthetic profile. build-info.json records which of the two it is.
 export const DEFAULT_WEATHER = join(PACKAGING_ROOT, 'weather', 'weather-stations.json.gz');
+export const EMPTY_STATIONS = { source: 'none: this build carries no NOAA station years (no full "Weather data" build was available)', stations: [] };
 
 export function stage({ input = DEFAULT_SINGLE_FILE, out = join(PACKAGING_ROOT, 'out', '.stage'), version, weather = DEFAULT_WEATHER } = {}) {
   input = resolve(input);
@@ -65,10 +69,15 @@ export function stage({ input = DEFAULT_SINGLE_FILE, out = join(PACKAGING_ROOT, 
   cpSync(join(src, 'lib'), join(app, 'lib'), { recursive: true });
   copyFileSync(input, join(app, 'web', 'index.html'));
   let weatherInfo = null;
+  let weatherPlaceholder = null;
   if (weather && existsSync(weather)) {
     copyFileSync(weather, join(app, 'web', 'weather-stations.json.gz'));
     const summary = join(weather, '..', 'weather-summary.json');
     weatherInfo = { file: 'weather-stations.json.gz', sha256: sha256(readFileSync(weather)), bytes: readFileSync(weather).length, stations: existsSync(summary) ? JSON.parse(readFileSync(summary, 'utf8')).stations : null };
+  } else {
+    const empty = gzipSync(Buffer.from(`${JSON.stringify(EMPTY_STATIONS)}\n`));
+    writeFileSync(join(app, 'web', 'weather-stations.json.gz'), empty);
+    weatherPlaceholder = { file: 'weather-stations.json.gz', sha256: sha256(empty), bytes: empty.length, stations: 0 };
   }
   copyFileSync(join(ICONS_DIR, 'icon-linux-512.png'), join(app, 'icons', 'icon.png'));
   copyFileSync(join(ICONS_DIR, 'icon.ico'), join(res, 'icon.ico'));
@@ -85,7 +94,7 @@ export function stage({ input = DEFAULT_SINGLE_FILE, out = join(PACKAGING_ROOT, 
     private: true,
   };
   writeFileSync(join(app, 'package.json'), `${JSON.stringify(pkg, null, 2)}\n`);
-  const info = { name: APP_NAME, appId: APP_ID, version: full, engineVersion: full, numericVersion: numeric, webSha256: sha256(readFileSync(input)), csp, scriptHashes: hashes, weatherStations: weatherInfo };
+  const info = { name: APP_NAME, appId: APP_ID, version: full, engineVersion: full, numericVersion: numeric, webSha256: sha256(readFileSync(input)), csp, scriptHashes: hashes, weatherStations: weatherInfo, weatherPlaceholder };
   writeFileSync(join(app, 'build-info.json'), `${JSON.stringify(info, null, 2)}\n`);
   return { out, app, resources: res, version: full, numeric, csp, info };
 }

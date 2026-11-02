@@ -65,7 +65,7 @@ The version in file names (`0.2.0-site`) is the model engine version read from t
 | Suite | Checks |
 |---|---|
 | `test:pwa` (P1–P12) | Loads and runs from a GitHub-Pages-like server; manifest and icons; maskable safe zone; service worker control; other pages on the same site left alone; offline reload and full run; installability; update notice (accessible, never forces a reload); works without service workers |
-| `test:desktop` (D1–D12, on the Linux build) | Archive checksum and layout; bundled web app unmodified; fuses; window loads; full model run with no page errors; page requests refused; CSP blocks injected scripts; no Node.js in the page; navigation and pop-ups blocked; single instance; clean quit and saved window size; whole-program network trace with strace (no DNS lookup, no connection off the computer, proxy settings ignored) |
+| `test:desktop` (D1–D12, on the Linux build) | Archive checksum and layout; bundled web app unmodified; fuses; window loads; full model run with no page errors; the bundled weather stations used, or without them the empty station list loaded and the stations reported missing (D5b, D5c); page requests refused; CSP blocks injected scripts; no Node.js in the page; navigation and pop-ups blocked; single instance; clean quit and saved window size; whole-program network trace with strace (no DNS lookup, no connection off the computer, proxy settings ignored) |
 
 Latest results: `test-results/pwa.json`, `test-results/desktop.json`. Each test run rewrites them, so commit them together
 with a verified change.
@@ -104,7 +104,7 @@ the macOS and Windows builds' launch.
     traced the program at start-up and found DNS lookups for `redirector.gvt1.com`, where Electron fetches spell-check
     dictionaries, made before the session's spell checker could be switched off. The page-level blocks could not stop
     them. With the two switches, nothing resolves and no proxy is used; D12 traces every process to prove it.
-16. Bundled weather stations (OPEN-QUESTIONS 114): `weather/weather-stations.json.gz` (from the latest full "Weather data" run, fetched by the Desktop builds workflow) is copied next to the page as `web/weather-stations.json.gz` and recorded in `build-info.json`. The page reads it from `app://bundle` (allowed by `connect-src 'self'`; no network). Without it the program uses the EPW upload or the synthetic profile. Check D5b.
+16. Bundled weather stations (OPEN-QUESTIONS 114): `weather/weather-stations.json.gz` (from the latest full "Weather data" run, fetched by the Desktop builds workflow) is copied next to the page as `web/weather-stations.json.gz` and recorded in `build-info.json`. The page reads it from `app://bundle` (allowed by `connect-src 'self'`; no network). Without it, the build puts an empty station list in its place, recorded as `weatherPlaceholder` in `build-info.json` (OPEN-QUESTIONS 131, known issue 35), so the page never asks for a missing file: it says the stations are missing and uses the EPW upload or the synthetic profile. Checks D5b (with stations) and D5c (without).
 17. Downloads are accepted only from the app's page: a `blob:` URL of the app's origin, or a `data:` URL started by an
     app page.
 
