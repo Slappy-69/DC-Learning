@@ -57,6 +57,8 @@ The walkthrough's decision log is `docs/walkthrough-decisions-2026-10-21.md` (a 
 
 GitHub runs the checks on every push to `main` or a `feature/` branch and on pull requests (`.github/workflows/ci.yml`: Node tests, build, PWA tests, browser tests) and builds the Windows program when the packaging changes (`desktop.yml`). Last result on `main` (commit 441635e): passed (2026-10-21).
 
+`feature/existing-plant` (2026-11-02): the check of 79a1d99 (the known issue 34 fix) failed in the Node suite, test 32 only (90 of 91 locally). Test 32 expected a start passed in to count as "assumed"; it now pins the clock instead (`docs/KNOWN-ISSUES.md` 34, `app/BUILD-NOTES.md`). The browser tests had not run on that commit. Read GitHub's result on the next push before any merge.
+
 ## Built and verified
 
 | Slice | Verification | Tests |

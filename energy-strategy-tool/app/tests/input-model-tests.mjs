@@ -6,8 +6,13 @@ import { buildDefaultInputs, normalizeInputs, COOLING, getRegistry, LABEL } from
 import { runModel } from '../src/engine/run.js';
 import { inputRows } from '../src/report/report.js';
 import { KEY_INPUTS } from '../src/engine/assumed.js';
+import { addMonths } from '../src/engine/dates.js';
 
 const small = (inp) => { inp.settings.generationCap = 150; return inp; };
+// The default analysis start is today + 3 months and its record does not follow a start a call is given (known
+// issue 34), so the start counts as "assumed" only when it equals that default. A clock pinned three months
+// before the test start makes the default equal the test start whatever the real date is.
+const todayFor = (ym) => { const [y, m] = ym.split('-').map(Number); return new Date(Date.UTC(y, m - 4, 1)); };
 const assumedPaths = (o) => o.flags.filter((f) => f.assumed && f.path).map((f) => f.path);
 
 export async function inputModelTests(test, ctxRuns) {
@@ -15,7 +20,9 @@ export async function inputModelTests(test, ctxRuns) {
     const out = [];
     const START = ctxRuns.START;
     // Only location and site area: the defaults carry no IT load and no grid values.
-    const raw = small(buildDefaultInputs({ analysisStart: START }));
+    // The analysis start is left at its default (today + 3 months, with the clock pinned so that is START).
+    const raw = small(buildDefaultInputs({ today: todayFor(START) }));
+    assert.equal(raw.project.analysisStart, START, 'pinned clock gives the default start');
     assert.equal(raw.load.itMW, null);
     assert.equal(raw.grid.nowMW, null); assert.equal(raw.grid.fullMW, null); assert.equal(raw.grid.fullDate, null);
     const n = normalizeInputs(raw);
@@ -39,16 +46,17 @@ export async function inputModelTests(test, ctxRuns) {
     }
     out.push(`defaults only: IT ${est} MW estimated, grid ${n.grid.nowMW} → ${n.grid.fullMW} MW at ${n.grid.fullDate}; ${run0.options.length} options, each with ${Math.min(...run0.options.map((o) => assumedPaths(o).length))}–${Math.max(...run0.options.map((o) => assumedPaths(o).length))} assumed key defaults`);
     // Entering a value removes its flag from every option.
-    const ent = small(buildDefaultInputs({ analysisStart: START }));
+    // The analysis start is entered too: a start other than the default is never flagged (known issue 34).
+    const ent = small(buildDefaultInputs({ analysisStart: addMonths(START, 6), today: todayFor(START) }));
     ent.load.itMW = 60; ent.economics.wacc = 0.08; ent.grid.fullMW = 90;
     const run1 = runModel(ent);
     for (const o of run1.options) {
       const p = assumedPaths(o);
-      for (const k of ['load.itMW', 'economics.wacc', 'grid.fullMW']) assert.ok(!p.includes(k), `${o.id} still flags ${k} after it was entered`);
+      for (const k of ['load.itMW', 'economics.wacc', 'grid.fullMW', 'project.analysisStart']) assert.ok(!p.includes(k), `${o.id} still flags ${k} after it was entered`);
       assert.ok(p.includes('economics.periodYears'));
     }
     assert.equal(normalizeInputs(ent).load.itMW, 60);
-    out.push('entering the IT load, WACC and full grid capacity removes those flags from every option');
+    out.push('entering the IT load, WACC, full grid capacity and a start other than the default removes those flags from every option');
     // Report: the estimate is listed as a default with its sentence.
     const row = inputRows(raw).find((r) => r.path === 'load.itMW');
     assert.ok(/^Default: estimated from the site area/.test(row.status), row.status);
@@ -62,6 +70,7 @@ export async function inputModelTests(test, ctxRuns) {
     assert.ok(o0.eco.byPeriod[0].lcoe !== o0.eco.lcoe, 'a 10-year LCOE equal to the 20-year one');
     assert.ok(KEY_INPUTS.length >= 20);
     out.push(`periods: ${o0.eco.byPeriod.map((p) => `${p.years} yr €${p.lcoe.toFixed(1)}/MWh`).join(', ')} (scoring 20 yr)`);
+    buildDefaultInputs(); // leave the registry as the real clock builds it, as the later tests expect
     return out.join('; ') + '.';
   });
 }
