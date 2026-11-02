@@ -417,6 +417,9 @@ export const PLANT_DEFAULTS = {
   takeoverCostFrac: rec('plants.takeoverCostFrac', 0.25, 'fraction of the standard extra-high-voltage connection rate', { low: 0.1, high: 0.5, ...J('OPEN-QUESTIONS 120: about €30k/MW against €120k/MW for a new connection.') }),
   // OPEN-QUESTIONS 127 (owner, 2026-10-31, "A"): generators inside other data centre campuses are left out unless ticked.
   dataCentreNames: rec('plants.dataCentreNames', 'data ?cent(er|re)|datacent|\\bDC\\b|echelon|profile park|winthrop|microsoft|google|amazon|\\baws\\b|equinix|digital realty|cyrus ?one|vantage|edgeconnex|pure dc|keppel|\\bmeta\\b|facebook', 'name pattern (case ignored)', J('Names in the bundled list that point to a data centre\'s own plant (in the 2026-10-07 list: six entries, all in Dublin). They are left out of the analysis unless the engineer ticks them in.')),
+  // OPEN-QUESTIONS 130 (owner, 2026-11-02, "C"): with existing plants, a bigger sample (five times the generation cap:
+  // 10,000 at the default), half of it for plant options.
+  capMultiplier: rec('plants.capMultiplier', 5, '× the generation cap when the study has options with an existing plant', { low: 1, high: 20, basis: 'judgement', ref: '§7.2', note: 'Owner, 2026-11-02 (OPEN-QUESTIONS 130): "find the best of the best"; at the default cap of 2,000, 10,000 options are screened. Run time grows about in proportion.' }),
   sampleShare: rec('plants.sampleShare', 0.5, 'fraction of the sampled options kept for options with an existing plant', { low: 0.2, high: 0.8, ...J('OPEN-QUESTIONS 118: each plant gets its own equal share of this, so no plant is crowded out (builder, 2026-10-31).') }),
   unitMW: {
     ccgt: rec('plants.unitMW.ccgt', 400, 'MW per unit, when the list gives the plant total only', J('A typical CCGT block; the list gives no unit count.')),

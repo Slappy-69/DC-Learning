@@ -140,7 +140,7 @@ export async function plantTests(test) {
     // A small base space with a cap below the total: the sample is filled to the cap (finding 6).
     const small = JSON.parse(JSON.stringify(inp)); small.settings.generationCap = 600;
     const gs = generateOptions(normalizeInputs(small));
-    assert.equal(gs.options.length, Math.min(600, gs.summary.totalCombinations), `${gs.options.length} screened of ${gs.summary.totalCombinations}`);
+    assert.equal(gs.options.length, Math.min(600 * PLANT_DEFAULTS.capMultiplier, gs.summary.totalCombinations), `${gs.options.length} screened of ${gs.summary.totalCombinations}`);
     // Keys without a takeover carry no C21, so studies without plants keep their option ids.
     assert.ok(en.valid.every((v) => !/C21=/.test(choiceKey(v))));
     // Full default space, sampled: each plant's share is equal (±1), and the plant options pass every rule.
@@ -149,9 +149,11 @@ export async function plantTests(test) {
     const share = g.summary.plantSampling;
     const drawn = Object.values(share).map((x) => x.drawn);
     assert.ok(Math.max(...drawn) - Math.min(...drawn) <= 1, JSON.stringify(share));
-    const quota = Math.floor((600 - g.summary.archetypes) * PLANT_DEFAULTS.sampleShare);
+    const capEff = 600 * PLANT_DEFAULTS.capMultiplier; // OPEN-QUESTIONS 130: a bigger sample with plants
+    assert.equal(g.summary.cap, capEff);
+    const quota = Math.floor((capEff - g.summary.archetypes) * PLANT_DEFAULTS.sampleShare);
     assert.ok(drawn.reduce((a, b) => a + b, 0) <= quota && drawn.reduce((a, b) => a + b, 0) >= quota - Object.keys(share).length - g.summary.archetypes, `${drawn} against ${quota}`);
-    assert.equal(g.options.length, 600);
+    assert.equal(g.options.length, Math.min(capEff, g.summary.totalCombinations));
     assert.ok(g.options.every((o) => !RULES.some((r) => r.fails(o.v, I3))), 'an option breaks a rule');
     assert.equal(new Set(g.options.map((o) => o.key)).size, g.options.length);
     return `small space: ${en.valid.length} base + ${en.plant.count} plant combinations = brute force ${brute}; ${caseTxt.join('; ')}; default space ${g.summary.totalCombinations.toLocaleString('en-GB')} combinations (${g.summary.plantCombinations.toLocaleString('en-GB')} with a plant), sample shares ${JSON.stringify(drawn)}.`;

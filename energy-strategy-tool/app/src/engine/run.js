@@ -76,7 +76,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
   yield;
 
   // ---- 3. Option generation ----
-  log.start(STAGE.generation, null, { cap: inputs.settings.generationCap, sampleAboveCap: inputs.settings.sampleAboveCap });
+  log.start(STAGE.generation, null, { cap: inputs.settings.generationCap, plantCapMultiplier: PLANT_DEFAULTS.capMultiplier, sampleAboveCap: inputs.settings.sampleAboveCap });
   const gen = generateOptions(inputs);
   const s = gen.summary;
   log.progress(STAGE.generation, s.validCombinations, s.rawTotal, { step: 'enumerate', rawTotal: s.rawTotal, collapsedTotal: s.collapsedTotal, validCombinations: s.validCombinations });

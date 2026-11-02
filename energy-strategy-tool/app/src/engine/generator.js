@@ -446,7 +446,8 @@ function lhsSample(valid, n, inputs, seed, exclude) {
 
 export function generateOptions(inputs) {
   const en = enumerate(inputs);
-  const cap = inputs.settings.generationCap;
+  // With options that use an existing plant, the cap is plants.capMultiplier times the generation cap (OPEN-QUESTIONS 130).
+  const cap = inputs.settings.generationCap * (en.plant.count > 0 ? registryValue('plants.capMultiplier') : 1);
   const sampling = inputs.settings.sampleAboveCap;
   const seed = inputs.project.seed;
 

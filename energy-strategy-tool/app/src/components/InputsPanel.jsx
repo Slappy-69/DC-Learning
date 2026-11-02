@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTag } from './Field.jsx';
-import { COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
+import { PLANT_DEFAULTS, COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
 import MapPicker from './MapPicker.jsx';
 import WeatherField from './WeatherField.jsx';
 import PlantsField from './PlantsField.jsx';
@@ -394,14 +394,14 @@ function PhasesEditor({ inputs, norm, update }) {
 const COUNT_LIMIT = 1000000;
 function ProjectedCount({ norm }) {
   const c = useMemo(() => countCombinations(norm, COUNT_LIMIT), [norm]);
-  const cap = norm.settings.generationCap;
+  const cap = norm.settings.generationCap * (c.plant > 0 ? PLANT_DEFAULTS.capMultiplier : 1); // OPEN-QUESTIONS 130
   const over = c.total > cap;
   return <span className={over ? 'warn-text' : ''}>{c.truncated ? 'more than ' : ''}{c.total.toLocaleString('en-GB')} combinations{over ? (norm.settings.sampleAboveCap ? ` · ${cap.toLocaleString('en-GB')} sampled` : ' · above cap, all screened') : ''}</span>;
 }
 
 function ChoicesPanel({ inputs, norm, update }) {
   const c = useMemo(() => countCombinations(norm, COUNT_LIMIT), [norm]);
-  const cap = norm.settings.generationCap;
+  const cap = norm.settings.generationCap * (c.plant > 0 ? PLANT_DEFAULTS.capMultiplier : 1); // OPEN-QUESTIONS 130
   return (
     <div className="choices">
       <p className="note" role="status">
