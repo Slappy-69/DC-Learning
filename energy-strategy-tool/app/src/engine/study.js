@@ -18,7 +18,17 @@ const SCHEMA_RE = /^dc-energy-study\/(\d+)$/;
 const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
 
 // The study file for the inputs on screen and, when there is one, the run of those inputs.
-export function studyFile(inputs, run = null, { savedAt = new Date(), appVersion = '', note = null } = {}) {
+// Report details (work package 21): the question the report answers and who it is for and by; kept with the study, not
+// in the inputs (they change no figure).
+export const REPORT_DETAIL_KEYS = ['question', 'preparedFor', 'preparedBy'];
+export function cleanReportDetails(d) {
+  if (!d || typeof d !== 'object') return null;
+  const out = {};
+  for (const k of REPORT_DETAIL_KEYS) if (typeof d[k] === 'string' && d[k].trim()) out[k] = d[k].trim().slice(0, 600);
+  return Object.keys(out).length ? out : null;
+}
+
+export function studyFile(inputs, run = null, { savedAt = new Date(), appVersion = '', note = null, report = null } = {}) {
   const n = normalizeInputs(inputs);
   const out = {
     schema: STUDY_SCHEMA,
@@ -31,7 +41,10 @@ export function studyFile(inputs, run = null, { savedAt = new Date(), appVersion
     inputHash: hashInputs(n),
     result: null,
     // The engineer's edit of the plain-English summary (work package 16), kept as a note marked "edited".
-    notes: note && typeof note.text === 'string' ? { summary: { text: note.text, key: note.key || '', leaderId: note.leaderId || null, leaderName: note.leaderName || '', editedAt: note.editedAt || '', siteBeta: !!note.siteBeta } } : {},
+    notes: {
+      ...(note && typeof note.text === 'string' ? { summary: { text: note.text, key: note.key || '', leaderId: note.leaderId || null, leaderName: note.leaderName || '', editedAt: note.editedAt || '', siteBeta: !!note.siteBeta } } : {}),
+      ...(cleanReportDetails(report) ? { report: cleanReportDetails(report) } : {}),
+    },
   };
   if (run && run.options && run.options.length) {
     const lead = run.options.reduce((a, b) => (a.rank < b.rank ? a : b));
@@ -113,6 +126,11 @@ export function readStudyFile(text) {
     const sn = f.notes.summary;
     if (isObj(sn) && typeof sn.text === 'string' && sn.text.trim()) notes.summary = { text: sn.text, key: String(sn.key || ''), leaderId: sn.leaderId || null, leaderName: String(sn.leaderName || ''), editedAt: String(sn.editedAt || ''), siteBeta: sn.siteBeta === true };
     else warnings.push('The summary note in the file is damaged and was left out.');
+  }
+  if (isObj(f.notes) && 'report' in f.notes) {
+    const rd = cleanReportDetails(f.notes.report);
+    if (rd) notes.report = rd;
+    else warnings.push('The report details in the file are damaged and were left out.');
   }
   return { ok: true, inputs, file: f, added, dropped, warnings, notes };
 }

@@ -331,28 +331,50 @@ From the Run progress panel, **Download run log** saves the log of the last run 
 ## PDF report
 
 ::: {.callout .built}
-**Built (23 October 2026, work package 10).** **Save PDF report** at the top of the window makes one PDF of the run on screen, **inputs first, results after**. The Windows program asks where to save it; a browser saves it to its downloads folder. Nothing is sent anywhere: the app writes the PDF itself, with the standard PDF fonts, and uses no outside library. **No Excel export.** The Site tab (Beta) is not included. The hosted page does not offer the PDF (a host's frame ignores downloads).
+**Built (23 October 2026, work package 10); rebuilt 2 November 2026 (work package 21) in the layout of the study report.** **Save PDF report** at the top of the window makes one PDF of the run on screen. It leads with the answer, then short numbered sections with charts, then appendices with every input and table. The Windows program asks where to save it; a browser saves it to its downloads folder. Nothing is sent anywhere: the app writes the PDF itself, with the standard PDF fonts (Times and Helvetica), and uses no outside library. **No Excel export.** The Site tab (Beta) is not included.
 :::
 
-The sections (OPEN-QUESTIONS 32, answered 23 October 2026):
+The sections (OPEN-QUESTIONS 141, the owner's answer of 2 November 2026):
 
 | Section | What it holds |
 |---|---|
-| Cover | Project, date, location, analysis start, IT load, options screened, engine version, inputs fingerprint, and the guardrail |
-| Summary | The plain-English summary of chapter 22 (built 24 October 2026), its detail, and your edited note marked "edited" when there is one (with a line when it was written for an earlier result). Site-fit flags are left out, and so is a note written with the Site tab (Beta) on |
-| 1. Inputs | Every input with its value and "Entered", "Entered (required)" or "Default" with its label and basis. Site geometry (Site tab) is left out |
-| 2. Assumptions | The defaults the run used, with basis and note; how many registry records are unverified |
-| 3. Results | Run summary and weights, the leader, the top five cards (figures, pros, cons, main flags), the top 20 |
-| 4. Trade-offs | LCOE against location-based carbon for every option; the top five numbered |
-| 5. Compare | The options ticked for comparison, their headline figures and the choices on which they differ |
-| 6. Dispatch | Energy balance of the top five in the last modelled year and in the first year with load (GWh) |
-| 7. Sensitivity | The last tornado run in the Sensitivity tab, with its chart and table, in the measure chosen there; the breakeven table (24 October 2026) and the Monte Carlo table (25 October 2026) when they were run for this run |
-| 8. Flags | Every flag on the top five (not the site-fit flags), and the run notes |
-| 9. Method | How the options are generated, dispatched, costed and ranked; run settings; the guardrail |
+| Front page | The project name; the question the report answers (or "Which energy strategy suits the N MW campus, what it costs and what decides it"); prepared for, prepared by and the date; the basis and status. **The answer**: the leading option, its LCOE, carbon, full-load date and capex, the gap the grid leaves, the cost against waiting for the grid and a close runner-up. Four headline figures: LCOE, capex, carbon and months late at full load. **What decides it**: the summary's parts (chapter 22). Your edited note, marked "edited" |
+| 1 · The question and what was modelled | The question, the campus, what the tool did, and a table of the key inputs with their basis (entered or tool default) |
+| 2 · Power need against grid supply | The gap in words; figure 1 (IT handed over on the programme, the facility load at design and the grid import by month, the gap shaded); when each phase could be energised if the programme waited for the grid |
+| 3 · The alternatives | Figure 2: the present value of net cost of each strategy's best option against waiting for the grid (or the leader when no option waits); a table with each one's plant, LCOE, carbon, full load, main issue and rank |
+| 4 · Does it make financial sense? | The leader's present value of net cost, capex and running costs; against waiting for the grid, the cost per MW-month of IT handed over on time; the leader's capex by line; each strategy's LCOE and NPV over each evaluation period |
+| 5 · Permitting, land and resilience | The leader's resilience and adequacy, its major and minor flags by subject, and the main issue of each other strategy. Land fit is not checked (Site tab, Beta) |
+| 6 · How robust is the answer? | What would change the answer and the confidence (from the summary); the tornado (figure 3 and its table), the breakevens and the Monte Carlo when they were run for this run |
+| 7 · Recommendations | A numbered list written by fixed rules from the run's figures (below) |
+| 8 · Limits of this report and what to do next | The guardrail, the defaults, the weather, the Site tab, what is not modelled or not run |
+| Appendix A · Inputs | Every input with its value and "Entered", "Entered (required)" or "Default" with its label and basis; the gas plants near the site; the technology choices generated |
+| Appendix B · Defaults used | The defaults the run used, with basis and note; how many registry records are unverified |
+| Appendix C · Ranked list | The top five cards (figures, pros, cons, main flags), the top 20, and LCOE against carbon for every option |
+| Appendix D · Compared options | The options ticked for comparison and the choices on which they differ |
+| Appendix E · Energy balance | The top five in the last modelled year and in the first year with load (GWh) |
+| Appendix F · Flags | Every flag on the top five (not the site-fit flags), and the run notes |
+| Appendix G · Summary and method | The summary as generated, its detail, and how the options are generated, dispatched, costed, ranked and recommended |
 
-Run the sensitivity test and tick options to compare **before** saving the PDF if you want those sections filled; otherwise they say they are empty. Each page carries the project name, the date and "Page n of N"; the reader's side panel lists the sections.
+**Report details.** Inputs section 1 has a folded box, **Report details (PDF only)**, with the question the report answers, "Prepared for" and "Prepared by". They are printed on the front page and saved with the study. They change no figure, so editing them never asks for a new run.
 
-![MOCK-UP of the PDF report contents (now built; the sections are listed above).](img/m09-pdf.png)
+**How the recommendations are written.** Each one follows from a rule on the run's figures (OPEN-QUESTIONS 143, Claude's defaults for the owner to confirm), and the report says so above the list:
+
+1. take #1 forward, or, when no option meets the power need in every hour, change the programme, the grid offer or the plant allowed;
+2. keep #2 open when it is within 3 points of the weighted score or 2 % of the LCOE;
+3. secure the bridging plant: its size, when it is needed and for how long, what happens to it after, and its permits;
+4. ask for more grid capacity or plan the permanent shortfall, or check the margin when the design load at full build takes 95 % of the grid import or more;
+5. clear the leader's major flags;
+6. replace the key inputs left at their default, those with the largest tornado swing first;
+7. watch the nearest breakevens;
+8. consider the Monte Carlo's robust pick when it is not #1;
+9. load measured weather when the run uses the synthetic year;
+10. run the tests not yet run.
+
+The tool cannot weigh what it does not know (the client's priorities, the site, the market, the permitting authority): treat the list as a starting point for your own judgement.
+
+Run the sensitivity test, the breakevens and the Monte Carlo, and tick options to compare, **before** saving the PDF if you want those sections filled; otherwise they say what was not run. Each page carries the project name, the date and "Page n of N"; the reader's side panel lists the sections.
+
+![MOCK-UP of the PDF report contents of 23 October 2026 (superseded by the layout above on 2 November 2026).](img/m09-pdf.png)
 
 # 30. General settings {#ch30}
 

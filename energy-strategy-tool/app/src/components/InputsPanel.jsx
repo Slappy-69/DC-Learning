@@ -7,7 +7,7 @@ import PlantsField from './PlantsField.jsx';
 
 const YM = '^\\d{4}-(0[1-9]|1[0-2])$';
 
-export default function InputsPanel({ inputs, update, setWeights, siteBeta = false }) {
+export default function InputsPanel({ inputs, update, setWeights, siteBeta = false, report = {}, onReport = null }) {
   const set = (path) => (val) => update(path, val);
   const norm = useMemo(() => normalizeInputs(inputs), [inputs]);
   const countryAuto = countryFromPin(inputs.project.lat, inputs.project.lon);
@@ -20,6 +20,15 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
     <div className="inputs">
       <Section title="1 · Project and location" defaultOpen>
         <TextField label="Project name" value={inputs.project.name} onCommit={set('project.name')} path="project.name" inputs={inputs} />
+        {onReport ? (
+          <details className="report-details">
+            <summary>Report details (PDF only)</summary>
+            <p className="small">Printed on the PDF report's front page; saved with the study. They change no figure, so editing them never asks for a new run.</p>
+            <TextField label="Question the report answers" value={report.question || ''} placeholder="e.g. Which options keep the programme through the grid delay?" onCommit={(v) => onReport({ ...report, question: v })} />
+            <TextField label="Prepared for" value={report.preparedFor || ''} placeholder="Client or reader" onCommit={(v) => onReport({ ...report, preparedFor: v })} />
+            <TextField label="Prepared by" value={report.preparedBy || ''} placeholder="Author or team" onCommit={(v) => onReport({ ...report, preparedBy: v })} />
+          </details>
+        ) : null}
         <MapPicker lat={inputs.project.lat} lon={inputs.project.lon} onPick={(la, lo) => { update('project.lat', la); update('project.lon', lo); }} />
         <div className="row2">
           <NumberField label="Latitude" unit="°" value={inputs.project.lat} onCommit={set('project.lat')} required min={-90} max={90} />

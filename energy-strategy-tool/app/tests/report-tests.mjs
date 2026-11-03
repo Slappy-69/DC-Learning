@@ -1,9 +1,10 @@
-// 30. Work package 10: the PDF report (AC 26; BRIEF §12.10; OPEN-QUESTIONS 32). One PDF, inputs first and results
-// after; no Site tab content; made offline (no dependency, no network); a valid PDF that a reader can open.
+// 30. Work package 10: the PDF report (AC 26; BRIEF §12.10; OPEN-QUESTIONS 32), rebuilt in work package 21 (owner
+// 2026-11-02; OPEN-QUESTIONS 141–146): the answer first, numbered sections, the inputs and tables in appendices; no Site
+// tab content; made offline (no dependency, no network); a valid PDF that a reader can open.
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildReport, inputRows, reportFileName, valueText, SITE_BETA_KEYS } from '../src/report/report.js';
+import { buildReport, inputRows, reportFileName, valueText, SITE_BETA_KEYS, REPORT_SECTIONS } from '../src/report/report.js';
 import { PdfDoc, pdfPageTexts, toWinAnsi, textWidth, wrap } from '../src/report/pdf.js';
 import { tornado, TORNADO_DRIVERS, DEFAULT_DRIVER_IDS } from '../src/engine/sensitivity.js';
 import { topCards } from '../src/engine/cards.js';
@@ -36,7 +37,7 @@ export function checkPdfStructure(bytes) {
 }
 
 export async function reportTests(test, ctxRuns) {
-  await test('30. PDF report (work package 10, AC 26; OPEN-QUESTIONS 32): one valid PDF, inputs first and results after (cover, inputs, assumptions, results, trade-offs, compare, dispatch, sensitivity, flags, method); every input listed as entered or default; the top five, the compared options and the tornado included; nothing from the Site tab; no network or dependency', async () => {
+  await test('30. PDF report (work package 10, AC 26; rebuilt in work package 21): one valid PDF, the answer first, sections 1–8 and appendices A–G in order; every input listed as entered or default; the top five, the compared options and the tornado included; nothing from the Site tab; no network or dependency', async () => {
     const out = [];
     const run = ctxRuns.runT1;
     // Writer basics.
@@ -54,15 +55,15 @@ export async function reportTests(test, ctxRuns) {
     const r = buildReport(run, { compareIds: cmp, sensitivity: sens, created, appVersion: 'test' });
     const ms = Date.now() - t0;
     const nObj = checkPdfStructure(r.bytes);
-    assert.deepEqual(r.sections, ['Summary', '1. Inputs', '2. Assumptions', '3. Results', '4. Trade-offs', '5. Compare', '6. Dispatch: energy balance', '7. Sensitivity', '8. Flags', '9. Method']);
+    assert.deepEqual(r.sections, REPORT_SECTIONS);
     const pages = pdfPageTexts(r.bytes);
     assert.equal(pages.length, r.pages);
     const all = pages.join('\n');
-    // Inputs first, results after: the page of each section heading increases.
+    // The answer first (page 1), then the sections and the appendices: the page of each section heading increases.
     const pageOf = (t) => pages.findIndex((p) => p.split('\n').includes(t));
     const order = r.sections.map(pageOf);
     for (let i = 0; i < order.length; i++) assert.ok(order[i] >= 1 && (i === 0 || order[i] >= order[i - 1]), `section ${r.sections[i]} out of order (${order.join(',')})`);
-    assert.ok(pages[0].includes('Energy strategy report') && pages[0].includes(toWinAnsi(run.inputs.project.name)), 'cover');
+    assert.ok(pages[0].includes('ENERGY STRATEGY SCREENING STUDY') && pages[0].includes(toWinAnsi(run.inputs.project.name)) && pages[0].includes('The answer.'), 'front page');
     assert.ok(all.includes('Concept-stage screening only'), 'guardrail');
     for (let i = 0; i < pages.length; i++) assert.ok(pages[i].includes(`Page ${i + 1} of ${pages.length}`), `page number on page ${i + 1}`);
     // Every input (outside the Site tab's geometry) is listed with entered or default.
@@ -91,7 +92,7 @@ export async function reportTests(test, ctxRuns) {
     assert.deepEqual(buildReport(run, { created }).bytes, r2.bytes);
     assert.match(reportFileName(run, created), /^energy-strategy-report-T1-reference-example-2026-10-23\.pdf$/);
     // Offline: the report code imports nothing outside the app (no npm dependency, no fetch).
-    for (const f of ['../src/report/pdf.js', '../src/report/report.js']) {
+    for (const f of ['../src/report/pdf.js', '../src/report/report.js', '../src/engine/recommend.js']) {
       const src = readFileSync(new URL(f, import.meta.url), 'utf8');
       assert.ok(!/\bfetch\(|XMLHttpRequest|https?:\/\//.test(src), `${f} reaches the network`);
       for (const m of src.matchAll(/from '([^']+)'/g)) assert.ok(m[1].startsWith('.'), `${f} imports ${m[1]}`);

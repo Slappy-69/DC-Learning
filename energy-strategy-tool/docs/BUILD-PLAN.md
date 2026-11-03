@@ -212,6 +212,15 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Acceptance tests:** Node test 51 (`app/tests/pue-tests.mjs`); tests 24, 32, 41, 44, 47a, 50, 25–27 and the run tests updated for the single PUE profile.
 - **Progress:** built 2026-11-02 on `feature/pue-inputs`. Not merged; not verified by Haiku (ask the owner first).
 
+### 21. The PDF report in the layout of the study report (added 2026-11-02)
+
+- **Why:** the owner, 2026-11-02, after the first study for a real project: "I want the app reports to look more like your reports", then "Everything really" to the list: answer-first front page, charts, short sections with the inputs at the back, recommendations. The PDF of work package 10 ran to 23 pages, mostly tables of inputs and defaults, with one chart.
+- **What:** `report/pdf.js` gains Times (body) beside Helvetica, "**bold**" runs in paragraphs, numbered lists, headline-figure tiles, a letter-spaced kicker, paths for charts, a rule-above section heading. `report/report.js` rebuilt: front page; sections 1–8 with figure 1 (IT handed over, facility load at design and grid import by month, the gap shaded), figure 2 (present value of net cost of each strategy's best option against waiting for the grid) and figure 3 (tornado); appendices A–G. `engine/recommend.js`: recommendations by fixed rules. Report details (question, prepared for, prepared by) in inputs section 1, kept in the study file (`notes.report`).
+- **Decisions:** OPEN-QUESTIONS 141–142 answered by the owner on 2026-11-02; 143–146 Claude's defaults, for the owner to confirm.
+- **User guide:** chapter 29 (the PDF report).
+- **Acceptance tests:** Node test 52 (`app/tests/report-design-tests.mjs`); test 30 and the summary test 43 updated for the new order.
+- **Progress:** built 2026-11-02 on `feature/report-redesign` (on top of `feature/pue-inputs`, so merging it brings work package 20 too). Not merged; not verified by Haiku.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:

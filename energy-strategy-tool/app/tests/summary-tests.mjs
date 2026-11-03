@@ -169,11 +169,15 @@ export async function summaryTests(test, ctxRuns) {
     const created = new Date('2026-10-24T12:00:00Z');
     const rep = buildReport(run, { created, summaryNote: note, sensitivity: tor });
     const pages = pdfPageTexts(rep.bytes);
-    assert.equal(rep.sections[0], 'Summary');
-    const sp = pages.findIndex((p) => p.split('\n').includes('Summary'));
-    assert.ok(sp === 1, `Summary on page ${sp + 1}`);
+    // Work package 21: the summary's parts are the front page's "What decides it" (page 1), the engineer's edit follows them
+    // as "Engineer's note (edited)", and the whole generated summary is in Appendix G.
+    assert.equal(rep.sections[0], '1 · The question and what was modelled');
+    const sp = pages.findIndex((p) => p.split('\n').includes('What decides it'));
+    assert.ok(sp === 0, `What decides it on page ${sp + 1}`);
+    assert.ok(pages[0].split('\n').includes(toWinAnsi("Engineer's note (edited)")), "the engineer's note is not on the front page");
+    assert.ok(pages.some((p) => p.split('\n').includes('Summary as generated')), 'the generated summary is not in Appendix G');
     const flat = pages.join(' ').replace(/\s+/g, ' ');
-    assert.ok(flat.includes(toWinAnsi('Summary as edited by the engineer (edited)')) && flat.includes('Our reading: the leader and #2 are close.'));
+    assert.ok(flat.includes('Our reading: the leader and #2 are close.'));
     assert.ok(flat.includes(toWinAnsi(st.parts[3].text.split('. ')[0])), 'summary text not in the PDF');
     assert.ok(!flat.includes('Written for an earlier result'), 'a note for this result flagged as earlier');
     const stale = buildReport(run, { created, summaryNote: { ...note, key: 'older' } });
@@ -184,7 +188,7 @@ export async function summaryTests(test, ctxRuns) {
     assert.ok(!pdfSite.includes('does not fit the site') && pdfSite.includes('written with the Site tab (Beta) on, so it is left out of this report'));
     assert.notEqual(summaryKey(run, { siteBeta: true }), summaryKey(run));
     assert.notEqual(summaryKey(run, { usedBreakevens: true }), summaryKey(run));
-    out.push(`edit kept in the study file and printed in the PDF (summary on page ${sp + 1}, "edited"; a note for an earlier result says so)`);
+    out.push(`edit kept in the study file and printed in the PDF (front page, "edited"; the generated summary in Appendix G; a note for an earlier result says so)`);
     return out.join('; ') + '.';
   });
 

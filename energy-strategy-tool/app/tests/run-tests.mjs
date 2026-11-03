@@ -93,6 +93,7 @@ import { weatherTmyTests } from './weathertmy-tests.mjs';
 import { monteCarloTests } from './montecarlo-tests.mjs';
 import { plantTests } from './plants-tests.mjs';
 import { pueTests } from './pue-tests.mjs';
+import { reportDesignTests } from './report-design-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1273,6 +1274,8 @@ await plantTests(test);
 
 // 51. Work package 20: PUE entered directly in place of the cooling types (tests/pue-tests.mjs)
 await pueTests(test, siteRuns);
+// 52. Work package 21: the report in the study layout (OPEN-QUESTIONS 141–146).
+await reportDesignTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

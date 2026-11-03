@@ -95,6 +95,9 @@ export default function App() {
   // study file, printed in the PDF), and whether the summary is shown on the Options tab.
   const [summaryNote, setSummaryNote] = useState(null);
   const [summaryShown, setSummaryShown] = useState(true);
+  // Report details (work package 21): the question the PDF answers, and who it is for and by. Kept with the study, not in
+  // the inputs, so editing them never makes the result out of date.
+  const [reportDetails, setReportDetails] = useState({});
   // Bumped when the breakevens or the Monte Carlo finish, so the header and the summary read the new result.
   const [, setExtras] = useState(0);
   const [focusChart, setFocusChart] = useState(false); // "Skip to trade-offs chart" request
@@ -182,7 +185,7 @@ export default function App() {
     if (!canSave) return;
     try {
       const hash = hashInputs(normalizeInputs(inputs));
-      const f = studyFile(inputs, compute.run && compute.run.inputHash === hash ? compute.run : null, { note: summaryNote });
+      const f = studyFile(inputs, compute.run && compute.run.inputHash === hash ? compute.run : null, { note: summaryNote, report: reportDetails });
       const done = () => setStudyMsg(`Study saved: ${f.name}${f.result ? `, with the result of the last run (leader ${f.result.leader.name})` : ' (inputs only: run it before saving to keep a record of the result)'}.`);
       const saving = saveFile(studyFileName(inputs), JSON.stringify(f, null, 1), 'application/json');
       if (__HOSTED__) { setStudyMsg('Saving the study: confirm the save to keep the file.'); saving.then(done, (e) => setStudyMsg(saveRefusal(e, 'Study'))); } else done();
@@ -215,6 +218,7 @@ export default function App() {
       }
       setInputs(ins);
       setSummaryNote(r.notes && r.notes.summary ? r.notes.summary : null);
+      setReportDetails(r.notes && r.notes.report ? r.notes.report : {});
       setOpenedStudy({ file: r.file, hash: hashInputs(normalizeInputs(ins)), betaNote });
       setStudyMsg(`Opened "${r.file.name}" (saved ${String(r.file.savedAt || '').slice(0, 10)}). ${r.warnings.join(' ')} ${betaNote} Running it…`.replace(/\s+/g, ' '));
     } catch (err) { setStudyMsg(`Could not open ${file.name}: ${err && err.message ? err.message : err}`); }
@@ -231,7 +235,7 @@ export default function App() {
     try {
       const sens = latestSensitivity(run);
       const created = new Date();
-      const r = buildReport(run, { compareIds, sensitivity: sens ? sens.result : null, sensitivityMeasure: sens ? sens.measure : null, created, summaryNote, breakevens: latestBreakevens(run), monteCarlo: latestMonteCarlo(run) });
+      const r = buildReport(run, { compareIds, sensitivity: sens ? sens.result : null, sensitivityMeasure: sens ? sens.measure : null, created, summaryNote, breakevens: latestBreakevens(run), monteCarlo: latestMonteCarlo(run), details: reportDetails });
       const saving = saveFile(reportFileName(run, created), r.bytes, 'application/pdf');
       if (__HOSTED__) {
         setPdfMsg(`PDF report made (${r.pages} pages): confirm the save to keep the file.`);
@@ -338,8 +342,8 @@ export default function App() {
         </div>
         <div className="topbar-actions">
           <button type="button" ref={panelToggle} className="chip-btn panel-toggle" aria-expanded={panelOpen} aria-controls="inputs-panel" onClick={() => setPanelOpen(!panelOpen)}>{panelOpen ? 'Close inputs' : 'Inputs'}</button>
-          <button type="button" className="chip-btn" onClick={() => { setInputs(referenceT1()); setSummaryNote(null); }}>Load T1 example</button>
-          <button type="button" className="chip-btn" onClick={() => { setInputs(buildDefaultInputs()); setSummaryNote(null); }}>Reset to defaults</button>
+          <button type="button" className="chip-btn" onClick={() => { setInputs(referenceT1()); setSummaryNote(null); setReportDetails({}); }}>Load T1 example</button>
+          <button type="button" className="chip-btn" onClick={() => { setInputs(buildDefaultInputs()); setSummaryNote(null); setReportDetails({}); }}>Reset to defaults</button>
           {canSave ? <button type="button" className="chip-btn" id="save-study" onClick={saveStudy}>Save study</button> : null}
           <button type="button" className="chip-btn" id="open-study" onClick={() => studyInput.current && studyInput.current.click()}>Open study…</button>
           <input ref={studyInput} id="open-study-file" type="file" accept=".json,application/json" hidden onChange={openStudy} aria-label="Study file to open" />
@@ -368,7 +372,7 @@ export default function App() {
             <span className="panel-head-title">Inputs</span>
             <button type="button" className="chip-btn" id="inputs-done" onClick={closePanel}>Done</button>
           </div>
-          <InputsPanel inputs={inputs} update={update} setWeights={setWeights} siteBeta={siteBeta} />
+          <InputsPanel inputs={inputs} update={update} setWeights={setWeights} siteBeta={siteBeta} report={reportDetails} onReport={setReportDetails} />
         </aside>
 
         <main id="results" className="main" tabIndex={-1}>

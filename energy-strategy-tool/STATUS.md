@@ -2,12 +2,13 @@
 
 Checkpoint, updated after every completed step so any session can resume from here. New sessions: read `../CLAUDE.md` first.
 
-**Last updated: 2026-11-02 (evening)**: work package 20 (PUE entered directly, in place of the cooling types) built on `feature/pue-inputs`, not merged. Earlier the same day: `STATUS.md` rewritten and shortened at the owner's request; known issue 35 logged; both merged into `main` from `feature/status-tidy` with the owner's yes ("Yes merge", 2026-11-02); the four old branches not in `main` copied to `archive/` branches; deleting the 33 old branches left to the owner on GitHub (see "Old branches").
+**Last updated: 2026-11-02 (late evening)**: work package 21 (the PDF report in the layout of the study report) built on `feature/report-redesign`, on top of work package 20 (`feature/pue-inputs`, PUE entered directly). Neither is merged. work package 20 (PUE entered directly, in place of the cooling types) built on `feature/pue-inputs`, not merged. Earlier the same day: `STATUS.md` rewritten and shortened at the owner's request; known issue 35 logged; both merged into `main` from `feature/status-tidy` with the owner's yes ("Yes merge", 2026-11-02); the four old branches not in `main` copied to `archive/` branches; deleting the 33 old branches left to the owner on GitHub (see "Old branches").
 
 ## Where things stand
 
 - **`main` holds everything built:** work packages 0 to 19 and 3b, the hourly weather work, the phone version and the Eemshaven study. Each was merged with the owner's yes (dates under "Work packages"). Nothing is built and waiting on another branch.
 - **Built, not merged:** work package 20 on `feature/pue-inputs` (owner, 2026-11-02: "ditch the cooling options and let the user set up PUE and max PUE"; OPEN-QUESTIONS 131–140). Checks on the branch: Node suite 92 of 92, browser checks 43 of 43 (2026-11-02). Merge only with the owner's yes. Not verified by Haiku yet.
+- **Built, not merged:** work package 21 on `feature/report-redesign`, branched from `feature/pue-inputs` (owner, 2026-11-02: "I want the app reports to look more like your reports … Everything really"; OPEN-QUESTIONS 141–146). Merging it brings work package 20 with it. Checks on the branch: Node suite 93 of 93 (2026-11-02); browser checks to re-run (the first run was cut off by a sandbox restart). Not verified by Haiku yet.
 - **GitHub checks (CI):** passed on `main` at 39442fb (run 41474468291, 2026-11-02: Node tests, build, installable web app tests and browser tests). The earlier runs on the merge (3b607e8) and the next note (991e85e) were cancelled, each by the next push.
 - **Windows program:** "Desktop builds" run 41474031494 (from `main` 991e85e, 2026-11-02) passed on Windows and Linux, with 2,926 NOAA stations bundled from "Weather data" run 41470033736. Download: GitHub → Actions → Desktop builds → that run → Artifacts → `desktop-win32-x64` (219 MB, kept until 2027-01-31). A duplicate run, 41474599019 (from 39442fb, which changed only records), also passed.
 - **Phone page:** version 8 (2026-10-30). It does not have the weather work or package 19. Republishing is dropped for now (owner, 2026-11-02).
@@ -63,6 +64,7 @@ All built and merged into `main` with the owner's yes. Details and acceptance te
 | 18 | Uncertainty by Monte Carlo | 2026-10-25 (check H6 fixes 2026-10-26) |
 | 19 | Existing gas plants near the site in the analysis: 608 plants bundled (powerplantmatching, CC BY 4.0), leased, bought for the units used or bought whole, grid connection takeover (C21), backup after a bought plant stops (C22); OPEN-QUESTIONS 116–130 | 2026-11-02 |
 | 20 | PUE entered directly: annual and maximum PUE in place of the four cooling types (C8 removed); hourly PUE follows the weather between them; backup and heat rejection at the maximum PUE; optional WUE; one white-space density; no CHP absorption credit | Built 2026-11-02, not merged |
+| 21 | PDF report in the layout of the study report: answer-first front page with four headline figures, sections 1–8 with three charts, recommendations by fixed rules, inputs and tables in appendices A–G; report details (question, prepared for and by) kept with the study | Built 2026-11-02, not merged |
 
 Also merged: the fixes from the Opus review of checks H4–H6 (known issues 22–27) and the hourly weather work (EPW upload; NOAA station years in the Windows program; OPEN-QUESTIONS 106–107, 114), both 2026-10-31; the phone version, 2026-10-31; the fixes from the weather review (known issues 28–32, OPEN-QUESTIONS 115) with the Eemshaven study, 2026-11-02.
 
@@ -111,6 +113,8 @@ Not scheduled (ask the owner first): `docs/BUILD-PLAN.md`, "Not scheduled".
 ## Open items
 
 - **Work package 20:** OPEN-QUESTIONS 140 (no ancillary load on top of the entered PUE, default 0) is Claude's default, for the owner to confirm. The user guide's T1 worked examples outside chapters 6 and 33 still show the cooling-type model (re-export the T1 run, README step 5), and figure 10 still shows the cooling selector. The phone page and the Windows program need rebuilding after a merge.
+- **Work package 21:** OPEN-QUESTIONS 142 (only the PDF advises; the on-screen summary keeps the no-advice rule) and 143–146 (the recommendation rules and thresholds, the waiting reference and cost per MW-month, report details kept with the study, fonts) are Claude's defaults, for the owner to confirm. The guide's figure of the PDF contents (`img/m09-pdf.png`) shows the layout of 23 October.
+- **Idea, waiting for the owner (2026-11-02):** bundle OpenStreetMap substations (110 kV and above) to list those near the pin and set a default off-site cable route. Asked whether to add it to the build plan as work package 22.
 - **Known issue 35:** a Windows build without weather stations fails launch check D5 instead of going on with a warning. Fix not decided.
 - **Packaging Opus review** not done (stopped 2026-10-19). Run one before further packaging work or a release.
 - **Windows program:** launch-tested only on its Linux copy, never automatically on Windows itself. Not code-signed.
