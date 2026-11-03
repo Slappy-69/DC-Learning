@@ -31,7 +31,7 @@ export async function topupTests(test, ctxRuns) {
         const p = o.sizing.prime;
         if (o.v.C4s === 'shortfall') {
           nTop++;
-          assert.ok(o.v.C1 === 'islanded' || perm.has(o.v.C8), `${label} ${o.id}: top-up without a permanent shortfall`);
+          assert.ok(o.v.C1 === 'islanded' || perm.has('pue'), `${label} ${o.id}: top-up without a permanent shortfall`);
           if (o.v.C1 === 'islanded') nIsl++;
           // (c) Sizing by hand.
           let S = 0;

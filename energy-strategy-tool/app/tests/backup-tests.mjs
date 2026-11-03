@@ -29,7 +29,7 @@ export async function backupTests(test, ctxRuns) {
     for (const o of run.options) {
       if (o.v.C5 === 'none' || o.v.C5 === 'retained') continue;
       const t = TECH[BACKUP[o.v.C5]];
-      const cp = ctx.cooling[o.v.C8];
+      const cp = ctx.cooling.pue;
       const critOf = (it) => req.backedPct * it * (1 + cp.coolPeak);
       const b = o.sizing.backup;
       if (o.v.C5a === 'perBuilding') {
@@ -67,7 +67,7 @@ export async function backupTests(test, ctxRuns) {
     inp.grid.nowMW = 0;
     const c2 = buildContext(normalizeInputs(inp));
     const base = run.options.find((o) => o.v.C1 === 'bridge') || run.options[0];
-    const v = { ...base.v, C1: 'bridge', C2: 'gasRecip', C3: 'backup', C4: 'none', C4s: 'n/a', C5: 'diesel', C5a: 'perBuilding', C6: 'N+1', C7: '48', C8: 'air' };
+    const v = { ...base.v, C1: 'bridge', C2: 'gasRecip', C3: 'backup', C4: 'none', C4s: 'n/a', C5: 'diesel', C5a: 'perBuilding', C6: 'N+1', C7: '48' };
     const s = sizeOption(c2, v);
     assert.ok(s.backup.coveredByRetired.length >= 1, 'no building backed up by the retired plant');
     const sPool = sizeOption(c2, { ...v, C5a: 'pooled' });

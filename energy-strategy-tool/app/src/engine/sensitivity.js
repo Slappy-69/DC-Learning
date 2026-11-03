@@ -80,7 +80,7 @@ export const TORNADO_DRIVERS = [
   ...[
     ['capex', 'Capex (every line)', 'economics.capexFactor', (inp, x) => { inp.economics.capexFactor = (inp.economics.capexFactor ?? 1) * x; }],
     ['capacity-factors', 'Capacity factors (on-site solar and wind)', 'utilities.reYieldFactor', (inp, x) => { inp.utilities.reYieldFactor = (inp.utilities.reYieldFactor ?? 1) * x; }],
-    ['pue', 'PUE (cooling energy)', 'load.coolingFactor', (inp, x) => { inp.load.coolingFactor = (inp.load.coolingFactor ?? 1) * x; }],
+    ['pue', 'PUE (overhead above 1)', 'load.coolingFactor', (inp, x) => { inp.load.coolingFactor = (inp.load.coolingFactor ?? 1) * x; }],
     ['bess-capex', 'Battery capex', 'economics.bessCapexFactor', (inp, x) => { inp.economics.bessCapexFactor = (inp.economics.bessCapexFactor ?? 1) * x; }],
     ['grid-capex', 'Grid connection capex', 'economics.gridCapexFactor', (inp, x) => { inp.economics.gridCapexFactor = (inp.economics.gridCapexFactor ?? 1) * x; }],
   ].map(([id, label, record, apply]) => ({ id, label, record, unit: '× current', range: () => { const r = rec(record); return [r.low, r.high]; }, apply, text: factorText })),

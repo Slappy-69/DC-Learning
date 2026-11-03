@@ -75,7 +75,7 @@ Flexibility is a design choice (C16, off by default). When on, it can shed up to
 
 ## Why cooling matters to the energy strategy
 
-Cooling is the largest load after IT. Its power depends strongly on the outdoor temperature, and its peak sets the design load. The cooling approach also changes the building size (how much IT fits on each square metre), the capital cost and the water use.
+Cooling is the largest load after IT. Its power depends strongly on the outdoor temperature, and its peak sets the design load. Since work package 20 (2 November 2026) the engineer enters the PUE directly; this chapter explains how the tool turns the two figures into an hourly load.
 
 ## Free cooling and mechanical cooling
 
@@ -87,33 +87,43 @@ A compressor's efficiency is its **coefficient of performance (COP)**: units of 
 
 **Dry-bulb temperature** is the ordinary air temperature. **Wet-bulb temperature** is the lowest temperature water can reach by evaporating into the air; it is lower than dry-bulb, and much lower in dry weather. Evaporative (adiabatic) systems cool by evaporating water, so their performance follows the wet-bulb temperature; the other approaches follow the dry-bulb temperature.
 
-## The four approaches in the tool
+## What the engineer enters
 
-| Approach | Driven by | Full free cooling below | IT density |
-|---|---|---|---|
-| Air (chilled water + free cooling) | dry-bulb | 10 °C | 1.5 kW/m² |
-| Evaporative-adiabatic | wet-bulb | 14 °C | 1.8 kW/m² |
-| Direct liquid cooling (DLC) + dry coolers | dry-bulb | 26 °C | 4.0 kW/m² |
-| Immersion | dry-bulb | 30 °C | 3.0 kW/m² |
+::: {.callout .built}
+**Built 2 November 2026: the PUE is entered directly (work package 20; owner, OPEN-QUESTIONS 131–140).** The four cooling types (air, evaporative-adiabatic, DLC with dry coolers, immersion) and the cooling choice C8 are gone. In section 3 the engineer enters two figures:
 
-Liquid cooling runs at much higher coolant temperatures, so it can reject heat with dry coolers on all but the hottest days, and packs more IT into each square metre of data hall ("whitespace"). It costs more to build: the tool adds €150/kW of IT for DLC and €250/kW for immersion compared with air, and subtracts €40/kW for evaporative.
+- **Annual PUE**: facility energy ÷ IT energy over the year. Default 1.3 (judgement). It covers every facility load: cooling, electrical losses, offices and lighting.
+- **Maximum PUE**: the PUE on the design day with all IT installed. Default 1.5 (judgement). It sets the design facility load, the critical load for backup and the heat rejected.
 
-## The cooling model in one picture
+Whatever weather the run uses (the synthetic year, an EPW file or a NOAA station), the year averages the annual PUE and the design hour reaches the maximum. The reason, from a real study: a cooling type tuned to give a client's PUE on one weather year gave a different peak PUE on another, and with no grid margin that changed the answer.
+:::
 
-The tool works out the cooling power for every hour from that hour's temperature. Below the free-cooling threshold only fans run; across a band (10 K wide, 6 K for evaporative) the compressor share rises in a straight line; above the band the compressors carry the full load, with a COP that falls as the temperature rises. Electrical losses (6–7 % of IT) are added on top. The result is a PUE for each hour:
+## How the hourly PUE follows the weather
 
-![Hourly PUE against outdoor temperature for the four cooling approaches, with the United Kingdom synthetic temperature profile in grey and the design-day temperature marked. Liquid cooling stays on free cooling for almost every hour of the year.](img/d04-pue.png)
+The tool spreads the PUE over the 8,760 hours of the year with the shape of an air-cooled plant. In each hour it works out s(h), the cooling power per MW of IT that air cooling would draw at that hour's dry-bulb temperature: fans only below 10 °C (0.07 MW per MW of IT), then compressors coming in across a 10 K band, with a COP of 5.0 at 25 °C that falls by 0.12 for each degree above. The hourly PUE is then
 
-For the T1 site (United Kingdom profile, hottest hour 26.4 °C dry-bulb, 19.9 °C wet-bulb), this gives:
+**PUE(h) = 1 + a + b × s(h)**
 
-| Approach | Annual PUE | Design-day PUE |
-|---|---|---|
-| Air | 1.180 | 1.347 |
-| Evaporative | 1.123 | 1.270 |
-| DLC | 1.105 | 1.111 |
-| Immersion | 1.090 | 1.090 |
+where the two constants are set so that the year's average is the annual PUE and the value at the design temperature is the maximum PUE. Only the shape of the air-cooled curve is used; its own levels are not.
 
-These are design values for a new build, at the low end of published fleet averages (chapter 5). Notice how much the peak matters: an air-cooled 100 MW campus has a design load of 100 × (1.347 + 0.02) = **136.7 MW**, which is more than the T1 grid offer of 120 MW. That one fact explains much of the T1 ranking (chapter 47).
+For the T1 site (United Kingdom synthetic year, design temperature 26.4 °C) at the defaults, a = 0.169 and b = 1.196. The PUE is 1.253 in every free-cooling hour, rises through the warm hours and reaches 1.5 at 26.4 °C; the year averages exactly 1.3. A site with almost no seasonal swing, for example heavy direct liquid cooling, simply enters two figures close together; with both equal the PUE is flat.
+
+Two edge cases are flagged on the run:
+
+- **Maximum far above the annual.** If a + b × s(h) would fall below 0 in the coldest hours, those hours are held at PUE 1.0. The year's average then comes out above the annual figure, and the run flag gives both.
+- **Maximum below the annual.** The PUE is held flat at the annual figure, and the design load uses it too.
+
+The tornado and Monte Carlo driver "PUE" scales the overhead above 1 of both figures together, by 0.8 to 1.2.
+
+## What follows from the maximum PUE
+
+- **Design facility load** = installed IT × maximum PUE, plus any load outside the PUE (section 3, default 0). For T1: 100 MW × 1.5 = **150 MW**, against a grid offer of 120 MW.
+- **Critical load for backup** = backed share × IT × maximum PUE, the whole facility at design (chapter 7).
+- **Heat rejected** = IT × maximum PUE, which sizes the heat-rejection area (choice C9).
+
+## What the cooling types used to do
+
+Before 2 November 2026 the tool modelled four cooling types, each with its own temperature basis, IT density, capex difference against air and water use, and compared them as choice C8. Since work package 20 there is no capex difference between cooling types (the cooling plant is the same in every option, so it does not change the comparison), one white-space density serves every building (default 1.5 kW/m², the former air value), and a CHP plant earns no absorption-chiller credit, because the split of the PUE between cooling and other loads is not known; CHP options carry a flag saying so.
 
 ## Design temperature
 
@@ -131,13 +141,7 @@ An example: the EnergyPlus sample file for Golden, Colorado gives n = 20: 38.3 �
 
 ## Water
 
-**Water Usage Effectiveness (WUE)** is litres of water per kWh of IT energy. The tool uses a base WUE for each approach (0.05 L/kWh for air, 0.3 for evaporative, 0.02 for DLC and immersion), plus, for evaporative cooling, 1.8 L/kWh during the hours when the adiabatic stage runs. It flags an option if daily water use exceeds the water available (when that input is known).
-
-## What the engineer chooses
-
-::: {.callout .agreed}
-**Agreed, not built yet.** The cooling type is always chosen by the engineer. The tool offers a typical PUE and maximum demand for each type, which the engineer can edit. Today the cooling approach is either fixed by the "Cooling approach" input or left as an open choice (C8), in which case all four are generated and compared.
-:::
+**Water Usage Effectiveness (WUE)** is litres of water per kWh of IT energy. Since work package 20 it is an optional input in section 3: left blank, water use is not reported; entered, the tool reports the year's water (WUE × IT energy) and flags an option if daily use exceeds the water available (when that input is known).
 
 # 7. Resilience: backup power and redundancy {#ch7}
 

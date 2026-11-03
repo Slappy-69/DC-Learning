@@ -32,7 +32,8 @@ export const KEY_INPUTS = [
   ['load.utilisation', 'Average IT utilisation', () => true],
   ['load.rampStart', 'Ramp: share at energisation', () => true],
   ['load.shape', 'Load shape', () => true],
-  ['load.coolingApproach', 'Cooling type', () => true], // OPEN-QUESTIONS 28: not chosen = all four compared
+  ['load.pueAnnual', 'Annual PUE', () => true], // work package 20: entered in place of the cooling type
+  ['load.pueMax', 'Maximum PUE', () => true],
   ['grid.priceAdder', 'Grid non-commodity adder', gridConnected],
   ['economics.elecEscalation', 'Electricity price escalation', gridConnected],
   ['utilities.gasAvailable', 'Gas availability', burnsGas],
@@ -93,8 +94,7 @@ export function assumedBase(ctx) {
         const tr = reg[`existing.types.${ty}.${k}`];
         text = tr ? `${valueText(path, tr.value, tr, inputs)}, the ${ty.toUpperCase()} default (${tr.basis}, ${tr.label})` : `by type (${ty}), not entered (judgement, ${LABEL})`;
       }
-    } else if (path === 'load.coolingApproach') { if (cur === 'open') text = 'not chosen, so all four types are compared in this run (OPEN-QUESTIONS 28; judgement, indicative — unverified)'; }
-    else if (r && !RESOLVED.includes(path)) {
+    } else if (r && !RESOLVED.includes(path)) {
       if (r.derived && typeof r.value === 'string' && r.value.startsWith('by ')) {
         if (cur == null || cur === r.value) text = `${cname} default (${r.basis}, ${r.label})`;
       } else if (same(cur, r.value)) {

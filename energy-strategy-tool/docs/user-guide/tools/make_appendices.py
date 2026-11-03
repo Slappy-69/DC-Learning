@@ -51,9 +51,10 @@ GROUP_TITLES = collections.OrderedDict([
     ("project", "Project"), ("country", "Country data (values in Appendix B)"), ("profiles", "Country profiles"), ("site", "Site"), ("load", "Load and building"),
     ("grid", "Grid"), ("utilities", "Utilities"), ("existing", "Existing plant near the site (lease)"), ("requirements", "Requirements"), ("economics", "Economics"),
     ("weights", "Weights"), ("deliverability", "Deliverability"), ("settings", "Run settings"), ("choices", "Choice default states"),
-    ("fuel", "Fuels and emission factors"), ("ppa", "PPA prices"), ("cooling", "Cooling approaches"), ("tech", "Technology library"),
+    ("fuel", "Fuels and emission factors"), ("ppa", "PPA prices"), ("cooling", "Shape of the hourly PUE (air-cooled curve; work package 20)"), ("tech", "Technology library"),
     ("spatial", "Spatial library (site layout)"), ("view", "View settings"), ("sensitivity", "Sensitivity (tornado)"),
     ("uncertainty", "Uncertainty (Monte Carlo)"), ("permitting", "Permitting"),
+    ("plants", "Existing gas plants from the bundled list (work package 19)"), ("weather", "Measured weather"),
 ])
 TECH_NAMES = {
     "solarGround": "Solar PV ground-mount", "solarRoof": "Solar PV rooftop", "solarCarport": "Solar PV carport", "wind": "Wind onshore",

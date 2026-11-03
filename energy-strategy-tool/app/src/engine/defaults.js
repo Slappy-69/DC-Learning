@@ -167,7 +167,7 @@ export const CHOICES = [
   { id: 'C5a', name: 'Backup arrangement', values: [['perBuilding', 'Per building'], ['pooled', 'Pooled across the campus']] },
   { id: 'C6', name: 'Backup topology', values: [['N', 'N'], ['N+1', 'N+1'], ['2N', '2N'], ['catcher', 'Distributed-redundant (catcher)']] },
   { id: 'C7', name: 'Autonomy / fuel storage', values: [['12', '12 h'], ['24', '24 h'], ['48', '48 h'], ['72', '72 h']] },
-  { id: 'C8', name: 'Cooling approach', values: [['air', 'Air (CHW + free cooling)'], ['evap', 'Evaporative-adiabatic'], ['dlc', 'DLC + dry coolers'], ['immersion', 'Immersion']] },
+  // C8 (cooling approach) removed in work package 20 (owner 2026-11-02, OPEN-QUESTIONS 131): the engineer enters the PUE.
   { id: 'C9', name: 'Heat rejection location', values: [['roof', 'Roof'], ['ground', 'Ground'], ['split', 'Split']] },
   { id: 'C10', name: 'On-site solar', values: [
     ['none', 'None'], ['roof', 'Roof only'], ['roofGround', 'Roof + ground']] },
@@ -204,7 +204,7 @@ export function choiceLabel(id, value) {
   return plantLabel(value) || value;
 }
 
-// Choice default states (§8 table). Some depend on other inputs (C6, C7, C8, C11, C15).
+// Choice default states (§8 table). Some depend on other inputs (C6, C7, C11, C15).
 export function defaultChoiceState(id, inputs) {
   switch (id) {
     case 'C1': return { state: 'open', values: ['wait', 'bridge', 'islanded'] };
@@ -220,10 +220,6 @@ export function defaultChoiceState(id, inputs) {
     case 'C5a': return { state: 'open', values: ['perBuilding', 'pooled'] };
     case 'C6': return { state: 'locked', values: [inputs ? inputs.requirements.topology : 'N+1'] };
     case 'C7': return { state: 'locked', values: [inputs ? String(inputs.requirements.autonomyH) : '48'] };
-    case 'C8': {
-      const ca = inputs ? inputs.load.coolingApproach : 'open';
-      return ca === 'open' ? { state: 'open', values: ['air', 'evap', 'dlc', 'immersion'] } : { state: 'locked', values: [ca] };
-    }
     case 'C9': return { state: 'open', values: ['roof', 'ground', 'split'] };
     case 'C10': {
       // OPEN-QUESTIONS 54 (2026-10-22): "Roof + ground" only when the engineer has entered a ground area for PV.
@@ -256,7 +252,7 @@ export function defaultChoiceState(id, inputs) {
 for (const c of CHOICES) {
   const d = defaultChoiceState(c.id, null);
   rec(`choices.${c.id}`, d, 'choice state', {
-    basis: 'judgement', ref: '§8', derived: ['C6', 'C7', 'C8', 'C10', 'C11', 'C15'].includes(c.id),
+    basis: 'judgement', ref: '§8', derived: ['C6', 'C7', 'C10', 'C11', 'C15'].includes(c.id),
     note: c.id === 'C11' ? 'Default "None" when site area ≤ 20 ha and no off-site land; otherwise open.' :
       c.id === 'C10' ? 'Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).' :
       c.id === 'C12r' ? 'Default role "peak-shave against grid cap" (§8 C12).' :
@@ -786,19 +782,17 @@ export const FUEL = {
   efHydrogen: rec('fuel.efHydrogen', 0, 'tCO2e/MWh_th', { low: 0, high: 0, ref: '§9.6', note: 'Scope 1 only; upstream production emissions not counted.' }),
 };
 
-export const COOLING = {};
-function cooling(id, name, params) {
-  COOLING[id] = { id, name, p: {} };
-  for (const [k, v] of Object.entries(params)) {
-    const [value, unit, low, high] = v;
-    COOLING[id].p[k] = rec(`cooling.${id}.${k}`, value, unit, { low, high, verify: 'ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies', ref: '§9.3', dist: typeof value === 'number' ? 'triangular' : 'fixed' });
-  }
+// Hourly PUE (work package 20, owner 2026-11-02, OPEN-QUESTIONS 131-139): the engineer enters the annual and the maximum
+// (design-day) PUE, and the four cooling types are gone. The hour-by-hour shape between the two comes from the air-cooled
+// curve below (free cooling below a dry-bulb threshold, then mechanical cooling whose COP falls with temperature), scaled
+// so that the weather year averages the annual PUE and the design hour is the maximum (engine/profiles.js, pueProfile).
+// The records keep their names (cooling.air.*) so earlier notes and the user guide still point at them.
+export const COOLING_ID = 'pue';
+export const PUE_SHAPE = { id: 'air', name: 'Air-cooled curve (shape of the hourly PUE)', p: {} };
+for (const [k, v] of Object.entries({ tempBasis: ['drybulb', ''], fcThreshold: [10, '°C', 8, 14], band: [10, 'K', 6, 12], copRef: [5.0, 'COP at tRef', 4, 6], tRef: [25, '°C', 25, 25], copSlope: [0.12, 'COP per K', 0.08, 0.16], fanFrac: [0.07, 'MW per MW IT', 0.05, 0.09] })) {
+  const [value, unit, low, high] = v;
+  PUE_SHAPE.p[k] = rec(`cooling.air.${k}`, value, unit, { low, high, verify: 'ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies', ref: '§9.3', dist: typeof value === 'number' ? 'triangular' : 'fixed', note: 'Shape of the hourly PUE only (work package 20): its levels come from the entered annual and maximum PUE.' });
 }
-// basis: which temperature drives free cooling; fcThreshold: full free cooling below this; band: partial band width
-cooling('air', 'Air (CHW + free cooling)', { tempBasis: ['drybulb', ''], fcThreshold: [10, '°C', 8, 14], band: [10, 'K', 6, 12], copRef: [5.0, 'COP at tRef', 4, 6], tRef: [25, '°C', 25, 25], copSlope: [0.12, 'COP per K', 0.08, 0.16], fanFrac: [0.07, 'MW per MW IT', 0.05, 0.09], lossFrac: [0.07, 'MW per MW IT', 0.05, 0.09], densityKWm2: [1.5, 'kW IT/m² whitespace', 1.2, 2.0], wueBase: [0.05, 'L/kWh IT', 0, 0.2], capexDeltaPerKW: [0, '€/kW IT vs air', 0, 0] });
-cooling('evap', 'Evaporative-adiabatic', { tempBasis: ['wetbulb', ''], fcThreshold: [14, '°C wet-bulb', 12, 17], band: [6, 'K', 4, 8], copRef: [6.5, 'COP at tRef', 5, 8], tRef: [20, '°C wet-bulb', 20, 20], copSlope: [0.15, 'COP per K', 0.1, 0.2], fanFrac: [0.05, 'MW per MW IT', 0.04, 0.07], lossFrac: [0.07, 'MW per MW IT', 0.05, 0.09], densityKWm2: [1.8, 'kW IT/m² whitespace', 1.4, 2.2], wueBase: [0.3, 'L/kWh IT', 0.1, 0.5], wueEvap: [1.8, 'L/kWh IT in adiabatic hours', 1.2, 2.5], capexDeltaPerKW: [-40, '€/kW IT vs air', -80, 0] });
-cooling('dlc', 'DLC + dry coolers', { tempBasis: ['drybulb', ''], fcThreshold: [26, '°C', 22, 30], band: [10, 'K', 6, 12], copRef: [5.5, 'COP at tRef', 4.5, 6.5], tRef: [35, '°C', 35, 35], copSlope: [0.1, 'COP per K', 0.06, 0.14], fanFrac: [0.045, 'MW per MW IT', 0.03, 0.06], lossFrac: [0.06, 'MW per MW IT', 0.05, 0.08], densityKWm2: [4.0, 'kW IT/m² whitespace', 3.0, 6.0], wueBase: [0.02, 'L/kWh IT', 0, 0.1], capexDeltaPerKW: [150, '€/kW IT vs air', 80, 250] });
-cooling('immersion', 'Immersion', { tempBasis: ['drybulb', ''], fcThreshold: [30, '°C', 26, 34], band: [10, 'K', 6, 12], copRef: [5.5, 'COP at tRef', 4.5, 6.5], tRef: [38, '°C', 38, 38], copSlope: [0.1, 'COP per K', 0.06, 0.14], fanFrac: [0.03, 'MW per MW IT', 0.02, 0.05], lossFrac: [0.06, 'MW per MW IT', 0.05, 0.08], densityKWm2: [3.0, 'kW IT/m² whitespace', 2.0, 4.5], wueBase: [0.02, 'L/kWh IT', 0, 0.1], capexDeltaPerKW: [250, '€/kW IT vs air', 150, 400] });
 
 // Batch 2 source records (work package 0, 2026-10-23).
 const SOURCED_TECH = {
@@ -947,7 +941,7 @@ export function buildDefaultInputs(opts = {}) {
     load: {
       // Work package 2 (knowledge levels; OPEN-QUESTIONS 26 answered 2026-10-23 with Claude's recommendation, accepted
       // in advance by the owner): blank = estimated from the site area with the building massing rule inverted.
-      itMW: rec('load.itMW', null, 'MW IT at full build (blank = estimated from the site area)', { basis: 'judgement', derived: true, ref: '§5.3', note: 'Blank: site area × building coverage × storeys ÷ gross-up × whitespace density of the cooling type (air when the cooling is an open choice), the same rule the building massing uses (OPEN-QUESTIONS 26).' }),
+      itMW: rec('load.itMW', null, 'MW IT at full build (blank = estimated from the site area)', { basis: 'judgement', derived: true, ref: '§5.3', note: 'Blank: site area × building coverage × storeys ÷ gross-up × whitespace density (load.densityKWm2), the same rule the building massing uses (OPEN-QUESTIONS 26).' }),
       estimateCoverage: rec('load.estimateCoverage', 0.35, 'fraction of the site area covered by data halls', { low: 0.2, high: 0.5, basis: 'judgement', ref: '§5.3', note: 'Walkthrough 2026-10-21: 35 % site coverage for the IT estimate from area. To research.' }),
       phases: null, // set below
       rampStart: rec('load.rampStart', 0.25, 'fraction of phase IT at energisation', { low: 0.1, high: 0.5, basis: 'judgement', ref: '§5.3', note: "The owner's judgement (2026-10-22, OPEN-QUESTIONS 51; was 50 %). No source; replace with the client's fit-out programme." }),
@@ -966,13 +960,17 @@ export function buildDefaultInputs(opts = {}) {
       aiInfTrough: rec('load.aiInfTrough', 0.6, 'night trough as a fraction of the daily peak', { low: 0.2, high: 1, basis: 'judgement', ref: '§5.3', note: 'No source; to research.' }),
       aiInfPeakHour: rec('load.aiInfPeakHour', 15, 'hour of the daily peak (local)', { low: 0, high: 23, basis: 'judgement', ref: '§5.3', note: 'No source; to research.' }),
       aiInfWeekend: rec('load.aiInfWeekend', 0.9, 'weekend level as a fraction of weekdays', { low: 0.5, high: 1.1, basis: 'judgement', ref: '§5.3', note: 'No source; to research.' }),
-      coolingApproach: rec('load.coolingApproach', 'open', '', { basis: 'judgement', note: 'Open choice (C8)', ref: '§5.3' }),
+      // PUE entered directly (work package 20, owner 2026-11-02, OPEN-QUESTIONS 131-139), in place of the cooling types.
+      pueAnnual: rec('load.pueAnnual', 1.3, 'annual PUE (facility energy ÷ IT energy over the year)', { low: 1.1, high: 1.6, basis: 'judgement', ref: '§5.3, §9.3', note: 'Owner 2026-11-02 (OPEN-QUESTIONS 131, 132): entered by the engineer; default 1.3 is judgement, no source. Covers every facility load: cooling, electrical losses and offices.' }),
+      pueMax: rec('load.pueMax', 1.5, 'maximum PUE (design day, 100 % IT)', { low: 1.2, high: 2.0, basis: 'judgement', ref: '§5.3, §9.3', note: 'Owner 2026-11-02 (OPEN-QUESTIONS 131, 132): entered by the engineer; default 1.5 is judgement, no source. Sets the design facility load, the critical load for backup and the heat rejected.' }),
+      densityKWm2: rec('load.densityKWm2', 1.5, 'kW of IT per m² of white space', { low: 1.0, high: 6.0, basis: 'judgement', ref: '§5.3', note: "Owner 2026-11-02 (OPEN-QUESTIONS 135): one density in place of the cooling types' own; 1.5 was the air-cooled value. Used for the IT estimate from the site area and for each building's white space." }),
+      wue: rec('load.wue', null, 'litres of water per kWh of IT (blank = water not reported)', { low: 0, high: 2.5, basis: 'judgement', ref: '§5.3', note: 'Owner 2026-11-02 (OPEN-QUESTIONS 134): optional; blank leaves water use out of the results.' }),
       grossUp: rec('load.grossUp', 2.2, 'GFA / whitespace', { low: 1.8, high: 2.6, basis: 'judgement', ref: '§5.3' }),
       storeys: rec('load.storeys', 2, 'storeys', { low: 1, high: 6, basis: 'judgement', ref: '§5.3' }),
       storeyHeightM: rec('load.storeyHeightM', 6.0, 'm', { low: 5, high: 7, basis: 'judgement', ref: '§5.3' }),
       roofZoneM: rec('load.roofZoneM', 4.0, 'm', { low: 3, high: 6, basis: 'judgement', ref: '§5.3' }),
-      coolingFactor: rec('load.coolingFactor', 1, '× cooling energy (PUE above 1)', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "PUE": scales fans and mechanical cooling. No source.' }),
-      ancillaryFrac: rec('load.ancillaryFrac', 0.02, 'fraction of installed IT', { low: 0.01, high: 0.04, basis: 'judgement', ref: '§5.3' }),
+      coolingFactor: rec('load.coolingFactor', 1, '× PUE overhead (PUE above 1)', { low: 0.8, high: 1.2, basis: 'judgement', ref: '§13.3', note: 'Tornado and Monte Carlo driver "PUE": scales the overhead above 1 of the annual and the maximum PUE together (work package 20, OPEN-QUESTIONS 139). No source.' }),
+      ancillaryFrac: rec('load.ancillaryFrac', 0, 'fraction of installed IT', { low: 0, high: 0.04, basis: 'judgement', ref: '§5.3', note: 'Loads outside the PUE only. Since work package 20 the entered PUE covers every facility load, so the default is 0 (was 2 % on top of the cooling-type PUE; OPEN-QUESTIONS 140, to confirm).' }),
       flexMaxPct: rec('load.flexMaxPct', 0.1, 'fraction of IT curtailable', { low: 0, high: 0.3, basis: 'judgement', ref: '§5.3' }),
       flexHours: rec('load.flexHours', 100, 'h/yr', { low: 0, high: 500, basis: 'judgement', ref: '§5.3' }),
       // Flexibility with triggers (walkthrough 2026-10-21; OPEN-QUESTIONS 34, 61): mock-up values, judgement, to research.
@@ -1165,7 +1163,7 @@ export function buildDefaultInputs(opts = {}) {
     design04DB: null, design04WB: null, readingIntervalH: null, humidityAssumedHours: null, notes: null,
   };
   inputs.load.phases = rec('load.phases', null, 'list of {itMW, date}', { basis: 'judgement', derived: true, ref: '§5.3', note: 'null = 1 phase, 100 % of IT at the grid full-connection date' });
-  // Choice states: null = default state (§8 table), which may follow other inputs (C6, C7, C8, C11, C15).
+  // Choice states: null = default state (§8 table), which may follow other inputs (C6, C7, C11, C15).
   inputs.choices = {};
   for (const c of CHOICES) inputs.choices[c.id] = null;
   return inputs;
@@ -1213,12 +1211,11 @@ export function resolveUnknowns(out) {
       L.itMW = sumPh;
       A['load.itMW'] = `the sum of the phases entered, ${round1(sumPh)} MW`;
     } else {
-      const cool = COOLING[L.coolingApproach] ? L.coolingApproach : 'air';
-      const dens = COOLING[cool].p.densityKWm2;
+      const dens = Number(L.densityKWm2) > 0 ? Number(L.densityKWm2) : 1.5;
       const cov = L.estimateCoverage ?? 0.35, storeys = L.storeys || 1, gu = L.grossUp || 1;
       const mw = Math.max(1, (areaHa * 10000 * cov * storeys / gu) * dens / 1000);
       L.itMW = Math.round(mw * 10) / 10;
-      A['load.itMW'] = `estimated from the site area: ${round1(areaHa)} ha × ${Math.round(cov * 100)} % coverage × ${storeys} storey${storeys === 1 ? '' : 's'} ÷ gross-up ${gu} × ${dens} kW/m² (${COOLING[cool].name}${L.coolingApproach === cool ? '' : ', cooling open'}) = ${L.itMW} MW`;
+      A['load.itMW'] = `estimated from the site area: ${round1(areaHa)} ha × ${Math.round(cov * 100)} % coverage × ${storeys} storey${storeys === 1 ? '' : 's'} ÷ gross-up ${gu} × ${dens} kW/m² = ${L.itMW} MW`;
     }
   }
   const start = out.project.analysisStart;

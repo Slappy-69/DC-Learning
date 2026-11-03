@@ -167,7 +167,7 @@ export default function OptionDetail({ o, start, onClose, dominator = null, onSh
               <tr><th scope="row">Market-based</th><td className="num">{sig(o.carbon.marketG)} gCO₂e/kWh</td></tr>
               <tr><th scope="row">Hourly CFE</th><td className="num">{pct(o.carbon.cfePct)}</td></tr>
               <tr><th scope="row">Scope 1 / Scope 2 (loc.) per yr</th><td className="num">{sig(o.carbon.scope1Annual)} / {sig(o.carbon.scope2LocAnnual)} tCO₂e</td></tr>
-              <tr><th scope="row">WUE</th><td className="num">{sig(o.carbon.wue, 2)} L/kWh</td></tr>
+              <tr><th scope="row">WUE</th><td className="num">{o.carbon.wue == null ? 'not reported (no WUE entered)' : `${sig(o.carbon.wue, 2)} L/kWh`}</td></tr>
             </tbody>
           </table>
           <h4>Steady-state year energy (MWh)</h4>

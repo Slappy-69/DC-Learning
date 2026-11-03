@@ -19,7 +19,7 @@ const EEM = { lat: 53.425, lon: 6.875 };
 export function eemSmall({ cap = 400, auto = true, edits = {} } = {}) {
   const inp = buildDefaultInputs({ analysisStart: '2027-01' });
   Object.assign(inp.project, { lat: EEM.lat, lon: EEM.lon, country: 'NL' });
-  inp.site.areaHa = 20; inp.load.itMW = 100; inp.load.coolingApproach = 'evap';
+  inp.site.areaHa = 20; inp.load.itMW = 100; inp.load.pueAnnual = 1.15; inp.load.pueMax = 1.27; // was evaporative cooling (work package 20)
   inp.load.phases = [{ itMW: 50, date: '2029-01' }, { itMW: 50, date: '2030-01' }];
   Object.assign(inp.grid, { nowMW: 0, fullMW: 130, fullDate: '2033-01' });
   inp.utilities.gasAvailable = 'Yes'; inp.utilities.gasDateMonths = 0;
@@ -164,7 +164,7 @@ export async function plantTests(test) {
     const ctx = buildContext(I);
     const c = plantCandidates(I).plants;
     const eem = c.find((p) => Math.round(p.mw) === 3210), old = c.find((p) => Math.round(p.mw) === 1410);
-    const base = { C1: 'bridge', C3: 'remove', C4: 'none', C4s: NA, C5: 'hvo', C5a: 'perBuilding', C6: 'N+1', C7: '48', C8: 'evap', C9: 'roof', C10: 'none', C11: 'none', C12: 'none', C12r: NA, C13: 'none', C14: NA, C15: 'none', C16: 'off', C17: 'AIS', C18: 'single', C19: 'perPhase', C20: 'none', C21: 'none' };
+    const base = { C1: 'bridge', C3: 'remove', C4: 'none', C4s: NA, C5: 'hvo', C5a: 'perBuilding', C6: 'N+1', C7: '48', C9: 'roof', C10: 'none', C11: 'none', C12: 'none', C12r: NA, C13: 'none', C14: NA, C15: 'none', C16: 'off', C17: 'AIS', C18: 'single', C19: 'perPhase', C20: 'none', C21: 'none' };
     const out = [];
     // Bought as bridging, kept as prime.
     const vb = canonical({ ...base, C2: eem.values.buy, C3: 'prime' });
@@ -256,7 +256,7 @@ export async function plantTests(test) {
 
   await test('50f. Fixes from the Opus review of package 19: a plant that stops after the dispatch cap is dispatched past its end; a bought plant kept as the backup is checked against the topology and fails once it stops; a leased plant kept as prime is not backup; a takeover does not move the campus connection capex; the Dispatch tab shows the option grid; the takeover lag is editable per plant; an old study file names the plants it gains', () => {
     const out = [];
-    const base = { C1: 'bridge', C3: 'remove', C4: 'none', C4s: NA, C5: 'hvo', C5a: 'perBuilding', C6: 'N+1', C7: '48', C8: 'evap', C9: 'roof', C10: 'none', C11: 'none', C12: 'none', C12r: NA, C13: 'none', C14: NA, C15: 'none', C16: 'off', C17: 'AIS', C18: 'single', C19: 'perPhase', C20: 'none', C21: 'none', C22: 'none' };
+    const base = { C1: 'bridge', C3: 'remove', C4: 'none', C4s: NA, C5: 'hvo', C5a: 'perBuilding', C6: 'N+1', C7: '48', C9: 'roof', C10: 'none', C11: 'none', C12: 'none', C12r: NA, C13: 'none', C14: NA, C15: 'none', C16: 'off', C17: 'AIS', C18: 'single', C19: 'perPhase', C20: 'none', C21: 'none', C22: 'none' };
     // (1) Magnum closing in 2036 and bought: it stops in month 228 (year 19), after the 15 dispatch years.
     const I = normalizeInputs(eemSmall({ edits: { ppm4359: { closeYear: 2036, units: 1, unitMW: 200 } } }));
     const ctx = buildContext(I);

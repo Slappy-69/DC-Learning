@@ -2,7 +2,7 @@
 // several evaluation periods (OPEN-QUESTIONS 21), the IT estimate from area (OPEN-QUESTIONS 26).
 
 import assert from 'node:assert/strict';
-import { buildDefaultInputs, normalizeInputs, COOLING, getRegistry, LABEL } from '../src/engine/defaults.js';
+import { buildDefaultInputs, normalizeInputs, getRegistry, LABEL } from '../src/engine/defaults.js';
 import { runModel } from '../src/engine/run.js';
 import { inputRows } from '../src/report/report.js';
 import { KEY_INPUTS } from '../src/engine/assumed.js';
@@ -26,7 +26,7 @@ export async function inputModelTests(test, ctxRuns) {
     assert.equal(raw.load.itMW, null);
     assert.equal(raw.grid.nowMW, null); assert.equal(raw.grid.fullMW, null); assert.equal(raw.grid.fullDate, null);
     const n = normalizeInputs(raw);
-    const dens = COOLING.air.p.densityKWm2;
+    const dens = raw.load.densityKWm2; // one density since work package 20
     const est = Math.round(Math.max(1, (raw.site.areaHa * 10000 * raw.load.estimateCoverage * raw.load.storeys / raw.load.grossUp) * dens / 1000) * 10) / 10;
     assert.equal(n.load.itMW, est, 'IT estimate from area');
     assert.equal(n.grid.nowMW, raw.grid.unknownNowMW);

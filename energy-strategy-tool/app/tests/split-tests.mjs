@@ -18,7 +18,7 @@ export async function splitTests(test, ctxRuns) {
       const sp = run.options.filter((o) => o.v.C3 === 'split');
       assert.ok(run.rules.find((r) => r.id === 'h'), 'rule (h) listed');
       for (const o of sp) {
-        assert.ok(o.v.C1 === 'bridge' && o.v.C2 !== 'bessSolar' && perm.has(o.v.C8), `${label} ${o.id}: rule (h)`);
+        assert.ok(o.v.C1 === 'bridge' && o.v.C2 !== 'bessSolar' && perm.has('pue'), `${label} ${o.id}: rule (h)`);
         const b = o.sizing.bridge;
         const t = TECH[b.tech];
         let SP = 0;

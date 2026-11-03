@@ -341,15 +341,15 @@ export async function blockTests(test, { runT1 }) {
     const inputs = runT1.inputs;
     const site = buildSiteModel(inputs);
     const ctx = lightContext(inputs, site);
-    // Archetype A1 (grid only, diesel gensets, roof heat rejection) with air cooling: since work package 14 the archetypes take
-    // the open cooling type with the lowest design load, so the air-cooled variant is sized here.
+    // Archetype A1 (grid only, diesel gensets, roof heat rejection). Since work package 20 the white-space density is one
+    // input (load.densityKWm2, default 1.5 kW/m², the former air-cooled value).
     const A1run = runT1.options.find((o) => o.archetype === 'A1');
-    const A1 = { archetype: 'A1', v: { ...A1run.v, C8: 'air' }, sizing: sizeOption(runT1.ctx, { ...A1run.v, C8: 'air' }) };
+    const A1 = { archetype: 'A1', v: { ...A1run.v }, sizing: sizeOption(runT1.ctx, { ...A1run.v }) };
     const bs = buildBlocks(ctx, A1.v, A1.sizing);
     // Air: whitespace 100,000 kW ÷ 1.5 kW/m² = 66,667 m²; GFA × 2.2 = 146,667 m²; ÷ 2 storeys = 73,333 m²;
     // 4 phases of 25 MW → 4 halls of 18,333 m², 1.5 : 1 → 165.8 × 110.6 m; height 2 × 6 + 4 = 16 m.
     const halls = bs.ground.filter((b) => b.type === 'building');
-    assert.equal(A1.v.C8, 'air');
+    assert.equal(inputs.load.densityKWm2 ?? 1.5, 1.5);
     assert.equal(halls.length, 4);
     near(halls.reduce((a, b) => a + b.areaM2, 0), (100000 / 1.5) * 2.2 / 2, 1e-6, 'total hall footprint');
     for (const h of halls) { near(h.areaM2, 73333.333 / 4, 0.01, 'hall area'); near(h.w / h.h, 1.5, 1e-9, 'hall L:W'); assert.equal(h.heightM, 16); assert.equal(h.clearanceM, SPATIAL.building.p.clearanceM); }
@@ -715,6 +715,9 @@ export async function siteFitTests(test, ctxRuns) {
     assert.deepEqual(runT2.options.map((o) => o.rank).sort((x, y) => x - y), Array.from({ length: n }, (_, i) => i + 1), 'ranks are not 1…N');
     // Including C17 GIS and C18 double-deck (the run summary's Include, AC7 wording).
     const inc = referenceT2({ analysisStart: START });
+    // Work package 20: one white-space density for every option. Before it, only the dense DLC options (4.0 kW/m²) fitted
+    // T2 with GIS and double-deck plant, so this part of the test uses that density.
+    inc.load.densityKWm2 = 4.0;
     inc.choices = { ...normalizeInputs(inc).choices, C17: { state: 'open', values: ['AIS', 'GIS'] }, C18: { state: 'open', values: ['single', 'double'] } };
     const runInc = runModel(inc);
     const fit = runInc.options.filter((o) => o.siteFit.status !== 'Does not fit');

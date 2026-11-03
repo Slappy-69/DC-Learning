@@ -212,7 +212,45 @@ export function coolingProfile(cool, prof) {
     coolPeak,
     coolPeak50: d50 ? p.fanFrac + d50.part / d50.c : null,
     designT, designT50: Number.isFinite(designT50) ? designT50 : null,
-    lossFrac: p.lossFrac,
+    lossFrac: p.lossFrac ?? 0,
     adiabaticHours: wueAdiabaticHours,
+  };
+}
+
+// Hourly PUE from the engineer's annual and maximum PUE (work package 20, owner 2026-11-02, OPEN-QUESTIONS 131-139).
+// The air-cooled curve gives the shape s(h): fans plus mechanical cooling per MW of IT in each hour, from that hour's
+// dry bulb. The overhead above 1 in hour h is a + b·s(h), with a and b chosen so that the mean over the weather year is
+// the annual PUE − 1 and the value at the design temperature is the maximum PUE − 1. So the two entered figures hold on
+// any weather (synthetic, EPW or NOAA station). An hour where a + b·s(h) would fall below 0 is held at 0 and counted
+// (the year's mean then rises above the annual PUE, and the run says so). The whole overhead is carried in coolFrac (no
+// separate electrical-loss term); mechFrac is 0, so there is no absorption-chiller credit (OPEN-QUESTIONS 136).
+// A maximum below the annual PUE is read as a flat PUE at the annual value, and also counted.
+export function pueProfile(shape, prof, annual, max) {
+  const air = coolingProfile(shape, prof);
+  const A = Math.max(0, annual - 1);
+  const maxBelowAnnual = !(max >= annual);
+  const Mx = maxBelowAnnual ? A : max - 1;
+  const span = air.coolPeak - air.coolAvg;
+  const b = span > 1e-9 ? (Mx - A) / span : 0;
+  const a = A - b * air.coolAvg;
+  const coolFrac = new Float64Array(H);
+  const mechFrac = new Float64Array(H);
+  const cop = new Float64Array(H).fill(1);
+  let sum = 0, clampedHours = 0;
+  for (let h = 0; h < H; h++) {
+    let o = a + b * air.coolFrac[h];
+    if (o < 0) { o = 0; clampedHours++; }
+    coolFrac[h] = o;
+    sum += o;
+  }
+  return {
+    coolFrac, mechFrac, cop,
+    coolAvg: sum / H,
+    coolPeak: Mx,
+    coolPeak50: air.coolPeak50 == null ? null : (b > 0 ? Math.max(Mx, a + b * air.coolPeak50) : Mx),
+    designT: air.designT, designT50: air.designT50,
+    lossFrac: 0,
+    adiabaticHours: 0,
+    shapeA: a, shapeB: b, clampedHours, maxBelowAnnual, annualEntered: annual, maxEntered: max,
   };
 }

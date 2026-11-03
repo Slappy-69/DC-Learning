@@ -29,7 +29,8 @@ export async function breakevenTests(test, ctxRuns) {
     assert.ok(comps.every((o) => o !== L && !sameFigures(L, o)));
     const cardIds = topCards(run.options, 6).cards.map((c) => c.o.id);
     assert.ok(comps.slice(1).every((o) => cardIds.includes(o.id) || o.rank <= 6), 'a competitor that is neither #2 nor the best of a strategy among the first six cards (OPEN-QUESTIONS 93, owner 2026-10-26)');
-    assert.deepEqual(comps.map((o) => o.rank), [2, 5, 7, 11, 16], 'T1 competitors (owner 2026-10-26: the strategies of six cards)');
+    // Work package 20 (2026-11-02) changed T1's results (PUE 1.3 annual and 1.5 maximum in place of the air-cooled type): was [2, 5, 7, 11, 16].
+    assert.deepEqual(comps.map((o) => o.rank), [2, 3, 6, 9, 13], 'T1 competitors (owner 2026-10-26: the strategies of six cards)');
     assert.deepEqual(comps.map((o) => o.rank), comps.map((o) => o.rank).slice().sort((a, b) => a - b));
     const t0 = Date.now();
     const be = breakevens(run, { site: run.ctx.site });
@@ -116,16 +117,17 @@ export async function breakevenTests(test, ctxRuns) {
     assert.ok(stale > 0.01, 'every option of the screening run was verified: the test would not show the difference');
     out.push(`screening run: base points re-run over the full year (the run's own figures for unverified options were up to ${stale.toFixed(3)} points off)`);
     // (2) LOW-2: a value entered outside the record's range widens the range used; the "higher" side then holds only higher values.
-    const runW = { ...run, inputs: { ...run.inputs, economics: { ...run.inputs.economics, wacc: 0.13 } } };
+    // Work package 20 changed T1's results and WACC fell to the ninth driver; electricity price escalation (third) is used.
+    const runW = { ...run, inputs: { ...run.inputs, economics: { ...run.inputs.economics, elecEscalation: 0.03 } } };
     const beW = breakevens(runW, { site: run.ctx.site });
-    const rowW = beW.rows.find((r) => r.id === 'wacc');
-    assert.ok(rowW, 'WACC is not among the drivers');
-    assert.ok(rowW.widened && Math.abs(rowW.high - 0.13) < 1e-12 && rowW.base === rowW.high && rowW.low < rowW.base, JSON.stringify([rowW.low, rowW.base, rowW.high]));
+    const rowW = beW.rows.find((r) => r.id === 'escalation');
+    assert.ok(rowW, 'electricity price escalation is not among the drivers');
+    assert.ok(rowW.widened && Math.abs(rowW.high - 0.03) < 1e-12 && rowW.base === rowW.high && rowW.low < rowW.base, JSON.stringify([rowW.low, rowW.base, rowW.high]));
     assert.ok(rowW.cells.every((c) => c.flips.up === null), 'a flip above a value that is already at the top of the range used');
     assert.ok(be.rows.every((r) => !r.widened), 'a row widened in T1');
     const flatW = (r) => pdfPageTexts(r.bytes).join(' ').replace(/\s+/g, ' ');
     assert.ok(flatW(buildReport(runW, { created: new Date('2026-10-26T12:00:00Z'), breakevens: beW })).includes('widened to include the value entered'));
-    out.push('a WACC of 13 % (record range 4–12 %) widens the range to 4–13 %, says so in the table and the PDF, and tests nothing above it');
+    out.push('an electricity price escalation of +3 %/yr (record range −2 to +2 %/yr) widens the range to −2 to +3 %/yr, says so in the table and the PDF, and tests nothing above it');
     // (3) LOW-1 and LOW-9: no competitor to test against is said so; the summary's detail says the search is on a grid.
     const smNone = plainSummary(run, { breakevens: { ...be, competitors: [], rows: [] } });
     assert.ok(/no other option with different figures was available/.test(smNone.parts.find((p) => p.id === 'change').text), smNone.parts.find((p) => p.id === 'change').text);

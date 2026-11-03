@@ -92,8 +92,8 @@ A check here is not a verification in the brief's sense. Values should be verifi
 
 | Default | App | Published | Status |
 |---|---|---|---|
-| Annual PUE (new build) | 1.09–1.18 for the UK profile | Uptime Institute 2025 global average 1.54 (all ages); EU 2023–24 weighted average 1.36; Germany: new data centres ≤ 1.2 | Plausible for new builds; research by cooling type |
-| IT density | air 1.5, evaporative 1.8, DLC 4.0, immersion 3.0 kW/m² of whitespace | Uptime Institute 2026: most common rack 11 kW; average 7.8 kW (excluding sites above 30 kW a rack). Assuming 2.5–3 m² of whitespace per rack, that is 2.6–4.4 kW/m² | Air and evaporative probably low; research |
+| Annual PUE (new build) | 1.09–1.18 for the UK profile | Uptime Institute 2025 global average 1.54 (all ages); EU 2023–24 weighted average 1.36; Germany: new data centres ≤ 1.2 | Plausible for new builds; research by cooling type Since 2 November 2026 the engineer enters the annual PUE (default 1.3) and the maximum PUE (default 1.5), both judgement. |
+| IT density | air 1.5, evaporative 1.8, DLC 4.0, immersion 3.0 kW/m² of whitespace | Uptime Institute 2026: most common rack 11 kW; average 7.8 kW (excluding sites above 30 kW a rack). Assuming 2.5–3 m² of whitespace per rack, that is 2.6–4.4 kW/m² | Air and evaporative probably low; research Since 2 November 2026 one input, default 1.5 kW/m². |
 | IT estimate from area (agreed) | 35 % coverage, 1 storey, 5.5 kW/m² | STACK Erskine Park: 82,020 m² of floor on 7.7 ha over three storeys (35.5 % coverage); 450 MW ÷ 82,020 m² = 5.5 kW/m²; IT or facility load not stated | Research (one data point) |
 | Generator testing | 12 h a year (agreed: 6) | NFPA 110: monthly runs of at least 30 minutes at 30 % load or more (about 6 h a year), plus an annual load-bank test where needed; UK: emergency-only generators exempt below 50 h a year including testing | Agreed value consistent |
 | Test load | 75 % | NFPA 110 load-bank test: 30 min at 50 % and 60 min at 75 % | Consistent (judgement) |

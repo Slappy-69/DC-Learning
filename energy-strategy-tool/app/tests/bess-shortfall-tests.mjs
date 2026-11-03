@@ -26,7 +26,7 @@ export async function bessShortfallTests(test, ctxRuns) {
     const sb = run.options.filter((o) => o.v.C12 === 'shortfall');
     for (const o of sb) {
       assert.ok(o.v.C1 !== 'islanded' && o.v.C12r === 'peakShave', `${o.id}: rule (i)`);
-      const pue = designDayPUE(ctx, o.v.C8);
+      const pue = designDayPUE(ctx, 'pue');
       let MW = 0, E = 0;
       for (let m = Math.max(0, ctx.fullGridM); m < ctx.nMonthsTimeline; m++) {
         let e = 0;
@@ -40,12 +40,13 @@ export async function bessShortfallTests(test, ctxRuns) {
       assert.ok(/BESS for the shortfall/.test(o.name));
     }
     out.push(`T1: ${sb.length} shortfall-battery options, ${sb.filter((o) => o.sizing.shortfallBess.rechargeOK).length} recharge on the design day (the T1 permanent shortfall lasts most of the design day)`);
-    // (c) A grid short only at the peak hours: T1 with a 125 MW full grid and evaporative cooling (design load 129 MW;
-    // the design-day PUE falls from 1.27 at the peak to 1.12 at night).
+    // (c) A grid short only at the peak hours: T1 with a 127 MW full grid and a low entered PUE (work package 20; was a
+    // 125 MW grid with evaporative cooling): maximum 1.29 (design load 129 MW), annual 1.15, so the design-day PUE falls
+    // to 1.19 at night and the grid is short only in the hottest hours.
     const inp = referenceT1({ analysisStart: run.inputs.project.analysisStart });
-    inp.grid.fullMW = 125;
+    inp.grid.fullMW = 127; inp.load.pueAnnual = 1.15; inp.load.pueMax = 1.29;
     const c2 = buildContext(normalizeInputs(inp));
-    const base = { ...run.options.find((o) => o.v.C1 === 'wait').v, C4: 'none', C4s: 'n/a', C8: 'evap', C12: 'shortfall', C12r: 'peakShave' };
+    const base = { ...run.options.find((o) => o.v.C1 === 'wait').v, C4: 'none', C4s: 'n/a', C12: 'shortfall', C12r: 'peakShave' };
     const s = sizeOption(c2, base);
     assert.ok(s.shortfallBess.rechargeOK && s.shortfallBess.mw > 0, 'battery should recharge when the grid is short only at the peak');
     const ttp = timeToPower(c2, base, s);
@@ -54,7 +55,7 @@ export async function bessShortfallTests(test, ctxRuns) {
     assert.ok(ttp.gapMWm < ttpNo.gapMWm, 'the battery does not reduce the power gap');
     const from = Math.max(c2.fullGridM, s.shortfallBess.availMonth);
     for (let m = from; m < c2.nMonthsTimeline; m++) assert.ok(ttp.supplyByMonth[m] + 1e-6 >= s.designByMonth[m], `month ${m}: battery does not close the design-load gap`);
-    out.push(`125 MW grid, evaporative cooling: ${s.shortfallBess.mw.toFixed(1)} MW / ${s.shortfallBess.mwh.toFixed(1)} MWh battery recharges and closes the permanent gap (power gap ${ttpNo.gapMWm.toFixed(0)} → ${ttp.gapMWm.toFixed(0)} MW-months)`);
+    out.push(`127 MW grid, PUE 1.15 annual and 1.29 maximum: ${s.shortfallBess.mw.toFixed(1)} MW / ${s.shortfallBess.mwh.toFixed(1)} MWh battery recharges and closes the permanent gap (power gap ${ttpNo.gapMWm.toFixed(0)} → ${ttp.gapMWm.toFixed(0)} MW-months)`);
     return out.join('; ');
   });
 }

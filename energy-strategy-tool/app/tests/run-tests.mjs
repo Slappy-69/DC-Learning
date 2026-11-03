@@ -92,6 +92,7 @@ import { weatherTests, stationTests } from './weather-tests.mjs';
 import { weatherTmyTests } from './weathertmy-tests.mjs';
 import { monteCarloTests } from './montecarlo-tests.mjs';
 import { plantTests } from './plants-tests.mjs';
+import { pueTests } from './pue-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -263,7 +264,7 @@ function resilienceFailInputs() {
   inp.project.name = 'T1 + C5 None (test 3 resilience-fail sample)';
   inp.choices = { ...(inp.choices || {}) };
   inp.choices.C5 = { state: 'open', values: ['hvo', 'diesel', 'retained', 'none'] };
-  for (const [id, val] of [['C3', 'backup'], ['C4', 'none'], ['C8', 'air'], ['C9', 'roof'], ['C10', 'none'], ['C12', 'none'], ['C13', 'none']]) {
+  for (const [id, val] of [['C3', 'backup'], ['C4', 'none'], ['C9', 'roof'], ['C10', 'none'], ['C12', 'none'], ['C13', 'none']]) {
     inp.choices[id] = { state: 'locked', values: [val] };
   }
   return inp;
@@ -1269,6 +1270,9 @@ await weatherTmyTests(test);
 
 // 50. Work package 19: existing gas plants near the site from the bundled list (tests/plants-tests.mjs)
 await plantTests(test);
+
+// 51. Work package 20: PUE entered directly in place of the cooling types (tests/pue-tests.mjs)
+await pueTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

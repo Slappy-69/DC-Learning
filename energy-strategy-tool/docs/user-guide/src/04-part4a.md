@@ -48,7 +48,7 @@ Three stages reuse work:
 
 | Stage | Cached by | T1 run |
 |---|---|---|
-| Sizing | hourly demand per cooling approach and model year | 1,996 reuses, 4 computations |
+| Sizing | hourly demand per model year (one PUE profile since 2 November 2026) | 1,996 reuses, 4 computations |
 | Site layout | the set of blocks (options with identical blocks share a layout) | 676 reuses, 1,324 layouts |
 | Dispatch | the dispatch configuration (everything the hourly loop reads) | 231 reuses, 1,769 simulations |
 
@@ -134,30 +134,25 @@ For each country, seed and site latitude the engine makes one year of 8,760 hour
 
 For T1 (United Kingdom, seed 20261015): mean temperature 9.8 °C, hottest hour 26.4 °C dry-bulb and 19.9 °C wet-bulb, solar yield 950 kWh/kWp, wind capacity factor 0.34, mean price €95/MWh, mean carbon 200 g/kWh.
 
-## Cooling profiles
+## The hourly PUE
 
-For each cooling approach and each hour, using the temperature that drives it (chapter 6):
-
-::: formula
-| COP = max(1.5, COP_ref − slope × (T − T_ref))
-| part = 0 if T ≤ T_fc; 1 if T ≥ T_fc + band; otherwise (T − T_fc) ÷ band
-| mechanical fraction = part ÷ COP
-| cooling fraction = fan fraction + mechanical fraction
-| PUE in that hour = 1 + cooling fraction + loss fraction
+::: {.callout .built}
+**Built 2 November 2026 (work package 20; OPEN-QUESTIONS 131–140).** One hourly PUE from the entered annual PUE (P_a) and maximum PUE (P_m), in place of one profile per cooling type.
 :::
 
-The **annual** cooling fraction is the average over the year; the **peak** is the value at the design temperature. The number of hours with part > 0 is kept for the water calculation.
+The shape s(h) is the former air type's cooling fraction, from the hour's dry-bulb temperature T:
 
-| Parameter | Air | Evaporative | DLC | Immersion |
-|---|---|---|---|---|
-| T_fc (°C) | 10 | 14 (wet-bulb) | 26 | 30 |
-| band (K) | 10 | 6 | 10 | 10 |
-| COP_ref | 5.0 at 25 °C | 6.5 at 20 °C | 5.5 at 35 °C | 5.5 at 38 °C |
-| COP slope (per K) | 0.12 | 0.15 | 0.10 | 0.10 |
-| fan fraction | 0.07 | 0.05 | 0.045 | 0.03 |
-| loss fraction | 0.07 | 0.07 | 0.06 | 0.06 |
+::: formula
+| COP = max(1.5, 5.0 − 0.12 × (T − 25))
+| part = 0 if T ≤ 10 °C; 1 if T ≥ 20 °C; otherwise (T − 10) ÷ 10
+| s(h) = 0.07 + part ÷ COP;  s̄ = its average over the year;  s_d = its value at the design temperature
+| b = (P_m − P_a) ÷ (s_d − s̄);  a = (P_a − 1) − b × s̄
+| PUE(h) = 1 + max(0, a + b × s(h));  design PUE = P_m
+:::
 
-**T1, DLC on the design day** (26.36 °C): part = (26.36 − 26) ÷ 10 = 0.036; COP = 5.5 − 0.1 × (26.36 − 35) = 6.36; mechanical = 0.0057; cooling = 0.045 + 0.0057 = 0.0507; peak PUE = 1 + 0.0507 + 0.06 = **1.111**.
+All of the overhead above 1 is carried in the cooling fraction; there is no separate loss fraction and no mechanical fraction (so no absorption-chiller credit). The "PUE" driver multiplies a + b × s(h) and the design overhead by the same factor.
+
+**T1 on the design day** (26.36 °C, defaults 1.3 and 1.5): s_d = 0.07 + 1 ÷ (5.0 − 0.12 × 1.36) = 0.2768; s̄ = 0.1096; b = 0.2 ÷ 0.1672 = 1.196; a = 0.3 − 1.196 × 0.1096 = 0.169. In a free-cooling hour the PUE is 1 + 0.169 + 1.196 × 0.07 = **1.253**; at the design temperature 1 + 0.169 + 1.196 × 0.2768 = **1.500**.
 
 ## Timelines by month
 
@@ -170,15 +165,15 @@ The context holds month-by-month arrays from the analysis start, long enough for
 
 ## Hourly demand
 
-For a cooling approach and a model year y, hour h falls in month 12y + floor(h ÷ 730) (the engine uses 730-hour months, with the last month running from hour 8,030 to the year end). Then:
+For a model year y, hour h falls in month 12y + floor(h ÷ 730) (the engine uses 730-hour months, with the last month running from hour 8,030 to the year end). Then:
 
 ::: formula
 | IT(h) = installed IT in that month × load shape(h)
-| facility demand(h) = IT(h) × (1 + cooling fraction(h) + loss fraction) + ancillary × installed IT
-| mechanical cooling(h) = IT(h) × mechanical fraction(h)
+| facility demand(h) = IT(h) × PUE(h) + load outside the PUE × installed IT (default 0)
+| mechanical cooling(h) = 0 since work package 20 (no absorption-chiller credit)
 :::
 
-The load shape has an average of exactly the utilisation (0.8 by default), so facility energy uses utilised IT, while sizing uses installed IT. The result is cached for each cooling approach and year.
+The load shape has an average of exactly the utilisation (0.8 by default), so facility energy uses utilised IT, while sizing uses installed IT. The result is cached for each year.
 
 ## Grid decarbonisation
 
@@ -220,9 +215,9 @@ Only logically impossible combinations are removed, each by a named rule:
 - **(c)** A battery in the "bridging support" role needs a battery: not generated with C12 "None".
 - **(e)** "Retained bridging plant" as backup needs bridging plant that stays on site (C1 "Islanded", or "Bridge until grid" with C3 not "Remove"). This rule was added by the builder.
 - **(f)** "Roof + ground" solar needs a ground area for PV above 0; otherwise it would repeat "Roof only" (built 22 October 2026).
-- **(g)** A top-up firm plant (C4 sizing "Permanent shortfall") needs a permanent shortfall for the option's cooling type: the design load above the full grid capacity after the full grid date. Islanded options always have one. Otherwise it would repeat C4 "None" (built 23 October 2026).
-- **(h)** Splitting bridging plant (C3 "Keep shortfall share as prime, rest as backup") needs generating plant and a permanent shortfall for the option's cooling type (built 23 October 2026).
-- **(i)** A battery sized to the permanent shortfall (C12) needs a grid to recharge from (not islanded), a permanent shortfall for the cooling type and the peak-shave role (built 23 October 2026).
+- **(g)** A top-up firm plant (C4 sizing "Permanent shortfall") needs a permanent shortfall: the design load above the full grid capacity after the full grid date. Islanded options always have one. Otherwise it would repeat C4 "None" (built 23 October 2026).
+- **(h)** Splitting bridging plant (C3 "Keep shortfall share as prime, rest as backup") needs generating plant and a permanent shortfall (built 23 October 2026).
+- **(i)** A battery sized to the permanent shortfall (C12) needs a grid to recharge from (not islanded), a permanent shortfall and the peak-shave role (built 23 October 2026).
 - **(j)**, **(k)**: the trigger-hours battery needs flexibility and trigger hours; a PPA needs a grid to deliver it (built 23 October 2026).
 - **(l)** Existing plant (C2 or C4) needs a plant that offers power (entered, or from the bundled list, and not closed: an entered closure year before the analysis start leaves only its connection), and is used in one role per option (built 24 October 2026; every nearby plant, leased or bought, since 31 October).
 - **(m)** A leased existing plant as bridging plant is handed back when the grid arrives (C3 "Remove") or kept running (C3 "Retain as prime"), and is never the campus's standby (C5 "Retained bridging plant"). A bought plant may be kept as the backup (OPEN-QUESTIONS 122).
@@ -254,7 +249,7 @@ Eleven reference strategies are always generated, whatever the choice settings, 
 | A10a Nascent firm (SMR) | SMR prime |
 | A10b Nascent firm (hydrogen) | hydrogen prime |
 
-Choices an archetype does not specify take the **first open value** of that choice, except cooling (built 24 October 2026, OPEN-QUESTIONS 84): the engineer's cooling type when it is set, and when it is left open the open type with the lowest design facility load (immersion in T1: 111 MW against 137 MW for air). Before, every T1 archetype was air-cooled and most could never reach full load (chapter 47). Archetypes that fall outside the open choices (T1: four of them) are added to the count: **57,028** combinations.
+Choices an archetype does not specify take the **first open value** of that choice, (the cooling rule of 24 October 2026, OPEN-QUESTIONS 84, went with the cooling types in work package 20; every option now uses the entered PUE). Before 24 October, every T1 archetype was air-cooled and most could never reach full load (chapter 47). Archetypes that fall outside the open choices (T1: four of them) are added to the count: **57,028** combinations.
 
 ## Step 5. The cap and sampling
 
@@ -294,16 +289,16 @@ The **steady-state average facility load** (for prime plant and the PPA sentence
 ## Critical load and backup
 
 ::: formula
-| critical load = backed % × IT × (1 + design cooling fraction)
+| critical load = backed % × IT × maximum PUE  (since 2 November 2026; before, IT × (1 + design cooling fraction))
 | N = ceiling(critical load ÷ unit size)
 | blocks B = ceiling(N ÷ 10)
 | installed = N (N); N + B (N+1); 2N (2N); N + ceiling(B ÷ 4) (catcher)
 :::
 
-*Critical load for backup: 100 % × (100 MW IT + 5.1 MW mechanical at design) = 105 MW.*
-*Diesel standby gensets: 105 MW ÷ 2.75 MW per unit = 38.2 → 39 units; 39 units form 4 blocks (block size 10); N+1 adds 4; total 43 units (118 MW).*
+*Critical load for backup: 100 % × 100 MW IT × maximum PUE 1.500 = 150 MW.*
+*Diesel standby gensets: 150 MW ÷ 2.75 MW per unit = 54.5 → 55 units; 55 units form 6 blocks (block size 10); N+1 adds 6; total 61 units (168 MW).*
 
-The "design cooling fraction" is the fans plus mechanical cooling at the design temperature (0.0507 for DLC).
+Since work package 20 the critical load is the whole facility at design, IT × maximum PUE, because the entered PUE does not split cooling from electrical losses (OPEN-QUESTIONS 133).
 
 **BESS-augmented UPS:** N HVO gensets only; the redundant units' capacity (B units for N+1) is provided by a battery of that many MW for 2 hours.
 
@@ -365,7 +360,7 @@ Since 23 October 2026 each C4 technology is generated sized two ways (choice C4s
 | n = ⌈S ÷ unit size⌉;  units = n + ⌈n ÷ block size⌉ (N+1 per block of 10);  installed MW = units × unit size
 :::
 
-In T1 with evaporative cooling, for example, S is 9.0 MW, so a top-up CHP has 3 units plus 1 for N+1: 4 × 4.5 MW = 18 MW. A baseload CHP for the same cooling is sized to the average facility load of 91.8 MW: 20 × 4.5 MW = 90 MW.
+In T1 with evaporative cooling (the model before 2 November 2026), for example, S was 9.0 MW, so a top-up CHP has 3 units plus 1 for N+1: 4 × 4.5 MW = 18 MW. A baseload CHP for the same cooling is sized to the average facility load of 91.8 MW: 20 × 4.5 MW = 90 MW.
 
 Available from its programme month (or its earliest year, or the gas date, whichever is later). The programme month (built 23 October 2026) is counted from day one:
 
@@ -400,7 +395,7 @@ With "BESS + solar only" bridging, the battery is S MW for 24 hours. After the f
 
 **Existing plant near the site** (built 24 October 2026, work package 12) is sized differently: as bridging plant or as firm plant it is exactly the units offered, with no N+1 added (the standby gensets cover a unit trip), and the sentence says if it falls short of the need. A plant from the bundled list (work package 19) gives the units the need takes, up to the plant's own, and is available from the analysis start; a bought plant is bought, like a leased one is hired, a month before it is first needed. Either stops at its closure (bought: after the refurbished life), and every reader of the plant's months (firm supply, dispatch, time-to-power, the ledger) stops with it; when the same option takes over its grid connection, the plant runs on until the campus can use the connection (assumed, and flagged, for a leased plant). The manual plant is available from the month entered, with no permitting allowance, and its lease starts a month before it is first needed: as bridging plant, before the first month of shortfall; as firm plant, before the first month the design load exceeds the grid and any bridging plant still on site (as baseload, before the first load). One availability date covers both roles: a study that needs the plant later as firm plant than as bridging plant relies on the lease rule, which starts the firm lease only when it is needed.
 
-In T1, for example, a rented bridge of 7 × 2 MW keeps 6 units (12 MW) for the 9.0 MW permanent shortfall of evaporative cooling and retires 1 into backup. Rule (h) generates the split only with generating plant (not "BESS + solar only") and where there is a permanent shortfall; otherwise it would repeat "Retain as backup".
+In T1, for example, a rented bridge of 7 × 2 MW keeps 6 units (12 MW) for the 9.0 MW permanent shortfall of evaporative cooling (before 2 November 2026) and retires 1 into backup. Rule (h) generates the split only with generating plant (not "BESS + solar only") and where there is a permanent shortfall; otherwise it would repeat "Retain as backup".
 
 ## Battery (C12)
 
@@ -420,7 +415,7 @@ For example "4 h at 50 %" on a 113 MW design load gives 56.5 MW and 226 MWh. The
 
 When the check passes in every month, the battery counts as firm supply from the full grid date (once available), so it can close the power gap and make an option adequate. When it fails, the battery is still built and dispatched but does not count, and the minor flag `bess-recharge` says from which month. In dispatch it is a security battery: it covers only the grid shortfall, takes no arbitrage and recharges from the grid in any hour. Rule (i) generates it only with a grid, a permanent shortfall and the peak-shave role.
 
-In T1 the permanent shortfall lasts most of the design day (air cooling: 16.7 MW at the peak, 291 MWh in the day), so the battery cannot recharge and never counts. On a site short only at the peak hours it does: T1 with a 125 MW grid and evaporative cooling (design-day PUE 1.27 at the peak, 1.12 at night) needs a 4.0 MW / 21.9 MWh battery, which recharges every day and closes the permanent power gap (250 → 31 MW-months; what remains is before the full grid date).
+In T1 the permanent shortfall lasts most of the design day (the air-cooled model before 2 November 2026: 16.7 MW at the peak, 291 MWh in the day), so the battery cannot recharge and never counts. On a site short only at the peak hours it does: T1 with a 125 MW grid and evaporative cooling (design-day PUE 1.27 at the peak, 1.12 at night) needs a 4.0 MW / 21.9 MWh battery, which recharges every day and closes the permanent power gap (250 → 31 MW-months; what remains is before the full grid date).
 
 **Sized to the trigger hours** (built 23 October 2026, OPEN-QUESTIONS 33; generated only when flexibility, C16, is on, rule j). The economic battery for battery response:
 
@@ -445,7 +440,7 @@ Before the layout, the engine estimates the land each block needs:
 | Fuel storage | 0.15 m² per m³ |
 | Battery | 50 m² per MWh |
 | Firm plant | per MW: recips 200, turbines 120, CHP 280, fuel cells 120, HVO-diesel 40, rented 150, hydrogen 300 m² |
-| Heat rejection on the ground | 60 m² per MW rejected (IT × (1 + design cooling + losses)); half with "Split" |
+| Heat rejection on the ground | 60 m² per MW rejected (IT × maximum PUE since 2 November 2026); half with "Split" |
 | Wind | 0.1 ha pad per turbine |
 
 **Rooftop solar:** from the roof area for PV when you enter one (÷ 5.5 m²/kWp). Left empty, the rule: the roof (the building footprint) less the roof plant: with heat rejection on the roof, the larger of 40 % of the roof and 60 m² per MW rejected (half of each for "Split"). Then:

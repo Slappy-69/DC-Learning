@@ -134,13 +134,21 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           </div> : null}
           <p className="note">Flexibility acts in trigger hours and as the last step against a shortfall, within the same limits (OPEN-QUESTIONS 34). IT shed against a shortfall counts as unmet for power adequacy (OPEN-QUESTIONS 61). Values are indicative — unverified.</p>
         </fieldset>
-        <SelectField label="Cooling approach" value={inputs.load.coolingApproach} onCommit={(v) => { update('load.coolingApproach', v); update('choices.C8', null); }} path="load.coolingApproach" inputs={inputs}
-          options={[['open', 'Open choice (C8)'], ['air', 'Air (CHW + free cooling)'], ['evap', 'Evaporative-adiabatic'], ['dlc', 'DLC + dry coolers'], ['immersion', 'Immersion']]} />
+        {/* Work package 20 (owner 2026-11-02): the PUE is entered directly, in place of the cooling types. */}
+        <div className="row2">
+          <NumberField label="Annual PUE" value={inputs.load.pueAnnual} onCommit={set('load.pueAnnual')} path="load.pueAnnual" inputs={inputs} min={1} max={3} step={0.01} hint="Facility energy ÷ IT energy over the year; covers cooling, electrical losses and offices." />
+          <NumberField label="Maximum PUE (design day)" value={inputs.load.pueMax} onCommit={set('load.pueMax')} path="load.pueMax" inputs={inputs} min={1} max={3} step={0.01} hint="At the design temperature with all IT installed; sets the design load, backup and heat rejected." />
+        </div>
+        <p className="note">The hourly PUE follows the weather between the two: the year averages the annual PUE and the design hour reaches the maximum.</p>
+        <div className="row2">
+          <NumberField label="White-space density" unit="kW/m²" value={inputs.load.densityKWm2} onCommit={set('load.densityKWm2')} path="load.densityKWm2" inputs={inputs} min={0.5} max={20} step={0.1} />
+          <NumberField label="Water use (WUE)" unit="L/kWh IT" value={inputs.load.wue} onCommit={set('load.wue')} path="load.wue" inputs={inputs} nullable min={0} max={5} step={0.05} placeholder="Not reported" />
+        </div>
         <div className="row2">
           <NumberField label="Gross-up (GFA / whitespace)" value={inputs.load.grossUp} onCommit={set('load.grossUp')} path="load.grossUp" inputs={inputs} min={1} />
           <NumberField label="Storeys" value={inputs.load.storeys} onCommit={(v) => update('load.storeys', Math.round(v))} path="load.storeys" inputs={inputs} min={1} max={6} step={1} />
         </div>
-        <NumberField label="Non-IT ancillary load" unit="% of IT" scale={100} value={inputs.load.ancillaryFrac} onCommit={set('load.ancillaryFrac')} path="load.ancillaryFrac" inputs={inputs} min={0} max={0.2} />
+        <NumberField label="Load outside the PUE" unit="% of IT" scale={100} value={inputs.load.ancillaryFrac} onCommit={set('load.ancillaryFrac')} path="load.ancillaryFrac" inputs={inputs} min={0} max={0.2} hint="Only loads the PUE does not already cover." />
       </Section>
 
       <Section title="4 · Utilities and grid" defaultOpen>

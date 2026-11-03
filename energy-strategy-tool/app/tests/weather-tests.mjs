@@ -2,7 +2,7 @@
 // psychrometric equations, design temperatures, and the weather in the engine, flags, study files and PDF.
 
 import assert from 'node:assert/strict';
-import { referenceT1 } from '../src/engine/defaults.js';
+import { referenceT1, COOLING_ID } from '../src/engine/defaults.js';
 import { runModel } from '../src/engine/run.js';
 import { readEpw, wetBulb, humidityRatio, satPressure, exceeded, HOURS } from '../src/engine/weather.js';
 import { studyFile, readStudyFile } from '../src/engine/study.js';
@@ -69,7 +69,7 @@ export async function weatherTests(test, ctxRuns) {
     return `wet bulb 25 °C/50 % ${wb(25, 50).toFixed(2)} °C, 35 °C/40 % ${wb(35, 40).toFixed(2)} °C; design n = 20 ${w.designDB}/${w.designWB} °C and n = 50 ${w.designDB50} °C from the file's ASHRAE extremes; without them the hottest hour ${noDesign.weather.designDB} °C; a two-year file keeps its first year with a warning; leap day dropped, 6 h gap filled, 7 h refused`;
   });
 
-  await test('48b. Measured weather in the engine: T1 with a hotter EPW year raises the design load and the hourly PUE; every option carries a "Weather" flag (station, distance, design basis) and no synthetic-climate flag; the weather survives a study file; the PDF lists it in one row; without a file nothing changes', () => {
+  await test('48b. Measured weather in the engine: T1 with a hotter EPW year keeps the entered annual and maximum PUE, the hourly PUE following the file (work package 20); every option carries a "Weather" flag (station, distance, design basis) and no synthetic-climate flag; the weather survives a study file; the PDF lists it in one row; without a file nothing changes', () => {
     const base = ctxRuns.runT1;
     const inp = referenceT1({ analysisStart: ctxRuns.START });
     inp.settings.generationCap = 60;
@@ -80,12 +80,16 @@ export async function weatherTests(test, ctxRuns) {
     const L = run.options.find((o) => o.rank === 1), Ls = syn.options.find((o) => o.rank === 1);
     assert.equal(run.ctx.prof.designTemp, 36); assert.equal(run.ctx.prof.designWetbulb, 20); assert.equal(run.ctx.prof.designTemp50, 37);
     assert.equal(run.ctx.prof.temp[4000], r.weather.dryBulb[4000]);
-    // Hotter weather: higher peak and average cooling power for every cooling type.
-    for (const id of Object.keys(run.ctx.cooling)) {
-      assert.ok(run.ctx.cooling[id].coolPeak >= syn.ctx.cooling[id].coolPeak - 1e-12, `${id} peak`);
-      assert.ok(run.ctx.cooling[id].coolAvg >= syn.ctx.cooling[id].coolAvg - 1e-12, `${id} average`);
+    // Work package 20 (OPEN-QUESTIONS 132): the entered annual and maximum PUE hold on any weather; the hourly PUE
+    // follows the file's temperatures between them, and the n = 50 check is read off the same curve.
+    const cw = run.ctx.cooling[COOLING_ID], cs = syn.ctx.cooling[COOLING_ID], Lw = run.ctx.inputs.load;
+    for (const c of [cw, cs]) {
+      assert.ok(Math.abs(1 + c.coolAvg - Lw.pueAnnual) < 1e-9 && Math.abs(1 + c.coolPeak - Lw.pueMax) < 1e-12, 'entered PUE held');
     }
-    assert.ok(Object.keys(run.ctx.cooling).some((id) => run.ctx.cooling[id].coolAvg > syn.ctx.cooling[id].coolAvg + 1e-6), 'no cooling type uses more energy in the hotter year');
+    const T = run.ctx.prof.temp, hot = T.indexOf(Math.max(...T));
+    assert.ok(cw.coolFrac[hot] >= Math.max(...cw.coolFrac) - 1e-12, 'the hottest hour of the file has the highest PUE');
+    assert.ok(cw.coolFrac.some((x, h) => Math.abs(x - cs.coolFrac[h]) > 1e-3), 'the hourly PUE does not follow the file');
+    assert.ok(cw.coolPeak50 >= cw.coolPeak, 'n = 50 PUE below the n = 20 maximum');
     for (const o of run.options) {
       const f = o.flags.find((x) => x.id === 'weather');
       assert.ok(f && f.severity === 'info' && /uploaded EPW file "hot\.epw".*km from the pin; sized to n = 20: 36 °C dry bulb and 20 °C wet bulb; check at n = 50: 37 °C/.test(f.message), `${o.id}: ${f && f.message}`);
@@ -106,7 +110,7 @@ export async function weatherTests(test, ctxRuns) {
     const rows = inputRows(inpW).filter((x) => x.section === 'Weather');
     assert.equal(rows.length, 1); assert.match(rows[0].value, /hot\.epw/);
     assert.match(inputRows(inp).find((x) => x.section === 'Weather').value, /synthetic/);
-    return `design ${run.ctx.prof.designTemp}/${run.ctx.prof.designWetbulb} °C (synthetic ${syn.ctx.prof.designTemp.toFixed(1)}/${syn.ctx.prof.designWetbulb.toFixed(1)} °C); leader LCOE €${L.eco.lcoe.toFixed(1)} against €${Ls.eco.lcoe.toFixed(1)}/MWh with the synthetic year; cooling never lower, higher for the mechanically cooled types; ${run.options.length} options flagged; study and PDF keep it`;
+    return `design ${run.ctx.prof.designTemp}/${run.ctx.prof.designWetbulb} °C (synthetic ${syn.ctx.prof.designTemp.toFixed(1)}/${syn.ctx.prof.designWetbulb.toFixed(1)} °C); leader LCOE €${L.eco.lcoe.toFixed(1)} against €${Ls.eco.lcoe.toFixed(1)}/MWh with the synthetic year; entered PUE held, hourly PUE follows the file; ${run.options.length} options flagged; study and PDF keep it`;
   });
 }
 

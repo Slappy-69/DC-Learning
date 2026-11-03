@@ -88,10 +88,13 @@ The net developable area is the land budget for every block of plant and the dat
 | Ramp duration | 12 months | Time to reach 100 % |
 | Average IT utilisation | 80 % | Average draw as a share of installed IT (energy only) |
 | Workload type | Mixed cloud | Sets the daily load wave (chapter 5) |
-| Cooling approach | Open choice (C8) | Fixes the cooling, or leaves all four open |
+| Annual PUE | 1.3 (judgement) | Facility ÷ IT energy over the year (work package 20, 2 November 2026; replaces the cooling approach) |
+| Maximum PUE (design day) | 1.5 (judgement) | Sets the design load, backup and heat rejected (chapter 6) |
+| White-space density | 1.5 kW/m² | IT per m² of data hall, for the IT estimate and the buildings |
+| Water use (WUE) | blank: not reported | Litres per kWh of IT |
 | Gross-up | 2.2 | Building gross floor area ÷ data hall whitespace |
 | Storeys | 2 | Storeys of data hall |
-| Non-IT ancillary load | 2 % of IT | Lighting, offices, security |
+| Load outside the PUE | 0 % of IT (was 2 % "non-IT ancillary load" until 2 November 2026) | Only loads the PUE does not already cover (OPEN-QUESTIONS 140, to confirm) |
 
 **The phasing table.** Add a row per phase with its IT MW and date (year and month). "Reset to default" returns to the one-phase default. The sum of the phases is shown against the IT load at full build; if they differ, the phasing table is what the engine uses month by month, while sizing uses the IT load at full build.
 
@@ -111,8 +114,8 @@ The footprint takes land on the site plan and gives the roof area for rooftop so
 **Built (23 October 2026, work package 2; OPEN-QUESTIONS 26): estimating the IT load from the area.** Leave the IT load blank and the tool estimates it with the building massing rule above, run backwards:
 
 ::: formula
-| IT load ≈ site area × site coverage × storeys ÷ gross-up × IT density of the cooling type
-| 15 ha, cooling open (air density): 150,000 m² × 35 % × 2 ÷ 2.2 × 1.5 kW/m² = 71.6 MW
+| IT load ≈ site area × site coverage × storeys ÷ gross-up × white-space density
+| 15 ha at the default density: 150,000 m² × 35 % × 2 ÷ 2.2 × 1.5 kW/m² = 71.6 MW
 :::
 
 Site coverage 35 % (the walkthrough's figure), the storeys and the gross-up are judgements. When the cooling is an open choice the air density, the lowest, is used. One rule now serves both the estimate and the sizing, so the same site gives the same building. The walkthrough's benchmark of 5.5 kW per m² of floor (STACK Erskine Park: 450 MW "operational capacity" on 82,020 m², not known whether IT or facility load) would give about 290 MW on 15 ha; it stays a research item (chapter 50). If you enter phases but no IT load, the IT load is their sum. The estimate is flagged as assumed on every option, and you can enter the IT load at any time.
@@ -279,12 +282,12 @@ The table lists every choice, its values, and the values included by default (ma
 | C2 Bridging supply | **Gas recips**, Gas turbines, **Fuel cells**, HVO-diesel prime, BESS + solar only, **Rented temporary generation**, and **each nearby existing plant, leased and bought** (work package 19) |
 | C3 Bridging plant after grid arrives | **Remove**, **Retain as backup**, **Retain as prime**, **Retain for grid services**, **Keep shortfall share as prime, rest as backup** (built 23 October 2026; only with generating plant and a permanent shortfall) |
 | C4 Primary firm on-site generation | **None**, **Gas CHP-trigen**, Gas recips, **Fuel cells**, SMR, Hydrogen, and **each nearby existing plant, leased and bought** (work package 19) |
-| C4s Firm generation sizing | **Average load (baseload)**, **Permanent shortfall (top-up)**; the top-up only for cooling types with a permanent shortfall, or islanded (built 23 October 2026) |
+| C4s Firm generation sizing | **Average load (baseload)**, **Permanent shortfall (top-up)**; the top-up only when the design load leaves a permanent shortfall, or islanded (built 23 October 2026) |
 | C5 Backup power technology | **Diesel gensets**, **HVO gensets**, Gas gensets, BESS-augmented UPS + reduced gensets, **Retained bridging plant**, None |
 | C5a Backup arrangement | **Per building**, **Pooled across the campus** (built 23 October 2026; not applicable with no backup or retained-plant backup) |
 | C6 Backup topology | locked to the required topology (**N+1**); N, 2N, catcher available |
 | C7 Autonomy / fuel storage | locked to the required autonomy (**48 h**); 12, 24, 72 h |
-| C8 Cooling approach | **all four** open, unless the cooling approach input fixes one |
+| C8 Cooling approach | **Removed 2 November 2026** (work package 20): the PUE is entered in section 3 (chapter 6) |
 | C9 Heat rejection location | **Roof**, **Ground**, **Split** |
 | C10 On-site solar | **None**, **Roof only**; **Roof + ground** when the ground area for PV is above 0 |
 | C11 On-site wind | **None** on sites ≤ 20 ha; otherwise **None**, **Fit as many as separations allow**, **Off-site land** |
@@ -311,7 +314,7 @@ The table lists every choice, its values, and the values included by default (ma
 **Not applicable values.** Some choices only matter when others take certain values: C2 and C3 only with bridging; C4s only with a firm plant; C5a only with gensets; C14 only with a PPA; the BESS role only with a BESS; C6, C7 and C18 only with gensets. Otherwise they are set to "n/a" rather than multiplying the options (chapter 34).
 
 ::: {.callout .agreed}
-**Agreed, not built yet.** The cooling approach is always chosen by the engineer (chapter 6). The flexibility and battery choices are replaced by the parameters described in chapters 16 and 18.
+**Built 2 November 2026:** the cooling approach is gone; the engineer enters the annual and maximum PUE (chapter 6). **Agreed, not built yet:** the flexibility and battery choices are replaced by the parameters described in chapters 16 and 18.
 :::
 
 # 21. Running: progress, run summary and run flags {#ch21}
@@ -327,8 +330,8 @@ The **Run progress** panel lists the 13 stages of the run (chapter 31), each wit
 - **Generation**: the open-choice product, the count after the n/a collapse, the valid count after the compatibility rules, the archetypes, the total, and how many were screened. When sampling applies, the summary says so, with a **Screen all** link (switches sampling off) and a reminder that locking a choice narrows the space.
 - **Compatibility rules**: each rule, what it removes, and how many combinations it removed.
 - **Scoring set**: every screened option. View filters never change any score or rank.
-- **Grid shortfall against the design load** (built 23 October 2026; OPEN-QUESTIONS 38): for each cooling type the run generates, the design load (the full contracted IT at the design-day PUE plus ancillary load), the **temporary** shortfall against the offered grid before the full connection date and the **permanent** shortfall from it on (peak MW, its month, and how many months), and the IT load the full grid connection supports on its own. In T1 (120 MW grid from 2029-07) air cooling needs 137 MW, so 16.7 MW stays short from 2031-12 and the full grid supports 87.8 MW of IT; DLC needs 113 MW, has only a temporary shortfall (peak 6.5 MW in 2029-06) and the grid supports 106 MW of IT. On-site generation must close both shortfalls for an option to be adequate.
-- **IT load the grid supports, by grid period** and **grid-matched phasing** (built 23 October 2026; OPEN-QUESTIONS 38, step 3): for each period of constant grid capacity, the IT it carries at each cooling type's design-day PUE plus ancillary load; and a reference phasing in which each building is energised no earlier than planned and only once the grid alone carries the cumulative IT. The reference is not an option and is not ranked: it shows what the campus could do with no on-site generation. In T1 the 20 MW grid before July 2029 carries 14.6 MW of IT with air cooling, so building 1 would wait 12 months for the 120 MW connection; with air cooling building 4 never fits the grid, with DLC it does.
+- **Grid shortfall against the design load** (built 23 October 2026; OPEN-QUESTIONS 38): the design load (the full contracted IT at the design-day PUE plus ancillary load), the **temporary** shortfall against the offered grid before the full connection date and the **permanent** shortfall from it on (peak MW, its month, and how many months), and the IT load the full grid connection supports on its own. In T1 (120 MW grid from 2029-07) air cooling needs 137 MW, so 16.7 MW stays short from 2031-12 and the full grid supports 87.8 MW of IT; DLC needs 113 MW, has only a temporary shortfall (peak 6.5 MW in 2029-06) and the grid supports 106 MW of IT. On-site generation must close both shortfalls for an option to be adequate.
+- **IT load the grid supports, by grid period** and **grid-matched phasing** (built 23 October 2026; OPEN-QUESTIONS 38, step 3): for each period of constant grid capacity, the IT it carries at the maximum PUE plus any load outside the PUE load; and a reference phasing in which each building is energised no earlier than planned and only once the grid alone carries the cumulative IT. The reference is not an option and is not ranked: it shows what the campus could do with no on-site generation. In T1 the 20 MW grid before July 2029 carries 14.6 MW of IT with air cooling, so building 1 would wait 12 months for the 120 MW connection; with air cooling building 4 never fits the grid, with DLC it does.
 
 ## Values not generated
 

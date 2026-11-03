@@ -14,7 +14,7 @@ import { timeToPower, economics, carbon, resilience, allOptionFlags, unmetSummar
 import { scoreOptions } from './scoring.js';
 import { hashString } from './prng.js';
 import { PROFILE_LABEL } from './profiles.js';
-import { getRegistry, PLANT_DEFAULTS } from './defaults.js';
+import { getRegistry, PLANT_DEFAULTS, COOLING_ID } from './defaults.js';
 import { PLANT_SOURCE } from './plants.js';
 import { createRunLog, STAGE, hashInputs, shortHash, mergeLogs } from './runlog.js';
 import { paretoView } from './pareto.js';
@@ -316,6 +316,14 @@ export function* runModelSteps(rawInputs, opts = {}) {
   const windNote = s.valuesNotGenerated.find((x) => x.id === 'C11' && x.note);
   if (windNote) runFlags.push(flag('tech-wind-default', 'info', 'Technology', windNote.note));
   if (inputs.load.workload === 'ai-training') runFlags.push(flag('load-ai', 'info', 'Load', 'AI training transient load not modelled'));
+  // Entered PUE (work package 20): what the hourly PUE does with the two figures on this weather year.
+  {
+    const cp = ctx.cooling[COOLING_ID], cf = inputs.load.coolingFactor ?? 1;
+    const fmt = (x) => (Math.round(x * 1000) / 1000).toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+    runFlags.push(flag('pue-entered', 'info', 'Load', `PUE entered: annual ${fmt(cp.annualEntered)}, maximum ${fmt(cp.maxEntered)} at the design temperature (${(Math.round(cp.designT * 10) / 10).toFixed(1)} °C dry bulb)${cf !== 1 ? `; overhead scaled × ${fmt(cf)}` : ''}. Hourly PUE follows the weather between them: lowest ${fmt(1 + Math.min(...cp.coolFrac))}, year's mean ${fmt(1 + cp.coolAvg)}.`));
+    if (cp.maxBelowAnnual) runFlags.push(flag('pue-max-below', 'minor', 'Load', `Maximum PUE ${fmt(cp.maxEntered)} is below the annual PUE ${fmt(cp.annualEntered)}: the PUE is held flat at the annual value and the design load uses it too.`));
+    if (cp.clampedHours > 0) runFlags.push(flag('pue-clamped', 'minor', 'Load', `The maximum PUE is far above the annual PUE for this weather: in ${cp.clampedHours.toLocaleString('en-GB')} cold hours the overhead would fall below 0 and is held at PUE 1.0, so the year's mean PUE is ${fmt(1 + cp.coolAvg / cf)} instead of ${fmt(cp.annualEntered)}.`));
+  }
   if (layoutSummary && layoutSummary.onDemand) runFlags.push(flag('site-layout-on-demand', 'info', 'Site', `Site layout (Beta): this large campus was not laid out option by option in the run (layout work ${(layoutSummary.work / 1e6).toFixed(1)} million block², limit ${Number(((inputs.settings.siteLayoutWorkLimit ?? 2e7) / 1e6).toPrecision(3)).toLocaleString('en-GB')} million), because site fit does not change the ranking. The Site tab lays out each option it shows. To lay out every option in the run, set "Site layout in the run" to every option`));
   // Existing plant ticked but incomplete (work package 12): not generated, and the run says why.
   if (ctx.existing && ctx.existing.include && !ctx.existing.entered) runFlags.push(flag('existing-incomplete', 'minor', 'Technology', `Existing plant near the site is ticked but not generated: enter its ${ctx.existing.missing.join(' and ')}`));
@@ -347,7 +355,7 @@ export function* runModelSteps(rawInputs, opts = {}) {
     scoring,
     verification,
     runFlags,
-    shortfall: shortfallAnalysis(ctx, [...new Set(options.map((o) => o.v.C8))].sort()),
+    shortfall: shortfallAnalysis(ctx, [COOLING_ID]),
     flexAnalysis: triggerAnalysis(ctx),
     meritOrder: MERIT_ORDER,
     dispatchHandling: { grid: inputs.settings.gridHandling, runHours: inputs.settings.runHourHandling },

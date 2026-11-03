@@ -17,7 +17,7 @@ import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel, existingEntered
 import { parsePlantValue, isPlantPower, isTakeover } from './plants.js';
 import { mulberry32, subSeed, shuffle, hashString } from './prng.js';
 import { permanentShortfallCoolings, shortfallAnalysis } from './adequacy.js';
-import { COOLING } from './defaults.js';
+import { COOLING_ID } from './defaults.js';
 import { buildContext } from './context.js';
 import { triggerSet } from './triggers.js';
 
@@ -34,21 +34,8 @@ export function noGridEver(inputs) {
   return !(g.nowMW > 0) && !(g.fullMW > 0) && !(g.steps || []).some((s) => Number(s.mw) > 0);
 }
 
-// Open cooling type with the lowest design facility load, once per inputs object (known issue 4, work package 14): the
-// archetypes use it, so a reference strategy is not judged on the cooling the engineer left open.
-const LOWEST = new WeakMap();
-function lowestDesignCooling(inputs, open) {
-  let c = LOWEST.get(inputs);
-  if (!c) {
-    const ctx = buildContext(inputs, { site: { noSiteModel: true } });
-    const by = shortfallAnalysis(ctx, Object.keys(COOLING)).byCooling;
-    c = by.slice().sort((a, b) => a.designMW - b.designMW).map((x) => x.cooling);
-    LOWEST.set(inputs, c);
-  }
-  return c.find((id) => open.includes(id)) || open[0];
-}
-
-// Cooling types with a permanent shortfall, once per inputs object (rule g).
+// Whether the PUE profile has a permanent shortfall, once per inputs object (rule g). Since work package 20 there is one
+// profile (COOLING_ID) in place of one per cooling type.
 const PERM = new WeakMap();
 function permSet(inputs) {
   let s = PERM.get(inputs);
@@ -111,13 +98,13 @@ export const RULES = [
     fails: (v, inputs) => v.C10 === 'roofGround' && !(inputs.site.pvGroundHa > 0) },
   { id: 'g', name: '(g) A top-up firm plant requires a permanent shortfall',
     detail: 'C4 sizing = Permanent shortfall is not generated for a cooling type whose design load the full grid covers (OPEN-QUESTIONS 58, 2026-10-23); it would repeat C4 = None. Islanded options always have one.',
-    fails: (v, inputs) => v.C4s === 'shortfall' && v.C1 !== 'islanded' && !permSet(inputs).has(v.C8) },
+    fails: (v, inputs) => v.C4s === 'shortfall' && v.C1 !== 'islanded' && !permSet(inputs).has(COOLING_ID) },
   { id: 'h', name: '(h) Splitting bridging plant requires generating plant and a permanent shortfall',
     detail: 'C3 = Keep shortfall share as prime, rest as backup is not generated with C2 = BESS + solar only (no generating plant to keep running), or for a cooling type whose design load the full grid covers (it would repeat Retain as backup) (OPEN-QUESTIONS 59, 2026-10-23).',
-    fails: (v, inputs) => v.C3 === 'split' && (v.C2 === 'bessSolar' || !permSet(inputs).has(v.C8)) },
+    fails: (v, inputs) => v.C3 === 'split' && (v.C2 === 'bessSolar' || !permSet(inputs).has(COOLING_ID)) },
   { id: 'i', name: '(i) A shortfall battery requires a permanent shortfall and a grid to recharge from',
     detail: 'C12 = Sized to the permanent shortfall is not generated when islanded, for a cooling type whose design load the full grid covers, or with a BESS role other than peak-shave (OPEN-QUESTIONS 60, 2026-10-23).',
-    fails: (v, inputs) => v.C12 === 'shortfall' && (v.C1 === 'islanded' || !permSet(inputs).has(v.C8) || v.C12r !== 'peakShave') },
+    fails: (v, inputs) => v.C12 === 'shortfall' && (v.C1 === 'islanded' || !permSet(inputs).has(COOLING_ID) || v.C12r !== 'peakShave') },
   { id: 'j', name: '(j) A trigger-hours battery requires flexibility and trigger hours',
     detail: 'C12 = Sized to the trigger hours is generated only with C16 = On, and (unless the battery size is held fixed) only when the profile has trigger hours at the trigger level (OPEN-QUESTIONS 33, 2026-10-23).',
     fails: (v, inputs) => v.C12 === 'trigger' && (v.C16 !== 'on' || (inputs.load.flexBatteryFixed !== 'size' && triggerHours(inputs) <= 0)) },
@@ -157,7 +144,7 @@ export const RULES = [
     fails: (v, inputs) => v.C10 === 'none' && v.C9 !== NA && v.C9 !== openValues(inputs, 'C9')[0] },
   { id: 'n', name: '(n) Existing plant as firm plant is sized once',
     detail: 'C4 = Existing plant is the units offered whatever the sizing rule, so only one C4 sizing is generated: Permanent shortfall where there is one (islanded included), otherwise Average load.',
-    fails: (v, inputs) => isPlantPower(v.C4) && v.C4s === 'average' && (v.C1 === 'islanded' || permSet(inputs).has(v.C8)) },
+    fails: (v, inputs) => isPlantPower(v.C4) && v.C4s === 'average' && (v.C1 === 'islanded' || permSet(inputs).has(COOLING_ID)) },
 ];
 export const RULE_D = { id: 'd', name: '(d) Choices that are n/a collapse to "n/a" rather than multiplying options',
   detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, the backup arrangement when there are no gensets, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets, C21 when islanded.' };
@@ -398,10 +385,6 @@ function archetypeVector(a, inputs) {
     if (a.v[id] !== undefined) v[id] = a.v[id];
     else v[id] = openValues(inputs, id)[0];
   }
-  // Cooling (known issue 4, work package 14, OPEN-QUESTIONS 84): the engineer's cooling type when one is set; when it is
-  // left open, the open type with the lowest design facility load, not the first in the list (air).
-  const c8 = openValues(inputs, 'C8');
-  if (c8.length > 1) v.C8 = lowestDesignCooling(inputs, c8);
   // Solar archetypes take "Roof + ground" only when a ground area for PV is entered; otherwise Roof only (rule f).
   if (v.C10 === 'roofGround' && !(inputs.site.pvGroundHa > 0)) v.C10 = 'roof';
   // Archetypes with a PPA use the engineer's PPA when one is ticked (OPEN-QUESTIONS 49), and drop it where it could
@@ -409,7 +392,7 @@ function archetypeVector(a, inputs) {
   if (v.C13 !== 'none' && inputs.utilities.ppaInclude) { v.C13 = inputs.utilities.ppaType; v.C14 = String(inputs.utilities.ppaCoverage); }
   if (v.C13 !== 'none' && (v.C1 === 'islanded' || noGridEver(inputs))) v.C13 = 'none';
   // Firm-plant archetypes take the top-up sizing only where there is a permanent shortfall (rule g).
-  if (v.C4s === 'shortfall' && v.C1 !== 'islanded' && !permSet(inputs).has(v.C8)) v.C4s = 'average';
+  if (v.C4s === 'shortfall' && v.C1 !== 'islanded' && !permSet(inputs).has(COOLING_ID)) v.C4s = 'average';
   return canonical(v);
 }
 
@@ -555,7 +538,6 @@ export function optionName(v, s) {
   if (v.C4 !== 'none') parts.push(`${choiceLabel('C4', v.C4)}${v.C4s === 'shortfall' ? ' top-up' : ''}`);
   const backup = v.C5 === 'none' ? 'no backup' : v.C5 === 'retained' ? 'retained-plant backup' : `${choiceLabel('C5', v.C5).replace(' gensets', '')} ${v.C6}${v.C5a === 'pooled' ? ' pooled' : ''}`;
   parts.push(backup);
-  parts.push(choiceLabel('C8', v.C8).split(' ')[0]);
   if (s && s.solarMWp > 0) parts.push(`PV ${s.solarMWp.toFixed(s.solarMWp < 10 ? 1 : 0)} MWp`);
   if (s && s.windMW > 0) parts.push(`Wind ${s.windMW.toFixed(0)} MW`);
   if (v.C12 === 'shortfall') parts.push('BESS for the shortfall');

@@ -203,6 +203,15 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Acceptance tests:** Node test 50 (`app/tests/plants-tests.mjs`, 50a–e).
 - **Progress:** research done, decisions taken and built 2026-10-31 on `feature/existing-plant` (owner's go-ahead the same day); verified the same day (`verification/existing-plant/`: three Haiku checks and an Opus review); the review's findings fixed and its seven owner decisions (OPEN-QUESTIONS 124–130) built by 2026-11-02 (choices C21 two ways, C22, rules (q) and (r), bought whole, data-centre plants left out, five times the cap with plants). Merged into `main` on 2026-11-02 with the owner's yes.
 
+### 20. PUE entered directly, in place of the cooling types (added 2026-11-02)
+
+- **Why:** the owner, 2026-11-02: "I want to ditch the cooling options and let the user set up PUE and max PUE." Found in a real study: a cooling-energy factor calibrated on the synthetic weather gave a different peak PUE when the Windows program swapped in the nearest NOAA station, and with a zero grid margin the ranking turned over. Engineers usually have the client's PUE figures, not a cooling type.
+- **What:** choice C8 and `load.coolingApproach` removed, with the evaporative, DLC and immersion types; new inputs `load.pueAnnual` (default 1.3) and `load.pueMax` (default 1.5), both judgement; hourly PUE = 1 + a + b × s(h) from the air-cooled curve, set so the weather year averages the annual figure and the design hour reaches the maximum (`engine/profiles.js`, `pueProfile`); critical load for backup and heat rejected at the maximum PUE; no cooling capex delta; optional WUE (`load.wue`); one white-space density (`load.densityKWm2`, 1.5); no CHP absorption-chiller credit (flag `tech-chp-no-credit`); the "PUE" driver scales both overheads; run flags `pue-entered`, `pue-clamped`, `pue-max-below`; `load.ancillaryFrac` default 0 (OPEN-QUESTIONS 140, to confirm).
+- **Decisions:** OPEN-QUESTIONS 131–139, answered by the owner on 2026-11-02 ("A" for the hourly shape, then "Do 1 to 9" of Claude's list); 140 open (Claude's default). Point 10 of the list (mapping old study files' cooling types to PUE values) was not chosen: an old study opens on the PUE defaults with the standard "left out" message.
+- **User guide:** chapters on load and building inputs and the PUE model (see `docs/user-guide/README.md`).
+- **Acceptance tests:** Node test 51 (`app/tests/pue-tests.mjs`); tests 24, 32, 41, 44, 47a, 50, 25–27 and the run tests updated for the single PUE profile.
+- **Progress:** built 2026-11-02 on `feature/pue-inputs`. Not merged; not verified by Haiku (ask the owner first).
+
 ## Not scheduled
 
 Ask the owner before starting any of these:

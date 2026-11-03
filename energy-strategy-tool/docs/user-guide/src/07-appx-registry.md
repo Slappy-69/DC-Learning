@@ -11,7 +11,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **project.name**: Untitled project; judg.
 - **project.country**: none; judg. null = derived from location (nearest built-in country centroid); overridable.
 - **project.currency**: by country (by country / EUR / GBP / CHF / NOK / SEK / DKK / ISK); judg. Display only; converted at the ECB reference rates of the release (project.fx). Inputs stay in euro.
-- **project.analysisStart**: 2027-01 (YYYY-MM); judg. Today + 3 months. No source; replace with the client programme start.
+- **project.analysisStart**: 2027-02 (YYYY-MM); judg. Today + 3 months. No source; replace with the client programme start.
 - **project.seed**: 20261015 integer; run.
 
 ## Country data (values in Appendix B)
@@ -54,7 +54,7 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 
 ## Load and building
 
-- **load.itMW**: none (MW IT at full build (blank = estimated from the site area)); judg. Blank: site area × building coverage × storeys ÷ gross-up × whitespace density of the cooling type (air when the cooling is an open choice), the same rule the building massing uses (OPEN-QUESTIONS 26).
+- **load.itMW**: none (MW IT at full build (blank = estimated from the site area)); judg. Blank: site area × building coverage × storeys ÷ gross-up × whitespace density (load.densityKWm2), the same rule the building massing uses (OPEN-QUESTIONS 26).
 - **load.estimateCoverage**: 0.35 fraction of the site area covered by data halls; range 0.2–0.5; judg. Walkthrough 2026-10-21: 35 % site coverage for the IT estimate from area. To research.
 - **load.rampStart**: 0.25 fraction of phase IT at energisation; range 0.1–0.5; judg. The owner's judgement (2026-10-22, OPEN-QUESTIONS 51; was 50 %). No source; replace with the client's fit-out programme.
 - **load.rampMonths**: 12 months; range 6–24; judg.
@@ -70,13 +70,16 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **load.aiInfTrough**: 0.6 night trough as a fraction of the daily peak; range 0.2–1; judg. No source; to research.
 - **load.aiInfPeakHour**: 15 hour of the daily peak (local); range 0–23; judg. No source; to research.
 - **load.aiInfWeekend**: 0.9 weekend level as a fraction of weekdays; range 0.5–1.1; judg. No source; to research.
-- **load.coolingApproach**: open; judg. Open choice (C8).
+- **load.pueAnnual**: 1.3 annual PUE (facility energy ÷ IT energy over the year); range 1.1–1.6; judg. Owner 2026-11-02 (OPEN-QUESTIONS 131, 132): entered by the engineer; default 1.3 is judgement, no source. Covers every facility load: cooling, electrical losses and offices.
+- **load.pueMax**: 1.5 maximum PUE (design day, 100 % IT); range 1.2–2; judg. Owner 2026-11-02 (OPEN-QUESTIONS 131, 132): entered by the engineer; default 1.5 is judgement, no source. Sets the design facility load, the critical load for backup and the heat rejected.
+- **load.densityKWm2**: 1.5 kW of IT per m² of white space; range 1–6; judg. Owner 2026-11-02 (OPEN-QUESTIONS 135): one density in place of the cooling types' own; 1.5 was the air-cooled value. Used for the IT estimate from the site area and for each building's white space.
+- **load.wue**: none (litres of water per kWh of IT (blank = water not reported)); range 0–2.5; judg. Owner 2026-11-02 (OPEN-QUESTIONS 134): optional; blank leaves water use out of the results.
 - **load.grossUp**: 2.2 GFA / whitespace; range 1.8–2.6; judg.
 - **load.storeys**: 2 storeys; range 1–6; judg.
 - **load.storeyHeightM**: 6 m; range 5–7; judg.
 - **load.roofZoneM**: 4 m; range 3–6; judg.
-- **load.coolingFactor**: 1 × cooling energy (PUE above 1); range 0.8–1.2; judg. Tornado driver "PUE": scales fans and mechanical cooling. No source.
-- **load.ancillaryFrac**: 0.02 fraction of installed IT; range 0.01–0.04; judg.
+- **load.coolingFactor**: 1 × PUE overhead (PUE above 1); range 0.8–1.2; judg. Tornado and Monte Carlo driver "PUE": scales the overhead above 1 of the annual and the maximum PUE together (work package 20, OPEN-QUESTIONS 139). No source.
+- **load.ancillaryFrac**: 0 fraction of installed IT; range 0–0.04; judg. Loads outside the PUE only. Since work package 20 the entered PUE covers every facility load, so the default is 0 (was 2 % on top of the cooling-type PUE; OPEN-QUESTIONS 140, to confirm).
 - **load.flexMaxPct**: 0.1 fraction of IT curtailable; range 0–0.3; judg.
 - **load.flexHours**: 100 h/yr; range 0–500; judg.
 - **load.flexTrigger**: price (price / carbon / stress); judg. Weather and grid stress is modelled as the ambient temperature at or above the trigger level (source to research).
@@ -132,6 +135,9 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **existing.types.ccgt.eff**: 0.56 electrical efficiency (LHV), with a part-load allowance; range 0.5–0.6; judg. Modern F-class CCGT about 58 % at full load; 56 % allows for part load (Pego study, 2026-10-24).
 - **existing.types.ccgt.msl**: 0.45 minimum stable load, fraction of one unit; range 0.35–0.5; judg. Typical for single-shaft F-class blocks; confirm with the owner of the plant.
 - **existing.types.ccgt.vomPerMWh**: 3 €/MWh; range 2–5; judg.
+- **existing.types.steam.eff**: 0.38 electrical efficiency (LHV); range 0.32–0.42; judg. Conventional gas-fired steam units, about 35–40 % (work package 19, 2026-10-31).
+- **existing.types.steam.msl**: 0.4 minimum stable load, fraction of one unit; range 0.3–0.5; judg.
+- **existing.types.steam.vomPerMWh**: 3 €/MWh; range 2–5; judg.
 - **existing.include**: off; judg. Off unless the engineer enters an existing plant near the site (work package 12).
 - **existing.name**: Existing plant; judg.
 - **existing.type**: ccgt (ccgt / ocgt / engines); judg. Sets the efficiency, minimum stable load and variable O&M unless entered.
@@ -143,6 +149,14 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **existing.vomPerMWh**: none (€/MWh); judg. Empty = by type.
 - **existing.leasePerKWMonth**: 6 €/kW/month; range 3–9; judg. Capacity payment for the lease, paid from a month before the plant is first needed (settings.rentalLeadMonths). Assumed in the Pego study (2026-10-24); replace with the owner's offer.
 - **existing.linkCapex**: 0 €; judg. One-off: the connection from the plant to the campus (lines, bays). Booked when the lease starts.
+- **existing.closeYear**: none (year); judg. Empty = the plant runs for the whole study and its grid connection is not offered.
+- **existing.buyPerKW**: none (€/kW); judg. Empty = plants.buyPerKW.
+- **existing.refurbPerKW**: none (€/kW); judg. Empty = plants.refurbPerKW.
+- **existing.fomPerKW**: none (€/kW/yr); judg. Empty = plants.fomPerKW.
+- **existing.buyExtraYears**: none (years); judg. Empty = plants.buyExtraYears.
+- **existing.takeoverMW**: none (MW); judg. Empty = the plant's output.
+- **existing.takeoverCostPerMW**: none (€/MW); judg. Empty = plants.takeoverCostFrac × the extra-high-voltage connection rate.
+- **existing.takeoverLagMonths**: none (months); judg. Empty = plants.takeoverLagMonths.
 
 ## Requirements
 
@@ -247,7 +261,6 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **choices.C5a**: open: perBuilding, pooled; judg. Both arrangements generated (OPEN-QUESTIONS 47, 48, 2026-10-22): per building is the rule; pooled is studied alongside and carries a client-perceived risk item in deliverability.
 - **choices.C6**: locked: N+1; judg.
 - **choices.C7**: locked: 48; judg.
-- **choices.C8**: open: air, evap, dlc, immersion; judg.
 - **choices.C9**: open: roof, ground, split; judg.
 - **choices.C10**: open: none, roof; judg. Default None and Roof only; Roof + ground is added when the ground area for PV (site.pvGroundHa) is above 0 (OPEN-QUESTIONS 54, 2026-10-22).
 - **choices.C11**: open: none; judg. Default "None" when site area ≤ 20 ha and no off-site land; otherwise open.
@@ -261,6 +274,8 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **choices.C18**: open: single; judg.
 - **choices.C19**: locked: perPhase; judg.
 - **choices.C20**: locked: none; judg.
+- **choices.C21**: open: none; judg.
+- **choices.C22**: open: none, replace; judg.
 
 ## Fuels and emission factors
 
@@ -282,73 +297,20 @@ Abbreviations: **src** = basis "source" (should come from a published source); *
 - **ppa.strike.cfe247**: 95 €/MWh; range 80–120; src; check against PPA market indices.
 - **ppa.shapingAdder**: 5 €/MWh; range 2–10; src; check against PPA market indices.
 
-## Cooling approaches
+## Shape of the hourly PUE (air-cooled curve; work package 20)
 
 
 ### Air (chilled water + free cooling)
 
 Check against: ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies.
 
-- **tempBasis**: drybulb; src.
-- **fcThreshold**: 10 °C; range 8–14; src.
-- **band**: 10 K; range 6–12; src.
-- **copRef**: 5 COP at tRef; range 4–6; src.
-- **tRef**: 25 °C; src.
-- **copSlope**: 0.12 COP per K; range 0.08–0.16; src.
-- **fanFrac**: 0.07 MW per MW IT; range 0.05–0.09; src.
-- **lossFrac**: 0.07 MW per MW IT; range 0.05–0.09; src.
-- **densityKWm2**: 1.5 kW IT/m² whitespace; range 1.2–2; src.
-- **wueBase**: 0.05 L/kWh IT; range 0–0.2; src.
-- **capexDeltaPerKW**: 0 €/kW IT vs air; src.
-
-### Evaporative-adiabatic
-
-Check against: ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies.
-
-- **tempBasis**: wetbulb; src.
-- **fcThreshold**: 14 °C wet-bulb; range 12–17; src.
-- **band**: 6 K; range 4–8; src.
-- **copRef**: 6.5 COP at tRef; range 5–8; src.
-- **tRef**: 20 °C wet-bulb; src.
-- **copSlope**: 0.15 COP per K; range 0.1–0.2; src.
-- **fanFrac**: 0.05 MW per MW IT; range 0.04–0.07; src.
-- **lossFrac**: 0.07 MW per MW IT; range 0.05–0.09; src.
-- **densityKWm2**: 1.8 kW IT/m² whitespace; range 1.4–2.2; src.
-- **wueBase**: 0.3 L/kWh IT; range 0.1–0.5; src.
-- **wueEvap**: 1.8 L/kWh IT in adiabatic hours; range 1.2–2.5; src.
-- **capexDeltaPerKW**: -40 €/kW IT vs air; range -80–0; src.
-
-### DLC + dry coolers
-
-Check against: ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies.
-
-- **tempBasis**: drybulb; src.
-- **fcThreshold**: 26 °C; range 22–30; src.
-- **band**: 10 K; range 6–12; src.
-- **copRef**: 5.5 COP at tRef; range 4.5–6.5; src.
-- **tRef**: 35 °C; src.
-- **copSlope**: 0.1 COP per K; range 0.06–0.14; src.
-- **fanFrac**: 0.045 MW per MW IT; range 0.03–0.06; src.
-- **lossFrac**: 0.06 MW per MW IT; range 0.05–0.08; src.
-- **densityKWm2**: 4 kW IT/m² whitespace; range 3–6; src.
-- **wueBase**: 0.02 L/kWh IT; range 0–0.1; src.
-- **capexDeltaPerKW**: 150 €/kW IT vs air; range 80–250; src.
-
-### Immersion
-
-Check against: ASHRAE TC 9.9 thermal guidelines; vendor data; published design studies.
-
-- **tempBasis**: drybulb; src.
-- **fcThreshold**: 30 °C; range 26–34; src.
-- **band**: 10 K; range 6–12; src.
-- **copRef**: 5.5 COP at tRef; range 4.5–6.5; src.
-- **tRef**: 38 °C; src.
-- **copSlope**: 0.1 COP per K; range 0.06–0.14; src.
-- **fanFrac**: 0.03 MW per MW IT; range 0.02–0.05; src.
-- **lossFrac**: 0.06 MW per MW IT; range 0.05–0.08; src.
-- **densityKWm2**: 3 kW IT/m² whitespace; range 2–4.5; src.
-- **wueBase**: 0.02 L/kWh IT; range 0–0.1; src.
-- **capexDeltaPerKW**: 250 €/kW IT vs air; range 150–400; src.
+- **tempBasis**: drybulb; src. Shape of the hourly PUE only (work package 20): its levels come from the entered annual and maximum PUE.
+- **fcThreshold**: 10 °C; range 8–14; src. Shape of the hourly PUE only (work package 20): its levels come from the entered annual and maximum PUE.
+- **band**: 10 K; range 6–12; src. Shape of the hourly PUE only (work package 20): its levels come from the entered annual and maximum PUE.
+- **copRef**: 5 COP at tRef; range 4–6; src. Shape of the hourly PUE only (work package 20): its levels come from the entered annual and maximum PUE.
+- **tRef**: 25 °C; src. Shape of the hourly PUE only (work package 20): its levels come from the entered annual and maximum PUE.
+- **copSlope**: 0.12 COP per K; range 0.08–0.16; src. Shape of the hourly PUE only (work package 20): its levels come from the entered annual and maximum PUE.
+- **fanFrac**: 0.07 MW per MW IT; range 0.05–0.09; src. Shape of the hourly PUE only (work package 20): its levels come from the entered annual and maximum PUE.
 
 ## Technology library
 
@@ -847,3 +809,32 @@ Check against: ISO 9613-2 (geometric divergence term only).
 - **permitting.outlook.dieselPrime**: unlikely (likely / uncertain / unlikely); judg. Diesel or HVO engines running as prime power in normal operation are unlikely to be consented under air-quality rules in most of Europe.
 - **permitting.outlook.hydrogen**: uncertain (likely / uncertain / unlikely); judg. Hydrogen storage above the Seveso threshold adds a major-accident regime and separation distances; few precedents at data centres.
 - **permitting.outlook.backup**: likely (likely / uncertain / unlikely); judg. Standby gensets tested a few hours a year are routinely permitted at data centres, although they bring the site under the IED.
+
+## Existing gas plants from the bundled list (work package 19)
+
+- **plants.effRange**: ccgt [0.45, 0.63]; ocgt [0.28, 0.42]; engines [0.38, 0.5]; steam [0.3, 0.45] (plausible electrical efficiency by type (low, high)); judg. Work package 19: the bundled list's efficiency is used only inside this range; outside it the type's value is used (some list values are far below what the type can reach). Opus review finding 16.
+- **plants.radiusKm**: 10 km from the site; judg. Owner, 2026-10-31 (OPEN-QUESTIONS 117): only plants the campus could share a site with.
+- **plants.minMW**: 50 MW, smallest plant; judg. Owner, 2026-10-31 (OPEN-QUESTIONS 117).
+- **plants.mergeKm**: 1 km: entries closer than this, of the same type and similar size, are one plant; judg. OPEN-QUESTIONS 118: the list carries some plants twice (from different source lists).
+- **plants.mergeSizeFrac**: 0.25 fraction: the smaller entry at least 75 % of the larger; judg. OPEN-QUESTIONS 118.
+- **plants.lifeYears**: 40 years after the first year, when the list gives no closure date; range 25–45; judg. OPEN-QUESTIONS 121: gas plants often run 25 to 40 years.
+- **plants.buyExtraYears**: 10 years added by the refurbishment when the plant is bought; range 5–15; judg. OPEN-QUESTIONS 121.
+- **plants.leasePerKWMonth**: 6 €/kW/month; range 3–9; judg. As the manual plant (work package 12, Pego study, 2026-10-24); replace with the owner's offer.
+- **plants.buyPerKW**: 150 €/kW bought (the share the campus uses); range 50–400; judg. Purchase of an ageing gas plant; no published price found (work package 19, 2026-10-31). Replace with the seller's price.
+- **plants.refurbPerKW**: 100 €/kW refurbishment when bought; range 50–250; judg. Life-extension works for the extra years (OPEN-QUESTIONS 121); no published figure found.
+- **plants.fomPerKW**: 25 €/kW/yr fixed O&M of a bought plant; range 15–40; judg. Fixed O&M of an older CCGT, own staff and maintenance (work package 19).
+- **plants.takeoverLagMonths**: 12 months from the plant closing to the campus using its connection; range 6–24; judg. OPEN-QUESTIONS 120: transfer and works.
+- **plants.takeoverCostFrac**: 0.25 fraction of the standard extra-high-voltage connection rate; range 0.1–0.5; judg. OPEN-QUESTIONS 120: about €30k/MW against €120k/MW for a new connection.
+- **plants.dataCentreNames**: data ?cent(er|re)|datacent|\bDC\b|echelon|profile park|winthrop|microsoft|google|amazon|\baws\b|equinix|digital realty|cyrus ?one|vantage|edgeconnex|pure dc|keppel|\bmeta\b|facebook (name pattern (case ignored)); judg. Names in the bundled list that point to a data centre's own plant (in the 2026-10-07 list: six entries, all in Dublin). They are left out of the analysis unless the engineer ticks them in.
+- **plants.capMultiplier**: 5 × the generation cap when the study has options with an existing plant; range 1–20; judg. Owner, 2026-11-02 (OPEN-QUESTIONS 130): "find the best of the best"; at the default cap of 2,000, 10,000 options are screened. Run time grows about in proportion.
+- **plants.sampleShare**: 0.5 fraction of the sampled options kept for options with an existing plant; range 0.2–0.8; judg. OPEN-QUESTIONS 118: each plant gets its own equal share of this, so no plant is crowded out (builder, 2026-10-31).
+- **plants.unitMW.ccgt**: 400 MW per unit, when the list gives the plant total only; judg. A typical CCGT block; the list gives no unit count.
+- **plants.unitMW.ocgt**: 100 MW per unit; judg. A typical heavy-duty open-cycle turbine.
+- **plants.unitMW.engines**: 10 MW per unit; judg. As the tool's gas recips.
+- **plants.unitMW.steam**: 300 MW per unit; judg. A typical gas-fired steam unit.
+- **plants.auto**: on; judg. Owner, 2026-10-31 (OPEN-QUESTIONS 118): every gas plant of 50 MW or more within 10 km enters the analysis. Off = the bundled list is not read.
+- **plants.edits**:  (corrections per plant); judg. Empty = the values of the bundled list and the defaults, each flagged with its source.
+
+## Measured weather
+
+- **weather.source**: none (none / epw / station); judg. none: the synthetic country temperatures (indicative — unverified). epw: a file the engineer uploads. station: the nearest bundled NOAA station (Windows program only, OPEN-QUESTIONS 114; built 2026-10-31).

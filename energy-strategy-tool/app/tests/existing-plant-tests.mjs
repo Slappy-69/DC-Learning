@@ -30,12 +30,12 @@ export async function existingPlantTests(test, ctxRuns) {
     assert.ok(!ex.some((o) => o.v.C2 === 'existing' && o.v.C4 === 'existing'), 'the plant in two roles');
     assert.ok(asBridge.every((o) => (o.v.C3 === 'remove' || o.v.C3 === 'prime' || o.v.C3 === NA) && o.v.C5 !== 'retained'), 'bridging role outside rule (m)');
     const ctx = run.ctx;
-    const perm = new Set(['air', 'evap', 'dlc', 'immersion'].filter((c) => asFirm.some((o) => o.v.C8 === c && o.v.C4s === 'shortfall' && o.v.C1 !== 'islanded')));
+    const perm = new Set(asFirm.some((o) => o.v.C4s === 'shortfall' && o.v.C1 !== 'islanded') ? ['pue'] : []); // one PUE profile (work package 20)
     assert.ok(asFirm.every((o) => o.v.C4s === 'shortfall' || o.v.C1 !== 'islanded'), 'islanded firm plant sized twice');
-    assert.ok(asFirm.every((o) => !(o.v.C4s === 'average' && perm.has(o.v.C8) && o.v.C1 !== 'islanded')), 'rule (n): two sizings for one cooling type');
+    assert.ok(asFirm.every((o) => !(o.v.C4s === 'average' && perm.has('pue') && o.v.C1 !== 'islanded')), 'rule (n): two sizings');
     // Every cooling type (Haiku check H4, L-10): shortfall sizing exactly where the cooling type has a permanent shortfall.
     const permAll = permanentShortfallCoolings(normalizeInputs(inp));
-    for (const o of asFirm) assert.equal(o.v.C4s, o.v.C1 === 'islanded' || permAll.has(o.v.C8) ? 'shortfall' : 'average', `${o.id}: rule (n) sizing for ${o.v.C8}`);
+    for (const o of asFirm) assert.equal(o.v.C4s, o.v.C1 === 'islanded' || permAll.has('pue') ? 'shortfall' : 'average', `${o.id}: rule (n) sizing`);
     const rate = 6 * 1000;
     let checked = 0;
     for (const o of ex) {

@@ -65,7 +65,7 @@ If you only want to use the tool, read Part I and the chapters of Part III you n
 - **Units:** MW (megawatt, power), MWh (megawatt-hour, energy), MWp (megawatt-peak, the rated output of solar panels), MWth (thermal megawatt, the energy content of fuel burnt per hour), ha (hectare, 10,000 m²), g/kWh (grams of CO₂-equivalent per kilowatt-hour, the same number as kg/MWh).
 - **€ m** means million euros. **TWh** is a million MWh.
 - **"Option"** means one complete energy strategy: a set of design choices plus the plant sizes that follow from them. **"Run"** means one evaluation of all the options. **"Default"** means the value the program uses when you have not entered one.
-- **Choices** are named C1 to C20 (for example C8, cooling approach). The full list is in chapter 20.
+- **Choices** are named C1 to C20 (for example C5, backup power technology). The full list is in chapter 20.
 - Names of buttons, tabs and fields are in **bold**, or in quotation marks inside sentences.
 - Formulas are written out in words and symbols on their own lines, like this:
 

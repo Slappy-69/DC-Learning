@@ -2,7 +2,7 @@
 // and plain sizing sentences. Every option is sized by the same rules before any check.
 // The grid connection is the offered capacity per period and is never resized.
 
-import { TECH, COOLING, SPATIAL, choiceLabel } from './defaults.js';
+import { TECH, COOLING_ID, SPATIAL, choiceLabel } from './defaults.js';
 import { designDemandByMonth, demandYear, designDayPUE, contractedCap, ctxFor } from './context.js';
 import { NA } from './generator.js';
 import { permittingTriggers, permitRegimes, permitOutlookItem } from './permitting.js';
@@ -87,18 +87,18 @@ export function sizeOption(ctx, v) {
   const L = inputs.load;
   const req = inputs.requirements;
   const sentences = [];
-  const coolingId = v.C8;
+  const coolingId = COOLING_ID; // one hourly PUE profile since work package 20
   const cp = ctx.cooling[coolingId];
-  const cool = COOLING[coolingId];
   const { arr: designByMonth, peakPUE } = designDemandByMonth(ctx, coolingId);
   const itMW = L.itMW;
   const designMW = itMW * (peakPUE + L.ancillaryFrac);
-  const basisWord = cool.p.tempBasis === 'wetbulb' ? 'wet-bulb' : 'dry-bulb';
-  sentences.push(`Design facility load: ${r1(itMW)} MW IT × peak PUE ${peakPUE.toFixed(3)} (${cool.name}, design ${basisWord} ${(cool.p.tempBasis === 'wetbulb' ? ctx.prof.designWetbulb : ctx.prof.designTemp).toFixed(1)} °C${ctx.prof.designTemp50 != null ? ', n = 20' : ''}) + ancillary ${(L.ancillaryFrac * 100).toFixed(0)} % = ${r1(designMW)} MW.`);
+  const basisWord = 'dry-bulb';
+  const cfTxt = (L.coolingFactor ?? 1) !== 1 ? `, overhead × ${L.coolingFactor}` : '';
+  sentences.push(`Design facility load: ${r1(itMW)} MW IT × maximum PUE ${peakPUE.toFixed(3)} (entered${cfTxt}; design dry-bulb ${ctx.prof.designTemp.toFixed(1)} °C${ctx.prof.designTemp50 != null ? ', n = 20' : ''}) + ancillary ${(L.ancillaryFrac * 100).toFixed(0)} % = ${r1(designMW)} MW.`);
   // The n = 50 check (owner 2026-10-31, OPEN-QUESTIONS 115): shown, not used for sizing.
   let check50 = null;
   if (cp.coolPeak50 != null) {
-    const peakPUE50 = 1 + cp.coolPeak50 + cp.lossFrac; // as designDemandByMonth's peak PUE, at the n = 50 temperature
+    const peakPUE50 = 1 + cp.coolPeak50 + cp.lossFrac; // the hourly-PUE shape at the n = 50 temperature (work package 20)
     const mw50 = itMW * (peakPUE50 + L.ancillaryFrac);
     check50 = { designT: cp.designT50, peakPUE: peakPUE50, designMW: mw50, extraMW: mw50 - designMW };
     sentences.push(`Check at n = 50 (design ${basisWord} ${cp.designT50.toFixed(1)} °C): peak PUE ${peakPUE50.toFixed(3)}, design facility load ${r1(mw50)} MW (${mw50 >= designMW ? '+' : ''}${r1(mw50 - designMW)} MW); not used for sizing.`);
@@ -111,14 +111,16 @@ export function sizeOption(ctx, v) {
   const avgMW = ssDem.sum / 8760;
 
   // --- Building massing (for roof PV and the area budget) ---
-  const whitespace = (itMW * 1000) / cool.p.densityKWm2;
+  const whitespace = (itMW * 1000) / (Number(L.densityKWm2) > 0 ? Number(L.densityKWm2) : 1.5); // load.densityKWm2 (work package 20)
   const gfa = whitespace * L.grossUp;
   const footprint = gfa / L.storeys;
   const heightM = L.storeys * L.storeyHeightM + L.roofZoneM;
 
   // --- Critical load and backup (§9.2) ---
+  // Work package 20 (OPEN-QUESTIONS 133): the whole facility at design, IT × maximum PUE (the entered PUE has no split
+  // between cooling and electrical losses).
   const criticalMW = req.backedPct * itMW * (1 + cp.coolPeak);
-  sentences.push(`Critical load for backup: ${(req.backedPct * 100).toFixed(0)} % × (${r1(itMW)} MW IT + ${r1(itMW * cp.coolPeak)} MW mechanical at design) = ${r1(criticalMW)} MW.`);
+  sentences.push(`Critical load for backup: ${(req.backedPct * 100).toFixed(0)} % × ${r1(itMW)} MW IT × maximum PUE ${(1 + cp.coolPeak).toFixed(3)} = ${r1(criticalMW)} MW.`);
   const backup = { tech: null, units: 0, unitMW: 0, mw: 0, nUnits: 0, fuelM3: 0, autonomyH: 0, bessMW: 0, bessMWh: 0, topology: v.C6 };
   if (v.C5 === 'none') sentences.push('Backup: none (flagged).');
 

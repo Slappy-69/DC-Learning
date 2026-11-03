@@ -12,13 +12,13 @@ import { plainSummary, SUMMARY_WORD_LIMIT } from '../src/engine/summary.js';
 import { studyFile, readStudyFile } from '../src/engine/study.js';
 
 export async function reviewFixTests(test, ctxRuns) {
-  await test('47a. Known issue 22: "Capex (every line)" multiplies every capex line, the cooling delta and fuel-cell stack replacements included, by exactly its factor, for every cooling type', () => {
+  await test('47a. Known issue 22: "Capex (every line)" multiplies every capex line and fuel-cell stack replacements by exactly its factor (the cooling delta was dropped in work package 20)', () => {
     const run = ctxRuns.runT1;
     const by = run.options.slice().sort((a, b) => a.rank - b.rank);
-    const picks = ['evap', 'dlc', 'immersion', 'air'].map((c) => by.find((o) => o.v.C8 === c)).filter(Boolean);
+    const picks = by.slice(0, 4);
     const fc = by.find((o) => o.v.C2 === 'fuelCell' || o.v.C4 === 'fuelCell');
     if (fc) picks.push(fc);
-    assert.ok(picks.length >= 4, `cooling types found: ${picks.length}`);
+    assert.ok(picks.length >= 4, `options found: ${picks.length}`);
     const ctxAt = (k) => { const i = normalizeInputs(run.inputs); i.economics.capexFactor = k; return buildContext(i, { site: run.ctx.site }); };
     const c1 = ctxAt(1);
     const out = [];
@@ -27,10 +27,10 @@ export async function reviewFixTests(test, ctxRuns) {
       for (const o of picks) {
         const a = evaluateOption(c1, o.v, { skipLayout: true }).eco, b = evaluateOption(ck, o.v, { skipLayout: true }).eco;
         const r = b.capexExContingency / a.capexExContingency;
-        assert.ok(Math.abs(r - k) < 1e-9, `#${o.rank} (${o.v.C8}) capex × ${k}: ratio ${r}`);
+        assert.ok(Math.abs(r - k) < 1e-9, `#${o.rank} capex × ${k}: ratio ${r}`);
         const rep = (e) => e.ledger.reduce((s, y) => s + y.replacement, 0);
         if (rep(a) > 0) assert.ok(Math.abs(rep(b) / rep(a) - k) < 1e-9, `#${o.rank} replacements × ${k}: ratio ${rep(b) / rep(a)}`);
-        if (k === 1.5) out.push(`#${o.rank} ${o.v.C8}${o === fc ? ' (fuel cell)' : ''}`);
+        if (k === 1.5) out.push(`#${o.rank}${o === fc ? ' (fuel cell)' : ''}`);
       }
     }
     return `capex and replacements × 1.5 and × 0.7 exactly: ${out.join(', ')}`;

@@ -52,7 +52,7 @@ export async function adequacyTests(test, ctxRuns) {
       if (nA) assert.ok(rf.message.startsWith(`${nA.toLocaleString('en-GB')} of ${opts.length.toLocaleString('en-GB')} options`));
       // (g) Shortfall analysis, recomputed by hand from the design load and the grid capacity.
       const ctx = run.ctx;
-      const coolings = [...new Set(opts.map((o) => o.v.C8))].sort();
+      const coolings = ['pue']; // one hourly PUE profile since work package 20
       assert.deepEqual(run.shortfall.byCooling.map((c) => c.cooling), coolings, `${label}: shortfall cooling types`);
       const T = Math.min(ctx.fullGridM, ctx.nMonthsTimeline);
       for (const c of run.shortfall.byCooling) {

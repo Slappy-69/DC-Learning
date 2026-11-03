@@ -138,7 +138,7 @@ Since 23 October 2026 (decision O2) the PPA counts only against grid energy actu
 ## Water
 
 ::: formula
-| WUE (L/kWh) = base WUE + evaporative WUE × hours with adiabatic or mechanical assist ÷ 8,760
+| WUE (L/kWh) = the entered WUE (blank: water not reported; since 2 November 2026, work package 20)
 | water (m³ a year) = WUE × IT MWh in the steady-state year
 :::
 

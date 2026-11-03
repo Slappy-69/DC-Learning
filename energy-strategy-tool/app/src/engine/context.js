@@ -2,9 +2,9 @@
 // these arrays depend only on inputs, not on the option's choices).
 
 import { applyWeather } from './weather.js';
-import { COUNTRIES, COOLING, TECH, FUEL, FX, applyExistingPlant, applyPlants, plantOf, PLANT_DEFAULTS } from './defaults.js';
+import { COUNTRIES, COOLING_ID, PUE_SHAPE, TECH, FUEL, FX, applyExistingPlant, applyPlants, plantOf, PLANT_DEFAULTS } from './defaults.js';
 import { parsePlantValue, isTakeover } from './plants.js';
-import { getProfiles, coolingProfile, nearestCountry, H } from './profiles.js';
+import { getProfiles, pueProfile, nearestCountry, H } from './profiles.js';
 import { monthsBetween, yearOf, parseYM } from './dates.js';
 import { mulberry32, subSeed } from './prng.js';
 import { buildSiteModel } from './site.js';
@@ -188,9 +188,10 @@ export function buildContext(inputs, opts = {}) {
   const baseYear = yearOf(inputs.project.analysisStart);
   const startMonth = parseYM(inputs.project.analysisStart).m;
 
-  const cooling = {};
-  for (const id of Object.keys(COOLING)) cooling[id] = coolingProfile(COOLING[id], prof);
-  // Cooling energy multiplier (tornado driver "PUE", work package 9): scales fans and mechanical cooling.
+  // Hourly PUE from the entered annual and maximum PUE (work package 20, owner 2026-11-02): one profile, in place of one
+  // per cooling type. Kept under the key COOLING_ID so the rest of the engine reads it as before.
+  const cooling = { [COOLING_ID]: pueProfile(PUE_SHAPE, prof, Number(inputs.load.pueAnnual), Number(inputs.load.pueMax)) };
+  // PUE overhead multiplier (tornado and Monte Carlo driver "PUE", work packages 9 and 20): scales the overhead above 1.
   const cf = inputs.load.coolingFactor ?? 1;
   if (cf !== 1) for (const id of Object.keys(cooling)) {
     const c = cooling[id];
@@ -236,7 +237,7 @@ export function ctxFor(ctx, v) {
   if (!v || !isTakeover(v.C21) || ctx.takeover) return ctx;
   // Cached first (Opus review finding 19): the key holds everything the derived context depends on in this run.
   const own0 = [v.C2, v.C4].map(parsePlantValue).find((p) => p && p.id === parsePlantValue(v.C21).id && p.mode !== 'takeover');
-  const key = `${v.C21}|${own0 ? own0.mode : '-'}|${v.C8}|${v.C1}`;
+  const key = `${v.C21}|${own0 ? own0.mode : '-'}|${v.C1}`;
   if (!ctx.takeoverCache) ctx.takeoverCache = new Map();
   const hit = ctx.takeoverCache.get(key);
   if (hit) return hit;
@@ -248,7 +249,7 @@ export function ctxFor(ctx, v) {
   const closeM = own && (own.mode === 'buy' || own.mode === 'buyWhole') && plant.closeM !== Infinity ? plant.closeM + plant.buyExtraYears * 12 : plant.closeM;
   // A plant whose default closure has passed (OPEN-QUESTIONS 125): its connection from the transfer months after the start.
   const month = plant.defaultPassed ? plant.takeoverM : Math.max(0, closeM) + plant.takeoverLagMonths;
-  const { arr } = designDemandByMonth(ctx, v.C8);
+  const { arr } = designDemandByMonth(ctx, COOLING_ID);
   let need = 0;
   for (let m = 0; m < arr.length; m++) if (arr[m] > need) need = arr[m];
   const mw = Math.max(0, Math.min(plant.takeoverMW, need));
@@ -271,7 +272,7 @@ export function ctxFor(ctx, v) {
   return d;
 }
 
-// Hourly facility demand for model year y (8760 h), for one cooling approach.
+// Hourly facility demand for model year y (8760 h), from the hourly PUE (coolingId is COOLING_ID since work package 20).
 // Returns { D, M, IT } where D = facility MW, M = mechanical cooling MW (for the CHP absorption credit), IT = IT MW.
 export function demandYear(ctx, coolingId, y) {
   const key = `${coolingId}|${y}`;
@@ -299,14 +300,14 @@ export function demandYear(ctx, coolingId, y) {
   return out;
 }
 
-// Design facility load per month (peak PUE, 100 % IT installed) for a cooling approach.
-// Design-day PUE hour by hour (OPEN-QUESTIONS 60, 2026-10-23): the year's hottest day of the cooling type's
-// temperature basis, shifted so that its hottest hour is at the design temperature; PUE from the same cooling model as
-// the peak PUE, so the peak hour equals the design load. Used to size and check a battery against the design day.
+// Design facility load per month (maximum PUE, 100 % IT installed).
+// Design-day PUE hour by hour (OPEN-QUESTIONS 60, 2026-10-23; work package 20): the year's hottest day, shifted so that
+// its hottest hour is at the design temperature; PUE from the same shape as the hourly PUE, so the hottest hour is the
+// entered maximum PUE and the peak hour equals the design load. Used to size and check a battery against the design day.
 export function designDayPUE(ctx, coolingId) {
   if (!ctx.designDayCache) ctx.designDayCache = new Map();
   if (ctx.designDayCache.has(coolingId)) return ctx.designDayCache.get(coolingId);
-  const p = COOLING[coolingId].p;
+  const p = PUE_SHAPE.p;
   const cp = ctx.cooling[coolingId];
   const prof = ctx.prof;
   const t = p.tempBasis === 'wetbulb' ? prof.wetbulb : prof.temp;
@@ -321,7 +322,8 @@ export function designDayPUE(ctx, coolingId) {
     const T = t[d0 + k] + (designT - dayMax);
     const c = Math.max(1.5, p.copRef - p.copSlope * (T - p.tRef));
     const part = T <= p.fcThreshold ? 0 : T >= p.fcThreshold + p.band ? 1 : (T - p.fcThreshold) / p.band;
-    out[k] = 1 + (p.fanFrac + part / c) * (ctx.inputs.load.coolingFactor ?? 1) + cp.lossFrac;
+    const o = cp.shapeB > 0 ? Math.max(0, cp.shapeA + cp.shapeB * (p.fanFrac + part / c)) : cp.coolPeak / (ctx.inputs.load.coolingFactor ?? 1);
+    out[k] = 1 + o * (ctx.inputs.load.coolingFactor ?? 1) + cp.lossFrac;
   }
   ctx.designDayCache.set(coolingId, out);
   return out;

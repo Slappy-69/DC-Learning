@@ -1,7 +1,7 @@
 // Per-option evaluation: time-to-power (§9.8), economics ledger (§9.5), carbon and water (§9.6),
 // resilience check (§9.7), flags (§15) and deliverability (§9.9).
 
-import { TECH, FUEL, PPA, COOLING, COUNTRIES, choiceLabel } from './defaults.js';
+import { TECH, FUEL, PPA, COUNTRIES, choiceLabel } from './defaults.js';
 import { decarbFactor, contractedCap, contractLimit, ctxFor } from './context.js';
 import { assumedFlags } from './assumed.js';
 import { fuelPrice, fuelEF } from './dispatch.js';
@@ -234,17 +234,8 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     addCapex(`${t.name} (replacing ${TECH[sz.bridge.tech].name} as backup)`, yearOfMonth(rb.fromMonth), rb.mw * 1000 * t.p.capexPerKW, t.p.life);
     if (rb.fuelM3 > 0) addCapex('Bulk fuel storage (replacement backup)', yearOfMonth(rb.fromMonth), rb.fuelM3 * TECH.fuelStorage.p.capexPerM3, 30);
   }
-  // Cooling capex delta vs air baseline (may be negative: booked as a negative line)
-  const coolDelta = sz.itMW * 1000 * COOLING[sz.coolingId].p.capexDeltaPerKW;
-  if (coolDelta !== 0) {
-    for (const ps of (perPhase ? phaseShares : [{ year: phaseShares[0] ? phaseShares[0].year : 0, share: 1 }])) {
-      if (ps.year > N - 1) continue;
-      const amt = coolDelta * ps.share * capF; // the "capex (every line)" factor scales this line too (known issue 22)
-      capexLines.push({ item: 'Cooling capex delta vs air', year: ps.year, amount: amt });
-      ledger[ps.year].capex += amt;
-      ledger[ps.year].contingency += amt * cont;
-    }
-  }
+  // Cooling capex delta between cooling types: dropped in work package 20 (OPEN-QUESTIONS 134): the cooling plant is the
+  // same in every option, so it does not change the comparison.
   // Heat reuse not costed in this slice (C15 locked None by default)
 
   // Replacements and residual value
@@ -424,13 +415,12 @@ export function carbon(ctx, sz, eco, disp) {
   const loc = del > 0 ? ((s1 + s2l) / del) * 1000 : 0; // t/MWh -> g/kWh
   const mkt = del > 0 ? ((s1 + s2m) / del) * 1000 : 0;
   const cfePct = net > 0 ? cfe / net : 0;
-  // Water (WUE) on steady-state year IT energy
-  const cool = COOLING[sz.coolingId].p;
-  const cp = ctx.cooling[sz.coolingId];
+  // Water on steady-state year IT energy (work package 20, OPEN-QUESTIONS 134): from the entered WUE (litres per kWh of
+  // IT); left blank, water is not reported (null).
   const ssd = disp.years[disp.years.length - 1];
-  const adFrac = cp.adiabaticHours / 8760;
-  const wue = cool.wueBase + (cool.wueEvap ? cool.wueEvap * adFrac : 0);
-  const waterM3 = (wue * ssd.itMWh * 1000) / 1000;
+  const wueIn = ctx.inputs.load.wue;
+  const wue = wueIn == null || wueIn === '' || !Number.isFinite(Number(wueIn)) ? null : Number(wueIn);
+  const waterM3 = wue == null ? null : (wue * ssd.itMWh * 1000) / 1000;
   return {
     locationG: loc, marketG: mkt, cfePct, scope1T: s1, scope2LocT: s2l, scope2MktT: s2m,
     scope1Annual: s1 / ctx.inputs.economics.periodYears, scope2LocAnnual: s2l / ctx.inputs.economics.periodYears,
@@ -687,8 +677,11 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   const usesH2 = sz.prime && sz.prime.tech === 'hydrogen';
   if (usesH2 && inputs.utilities.hydrogenAvailable !== 'Yes') flags.push(flag('fuel-h2-unavailable', 'major', 'Fuel and utilities', 'Hydrogen supply unavailable at current inputs'));
   if (usesH2 && inputs.utilities.hydrogenAvailable === 'Yes') flags.push(flag('fuel-h2-assumed', 'minor', 'Fuel and utilities', 'Hydrogen supply assumed (date and price unconfirmed)'));
-  if (typeof inputs.utilities.waterAvailable === 'number' && carb.waterM3 / 365 > inputs.utilities.waterAvailable) flags.push(flag('fuel-water', 'minor', 'Fuel and utilities', `Water use ${Math.round(carb.waterM3 / 365)} m³/day above availability`));
+  if (typeof inputs.utilities.waterAvailable === 'number' && carb.waterM3 != null && carb.waterM3 / 365 > inputs.utilities.waterAvailable) flags.push(flag('fuel-water', 'minor', 'Fuel and utilities', `Water use ${Math.round(carb.waterM3 / 365)} m³/day above availability`));
   if (v.C2 === 'dieselPrime') flags.push(flag('fuel-diesel-prime', 'minor', 'Fuel and utilities', 'HVO-diesel prime bridging (flagged in §8 C2)'));
+  // Work package 20 (OPEN-QUESTIONS 136): with the PUE entered directly, the split between cooling and other loads is not
+  // known, so the CHP's recovered heat is not credited against mechanical cooling.
+  if (sz.prime && sz.prime.tech === 'chp') flags.push(flag('tech-chp-no-credit', 'info', 'Technology', 'Absorption-chiller credit not modelled: the PUE is entered directly, so the CHP\'s recovered heat is not credited against the cooling load'));
 
   // Targets and ceilings
   if (req.carbonTarget != null && carb.locationG > req.carbonTarget) flags.push(flag('target-carbon', 'minor', 'Targets and ceilings', `Carbon target not met: ${carb.locationG.toFixed(0)} > ${req.carbonTarget} gCO₂e/kWh`));

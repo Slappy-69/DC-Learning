@@ -1,5 +1,5 @@
 import React from 'react';
-import { LABEL, CHOICE_BY_ID } from '../engine/defaults.js';
+import { LABEL } from '../engine/defaults.js';
 import { monthLabel, sig } from '../format.js';
 
 // What site fit does and does not change (§5.7, §9.9, §10.4, §11), in words. The status is never a weight:
@@ -22,7 +22,8 @@ export function siteFitEffect(inputs) {
 // Grid shortfall analysis (OPEN-QUESTIONS 38, step 1, 2026-10-22): the phased design load (contracted IT at the
 // design-day PUE plus ancillary) against the offered grid capacity, month by month, for each cooling type the run
 // generates. Temporary = before the full grid connection date; permanent = from it on.
-const coolingName = (id) => { const v = CHOICE_BY_ID.C8 && CHOICE_BY_ID.C8.values.find((x) => x[0] === id); return v ? v[1] : id; };
+// One hourly PUE profile since work package 20 (the entered annual and maximum PUE), in place of one per cooling type.
+const coolingName = () => 'Entered PUE';
 function ShortfallSection({ sf, start }) {
   const part = (x) => (x.months
     ? <>peak {sig(x.peakMW, 3)} MW in {monthLabel(start, x.peakMonth)}; {x.months} month{x.months === 1 ? '' : 's'} from {monthLabel(start, x.firstMonth)}</>
