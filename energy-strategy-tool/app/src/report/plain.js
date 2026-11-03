@@ -17,17 +17,17 @@ export function flagHeadline(f, start) {
   let x;
   switch (id) {
     case 'permit-ied':
-      x = /input ([\d,.]+) MWth\s*(?:≥|>=)\s*([\d,.]+) MWth/.exec(m);
+      x = /input ([\d,.]+) MWth\s*(?:\u2265|>=)\s*([\d,.]+) MWth/.exec(m);
       return x ? `Needs an environmental permit under IED: ${num(x[1])} MWth of combustion plant on site, over the ${num(x[2])} MWth threshold` : 'Needs an environmental permit under IED';
     case 'permit-mcp':
       x = /units of ([\d,.]+) MWth \((.+?)\) are within/.exec(m);
       return x ? `Medium combustion plant rules apply to the ${lower(x[2])} (${num(x[1])} MWth per unit)` : 'Medium combustion plant rules apply';
     case 'permit-outlook':
-      x = /Permitting outlook: (.+?) \(([^;]+); ([^)]+)\): (\w+); ready month (\d+), needed month (\d+), (\d+) months?(?:'|’)? (late|float)/.exec(m);
+      x = /Permitting outlook: (.+?) \(([^;]+); ([^)]+)\): (\w+); ready month (\d+), needed month (\d+), (\d+) months?(?:'|\u2019)? (late|float)/.exec(m);
       if (x) return `Permit for the ${lower(x[1])} (${x[3]}) is ${x[4]}: ready ${monthText(start, x[5])}, needed ${monthText(start, x[6])}${x[8] === 'late' ? `, ${x[7]} months late` : ''}`;
       return 'Permit timing to check';
     case 'permit-seveso-fuel':
-      x = /([\d,.]+) t (.+?)\s*(?:≥|>=)\s*([\d,.]+) t/.exec(m);
+      x = /([\d,.]+) t (.+?)\s*(?:\u2265|>=)\s*([\d,.]+) t/.exec(m);
       return x ? `Fuel store of ${num(x[1])} t of ${x[2]} is above the ${num(x[3])} t hazardous-substances (COMAH) threshold` : 'Fuel store above the hazardous-substances threshold';
     case 'permit-h2':
       x = /Hydrogen storage ([\d,.]+) t/.exec(m);
@@ -36,7 +36,7 @@ export function flagHeadline(f, start) {
       x = /Stack height ([\d.,]+) m above the ([\d.,]+) m height limit/.exec(m);
       return x ? `Stacks of ${x[1]} m would break the ${x[2]} m height limit` : 'Stacks above the height limit';
     case 'grid-shortfall':
-      x = /up to ([\d.,]+) MW in months (\d+)[–-](\d+)/.exec(m);
+      x = /up to ([\d.,]+) MW in months (\d+)[\u2013-](\d+)/.exec(m);
       return x ? `Grid import below the design load by up to ${x[1]} MW, ${monthText(start, x[2])} to ${monthText(start, x[3])}` : 'Grid import below the design load at times';
     case 'grid-binding':
       x = /binding: ([\d,]+) h, ([\d,]+) MWh unmet/.exec(m);

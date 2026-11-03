@@ -2188,3 +2188,4 @@ The owner's choices from Claude's list (OPEN-QUESTIONS 147; 148–152 Claude's d
 - **`engine/recommend.js`:** new items `permits`, `fuel`, `gas`, `backup`; budgets in `bridge` (`hirePerYear`, or capex of the bridging line); helpers `capexOf`, `gasNeed` (MW × the largest fuel MWh per MWh in the dispatch).
 - **Tests:** Node test 53 (`tests/report-review-tests.mjs`); test 30 looks for plain input names; test 52 expects nine sections, seven figures and the new front figures.
 - **T1 sample (2026-11-02):** 27 pages with every test run (front page, sections on pages 2–13, appendices from page 14); 26 pages without (was 32).
+- **Test run (2026-11-02):** Node suite 94 of 94; browser checks 43 of 43. The first build had five non-ASCII characters in regular expressions of `plain.js` and `recommend.js` (≥, ’, –), written as `\u` escapes.

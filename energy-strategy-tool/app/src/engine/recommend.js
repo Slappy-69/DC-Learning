@@ -133,7 +133,7 @@ export function recommendations(run, opts = {}) {
 
   // 5c. The fuel store against the hazardous-substances (COMAH) threshold.
   const sev = L.flags.find((f) => f.id === 'permit-seveso-fuel');
-  const sx = sev && /([\d,.]+) t .*?(?:≥|>=)\s*([\d,.]+) t/.exec(sev.message);
+  const sx = sev && /([\d,.]+) t .*?(?:\u2265|>=)\s*([\d,.]+) t/.exec(sev.message);
   if (sx) {
     const t = Number(sx[1].replace(/,/g, '')), thr = Number(sx[2].replace(/,/g, '')), h = Number(I.requirements.autonomyH);
     const hBelow = t > 0 && h > 0 ? Math.floor((h * thr) / t) : null;
