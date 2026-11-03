@@ -94,6 +94,7 @@ import { monteCarloTests } from './montecarlo-tests.mjs';
 import { plantTests } from './plants-tests.mjs';
 import { pueTests } from './pue-tests.mjs';
 import { reportDesignTests } from './report-design-tests.mjs';
+import { reportReviewTests } from './report-review-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1276,6 +1277,8 @@ await plantTests(test);
 await pueTests(test, siteRuns);
 // 52. Work package 21: the report in the study layout (OPEN-QUESTIONS 141–146).
 await reportDesignTests(test, siteRuns);
+// 53. Work package 22: the report review (OPEN-QUESTIONS 147–152).
+await reportReviewTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

@@ -59,17 +59,20 @@ export async function reportDesignTests(test, ctxRuns) {
     const p0 = pages[0];
     for (const t of ['ENERGY STRATEGY SCREENING STUDY', toWinAnsi(details.question), 'Prepared for: Example client', 'Prepared by: Energy team', 'What decides it']) assert.ok(p0.includes(t), `front page lacks "${t}"`);
     assert.ok(flatOf([p0]).includes(toWinAnsi(`The leading option is #1 ${L.name}`)), 'the answer names the leader');
-    for (const t of [perMWh(L.eco.lcoe, 3), money(L.eco.capex, 3), `${sig(L.carbon.locationG, 3)} g/kWh`]) assert.ok(p0.split('\n').includes(toWinAnsi(t)), `tile ${t} missing`);
+    // Work package 22: the front figures follow the study report (gap, bridging plant, against waiting, months late).
+    const tiles = [g.temporary.months > 0 ? `${sig(g.temporary.peakMW, 3)} MW` : null, L.sizing.bridge && L.sizing.bridge.mw > 0 ? `${sig(L.sizing.bridge.mw, 3)} MW` : null, `${Math.round(L.ttp.delayFull || 0)} month${Math.round(L.ttp.delayFull || 0) === 1 ? '' : 's'}`].filter(Boolean);
+    for (const t of tiles) assert.ok(p0.split('\n').includes(toWinAnsi(t)), `tile ${t} missing`);
+    assert.ok(flatOf([p0]).includes(toWinAnsi(perMWh(L.eco.lcoe, 3))), 'the LCOE is not in the answer');
     const pageOf = (t) => pages.findIndex((p) => p.split('\n').includes(toWinAnsi(t)));
     const at = REPORT_SECTIONS.map(pageOf);
     assert.ok(at.every((x, i) => x >= 1 && (i === 0 || x >= at[i - 1])), `sections out of order: ${at.join(',')}`);
-    for (let i = 0; i < 6; i++) assert.ok(at[i + 1] > at[i], `section ${i + 2} does not start a new page`);
-    for (const t of ['Figure 1.', 'Figure 2.', 'Figure 3.']) assert.ok(all.includes(t), `${t} missing`);
+    for (let i = 0; i < 8; i++) assert.ok(at[i + 1] > at[i], `section ${i + 2} does not start a new page`);
+    for (let n = 1; n <= 7; n++) assert.ok(all.includes(`Figure ${n}.`), `Figure ${n} missing`);
     assert.ok(all.includes("The leader's capex") && all.includes('Cost of each strategy over each evaluation period'));
-    assert.ok(pages[at[6]].includes('1.') && all.includes(toWinAnsi('Written by fixed rules from this run')), 'recommendations');
+    assert.ok(pages[at[7]].includes('1.') && all.includes(toWinAnsi('Written by fixed rules from this run')), 'recommendations');
     // Deterministic.
     assert.deepEqual(buildReport(run, { created, sensitivity: sens, breakevens: be, monteCarlo: mc, details, appVersion: 'test' }).bytes, r.bytes);
-    out.push(`${r.pages} pages; front page, sections 1–8 on pages ${at.slice(0, 8).map((x) => x + 1).join(', ')}, appendices from page ${at[8] + 1}`);
+    out.push(`${r.pages} pages; front page, sections 1–9 on pages ${at.slice(0, 9).map((x) => x + 1).join(', ')}, appendices from page ${at[9] + 1}`);
 
     // (d) Without details: the default subtitle, no "Prepared for".
     const r0 = buildReport(run, { created });

@@ -13,6 +13,7 @@ import { sameFigures } from './cards.js';
 import { nearestFlips } from './breakeven.js';
 import { shortFlag } from './summary.js';
 import { weatherSummary } from './weather.js';
+import { flagHeadline } from '../report/plain.js';
 import { sig, money, monthLabel, perMWh } from '../format.js';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -30,6 +31,25 @@ const plural = (n, w, p = `${w}s`) => `${n.toLocaleString('en-GB')} ${n === 1 ? 
 const listText = (xs) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const techName = (t) => (TECH[t] ? TECH[t].name : t);
+// Capex lines of an option whose item matches a pattern (summed over years, real terms).
+export const capexOf = (o, re) => ((o.eco && o.eco.capexLines) || []).filter((c) => re.test(c.item)).reduce((t, c) => t + c.amount, 0);
+// The largest yearly hire of rented plant in the option's ledger (real terms).
+export const hirePerYear = (o) => Math.max(0, ...((o.eco && o.eco.ledger) || []).map((y) => y.rental || 0));
+const GAS_TECH = new Set(['gasRecip', 'gasTurbine', 'chp', 'fuelCell', 'rented', 'backupGas']);
+// Peak gas the option's running plant can burn (MW thermal): each plant's MW × its fuel per MWh from the dispatch.
+export function gasNeed(o) {
+  const sz = o.sizing || {};
+  const years = (o.dispatch && o.dispatch.years) || [];
+  const out = [];
+  for (const role of ['bridge', 'prime']) {
+    const p = sz[role];
+    if (!p || !(p.mw > 0) || !GAS_TECH.has(p.tech)) continue;
+    let rate = 0;
+    for (const y of years) for (const q of y.plants || []) if (q.role === role && q.tech === p.tech && q.mwh > 0) rate = Math.max(rate, q.fuelMWhTh / q.mwh);
+    if (rate > 0) out.push({ role, tech: p.tech, mw: p.mw, mwth: p.mw * rate });
+  }
+  return out;
+}
 
 // The choices on which two options differ, as "C2 bridging technology: rented temporary generation against gas turbines".
 export function choiceDifferences(a, b) {
@@ -86,7 +106,10 @@ export function recommendations(run, opts = {}) {
   if (br && br.mw > 0 && g && g.temporary && g.temporary.months > 0) {
     const permit = br.permitRegimes && br.permitRegimes.length ? ` It needs ${br.permitRegimes.length === 1 ? 'a permit' : 'permits'} under ${listText(br.permitRegimes)}; the programme allows ${plural(br.permitM || 0, 'month')} for ${br.permitRegimes.length === 1 ? 'it' : 'them'}.` : '';
     const after = { remove: 'removed when the grid is ready', backup: 'kept as the campus backup', prime: 'kept running as prime power', split: 'kept for the permanent shortfall, the rest as backup', gridServices: 'kept for grid services' }[L.v.C3] || '';
-    add('bridge', `**Secure the bridging plant now.** ${sig(br.mw, 3)} MW of ${techName(br.tech).toLowerCase()}${br.units ? ` (${br.units} × ${sig(br.unitMW, 3)} MW)` : ''}, needed from ${monthText(start, g.temporary.firstMonth)} for ${plural(g.temporary.months, 'month')} until the grid carries the design load${g.fullGridMonth != null ? ` (${monthText(start, g.fullGridMonth)})` : ''}${after ? `, then ${after}` : ''}.${permit}`);
+    const hire = br.tech === 'rented' ? hirePerYear(L) : 0;
+    const bought = capexOf(L, /\((bridging|retained as backup)\)$/);
+    const budget = hire > 0 ? ` Budget about ${money(hire, 2)} a year of hire while it runs, with fuel and carbon on top.` : bought > 0 ? ` Budget about ${money(bought, 2)} of capex for it, with fuel and carbon on top.` : '';
+    add('bridge', `**Secure the bridging plant now.** ${sig(br.mw, 3)} MW of ${techName(br.tech).toLowerCase()}${br.units ? ` (${br.units} × ${sig(br.unitMW, 3)} MW)` : ''}, needed from ${monthText(start, g.temporary.firstMonth)} for ${plural(g.temporary.months, 'month')} until the grid carries the design load${g.fullGridMonth != null ? ` (${monthText(start, g.fullGridMonth)})` : ''}${after ? `, then ${after}` : ''}.${budget}${permit}`);
   }
 
   // 4. The grid margin at full build.
@@ -98,7 +121,42 @@ export function recommendations(run, opts = {}) {
 
   // 5. Major flags on the leader.
   const major = L.flags.filter((f) => f.severity === 'major' && !f.assumed && !f.siteFit);
-  if (major.length) add('flags', `**Clear the major flags early.** ${cap(listText(major.slice(0, 3).map((f) => shortFlag(f.message))))}${major.length > 3 ? `, and ${major.length - 3} more (Appendix F)` : ''}.`);
+  if (major.length) add('flags', `**Clear the major flags early.** ${major.slice(0, 3).map((f) => `${flagHeadline(f, start)}.`).join(' ')}${major.length > 3 ? ` And ${major.length - 3} more (Appendix F).` : ''}`);
+
+  // 5b. Consents: each permit of the leader's plant, with the tool's allowance and when the plant is needed.
+  const po = ((L.sizing && L.sizing.permitOutlook) || []).filter((p) => p.regimes && p.regimes.length);
+  if (po.length) {
+    const allowance = Number(I.requirements.permitAllowanceM) || 0;
+    const late = po.filter((p) => p.readyMonth > p.neededMonth);
+    add('permits', `**Start the consents now.** ${po.slice(0, 4).map((p) => `${cap(lower(p.name))} (${p.role === 'bridge' ? 'bridging' : p.role}): ${p.regimes.join(' and ')} permit, outlook ${p.outlook}; needed ${monthText(start, p.neededMonth)}, ready ${monthText(start, p.readyMonth)} on the tool's programme${p.readyMonth > p.neededMonth ? `, ${p.readyMonth - p.neededMonth} months late` : ''}.`).join(' ')} The tool allows ${plural(allowance, 'month')} for a significant permit; ask planning advisers whether that holds${late.length ? ', and close the late ones first' : ''}.`);
+  }
+
+  // 5c. The fuel store against the hazardous-substances (COMAH) threshold.
+  const sev = L.flags.find((f) => f.id === 'permit-seveso-fuel');
+  const sx = sev && /([\d,.]+) t .*?(?:≥|>=)\s*([\d,.]+) t/.exec(sev.message);
+  if (sx) {
+    const t = Number(sx[1].replace(/,/g, '')), thr = Number(sx[2].replace(/,/g, '')), h = Number(I.requirements.autonomyH);
+    const hBelow = t > 0 && h > 0 ? Math.floor((h * thr) / t) : null;
+    add('fuel', `**Decide the standby fuel hours early.** ${h} h of fuel is about ${sig(t, 3)} t, above the ${sig(thr, 3)} t lower-tier hazardous-substances (COMAH) threshold, which brings a safety regime and a longer consent.${hBelow ? ` ${hBelow} h (about ${sig((t * hBelow) / h, 3)} t) stays below it.` : ''} Check what the customers' resilience requirements allow.`);
+  }
+
+  // 5d. The gas supply the leader's running plant needs.
+  const gn = gasNeed(L);
+  if (gn.length) {
+    const tot = gn.reduce((a, x) => a + x.mwth, 0);
+    const need = po.filter((p) => GAS_TECH.has(p.tech)).map((p) => p.neededMonth);
+    const from = need.length ? Math.min(...need) : null;
+    const gasAt = Number(I.utilities.gasDateMonths) || 0;
+    const known = String(I.utilities.gasAvailable).toLowerCase();
+    add('gas', `**Confirm the gas supply.** Up to about ${sig(tot, 3)} MW thermal (${gn.map((x) => `${x.role === 'bridge' ? 'bridging' : 'prime'} ${sig(x.mw, 3)} MW of ${lower(techName(x.tech))}`).join(', ')})${from != null ? ` from ${monthText(start, from)}` : ''}. ${known === 'yes' ? `Gas is entered as available${gasAt > 0 ? ` from ${monthText(start, gasAt)}` : ''}` : known === 'no' ? 'Gas is entered as not available, so this option cannot run as modelled' : 'Gas availability is not known'}; get the capacity and the date in writing from the gas network.`);
+  }
+
+  // 5e. The backup the leader keeps, with its capex.
+  const bk = L.sizing && L.sizing.backup;
+  if (bk && bk.mw > 0) {
+    const bc = capexOf(L, /gensets \((N|2N)/) + capexOf(L, /^Bulk fuel storage$/);
+    add('backup', `**Plan the permanent backup.** ${bk.units ? `${bk.units} × ${sig(bk.unitMW, 3)} MW ` : `${sig(bk.mw, 3)} MW of `}${lower(techName(bk.tech))}${bk.topology ? ` (${bk.topology})` : ''} with ${sig(bk.autonomyH || I.requirements.autonomyH, 3)} h of fuel${bc > 0 ? `, about ${money(bc, 2)} of capex with the fuel store` : ''}${L.v.C3 === 'backup' ? '; the bridging plant is kept as part of it' : ''}.`);
+  }
 
   // 6. Defaults that matter: the leader's key inputs left at their default, those with the largest tornado swing first.
   const assumed = L.flags.filter((f) => f.assumed && f.path && f.id.startsWith('assumed:'));

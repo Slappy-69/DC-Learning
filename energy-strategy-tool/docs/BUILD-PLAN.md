@@ -221,6 +221,19 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Acceptance tests:** Node test 52 (`app/tests/report-design-tests.mjs`); test 30 and the summary test 43 updated for the new order.
 - **Progress:** built 2026-11-02 on `feature/report-redesign` (on top of `feature/pue-inputs`); merged into `main` on 2026-11-02 with the owner's yes ("Go ahead with the merge"), a fast-forward to c6b63f5. Rows 142–146 confirmed by the owner the same day. Not verified by Haiku (paused). The owner will come back to the report's content ("We'll come back to the report").
 
+### 22. Report review (added 2026-11-02)
+
+- **Why:** the owner's review of the work package 21 sample, from Claude's tick-box list, then "Make the app report more like something you've created" (OPEN-QUESTIONS 147).
+- **What:** study-style front figures; one plain line per flag (`report/plain.js`, `flagHeadline`), the full wording in Appendix F; plain input names (`INPUT_NAMES`) and only the inputs that apply (`inputApplies`); four new figures (programme timeline, LCOE build-up, energy by source each year, carbon each year) and a new section 5, "Energy and carbon over the years" (nine sections now); call-outs on figure 1; new recommendations (consents, fuel store, gas supply, backup) and budgets; Appendices B, F and G shortened.
+- **Decisions:** row 147 answered by the owner; 148–152 Claude's defaults, for the owner to confirm.
+- **User guide:** chapter 29.
+- **Acceptance tests:** Node test 53 (`app/tests/report-review-tests.mjs`); tests 30 and 52 updated.
+- **Progress:** built 2026-11-02 on `feature/report-review`. Not merged.
+
+### Next, chosen by the owner (2026-11-02)
+
+From Claude's list of 20 next steps the owner chose: the report review (package 22, above); a search around the leaders ("local search", a cheap trial first); research of each country's rules for taking over a closing plant's grid connection; the user guide pictures (re-export the T1 worked examples, a new inputs screenshot and a new picture of the PDF contents, after the report and the search). Modelling ideas put on the list (owner, 2026-11-02, from "make them more relatable to actual data centre development"): **energy centre as a service** (bridging or prime power from a third party on a per-MWh or per-MW-month contract, against owning the plant) and **earning from the standby fleet** (Capacity Market and frequency response from standby gensets and a grid-interactive UPS, within the permits' run-hour limits). Not chosen then: lost rent and delay penalties, an interim or flexible grid offer. Paused: the Haiku check, the OpenStreetMap substations, known issue 35, the defaults research. On hold: rebuilding the Windows program and the phone page.
+
 ## Not scheduled
 
 Ask the owner before starting any of these:

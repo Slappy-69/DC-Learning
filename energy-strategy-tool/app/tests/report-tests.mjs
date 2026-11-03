@@ -73,7 +73,8 @@ export async function reportTests(test, ctxRuns) {
     for (const x of rows) assert.ok(/^(Entered|Entered \(required\)|Default: .+)$/.test(x.status));
     assert.ok(rows.find((x) => x.path === 'site.areaHa').status === 'Entered (required)');
     assert.ok(rows.find((x) => x.path === 'economics.wacc').status.startsWith(`Default: ${LABEL}`));
-    for (const p of ['load.itMW', 'grid.fullMW', 'economics.wacc', 'settings.generationCap']) assert.ok(all.includes(p), `${p} not in the PDF`);
+    // Work package 22: plain input names in Appendix A (the study file keeps the paths).
+    for (const p of ['IT load at full build', 'Grid import at full connection', 'Discount rate (WACC, real)', 'Options screened (cap)']) assert.ok(all.includes(toWinAnsi(p)), `${p} not in the PDF`);
     // Results: the top five, the compared options, the tornado drivers.
     const { cards } = topCards(run.options);
     for (const c of cards) assert.ok(all.includes(`#${c.o.rank} `), `card #${c.o.rank} missing`);

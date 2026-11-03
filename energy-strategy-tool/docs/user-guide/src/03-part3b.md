@@ -331,29 +331,30 @@ From the Run progress panel, **Download run log** saves the log of the last run 
 ## PDF report
 
 ::: {.callout .built}
-**Built (23 October 2026, work package 10); rebuilt 2 November 2026 (work package 21) in the layout of the study report.** **Save PDF report** at the top of the window makes one PDF of the run on screen. It leads with the answer, then short numbered sections with charts, then appendices with every input and table. The Windows program asks where to save it; a browser saves it to its downloads folder. Nothing is sent anywhere: the app writes the PDF itself, with the standard PDF fonts (Times and Helvetica), and uses no outside library. **No Excel export.** The Site tab (Beta) is not included.
+**Built (23 October 2026, work package 10); rebuilt 2 November 2026 (work packages 21 and 22) in the layout of the study report.** **Save PDF report** at the top of the window makes one PDF of the run on screen. It leads with the answer, then short numbered sections with charts, then appendices with every input and table. The Windows program asks where to save it; a browser saves it to its downloads folder. Nothing is sent anywhere: the app writes the PDF itself, with the standard PDF fonts (Times and Helvetica), and uses no outside library. **No Excel export.** The Site tab (Beta) is not included.
 :::
 
-The sections (OPEN-QUESTIONS 141, the owner's answer of 2 November 2026):
+The sections (OPEN-QUESTIONS 141 and 147, the owner's answers of 2 November 2026):
 
 | Section | What it holds |
 |---|---|
-| Front page | The project name; the question the report answers (or "Which energy strategy suits the N MW campus, what it costs and what decides it"); prepared for, prepared by and the date; the basis and status. **The answer**: the leading option, its LCOE, carbon, full-load date and capex, the gap the grid leaves, the cost against waiting for the grid and a close runner-up. Four headline figures: LCOE, capex, carbon and months late at full load. **What decides it**: the summary's parts (chapter 22). Your edited note, marked "edited" |
+| Front page | The project name; the question the report answers (or "Which energy strategy suits the N MW campus, what it costs and what decides it"); prepared for, prepared by and the date; the basis and status. **The answer**: the leading option, its LCOE, carbon, full-load date and capex, the gap the grid leaves, the cost against waiting for the grid and a close runner-up. Four headline figures, as in the study report: the gap to bridge, the bridging plant, the cost against waiting for the grid (per MW-month of IT on time when keeping the programme costs more) and the months late at full load; LCOE, capex and carbon fill any place left. **What decides it**: the summary's parts (chapter 22). Your edited note, marked "edited" |
 | 1 · The question and what was modelled | The question, the campus, what the tool did, and a table of the key inputs with their basis (entered or tool default) |
-| 2 · Power need against grid supply | The gap in words; figure 1 (IT handed over on the programme, the facility load at design and the grid import by month, the gap shaded); when each phase could be energised if the programme waited for the grid |
+| 2 · Power need against grid supply | The gap in words; figure 1 (IT handed over on the programme, the facility load at design and the grid import by month, the gap shaded and labelled); when each phase could be energised if the programme waited for the grid; figure 2, the programme timeline (the handovers, the grid, and for each strategy when its plant could be ready after permits and delivery, when the programme needs it, and its full-load date) |
 | 3 · The alternatives | Figure 2: the present value of net cost of each strategy's best option against waiting for the grid (or the leader when no option waits); a table with each one's plant, LCOE, carbon, full load, main issue and rank |
-| 4 · Does it make financial sense? | The leader's present value of net cost, capex and running costs; against waiting for the grid, the cost per MW-month of IT handed over on time; the leader's capex by line; each strategy's LCOE and NPV over each evaluation period |
-| 5 · Permitting, land and resilience | The leader's resilience and adequacy, its major and minor flags by subject, and the main issue of each other strategy. Land fit is not checked (Site tab, Beta) |
-| 6 · How robust is the answer? | What would change the answer and the confidence (from the summary); the tornado (figure 3 and its table), the breakevens and the Monte Carlo when they were run for this run |
-| 7 · Recommendations | A numbered list written by fixed rules from the run's figures (below) |
-| 8 · Limits of this report and what to do next | The guardrail, the defaults, the weather, the Site tab, what is not modelled or not run |
-| Appendix A · Inputs | Every input with its value and "Entered", "Entered (required)" or "Default" with its label and basis; the gas plants near the site; the technology choices generated |
-| Appendix B · Defaults used | The defaults the run used, with basis and note; how many registry records are unverified |
+| 4 · Does it make financial sense? | The leader's present value of net cost, capex and running costs; against waiting for the grid, the cost per MW-month of IT handed over on time; figure 4, what makes up the LCOE (capex, O&M, grid import and network charges, PPA, fuel, hire, carbon) for the leader, the runner-up and waiting, adding up to each LCOE; the leader's capex by line; each strategy's LCOE and NPV over each evaluation period |
+| 5 · Energy and carbon over the years | Where the leader's energy comes from at full load; figure 5, energy by source each modelled year; figure 6, location-based carbon intensity each year of the evaluation period for the leader, the runner-up and waiting |
+| 6 · Permitting, land and resilience | The leader's resilience and adequacy, its major and minor flags by subject, each in one plain line (the full wording is in Appendix F), and the main issue of each other strategy. Land fit is not checked (Site tab, Beta) |
+| 7 · How robust is the answer? | What would change the answer and the confidence (from the summary); the tornado (figure 7 and its table), the breakevens and the Monte Carlo when they were run for this run |
+| 8 · Recommendations | A numbered list written by fixed rules from the run's figures (below) |
+| 9 · Limits of this report and what to do next | The guardrail, the defaults, the weather, the Site tab, what is not modelled or not run |
+| Appendix A · Inputs | The inputs that apply to this run, by plain name, with "Entered", "Entered (required)" or "Default" and its basis; the gas plants near the site; the technology choices generated. The study file keeps every input |
+| Appendix B · Defaults used | How many inputs and registry records are defaults, and the key inputs the leader takes from them |
 | Appendix C · Ranked list | The top five cards (figures, pros, cons, main flags), the top 20, and LCOE against carbon for every option |
 | Appendix D · Compared options | The options ticked for comparison and the choices on which they differ |
 | Appendix E · Energy balance | The top five in the last modelled year and in the first year with load (GWh) |
-| Appendix F · Flags | Every flag on the top five (not the site-fit flags), and the run notes |
-| Appendix G · Summary and method | The summary as generated, its detail, and how the options are generated, dispatched, costed, ranked and recommended |
+| Appendix F · Flags | Every flag on the leader and the major and minor flags of the other four top strategies, in the tool's full wording (not the site-fit flags), and the run notes |
+| Appendix G · Summary and method | The summary as generated, and how the options are generated, dispatched, costed, ranked and recommended |
 
 **Report details.** Inputs section 1 has a folded box, **Report details (PDF only)**, with the question the report answers, "Prepared for" and "Prepared by". They are printed on the front page and saved with the study. They change no figure, so editing them never asks for a new run.
 
@@ -369,6 +370,8 @@ The sections (OPEN-QUESTIONS 141, the owner's answer of 2 November 2026):
 8. consider the Monte Carlo's robust pick when it is not #1;
 9. load measured weather when the run uses the synthetic year;
 10. run the tests not yet run.
+
+Since 2 November 2026 (work package 22, OPEN-QUESTIONS 152) the list also has: start the consents (each permit of the leader's plant, its outlook, when it is needed and when it could be ready); decide the standby fuel hours early when the fuel store is above the hazardous-substances (COMAH) threshold, with the hours that stay below it; confirm the gas supply (the MW thermal the running gas plant needs, and from when); plan the permanent backup (units, topology, fuel and capex); and a budget in the bridging item (hire a year, or capex).
 
 The tool cannot weigh what it does not know (the client's priorities, the site, the market, the permitting authority): treat the list as a starting point for your own judgement.
 
