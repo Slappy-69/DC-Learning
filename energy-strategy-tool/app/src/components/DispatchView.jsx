@@ -4,6 +4,7 @@ import { normalizeInputs, TECH } from '../engine/defaults.js';
 import { sig, money, monthLabel } from '../format.js';
 import StackChart, { fmtMW } from './StackChart.jsx';
 import { siteFor } from './SiteView.jsx';
+import { listedOptions } from '../engine/detail.js';
 
 // Dispatch tab (BRIEF §12.6 phasing timeline, §20 stage 4 dispatch visualisations): how one option is supplied,
 // month by month while the site is energised and hour by hour in each model year, with the annual energy balance,
@@ -71,7 +72,9 @@ export default function DispatchView({ run, optionId = null, setOptionId = () =>
   const option = (optionId != null && ranked.find((o) => o.id === optionId)) || ranked[0] || null;
   const key = option ? `${run.inputHash || ''}|${option.id}` : null;
   const [state, setState] = useState(() => (initial && option ? { key, ...initial } : { key: null }));
-  const optionList = useMemo(() => ranked.map((o) => <option key={o.id} value={o.id}>#{o.rank} {o.name}</option>), [ranked]);
+  // With every combination screened (work package 23) the list offers the best 2,000 and the option shown.
+  const listed = useMemo(() => listedOptions(ranked, option), [ranked, option]);
+  const optionList = useMemo(() => listed.map((o) => <option key={o.id} value={o.id}>#{o.rank} {o.name}</option>), [listed]);
 
   useEffect(() => {
     if (!option || state.key === key) return undefined;

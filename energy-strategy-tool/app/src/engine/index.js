@@ -7,6 +7,7 @@ export { runModel, runModelSteps, startPooledRun, rescore, mergeRuns, toTransfer
 export { verifySteps, verifyTop, FULL_MODEL } from './verify.js';
 export { representativeHours } from './dispatch.js';
 export * from './runlog.js';
+export { DETAIL_KEEP, isLight, lightOption, lightenRun, rebuildOption, ensureDetail, detailIds, withDetail } from './detail.js';
 export { getProfiles, PROFILE_LABEL, nearestCountry, H } from './profiles.js';
 export { buildContext, demandYear, gridCapByMonth, contractedCap, contractLimit, countryFromPin, pinCountryInfo, displayCurrencyCode, resolveCountry } from './context.js';
 export { sizeOption, techAvailMonth, bridgeActive } from './sizing.js';

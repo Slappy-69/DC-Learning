@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { rebuildOption } from '../engine/detail.js';
 import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
 import { sig, money, monthLabel, pct, perMWh } from '../format.js';
@@ -107,7 +108,11 @@ export function PpaHedgeRow({ h }) {
   );
 }
 
-export default function OptionDetail({ o, start, onClose, dominator = null, onShowSite = null, onShowDispatch = null, siteBeta = false, onCompare = null, inCompare = false }) {
+export default function OptionDetail({ o: o0, run = null, start, onClose, dominator = null, onShowSite = null, onShowDispatch = null, siteBeta = false, onCompare = null, inCompare = false }) {
+  // Work package 23: an option outside the best 2,000 keeps a light record; its detail is rebuilt here, with the run's
+  // own per-option chain, so every figure is the run's (the first one takes about a second: the context is built once).
+  const o = useMemo(() => (o0 && o0.light && run ? rebuildOption(run, o0) : o0), [o0, run]);
+  if (o && o.light) return <section className="detail"><p className="note">The detail of this option was not kept (it ranks below the best 2,000).</p></section>;
   const shownFlags = visibleFlags(o, siteBeta);
   const sz = o.sizing;
   const ss = o.dispatch.years[o.dispatch.years.length - 1];

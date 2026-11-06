@@ -17,7 +17,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   runModelSteps, toTransferable, mergeRuns, startPooledRun, normalizeInputs, hashInputs, verifySteps, refreshAdequacyFlag,
-  createProgressTracker, mergeLogs, nowAbs,
+  createProgressTracker, mergeLogs, nowAbs, lightenRun,
 } from './engine/index.js';
 
 function poolSize() {
@@ -104,7 +104,8 @@ export function useCompute(inputs, computeKey) {
           let r = it.next();
           while (!r.done && performance.now() < until) r = it.next();
           if (!r.done) { setTimeout(step, 0); return; }
-          const run = toTransferable(r.value);
+          // Work package 23: full detail for the best 2,000 options only (memory with every combination screened).
+          const run = lightenRun(toTransferable(r.value));
           if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
           setState({ status: 'done', run, error: null, mode, ms: performance.now() - t0, progress: tracker.snapshot(), runMeta: { ...runMeta, inputHash: run.inputHash }, notice });
         } catch (err) {
@@ -184,7 +185,9 @@ export function useCompute(inputs, computeKey) {
               try {
                 // Scoring and ranking events reach the panel through coord.log's onEvent.
                 const run = mergeRuns(parts, inputs, { log: coord.log });
+                parts.length = 0; // let the slices go before the light records are made
                 const finish = () => {
+                  lightenRun(run); // work package 23: full detail for the best 2,000 options only
                   if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
                   setState({ status: 'done', run, error: null, mode, ms: performance.now() - t0, progress: tracker.snapshot(), runMeta: { ...runMeta, inputHash: run.inputHash } });
                 };

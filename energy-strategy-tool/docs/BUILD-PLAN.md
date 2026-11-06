@@ -236,6 +236,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **What:** `settings.screenAllBelow` (default 20,000): a run screens every valid combination up to it, and samples up to the generation cap above it; 0 always samples. Shown in the run settings and in the Choices panel's projected count. The Node test suite sets 0 (`tests/test-env.mjs`) so its pinned sampled runs keep their figures; test 54 checks the new path on T3.
 - **Effect on T1:** all 17,344 combinations are screened (about 50 s on one thread instead of 17 s); the leader becomes the best of every combination (gas engines kept as prime with diesel backup in the trial).
 - **Acceptance tests:** Node test 54 (`app/tests/screen-all-tests.mjs`); the browser checks run T1 with the default.
+- **Memory** (owner 2026-11-06, "Keep detail for the top 2,000", OPEN-QUESTIONS 154): with T1 screened in full the page held about 1 GB and a re-run crashed it. The best 2,000 options keep their full detail; the others keep the figures the ranking and the views read, and are rebuilt when shown (`engine/detail.js`, Node test 55). T1: 1,033 MB to 287 MB.
 - **Progress:** built 2026-11-06 on `feature/screen-all`. Not merged.
 
 ### Next, chosen by the owner (2026-11-02)

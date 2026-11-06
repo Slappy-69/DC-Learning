@@ -16,6 +16,7 @@ import { latestMonteCarlo } from './components/UncertaintyPanel.jsx';
 import { buildReport, reportFileName } from './report/report.js';
 import { saveFile, saveRefusal, hostDownloads } from './saveFile.js';
 import { useCompute } from './useCompute.js';
+import { withDetail } from './engine/detail.js';
 import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount, studyFile, studyFileName, readStudyFile, compareWithSaved, hashInputs } from './engine/index.js';
 import { viewSetting, withoutSiteFilters } from './engine/view.js';
 import { UnverifiedTag } from './components/Field.jsx';
@@ -154,7 +155,7 @@ export default function App() {
   const setWeights = useCallback((w) => setInputs((cur) => ({ ...cur, weights: { ...w } })), []);
 
   // Re-score the latest run with the current weights and scoring settings (no dispatch).
-  const run = useMemo(() => {
+  const scoredRun = useMemo(() => {
     if (!compute.run) return null;
     const r = { ...compute.run, options: compute.run.options.map((o) => ({ ...o })) };
     // Dominance depends on the cost and carbon measures, not the weights: kept from the run when those match.
@@ -164,6 +165,11 @@ export default function App() {
     r.inputs = { ...r.inputs, weights: inputs.weights, settings: { ...r.inputs.settings, costMetric: inputs.settings.costMetric, carbonMetric: inputs.settings.carbonMetric, rankCompliantFirst: inputs.settings.rankCompliantFirst } };
     return r;
   }, [compute.run, inputs.weights, inputs.settings.costMetric, inputs.settings.carbonMetric, inputs.settings.rankCompliantFirst]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Work package 23 (owner 2026-11-06, "Keep detail for the top 2,000"): options below the best 2,000 hold light records.
+  // Those the screens read in full (the top 50, the strategy cards, the options on the Dispatch, Site, Sensitivity and
+  // Compare tabs) are rebuilt here; an option opened further down the list is rebuilt by its detail panel.
+  const run = useMemo(() => withDetail(scoredRun, [dispatchOptionId, siteOptionId, sensOptionId, ...compareIds]),
+    [scoredRun, dispatchOptionId, siteOptionId, sensOptionId, compareIds]);
 
   // The leader is the weighted pick (rank 1): the same function the Trade-offs view uses, so the header,
   // the live region and the highlighted pick always name the same option (AC5).

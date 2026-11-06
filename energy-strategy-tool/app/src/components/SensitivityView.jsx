@@ -6,6 +6,7 @@ import { sig, money, perMWh, cur, curUnit } from '../format.js';
 import { siteFor } from './SiteView.jsx';
 import BreakevenPanel from './BreakevenPanel.jsx';
 import UncertaintyPanel from './UncertaintyPanel.jsx';
+import { listedOptions } from '../engine/detail.js';
 
 // Sensitivity tab (BRIEF §13.3 tornado). Port of the other line's SensitivityView (commit f1fd5c5): one option at a
 // time (the leader unless another is chosen), run on request, never changing the run, its scores or its ranking.
@@ -196,7 +197,7 @@ export default function SensitivityView({ run, optionId = null, setOptionId = ()
   const pickMeasure = (v) => { sensChoice.measure = v; setMeasure(v); };
   const [state, setState] = useState(() => ({ key, ...(sensCache.get(key) || {}) }));
   const timer = useRef(null);
-  const optionList = useMemo(() => ranked.map((o) => <option key={o.id} value={o.id}>#{o.rank} {o.name}</option>), [ranked]);
+  const optionList = useMemo(() => listedOptions(ranked, option).map((o) => <option key={o.id} value={o.id}>#{o.rank} {o.name}</option>), [ranked, option]);
 
   useEffect(() => {
     // A new run, option or weighting: stop a re-run in progress and show the cached result for the new key, if any.

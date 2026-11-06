@@ -26,6 +26,7 @@ import { nearestFlips, gridDateAt } from '../engine/breakeven.js';
 import { itInstalledByMonth, gridCapByMonth, monthOf } from '../engine/context.js';
 import { recommendations, gapFacts, runnerUp } from '../engine/recommend.js';
 import { flagHeadline, inputName, inputApplies } from './plain.js';
+import { ensureDetail, detailIds } from '../engine/detail.js';
 import { GUARDRAIL, sig, money, monthLabel, pct, perMWh, cur, displayCurrency } from '../format.js';
 
 // Input sections in the order of the inputs panel; site geometry belongs to the Site tab (Beta) and is left out.
@@ -184,8 +185,15 @@ export function gapSeries(run) {
 // Builds the report; returns { bytes, pages, sections }. view: { compareIds, sensitivity (a tornado result or null),
 // sensitivityMeasure, created (Date), appVersion, summaryNote, breakevens, monteCarlo, details: { question,
 // preparedFor, preparedBy } }.
-export function buildReport(run, view = {}) {
+export function buildReport(run0, view = {}) {
   const { compareIds = [], sensitivity = null, sensitivityMeasure = null, created = null, appVersion = '' } = view;
+  // Work package 23: options outside the best 2,000 keep light records; rebuild those the report reads (the top 20, the
+  // best of each of the first ten strategies, waiting for the grid, the cards and the compared options).
+  const run = run0.options.some((o) => o.light) ? { ...run0 } : run0;
+  if (run !== run0) {
+    ensureDetail(run, detailIds(run, { topN: 20, extra: compareIds }));
+    ensureDetail(run, [...topCards(run.options, 10).cards, ...topCards(run.options, 5).cards].map((c) => c.o.id));
+  }
   const details = view.details || {};
   const I = normalizeInputs(run.inputs);
   const start = (run.meta && run.meta.analysisStart) || I.project.analysisStart;

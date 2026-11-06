@@ -229,7 +229,7 @@ Since 23 October 2026 the economic inputs have their own section, **5 · Economi
 | Include site-fit penalty in deliverability | off | −10 for "Fits with flags", −25 for "Does not fit" |
 | Most dispatch years | 15 years | Upper limit on the years dispatched hour by hour before the last one repeats (chapter 37); a run flag says when an option needs more (built 24 October 2026; was 8 with no flag) |
 | Rented plant hired before it is needed | 1 month | Rented bridging plant arrives and is paid for this many months before the first month of shortfall (chapter 35; built 24 October 2026) |
-| Screen every combination below | 20,000 combinations | Up to this many valid combinations the run screens all of them; above it the run samples up to the generation cap; 0 always samples (built 6 November 2026, work package 23, OPEN-QUESTIONS 153) |
+| Screen every combination below | 20,000 combinations | Up to this many valid combinations the run screens all of them; above it the run samples up to the generation cap; 0 always samples (built 6 November 2026, work package 23, OPEN-QUESTIONS 153). With more than 2,000 options, the best 2,000 keep their full detail; the others keep every figure the ranking and the filters use, and are rebuilt, figure for figure, when you open, compare or inspect one, or when the PDF needs it. The option lists on the Dispatch, Site and Sensitivity tabs offer the best 2,000 and the option shown (OPEN-QUESTIONS 154) |
 | Generation cap | 2,000 options | Maximum options screened when the run samples (above the screen-all limit) |
 | Sample above cap | on | Samples down to the cap; off screens all |
 | Wind default site threshold | 20 ha | Wind not generated on smaller sites |

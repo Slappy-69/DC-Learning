@@ -4,6 +4,7 @@ import SiteFitPanel, { FitBadge } from './site/SiteFitPanel.jsx';
 import SiteEditor, { TypedCoords } from './site/SiteEditor.jsx';
 import BlocksTable from './site/BlocksTable.jsx';
 import { normalizeInputs, buildSiteModel, siteKey, layoutForOption, viewSetting, SOURCE_LABEL, EXCLUSION_TYPES, geometry as G } from '../engine/index.js';
+import { listedOptions } from '../engine/detail.js';
 
 // Site tab (BRIEF §10.7, §10.6, §5.2): 2D plan of one option (the leader unless another is chosen) with
 // layers, scale bar, north arrow and dimensions on hover and keyboard focus; site-fit panel; small
@@ -134,7 +135,7 @@ export default function SiteView({ run, inputs, update, optionId, setOptionId, c
   const ranked = useMemo(() => run.options.slice().sort((a, b) => a.rank - b.rank), [run.options]);
   const option = (optionId != null && run.options.find((o) => o.id === optionId)) || ranked[0] || null;
   const res = option && !stale ? layoutFor(run, runSite, nRun, option) : null;
-  const optionList = useMemo(() => ranked.map((o) => <option key={o.id} value={o.id}>#{o.rank} {o.name} · {o.siteFit ? o.siteFit.status : ''}</option>), [ranked]);
+  const optionList = useMemo(() => listedOptions(ranked, option).map((o) => <option key={o.id} value={o.id}>#{o.rank} {o.name} · {o.siteFit ? o.siteFit.status : ''}</option>), [ranked, option]);
   const nMult = smallMultiplesCount();
   const multiples = useMemo(() => ranked.slice(0, nMult), [ranked, nMult]);
 

@@ -197,7 +197,7 @@ export default function ParetoView({ onCompare = null, compareIds = [], run, vie
 
       {open ? (
         <div className="pareto-detail">
-          <OptionDetail o={open} start={start} dominator={open.dominatedBy ? byId.get(open.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} onCompare={onCompare} inCompare={compareIds.includes(open.id)} />
+          <OptionDetail o={open} run={run} start={start} dominator={open.dominatedBy ? byId.get(open.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} onCompare={onCompare} inCompare={compareIds.includes(open.id)} />
         </div>
       ) : null}
     </section>

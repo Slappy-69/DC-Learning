@@ -230,7 +230,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
                     <td className="num"><span className="flag-counts" title={`${c.major} major, ${c.minor} minor, ${c.info} info`}>{c.major ? <span className="fc fc-major">{c.major}</span> : null}{c.minor ? <span className="fc fc-minor">{c.minor}</span> : null}<span className="fc fc-info">{c.info}</span></span></td>
                   </tr>
                   {open ? (
-                    <tr className="detail-row"><td colSpan={cols}><OptionDetail o={o} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} onCompare={onCompare} inCompare={compareIds.includes(o.id)} /></td></tr>
+                    <tr className="detail-row"><td colSpan={cols}><OptionDetail o={o} run={run} start={start} dominator={o.dominatedBy ? nameById.get(o.dominatedBy) : null} onClose={() => setOpenId(null)} onShowSite={siteBeta ? onShowSite : null} onShowDispatch={onShowDispatch} siteBeta={siteBeta} onCompare={onCompare} inCompare={compareIds.includes(o.id)} /></td></tr>
                   ) : null}
                 </React.Fragment>
               );

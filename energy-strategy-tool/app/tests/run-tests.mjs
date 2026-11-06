@@ -97,6 +97,7 @@ import { pueTests } from './pue-tests.mjs';
 import { reportDesignTests } from './report-design-tests.mjs';
 import { reportReviewTests } from './report-review-tests.mjs';
 import { screenAllTests } from './screen-all-tests.mjs';
+import { detailTests } from './detail-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1283,6 +1284,8 @@ await reportDesignTests(test, siteRuns);
 await reportReviewTests(test, siteRuns);
 // 54. Work package 23: screen every combination below a limit (OPEN-QUESTIONS 153).
 await screenAllTests(test, siteRuns);
+// 55. Work package 23: detail kept for the best options only (OPEN-QUESTIONS 154).
+await detailTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { rebuildOption } from '../engine/detail.js';
 import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
 import { sig, money, monthLabel, pct, perMWh } from '../format.js';
@@ -27,7 +28,8 @@ const ROWS = [
 
 export default function CompareView({ run, ids, onRemove, onClear, start }) {
   const [openId, setOpenId] = useState(null);
-  const opts = ids.map((id) => run.options.find((o) => o.id === id)).filter(Boolean);
+  // Work package 23: a compared option outside the best 2,000 is rebuilt with the run's own chain.
+  const opts = useMemo(() => ids.map((id) => run.options.find((o) => o.id === id)).filter(Boolean).map((o) => (o.light ? rebuildOption(run, o) : o)), [ids, run]);
   if (!opts.length) {
     return (
       <section className="compare" aria-labelledby="cmp-h">
@@ -68,7 +70,7 @@ export default function CompareView({ run, ids, onRemove, onClear, start }) {
         </table>
       ) : <p className="small">The options share every choice.</p>}
       <p className="small"><button type="button" className="link-btn" onClick={onClear}>Clear the comparison</button> · Select an option's name for its deep-dive card.</p>
-      {open ? <OptionDetail o={open} start={start} onClose={() => setOpenId(null)} /> : null}
+      {open ? <OptionDetail o={open} run={run} start={start} onClose={() => setOpenId(null)} /> : null}
     </section>
   );
 }
