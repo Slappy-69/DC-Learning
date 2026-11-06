@@ -2191,3 +2191,12 @@ The owner's choices from Claude's list (OPEN-QUESTIONS 147; 148–152 Claude's d
 - **Test run (2026-11-02):** Node suite 94 of 94; browser checks 43 of 43. The first build had five non-ASCII characters in regular expressions of `plain.js` and `recommend.js` (≥, ’, –), written as `\u` escapes.
 
 - **Merged (2026-11-06):** work package 22, the local search trial and the takeover research merged into `main` with the owner's yes ("Merge"), a fast-forward to 2817d2d after GitHub's CI passed on it. OPEN-QUESTIONS 148–152 still Claude's defaults to confirm.
+
+## Work package 23: screen every combination below a limit (2026-11-06, branch feature/screen-all)
+
+The owner, 2026-11-02: "Screen all below a limit" (OPEN-QUESTIONS 153), after the local search trial.
+
+- **Default:** `settings.screenAllBelow` 20,000 combinations (run setting; judgement). `generateOptions` screens every valid combination when the projected total is no more than it; otherwise it samples to the cap as before. The generation summary gains `screenAllBelow` and `screenAll` (true when every combination was screened although there were more than the cap).
+- **Test switch:** `defaults.js` reads `ESTOOL_SCREEN_ALL_BELOW` when it exists (`tests/test-env.mjs` sets "0", imported first by `run-tests.mjs` and `only-tests.mjs`), so the Node suite's T1 and T3 stay the sampled runs whose figures the tests pin. The app, the phone page and the Windows program have no such variable and use 20,000.
+- **UI:** "Screen every combination below" in the run settings; the projected count says "all screened" below the limit.
+- **Tests:** Node test 54 (`tests/screen-all-tests.mjs`): the default outside the suite (a child process without the variable), generation at 20,000 / 5,000 / 0 on T3, and the full T3 run (9,424 options, 14 s) whose leader is at least as good as the sampled one (the sampled leader is #11 of all, 0.0001 points behind).

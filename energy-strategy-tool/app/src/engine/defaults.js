@@ -46,6 +46,15 @@ function applySource(r, src) {
 
 const REGISTRY = {};
 
+// Default of settings.screenAllBelow (work package 23). The Node test suite sets ESTOOL_SCREEN_ALL_BELOW=0 so the
+// sampled reference runs it pins stay as they are; the app and the Windows program always use 20,000.
+const SCREEN_ALL_DEFAULT = (() => {
+  try {
+    const e = typeof process !== 'undefined' && process.env ? process.env.ESTOOL_SCREEN_ALL_BELOW : undefined;
+    return e != null && e !== '' && Number.isFinite(Number(e)) ? Math.max(0, Number(e)) : 20000;
+  } catch { return 20000; }
+})();
+
 function rec(path, value, unit, opts = {}) {
   const numeric = typeof value === 'number';
   REGISTRY[path] = {
@@ -1090,6 +1099,8 @@ export function buildDefaultInputs(opts = {}) {
     },
     settings: {
       generationCap: rec('settings.generationCap', 2000, 'options', { basis: 'run setting', ref: '§7.2' }),
+      // Work package 23 (owner 2026-11-02, OPEN-QUESTIONS 153): screen every combination below this many, sample above it.
+      screenAllBelow: rec('settings.screenAllBelow', SCREEN_ALL_DEFAULT, 'combinations', { basis: 'run setting', ref: '§7.2', note: 'A run screens every valid combination when there are no more than this many, and samples up to the generation cap above it; 0 always samples. Owner, 2026-11-02, after a trial in which the 2,000-option sample missed the best option on T1 and T3 (docs/research/local-search-trial-2026-11-02.md). The Node test suite sets 0 through ESTOOL_SCREEN_ALL_BELOW so its sampled reference runs keep their figures.' }),
       sampleAboveCap: rec('settings.sampleAboveCap', true, 'toggle', { basis: 'judgement', ref: '§7.2' }),
       gridHandling: rec('settings.gridHandling', 'unmet', '"unmet" | "exceedance"', { basis: 'judgement', ref: '§9.4', note: 'Show unmet load' }),
       runHourHandling: rec('settings.runHourHandling', 'flag', '"flag" | "respect"', { basis: 'judgement', ref: '§9.4', note: 'Flag only' }),

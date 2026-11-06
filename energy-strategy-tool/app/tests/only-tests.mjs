@@ -1,6 +1,7 @@
 // Development aid: runs only the layout-scope (40), Monte Carlo (46), review-fix (47), weather (48), existing-plant (39)
 // and plant-list (50) groups on a fresh T1 run.
 // The full suite (run-tests.mjs) remains the check of record.
+import './test-env.mjs'; // first: work package 23's screen-all limit off for the pinned sampled runs
 import { referenceT1 } from '../src/engine/defaults.js';
 import { runModel } from '../src/engine/run.js';
 import { layoutScopeTests } from './layout-scope-tests.mjs';

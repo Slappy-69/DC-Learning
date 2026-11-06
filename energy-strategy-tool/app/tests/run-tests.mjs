@@ -45,6 +45,7 @@
 //     startup errors and the hosted page (14).
 // Browser checks (Canvas drawing, keyboard, table paging, skip links, axe) are in tests/browser-tests.mjs.
 
+import './test-env.mjs'; // first: work package 23's screen-all limit off for the pinned sampled runs
 import assert from 'node:assert/strict';
 import {
   referenceT1, referenceT3, runModel, normalizeInputs, buildContext, sizeOption, dispatchConfig, dispatchYear,
@@ -95,6 +96,7 @@ import { plantTests } from './plants-tests.mjs';
 import { pueTests } from './pue-tests.mjs';
 import { reportDesignTests } from './report-design-tests.mjs';
 import { reportReviewTests } from './report-review-tests.mjs';
+import { screenAllTests } from './screen-all-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1279,6 +1281,8 @@ await pueTests(test, siteRuns);
 await reportDesignTests(test, siteRuns);
 // 53. Work package 22: the report review (OPEN-QUESTIONS 147–152).
 await reportReviewTests(test, siteRuns);
+// 54. Work package 23: screen every combination below a limit (OPEN-QUESTIONS 153).
+await screenAllTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

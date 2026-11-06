@@ -456,7 +456,10 @@ export function generateOptions(inputs) {
   let plantDrawn = [];
   const perPlant = {};
   const projected = totalCombinations;
-  if (sampling && projected > cap) {
+  // Work package 23 (OPEN-QUESTIONS 153): every combination is screened when there are no more than screenAllBelow.
+  const screenAllBelow = Math.max(0, Number(inputs.settings.screenAllBelow) || 0);
+  const screenAll = screenAllBelow > 0 && projected <= screenAllBelow;
+  if (sampling && projected > cap && !screenAll) {
     sampled = true;
     const room = Math.max(0, cap - list.length);
     // Combinations with an existing plant (work package 19, OPEN-QUESTIONS 118): a share of the sample
@@ -520,6 +523,8 @@ export function generateOptions(inputs) {
       screened: list.length,
       cap,
       sampling,
+      screenAllBelow,
+      screenAll: screenAll && projected > cap,
       sampled,
       lhsRepaired: repaired,
       truncated: en.truncated,

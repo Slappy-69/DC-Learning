@@ -230,6 +230,14 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Acceptance tests:** Node test 53 (`app/tests/report-review-tests.mjs`); tests 30 and 52 updated.
 - **Progress:** built 2026-11-02 on `feature/report-review`; merged into `main` on 2026-11-06 with the owner's yes ("Merge"), a fast-forward to 2817d2d after GitHub's checks passed on it.
 
+### 23. Screen every combination below a limit (added 2026-11-06)
+
+- **Why:** the trial of 2 November 2026 (`docs/research/local-search-trial-2026-11-02.md`): the 2,000-option sample missed the best option on T1 and T3. The owner chose "Screen all below a limit" (OPEN-QUESTIONS 153).
+- **What:** `settings.screenAllBelow` (default 20,000): a run screens every valid combination up to it, and samples up to the generation cap above it; 0 always samples. Shown in the run settings and in the Choices panel's projected count. The Node test suite sets 0 (`tests/test-env.mjs`) so its pinned sampled runs keep their figures; test 54 checks the new path on T3.
+- **Effect on T1:** all 17,344 combinations are screened (about 50 s on one thread instead of 17 s); the leader becomes the best of every combination (gas engines kept as prime with diesel backup in the trial).
+- **Acceptance tests:** Node test 54 (`app/tests/screen-all-tests.mjs`); the browser checks run T1 with the default.
+- **Progress:** built 2026-11-06 on `feature/screen-all`. Not merged.
+
 ### Next, chosen by the owner (2026-11-02)
 
 From Claude's list of 20 next steps the owner chose: the report review (package 22, above); a search around the leaders ("local search", a cheap trial first); research of each country's rules for taking over a closing plant's grid connection; the user guide pictures (re-export the T1 worked examples, a new inputs screenshot and a new picture of the PDF contents, after the report and the search). Modelling ideas put on the list (owner, 2026-11-02, from "make them more relatable to actual data centre development"): **energy centre as a service** (bridging or prime power from a third party on a per-MWh or per-MW-month contract, against owning the plant) and **earning from the standby fleet** (Capacity Market and frequency response from standby gensets and a grid-interactive UPS, within the permits' run-hour limits). Not chosen then: lost rent and delay penalties, an interim or flexible grid offer. Paused: the Haiku check, the OpenStreetMap substations, known issue 35, the defaults research. On hold: rebuilding the Windows program and the phone page.

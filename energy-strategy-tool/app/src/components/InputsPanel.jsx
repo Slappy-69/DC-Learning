@@ -349,6 +349,8 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           options={[['auto', 'Every option, unless the campus is large (default)'], ['all', 'Every option, always']]}
           hint="A large campus (hundreds of genset blocks) can take minutes to lay out option by option. By default the run then skips it, because site fit does not change the ranking, and the Site tab lays out each option it shows. With the site-fit penalty or compliant-first ranking on, every option is always laid out." /> : null}
         <NumberField label="Generation cap" unit="options" value={inputs.settings.generationCap} onCommit={(v) => update('settings.generationCap', Math.round(v))} path="settings.generationCap" inputs={inputs} min={20} step={1} />
+        <NumberField label="Screen every combination below" unit="combinations" value={inputs.settings.screenAllBelow} onCommit={(v) => update('settings.screenAllBelow', Math.max(0, Math.round(v)))} path="settings.screenAllBelow" inputs={inputs} min={0} step={1000}
+          hint="Up to this many valid combinations, the run screens all of them, so the best option is never missed by sampling (T1's 17,344 take about a minute). Above it, the run samples up to the generation cap. 0 always samples (quick look)." />
         <ToggleField label="Sample above cap" checked={inputs.settings.sampleAboveCap} onCommit={set('settings.sampleAboveCap')} path="settings.sampleAboveCap" inputs={inputs}
           hint="Off screens every combination (slow above the cap)." />
         <NumberField label="Wind default site threshold" unit="ha" value={inputs.settings.windSiteThresholdHa} onCommit={(v) => { update('settings.windSiteThresholdHa', v); update('choices.C11', null); }} path="settings.windSiteThresholdHa" inputs={inputs} min={0} />
@@ -417,11 +419,14 @@ function useCount(norm) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => countCombinations(norm, COUNT_LIMIT), [key]);
 }
+// Work package 23: whether the run will screen every combination (no more than the screen-all limit).
+const screensAll = (norm, c) => !c.truncated && Number(norm.settings.screenAllBelow) > 0 && c.total <= Number(norm.settings.screenAllBelow);
 function ProjectedCount({ norm }) {
   const c = useCount(norm);
   const cap = norm.settings.generationCap * (c.plant > 0 ? PLANT_DEFAULTS.capMultiplier : 1); // OPEN-QUESTIONS 130
-  const over = c.total > cap;
-  return <span className={over ? 'warn-text' : ''}>{c.truncated ? 'more than ' : ''}{c.total.toLocaleString('en-GB')} combinations{over ? (norm.settings.sampleAboveCap ? ` · ${cap.toLocaleString('en-GB')} sampled` : ' · above cap, all screened') : ''}</span>;
+  const all = screensAll(norm, c);
+  const over = c.total > cap && !all;
+  return <span className={over ? 'warn-text' : ''}>{c.truncated ? 'more than ' : ''}{c.total.toLocaleString('en-GB')} combinations{c.total > cap ? (all ? ' · all screened' : norm.settings.sampleAboveCap ? ` · ${cap.toLocaleString('en-GB')} sampled` : ' · above cap, all screened') : ''}</span>;
 }
 
 function ChoicesPanel({ inputs, norm, update }) {
@@ -430,8 +435,9 @@ function ChoicesPanel({ inputs, norm, update }) {
   return (
     <div className="choices">
       <p className="note" role="status">
-        Projected: <strong>{c.truncated ? 'more than ' : ''}{c.total.toLocaleString('en-GB')}</strong> combinations after compatibility rules (cap {cap.toLocaleString('en-GB')}; sample above cap: {norm.settings.sampleAboveCap ? 'on' : 'off'}).
-        {c.total > cap && norm.settings.sampleAboveCap ? ` ${cap.toLocaleString('en-GB')} will be screened (every archetype kept, seeded Latin hypercube over the rest).` : ''}
+        Projected: <strong>{c.truncated ? 'more than ' : ''}{c.total.toLocaleString('en-GB')}</strong> combinations after compatibility rules (cap {cap.toLocaleString('en-GB')}; every combination screened up to {Number(norm.settings.screenAllBelow || 0).toLocaleString('en-GB')}; sample above cap: {norm.settings.sampleAboveCap ? 'on' : 'off'}).
+        {c.total > cap && screensAll(norm, c) ? ' Every combination will be screened (fewer than the screen-all limit); this takes longer than a sampled run.' : ''}
+        {c.total > cap && !screensAll(norm, c) && norm.settings.sampleAboveCap ? ` ${cap.toLocaleString('en-GB')} will be screened (every archetype kept, seeded Latin hypercube over the rest).` : ''}
         {c.total > cap && !norm.settings.sampleAboveCap ? ' Every combination will be screened; this is slow above the cap.' : ''}
       </p>
       {CHOICES.map((ch) => <ChoiceRow key={ch.id} ch={ch} inputs={inputs} norm={norm} update={update} />)}
