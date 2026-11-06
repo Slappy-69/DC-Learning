@@ -162,6 +162,9 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
   for (const o of run.options) { if (o.rank === 1) L = o; else if (o.rank === 2) R = o; }
   if (!L) L = run.options.reduce((a, b) => (a.rank < b.rank ? a : b));
   const group = rankGroup(run.options, L, !!settings.rankCompliantFirst);
+  // A set for membership: with every combination screened (work package 23, 17,344 options on T1) an array lookup
+  // inside the loop over all options below cost about 200 ms per summary.
+  const inGroup = new Set(group);
   const kind = `${adequate(L) ? 'adequate ' : ''}${settings.rankCompliantFirst ? 'requirement-compliant ' : ''}`;
   const groupName = `${kind}options`;
   const tor = sensitivity && sensitivity.optionId === L.id && Array.isArray(sensitivity.allRows) ? sensitivity : null;
@@ -264,7 +267,7 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     // Options outside the leader's group (they rank below it whatever their score) that do better on an axis (H5, M2).
     const outside = SCORE_KEYS.map((k) => {
       let best = null;
-      for (const o of run.options) if (!group.includes(o) && o.axisScores[k] > L.axisScores[k] + GAP && (!best || o.axisScores[k] > best.axisScores[k])) best = o;
+      for (const o of run.options) if (!inGroup.has(o) && o.axisScores[k] > L.axisScores[k] + GAP && (!best || o.axisScores[k] > best.axisScores[k])) best = o;
       return best ? { k, best, gap: best.axisScores[k] - L.axisScores[k] } : null;
     }).filter(Boolean).sort((a, b) => b.gap - a.gap);
     let none;

@@ -32,7 +32,10 @@ export function axisScore(key, x, lo, hi) {
   return LOWER_BETTER[key] ? (100 * (hi - x)) / (hi - lo) : (100 * (x - lo)) / (hi - lo);
 }
 
-export function scoreOptions(options, inputs) {
+// opts.keepDominance: the options already carry dominatedBy for the same cost and carbon measures (a re-score after a
+// weight change, work package 23): dominance does not depend on the weights, and with every combination screened it is
+// the slowest step (an all-pairs check over 17,344 options on T1).
+export function scoreOptions(options, inputs, opts = {}) {
   const { w, equal } = effectiveWeights(inputs.weights);
   const keys = SCORE_KEYS;
   for (const o of options) o.metrics = axisMetrics(o, inputs.settings);
@@ -58,7 +61,7 @@ export function scoreOptions(options, inputs) {
     }
     o.score = ws;
   }
-  markDominance(options);
+  if (!opts.keepDominance) markDominance(options);
   rankOptions(options, inputs.settings.rankCompliantFirst);
   return { weights: w, equalWeightsUsed: equal, ranges: range, scope: options.length };
 }

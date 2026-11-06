@@ -157,7 +157,10 @@ export default function App() {
   const run = useMemo(() => {
     if (!compute.run) return null;
     const r = { ...compute.run, options: compute.run.options.map((o) => ({ ...o })) };
-    r.scoring = scoreOptions(r.options, normalizeInputs(inputs));
+    // Dominance depends on the cost and carbon measures, not the weights: kept from the run when those match.
+    const rs = compute.run.inputs.settings || {};
+    const keepDominance = rs.costMetric === inputs.settings.costMetric && rs.carbonMetric === inputs.settings.carbonMetric && compute.run.options.every((o) => 'dominatedBy' in o);
+    r.scoring = scoreOptions(r.options, normalizeInputs(inputs), { keepDominance });
     r.inputs = { ...r.inputs, weights: inputs.weights, settings: { ...r.inputs.settings, costMetric: inputs.settings.costMetric, carbonMetric: inputs.settings.carbonMetric, rankCompliantFirst: inputs.settings.rankCompliantFirst } };
     return r;
   }, [compute.run, inputs.weights, inputs.settings.costMetric, inputs.settings.carbonMetric, inputs.settings.rankCompliantFirst]); // eslint-disable-line react-hooks/exhaustive-deps

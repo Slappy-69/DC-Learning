@@ -17,9 +17,18 @@ export function sameFigures(a, b) {
 }
 
 // Map id → the better-ranked option with the same figures (KNOWN-ISSUES item 5). O(n log n) on a rounded key.
+// The key is kept per option result (its eco object, shared by the copies the app makes on each re-score), so a weight
+// change does not rebuild 17,344 keys when every combination is screened (work package 23).
+const KEY_CACHE = new WeakMap();
+const figKey = (o) => FIGS.map((f) => { const x = f(o); return Number.isFinite(x) ? x.toPrecision(10) : String(x); }).join('|') + `|${o.resilience.status}|${o.adequacy ? o.adequacy.adequate : ''}`;
 export function identicalResults(options) {
   const byRank = [...options].sort((a, b) => a.rank - b.rank);
-  const key = (o) => FIGS.map((f) => { const x = f(o); return Number.isFinite(x) ? x.toPrecision(10) : String(x); }).join('|') + `|${o.resilience.status}|${o.adequacy ? o.adequacy.adequate : ''}`;
+  const key = (o) => {
+    if (!o.eco || typeof o.eco !== 'object') return figKey(o);
+    let k = KEY_CACHE.get(o.eco);
+    if (k === undefined) { k = figKey(o); KEY_CACHE.set(o.eco, k); }
+    return k;
+  };
   const first = new Map();
   const out = new Map();
   for (const o of byRank) {
