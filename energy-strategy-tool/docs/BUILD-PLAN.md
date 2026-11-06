@@ -228,7 +228,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Decisions:** row 147 answered by the owner; 148–152 Claude's defaults, for the owner to confirm.
 - **User guide:** chapter 29.
 - **Acceptance tests:** Node test 53 (`app/tests/report-review-tests.mjs`); tests 30 and 52 updated.
-- **Progress:** built 2026-11-02 on `feature/report-review`. Not merged.
+- **Progress:** built 2026-11-02 on `feature/report-review`; merged into `main` on 2026-11-06 with the owner's yes ("Merge"), a fast-forward to 2817d2d after GitHub's checks passed on it.
 
 ### Next, chosen by the owner (2026-11-02)
 

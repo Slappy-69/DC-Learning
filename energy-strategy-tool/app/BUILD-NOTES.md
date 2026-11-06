@@ -2189,3 +2189,5 @@ The owner's choices from Claude's list (OPEN-QUESTIONS 147; 148–152 Claude's d
 - **Tests:** Node test 53 (`tests/report-review-tests.mjs`); test 30 looks for plain input names; test 52 expects nine sections, seven figures and the new front figures.
 - **T1 sample (2026-11-02):** 27 pages with every test run (front page, sections on pages 2–13, appendices from page 14); 26 pages without (was 32).
 - **Test run (2026-11-02):** Node suite 94 of 94; browser checks 43 of 43. The first build had five non-ASCII characters in regular expressions of `plain.js` and `recommend.js` (≥, ’, –), written as `\u` escapes.
+
+- **Merged (2026-11-06):** work package 22, the local search trial and the takeover research merged into `main` with the owner's yes ("Merge"), a fast-forward to 2817d2d after GitHub's CI passed on it. OPEN-QUESTIONS 148–152 still Claude's defaults to confirm.
