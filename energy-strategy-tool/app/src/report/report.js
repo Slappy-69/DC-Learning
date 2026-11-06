@@ -19,7 +19,7 @@ import { PLANT_SOURCE } from '../engine/plants.js';
 import { addMonths } from '../engine/dates.js';
 import { NA } from '../engine/generator.js';
 import { weatherSummary } from '../engine/weather.js';
-import { topCards } from '../engine/cards.js';
+import { topCards, cardOptions } from '../engine/cards.js';
 import { measureById, sortRows } from '../engine/sensitivity.js';
 import { plainSummary, summaryKey, shortFlag } from '../engine/summary.js';
 import { nearestFlips, gridDateAt } from '../engine/breakeven.js';
@@ -192,7 +192,7 @@ export function buildReport(run0, view = {}) {
   const run = run0.options.some((o) => o.light) ? { ...run0 } : run0;
   if (run !== run0) {
     ensureDetail(run, detailIds(run, { topN: 20, extra: compareIds }));
-    ensureDetail(run, [...topCards(run.options, 10).cards, ...topCards(run.options, 5).cards].map((c) => c.o.id));
+    ensureDetail(run, cardOptions(run.options, 10).map((c) => c.o.id));
   }
   const details = view.details || {};
   const I = normalizeInputs(run.inputs);

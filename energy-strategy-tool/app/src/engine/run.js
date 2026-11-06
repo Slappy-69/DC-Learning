@@ -507,8 +507,8 @@ export function slimOption(o) {
   };
 }
 
-export function toTransferable(run) {
-  const options = run.options.map(slimOption);
+export function toTransferable(run, mapOption = slimOption) {
+  const options = run.options.map((o) => mapOption(o));
   const { ctx, dispatchKeys, ...rest } = run;
   return {
     dispatchKeys,

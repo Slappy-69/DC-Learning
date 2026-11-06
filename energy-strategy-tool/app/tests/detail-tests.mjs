@@ -8,6 +8,7 @@ import { slimOption } from '../src/engine/run.js';
 import { scoreOptions } from '../src/engine/scoring.js';
 import { normalizeInputs } from '../src/engine/defaults.js';
 import { buildReport } from '../src/report/report.js';
+import { identicalResults, byRank } from '../src/engine/cards.js';
 
 const slimRun = (run) => ({ ...run, ctx: undefined, options: run.options.map(slimOption) });
 
@@ -64,6 +65,22 @@ export async function detailTests(test, ctxRuns) {
     assert.ok(shown.every((id) => !wd.options.find((o) => o.id === id).light), 'an option the screens read is still light');
     assert.deepEqual(wd.options.find((o) => o.id === lightOnes[9].id).eco, byId.get(lightOnes[9].id).eco);
     assert.equal(withDetail(wd, [lightOnes[9].id]), wd, 'nothing left to rebuild');
+    // With the unscored run as `base` (as the app does), the rebuilt options are put back there: the next re-score
+    // starts from them and nothing is rebuilt again.
+    const b2 = lightenRun({ ...base, options: base.options.slice() }, keep);
+    const copyOf = (x) => ({ ...x, options: x.options.map((o) => ({ ...o })) });
+    const w1 = withDetail(copyOf(b2), [lightOnes[11].id], b2);
+    assert.ok(!w1.options.find((o) => o.id === lightOnes[11].id).light && !b2.options.find((o) => o.id === lightOnes[11].id).light, 'not put back');
+    const c2 = copyOf(b2);
+    assert.equal(withDetail(c2, [lightOnes[11].id], b2), c2, 'rebuilt again after being put back');
+    // The kept order and identical results follow a re-score in place.
+    const arr = base.options.map((o) => ({ ...o }));
+    const s1 = identicalResults(arr);
+    scoreOptions(arr, { ...I, weights: { cost: 0.05, carbon: 0.05, ttp: 0.05, deliverability: 0.85 } });
+    const s2 = identicalResults(arr), s3 = identicalResults(arr.slice());
+    assert.ok(identicalResults(arr) === s2 && byRank(arr)[0].rank === 1 && byRank(arr).every((o, k) => o.rank === k + 1));
+    assert.deepEqual([...s2].map(([id, o]) => [id, o.id]), [...s3].map(([id, o]) => [id, o.id]));
+    assert.ok(s1 instanceof Map);
     // The option lists: every option up to DETAIL_KEEP; above it the best DETAIL_KEEP and the one shown.
     const many = Array.from({ length: DETAIL_KEEP + 500 }, (_, k) => ({ id: k, rank: k + 1 }));
     assert.equal(listedOptions(many.slice(0, 10)).length, 10);

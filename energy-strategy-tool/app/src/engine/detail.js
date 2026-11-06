@@ -11,9 +11,9 @@ import { buildContext } from './context.js';
 import { normalizeInputs } from './defaults.js';
 import { evaluateOption } from './option.js';
 import { optionName } from './generator.js';
-import { slimOption } from './run.js';
+import { slimOption, toTransferable } from './run.js';
 import { hashInputs } from './runlog.js';
-import { topCards } from './cards.js';
+import { cardOptions, byRank } from './cards.js';
 
 export const DETAIL_KEEP = 2000;
 export const isLight = (o) => !!(o && o.light);
@@ -41,17 +41,70 @@ export function lightOption(o) {
   };
 }
 
+// A worker's part of a pooled run with every option as a light record (its layout key kept for the merge's count of
+// distinct layouts). The main thread merges and ranks the parts, then asks each worker for the full detail of its
+// options among the best DETAIL_KEEP (`detailPart`). So the page never holds every option in full, and the worker never
+// copies every option for the transfer: with T1 screened in full on one worker, the copy and the transfer of
+// 17,344 full options crashed the page.
+export function lightPart(run) {
+  return toTransferable(run, (o) => ({ ...lightOption(slimOption(o)), layoutKey: o.layoutKey }));
+}
+// After a pooled run with light parts is merged: each light option's worker (`parts` in worker order).
+export function partOwners(parts) {
+  const owner = new Map();
+  parts.forEach((p, k) => { for (const o of p.options) if (o.light) owner.set(o.id, k); });
+  return owner;
+}
+// Once the run is ranked (and verified): which options to ask each of `n` workers for in full: light ones among the
+// best `keep`, and pinned or custom ones.
+export function detailAsks(run, owner, n, keep = DETAIL_KEEP) {
+  const asks = Array.from({ length: n }, () => []);
+  for (const o of run.options) if (o.light && owner.has(o.id) && (o.rank <= keep || o.pinned || o.custom)) asks[owner.get(o.id)].push(o.id);
+  return asks;
+}
+// Puts a worker's detail records into the merged run (in place), keeping this run's scoring and rank.
+const SCORED = ['metrics', 'axisScores', 'score', 'rank', 'dominatedBy'];
+export function applyDetail(run, details) {
+  if (!details || !details.length) return 0;
+  const byIdx = new Map(run.options.map((o, k) => [o.id, k]));
+  let n = 0;
+  for (const d of details) {
+    const at = byIdx.get(d.id);
+    if (at === undefined) continue;
+    const cur = run.options[at];
+    if (!cur.light) continue; // already in full (for example verified with the full year on this thread)
+    const scored = {};
+    for (const f of SCORED) if (f in cur) scored[f] = cur[f];
+    run.options[at] = { ...d, ...scored };
+    n++;
+  }
+  return n;
+}
+
+// A scored run made ready for the page with light records below `keep` (the main-thread run), without first copying
+// every option in full.
+export function lightTransferable(run, keep = DETAIL_KEEP) {
+  const many = run.options.length > keep;
+  return lightenRun(toTransferable(run, (o) => (many && o.rank > keep && !o.pinned && !o.custom ? lightOption(slimOption(o)) : slimOption(o))), keep);
+}
+// The full (slim) records of the options `ids` from a worker's run.
+export function detailPart(run, ids) {
+  const want = new Set(ids);
+  return run.options.filter((o) => want.has(o.id)).map(slimOption);
+}
+
 // After a run is scored: options ranked below `keep` become light (none when the run holds no more than `keep`).
 // Changes run.options in place and returns the run.
 export function lightenRun(run, keep = DETAIL_KEEP) {
-  if (!run || !Array.isArray(run.options) || run.options.length <= keep) return run;
+  if (!run || !Array.isArray(run.options) || (run.options.length <= keep && !run.options.some((o) => o.light))) return run;
   let n = 0;
   // Identical flags (the same data flag, the same assumed default, the same permit threshold…) are shared between light
   // records, so thousands of options do not each hold their own copy. Flags are read, never changed.
   const shared = new Map();
   const share = (f) => { const k = JSON.stringify(f); let x = shared.get(k); if (!x) { x = f; shared.set(k, x); } return x; };
   run.options = run.options.map((o) => {
-    if (o.light || o.pinned || o.custom || !(o.rank > keep)) return o;
+    if (o.light) { o.flags = (o.flags || []).map(share); return o; } // light from a worker: its flags shared too
+    if (o.pinned || o.custom || !(o.rank > keep)) return o;
     n++;
     const l = lightOption(o);
     l.flags = (l.flags || []).map(share);
@@ -115,7 +168,7 @@ export function ensureDetail(run, ids) {
 // ten strategies (cards and section 3 of the report), the best option that waits for the grid, and any extra ids.
 export function detailIds(run, { topN = 50, extra = [] } = {}) {
   if (!run || !run.options) return [];
-  const ranked = run.options.slice().sort((a, b) => a.rank - b.rank);
+  const ranked = byRank(run.options);
   const ids = new Set(ranked.slice(0, topN).map((o) => o.id));
   const seen = new Set();
   for (const o of ranked) {
@@ -132,12 +185,19 @@ export function detailIds(run, { topN = 50, extra = [] } = {}) {
 
 // The run the screens show: when options they read in full are light (the top 50, the strategy cards, the options on
 // the Dispatch, Site, Sensitivity and Compare tabs: `extra`), a copy of the run with those rebuilt; otherwise the same run.
-export function withDetail(run, extra = []) {
+// `base`: the unscored run the app re-scores on each weight change (the run it was copied from, same order); the
+// rebuilt options are put back there too, so the next re-score starts from them and returns the same run here.
+export function withDetail(run, extra = [], base = null) {
   if (!run || !Array.isArray(run.options) || !run.options.some((o) => o.light)) return run;
+  const want = new Set(detailIds(run, { topN: 50, extra }));
+  for (const c of cardOptions(run.options, 10)) want.add(c.o.id);
+  if (!run.options.some((o) => o.light && want.has(o.id))) return run;
   const r = { ...run };
-  let n = ensureDetail(r, detailIds(r, { topN: 50, extra }));
-  n += ensureDetail(r, topCards(r.options, 10).cards.map((c) => c.o.id));
-  return n ? r : run;
+  ensureDetail(r, [...want]);
+  if (base && Array.isArray(base.options) && base.options.length === run.options.length) {
+    base.options.forEach((o, k) => { if (o.light && want.has(o.id) && run.options[k].id === o.id) base.options[k] = rebuildOption(base, o); });
+  }
+  return r;
 }
 
 // The options a "choose an option" list offers (Dispatch, Site and Sensitivity tabs): all of them up to DETAIL_KEEP;

@@ -4,13 +4,29 @@
 // Run log: the worker records its own ordered events (source "worker k", own seq from 0) and returns
 // them with the result (run.log). For the live progress panel it also streams copies of the events in
 // batches; the main thread uses the returned log, not the streamed copies, to build the merged log.
-import { runModel, toTransferable } from './engine/index.js';
+import { runModel, toTransferable, lightPart, detailPart } from './engine/index.js';
 
 const FLUSH_EVENTS = 200;
 const FLUSH_MS = 120;
 
+// Work package 23: when the whole run (every slice) holds more options than `lightAbove` (the app sends DETAIL_KEEP),
+// the result carries light records only; the run is held here until the main thread asks for the full detail of the
+// options it ranks among the best (a 'detail' request), then let go.
+let held = null;
+
 self.onmessage = (e) => {
-  const { id, inputs, sliceIndex, sliceCount, t0Abs } = e.data;
+  if (e.data && e.data.type === 'detail') {
+    const { id, ids } = e.data;
+    try {
+      self.postMessage({ id, type: 'detail', options: held && held.id === id ? detailPart(held.run, ids) : [] });
+    } catch (err) {
+      self.postMessage({ id, type: 'detail', options: [], error: String(err && err.message ? err.message : err) });
+    }
+    held = null;
+    return;
+  }
+  const { id, inputs, sliceIndex, sliceCount, t0Abs, lightAbove = null } = e.data;
+  held = null;
   let buf = [];
   let last = performance.now();
   const flush = () => {
@@ -28,7 +44,10 @@ self.onmessage = (e) => {
       },
     });
     flush();
-    self.postMessage({ id, type: 'result', sliceIndex, run: toTransferable(run) });
+    if (lightAbove != null && run.generation && run.generation.screened > lightAbove) {
+      held = { id, run };
+      self.postMessage({ id, type: 'result', sliceIndex, run: lightPart(run) });
+    } else self.postMessage({ id, type: 'result', sliceIndex, run: toTransferable(run) });
   } catch (err) {
     flush();
     self.postMessage({ id, type: 'error', message: String(err && err.stack ? err.stack : err) });

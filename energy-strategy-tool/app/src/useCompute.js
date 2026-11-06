@@ -16,8 +16,8 @@
 // run itself (main thread). A partial log (run cancelled or failed) is merged the same way.
 import { useEffect, useRef, useState } from 'react';
 import {
-  runModelSteps, toTransferable, mergeRuns, startPooledRun, normalizeInputs, hashInputs, verifySteps, refreshAdequacyFlag,
-  createProgressTracker, mergeLogs, nowAbs, lightenRun,
+  runModelSteps, mergeRuns, startPooledRun, normalizeInputs, hashInputs, verifySteps, refreshAdequacyFlag,
+  createProgressTracker, mergeLogs, nowAbs, lightenRun, lightTransferable, partOwners, detailAsks, applyDetail, DETAIL_KEEP,
 } from './engine/index.js';
 
 function poolSize() {
@@ -105,7 +105,7 @@ export function useCompute(inputs, computeKey) {
           while (!r.done && performance.now() < until) r = it.next();
           if (!r.done) { setTimeout(step, 0); return; }
           // Work package 23: full detail for the best 2,000 options only (memory with every combination screened).
-          const run = lightenRun(toTransferable(r.value));
+          const run = lightTransferable(r.value);
           if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
           setState({ status: 'done', run, error: null, mode, ms: performance.now() - t0, progress: tracker.snapshot(), runMeta: { ...runMeta, inputHash: run.inputHash }, notice });
         } catch (err) {
@@ -146,6 +146,8 @@ export function useCompute(inputs, computeKey) {
       const parts = new Array(n);
       let received = 0;
       let failed = false;
+      // Work package 23: the detail request after the merge (see finish below).
+      const detailPhase = { onDetail: null, timer: null, done: false };
       // Watchdog: a worker that dies without an error event (for example killed by the browser
       // for memory) would otherwise leave the run with no progress and no result. Workers stream
       // events at least every few hundred ms while working, so silence for WORKER_SILENCE_MS
@@ -167,7 +169,7 @@ export function useCompute(inputs, computeKey) {
         const now = performance.now();
         if (lastSeen.some((t, i) => parts[i] === undefined && now - t > WORKER_SILENCE_MS)) failPool('stopped responding');
       }, WATCHDOG_EVERY_MS);
-      cleanupPool = stopWatchdog;
+      cleanupPool = () => { stopWatchdog(); if (detailPhase.timer) { clearTimeout(detailPhase.timer); detailPhase.timer = null; } };
       workers.forEach((w, i) => {
         w.onmessage = (e) => {
           if (id !== reqRef.current || failed) return;
@@ -175,21 +177,46 @@ export function useCompute(inputs, computeKey) {
           const msg = e.data;
           if (msg.type === 'events') {
             onEvents(msg.events);
+          } else if (msg.type === 'detail') {
+            if (!detailPhase.done && detailPhase.onDetail) detailPhase.onDetail(i, msg.options);
           } else if (msg.type === 'result') {
             parts[i] = msg.run;
             received++;
             if (received === n) {
               stopWatchdog();
-              workers.forEach((x) => x.terminate());
-              workersRef.current = [];
               try {
                 // Scoring and ranking events reach the panel through coord.log's onEvent.
                 const run = mergeRuns(parts, inputs, { log: coord.log });
-                parts.length = 0; // let the slices go before the light records are made
-                const finish = () => {
+                // Work package 23: each light option's worker, for the detail of the best options (none unless the parts are light).
+                const owner = partOwners(parts);
+                parts.length = 0; // let the slices go
+                const complete = () => {
+                  if (detailPhase.timer) { clearTimeout(detailPhase.timer); detailPhase.timer = null; }
+                  if (detailPhase.done || id !== reqRef.current) return; // finished already, or superseded by a newer run
+                  detailPhase.done = true;
+                  workers.forEach((x) => x.terminate());
+                  workersRef.current = [];
                   lightenRun(run); // work package 23: full detail for the best 2,000 options only
                   if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
                   setState({ status: 'done', run, error: null, mode, ms: performance.now() - t0, progress: tracker.snapshot(), runMeta: { ...runMeta, inputHash: run.inputHash } });
+                };
+                // The workers sent light records (more options than keep their detail): ask each for the full detail of
+                // its options among the best DETAIL_KEEP, then finish. A worker that does not answer in time leaves
+                // its options light; the screens rebuild those they show.
+                const finish = () => {
+                  const asks = detailAsks(run, owner, n, DETAIL_KEEP);
+                  const pending = new Set(asks.map((a, k) => (a.length ? k : -1)).filter((k) => k >= 0));
+                  if (!pending.size) { complete(); return; }
+                  detailPhase.onDetail = (k, options) => {
+                    applyDetail(run, options); // the ranking of this run is kept; only the detail comes from the worker
+                    pending.delete(k);
+                    if (!pending.size) complete();
+                  };
+                  detailPhase.timer = setTimeout(complete, WORKER_SILENCE_MS);
+                  for (const k of pending) {
+                    try { workers[k].postMessage({ type: 'detail', id, ids: asks[k] }); } catch (err) { pending.delete(k); }
+                  }
+                  if (!pending.size) complete();
                 };
                 if (normalizeInputs(inputs).settings.screeningModel !== 'repDays') { finish(); return; }
                 // Screening tier (work package 8): verify the best options with the full year on this thread, in slices.
@@ -205,11 +232,15 @@ export function useCompute(inputs, computeKey) {
                     setState((s) => ({ ...s, notice: null }));
                     finish();
                   } catch (err) {
+                    workers.forEach((x) => x.terminate());
+                    workersRef.current = [];
                     setState((s) => ({ ...s, status: 'error', error: String(err && err.stack ? err.stack : err) }));
                   }
                 };
                 setTimeout(vstep, 0);
               } catch (err) {
+                workers.forEach((x) => x.terminate());
+                workersRef.current = [];
                 setState((s) => ({ ...s, status: 'error', error: String(err && err.stack ? err.stack : err) }));
               }
             }
@@ -227,6 +258,8 @@ export function useCompute(inputs, computeKey) {
         // deserialised): terminate the pool and run on the main thread instead.
         const onWorkerFailure = (kind) => (ev) => {
           if (ev && ev.preventDefault) ev.preventDefault();
+          // Once every result is in, a worker that fails while sending detail leaves its options light (not a re-run).
+          if (received === n && !failed) { if (detailPhase.onDetail && !detailPhase.done) detailPhase.onDetail(i, []); return; }
           failPool(kind);
         };
         w.onerror = onWorkerFailure('failed');
@@ -236,7 +269,7 @@ export function useCompute(inputs, computeKey) {
       // exception escapes the timer callback and the run stays "running" with no result.
       for (let i = 0; i < n && !failed; i++) {
         try {
-          workers[i].postMessage({ id, inputs, sliceIndex: i, sliceCount: n, t0Abs });
+          workers[i].postMessage({ id, inputs, sliceIndex: i, sliceCount: n, t0Abs, lightAbove: DETAIL_KEEP });
         } catch (err) {
           failPool('could not be started');
         }

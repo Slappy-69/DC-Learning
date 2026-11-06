@@ -1075,7 +1075,7 @@ await check('B19. Phone width (375 px, touch): after the run, the tab bar and th
   return `header strip ${m.header.top}–${m.header.bottom} px, status line ${m.statusH} px ("${m.status.slice(0, 60)}…"), "Run details" (closed) at ${m.det.top} px: "${m.det.summary}"; tab bar ${m.tabs.top}–${m.tabs.bottom} px, first content of the active tab (${m.first.tag} "${m.first.text}") at ${m.first.top} px (was about 5,400 px); one tap opens the progress panel (${opened.done}/${opened.stages} stages done); during a new run the panel is shown outside "Run details" (${during.h} px), and folds again when it finishes (tab bar at ${after.tabsBottom} px)${axeClosed.skipped ? '' : `\n      ${axeLine(axeClosed)}\n      ${axeLine(axeOpen)}`}.`;
 });
 
-await check('B20. Site tab at 1400, 1000 and 375 px: no horizontal page scroll with the option selector listing every screened option; the closed selector shows its full name as the title', async () => {
+await check('B20. Site tab at 1400, 1000 and 375 px: no horizontal page scroll with the option selector listing every screened option (the best 2,000 when more were screened, work package 23); the closed selector shows its full name as the title', async () => {
   const { ctx, page, errors } = await openPage({ width: 1400, height: 900, siteBeta: true });
   await openSite(page);
   const screened = Number(((await page.locator('.header-strip').innerText()).match(/([\d,]+) screened/) || [])[1].replace(/,/g, ''));
@@ -1090,14 +1090,14 @@ await check('B20. Site tab at 1400, 1000 and 375 px: no horizontal page scroll w
     });
     ok(r.sw <= r.cw, `${w} px: scrollWidth ${r.sw} > clientWidth ${r.cw}`);
     ok(r.right <= r.cw, `${w} px: the selector ends at ${r.right} px`);
-    ok(r.n === screened, `${w} px: the selector lists ${r.n} options, ${screened} screened`);
+    ok(r.n === Math.min(screened, 2000), `${w} px: the selector lists ${r.n} options, ${screened} screened`);
     ok(r.title.replace(/\s+/g, ' ').trim() === r.text, `${w} px: title "${r.title}" ≠ selected "${r.text}"`);
     if (!first) first = r;
     out.push(`${w} px: ${r.sw}/${r.cw}, selector ${r.left}–${r.right} px`);
   }
   await ctx.close();
   ok(errors.length === 0, errors.join(' | '));
-  return `scrollWidth/clientWidth ${out.join('; ')}; ${first.n} options listed (= screened), longest label ${first.longest} characters; the title holds the full selected name.`;
+  return `scrollWidth/clientWidth ${out.join('; ')}; ${first.n} options listed of ${screened.toLocaleString('en-GB')} screened, longest label ${first.longest} characters; the title holds the full selected name.`;
 });
 
 await check('B21. "Skip to site plan" is the third Tab stop: Enter selects the Site tab and focuses the plan', async () => {

@@ -21,8 +21,31 @@ export function sameFigures(a, b) {
 // change does not rebuild 17,344 keys when every combination is screened (work package 23).
 const KEY_CACHE = new WeakMap();
 const figKey = (o) => FIGS.map((f) => { const x = f(o); return Number.isFinite(x) ? x.toPrecision(10) : String(x); }).join('|') + `|${o.resilience.status}|${o.adequacy ? o.adequacy.adequate : ''}`;
+// The result is kept per options array: the Options tab, the cards and the screens' run share one array after a
+// re-score (work package 23), so the 17,344 options are ordered once, not three times.
+// The ranks are checked, so an array re-scored in place is ordered again.
+const SAME_CACHE = new WeakMap();
+const rankPrint = (options) => { let h = options.length; for (const o of options) h = (Math.imul(h, 31) + o.rank) | 0; return h; };
+// The options in rank order, kept per array in the same way (read-only: callers copy before changing it).
+const ORDER_CACHE = new WeakMap();
+export function byRank(options) {
+  const print = rankPrint(options);
+  const hit = ORDER_CACHE.get(options);
+  if (hit && hit.print === print) return hit.list;
+  const list = [...options].sort((a, b) => a.rank - b.rank);
+  ORDER_CACHE.set(options, { print, list });
+  return list;
+}
 export function identicalResults(options) {
-  const byRank = [...options].sort((a, b) => a.rank - b.rank);
+  const print = rankPrint(options);
+  const hit = SAME_CACHE.get(options);
+  if (hit && hit.print === print) return hit.out;
+  const out = identicalResultsOf(options);
+  SAME_CACHE.set(options, { print, out });
+  return out;
+}
+function identicalResultsOf(options) {
+  const ranked = byRank(options);
   const key = (o) => {
     if (!o.eco || typeof o.eco !== 'object') return figKey(o);
     let k = KEY_CACHE.get(o.eco);
@@ -31,7 +54,7 @@ export function identicalResults(options) {
   };
   const first = new Map();
   const out = new Map();
-  for (const o of byRank) {
+  for (const o of ranked) {
     const k = key(o);
     const f = first.get(k);
     if (f && sameFigures(f, o)) out.set(o.id, f);
@@ -90,22 +113,27 @@ export function prosCons(o, options, sortedCache = new Map()) {
   return { pros: pros.slice(0, 3), cons: cons.slice(0, 3) };
 }
 
-// The top-five cards: five distinct strategies in rank order, skipping identical results.
-export function topCards(options, n = 5) {
+// The options the top-five cards show: five (n) distinct strategies in rank order, skipping identical results.
+export function cardOptions(options, n = 5) {
   const same = identicalResults(options);
-  const byRank = [...options].sort((a, b) => a.rank - b.rank);
   const seen = new Set();
-  const cache = new Map();
   const out = [];
-  for (const o of byRank) {
+  for (const o of byRank(options)) {
     if (same.has(o.id)) continue;
     const k = strategyKey(o);
     if (seen.has(k)) continue;
     seen.add(k);
-    out.push({ o, strategy: k, ...prosCons(o, options, cache), majorFlags: o.flags.filter((f) => f.severity === 'major') });
+    out.push({ o, strategy: k });
     if (out.length >= n) break;
   }
-  return { cards: out, comparison: `against the ${options.length.toLocaleString('en-GB')} options in this run`, identical: same };
+  return out;
+}
+
+// The top-five cards. `sortedCache`: the run's figures sorted for the pros and cons; they do not change with the weights, so the app keeps
+// one per run (work package 23: six sorts of 17,344 figures on every weight change otherwise).
+export function topCards(options, n = 5, sortedCache = new Map()) {
+  const out = cardOptions(options, n).map(({ o, strategy }) => ({ o, strategy, ...prosCons(o, options, sortedCache), majorFlags: o.flags.filter((f) => f.severity === 'major') }));
+  return { cards: out, comparison: `against the ${options.length.toLocaleString('en-GB')} options in this run`, identical: identicalResults(options) };
 }
 
 // Live description of a weight change (BRIEF §11; walkthrough 2026-10-21).

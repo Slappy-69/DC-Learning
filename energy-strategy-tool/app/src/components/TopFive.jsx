@@ -8,7 +8,7 @@ import { LABEL } from '../engine/defaults.js';
 const resCls = (s) => (s === 'Meets' ? 'ok' : s === 'Meets with flags' ? 'warn' : 'bad');
 
 export default function TopFive({ run, onOpen, onCompare, compareIds = [] }) {
-  const { cards, comparison } = useMemo(() => topCards(run.options), [run]);
+  const { cards, comparison } = useMemo(() => topCards(run.options, 5, run.sortedFigures), [run]);
   if (!cards.length) return null;
   return (
     <section className="top5" aria-labelledby="top5-h">

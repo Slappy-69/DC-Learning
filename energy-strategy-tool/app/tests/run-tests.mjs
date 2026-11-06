@@ -55,6 +55,7 @@ import {
   HOOKS, paretoFrontier, weightedPick, paretoTableRows, PRESETS,
   highestWeightedScore, defaultView, activeFilterChips, activeFilterCount, paretoTtpClasses, defaultParetoAxes,
   tablePageSize, buildDefaultInputs, isRequirementCompliant,
+  slimOption, lightenRun, partOwners, detailAsks, applyDetail,
 } from '../src/engine/index.js';
 import { scoreOptions, isAdequate } from '../src/engine/scoring.js';
 import { dispatchAll } from '../src/engine/dispatch.js';
@@ -103,7 +104,10 @@ import { getViewBundle } from './view-bundle.mjs';
 const START = '2027-01';
 const results = [];
 let failures = 0;
+// NODE_ONLY=<regex> runs only the matching tests (development aid; the full run is the check of record).
+const ONLY = process.env.NODE_ONLY ? new RegExp(process.env.NODE_ONLY) : null;
 async function test(name, fn) {
+  if (ONLY && !ONLY.test(name)) return;
   const t0 = performance.now();
   try {
     const info = await fn();
@@ -584,6 +588,49 @@ await test('6c. Worker pool: each worker returns its own events; merged log comp
   assert.deepEqual(p1.run.shortfall, runT1.shortfall, 'pool shortfall analysis');
   const perWorker = p1.parts.map((p) => { const d = p.log.find((e) => e.stage === 'dispatch' && e.event === 'end').detail; return `${p.options.length} options ${d.cacheMisses} miss/${d.cacheHits} hit`; });
   return `${N} workers (real src/worker.js in worker_threads): merged ${log.length} events, seq contiguous, sources ${v.sources.join(', ')}; per worker ${perWorker.join('; ')}; ${merge.detail.distinctConfigurations} distinct configurations, ${merge.detail.duplicatedAcrossWorkers} simulated in more than one worker; streamed events = returned events; second pool run identical excluding timestamps; ${runT1.options.length} scores and ranks equal the single-thread run.`;
+});
+
+await test('6c2. Worker pool with light parts (work package 23, OPEN-QUESTIONS 154): above the keep limit each worker sends light records and holds its run; after the merge it sends the full detail of its options among the best only; the result equals the single-thread run lightened at the same limit', async () => {
+  const N = 2, KEEP = 150;
+  const t0Abs = performance.timeOrigin + performance.now();
+  const coord = startPooledRun(t1Inputs, { t0Abs });
+  const workers = Array.from({ length: N }, () => new Worker(new URL('./worker-shim.mjs', import.meta.url)));
+  const ask = (w, msg, type) => new Promise((resolve, reject) => {
+    const on = (m) => { if (m.type === type) { w.off('message', on); resolve(m); } else if (m.type === 'error') { w.off('message', on); reject(new Error(m.message)); } };
+    w.on('message', on); w.on('error', reject); w.postMessage(msg);
+  });
+  try {
+    const parts = (await Promise.all(workers.map((w, i) => ask(w, { id: 7, inputs: t1Inputs, sliceIndex: i, sliceCount: N, t0Abs, lightAbove: KEEP }, 'result')))).map((m) => m.run);
+    assert.ok(parts.every((p) => p.options.every((o) => o.light)), 'a part sent full records above the limit');
+    const run = mergeRuns(parts, t1Inputs, { log: coord.log });
+    const asks = detailAsks(run, partOwners(parts), N, KEEP);
+    assert.equal(asks.flat().length, KEEP);
+    const replies = await Promise.all(workers.map((w, k) => ask(w, { type: 'detail', id: 7, ids: asks[k] }, 'detail')));
+    replies.forEach((m, k) => assert.equal(applyDetail(run, m.options), asks[k].length));
+    // A second request finds nothing: the worker let its run go.
+    const again = await ask(workers[0], { type: 'detail', id: 7, ids: asks[0] }, 'detail');
+    assert.equal(again.options.length, 0);
+    lightenRun(run, KEEP);
+    // Against the single-thread run, lightened at the same limit.
+    const ref = lightenRun({ ...runT1, options: runT1.options.map(slimOption) }, KEEP);
+    const byId = new Map(ref.options.map((o) => [o.id, o]));
+    assert.equal(run.options.length, ref.options.length);
+    let full = 0;
+    for (const o of run.options) {
+      const r = byId.get(o.id);
+      assert.ok(o.rank === r.rank && o.score === r.score && !!o.light === !!r.light, `#${o.rank} rank, score or light`);
+      if (o.light) { assert.deepEqual(o.flags, r.flags); assert.deepEqual(o.eco, r.eco); continue; }
+      full++;
+      for (const k of ['name', 'eco', 'dispatch', 'flags', 'ttp', 'carbon', 'resilience', 'deliv', 'unmet', 'adequacy', 'sizing', 'metrics', 'axisScores']) assert.deepEqual(o[k], r[k], `#${o.rank} ${k}`);
+    }
+    assert.equal(full, KEEP);
+    // At or below the limit the parts are full records, as before.
+    const below = await ask(workers[1], { id: 8, inputs: t1Inputs, sliceIndex: 1, sliceCount: 50, t0Abs, lightAbove: 5000 }, 'result');
+    assert.ok(below.run.options.every((o) => !o.light));
+    return `${N} workers, ${run.options.length} options: light parts, ${KEEP} sent in full after the merge, equal to the single-thread run lightened at ${KEEP}; a worker lets its run go after the detail; full parts at or below the limit.`;
+  } finally {
+    workers.forEach((w) => w.terminate());
+  }
 });
 
 await test('6d. Main-thread fallback: time-sliced runModelSteps gives the same log content and results, and the progress tracker reaches 100 % on every stage', async () => {

@@ -155,6 +155,8 @@ export default function App() {
   const setWeights = useCallback((w) => setInputs((cur) => ({ ...cur, weights: { ...w } })), []);
 
   // Re-score the latest run with the current weights and scoring settings (no dispatch).
+  // The run's figures sorted for the cards' pros and cons: they do not change with the weights (work package 23).
+  const sortedFigures = useMemo(() => new Map(), [compute.run]);
   const scoredRun = useMemo(() => {
     if (!compute.run) return null;
     const r = { ...compute.run, options: compute.run.options.map((o) => ({ ...o })) };
@@ -162,14 +164,15 @@ export default function App() {
     const rs = compute.run.inputs.settings || {};
     const keepDominance = rs.costMetric === inputs.settings.costMetric && rs.carbonMetric === inputs.settings.carbonMetric && compute.run.options.every((o) => 'dominatedBy' in o);
     r.scoring = scoreOptions(r.options, normalizeInputs(inputs), { keepDominance });
+    r.sortedFigures = sortedFigures;
     r.inputs = { ...r.inputs, weights: inputs.weights, settings: { ...r.inputs.settings, costMetric: inputs.settings.costMetric, carbonMetric: inputs.settings.carbonMetric, rankCompliantFirst: inputs.settings.rankCompliantFirst } };
     return r;
   }, [compute.run, inputs.weights, inputs.settings.costMetric, inputs.settings.carbonMetric, inputs.settings.rankCompliantFirst]); // eslint-disable-line react-hooks/exhaustive-deps
   // Work package 23 (owner 2026-11-06, "Keep detail for the top 2,000"): options below the best 2,000 hold light records.
   // Those the screens read in full (the top 50, the strategy cards, the options on the Dispatch, Site, Sensitivity and
   // Compare tabs) are rebuilt here; an option opened further down the list is rebuilt by its detail panel.
-  const run = useMemo(() => withDetail(scoredRun, [dispatchOptionId, siteOptionId, sensOptionId, ...compareIds]),
-    [scoredRun, dispatchOptionId, siteOptionId, sensOptionId, compareIds]);
+  const run = useMemo(() => withDetail(scoredRun, [dispatchOptionId, siteOptionId, sensOptionId, ...compareIds], compute.run),
+    [scoredRun, dispatchOptionId, siteOptionId, sensOptionId, compareIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The leader is the weighted pick (rank 1): the same function the Trade-offs view uses, so the header,
   // the live region and the highlighted pick always name the same option (AC5).
