@@ -91,7 +91,7 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | EE | Done 2026-11-07 (partial: one fee only) |
 | IT | Partly done 2026-11-07 (rate tables not readable) |
 
-Part H: 23 countries researched (GR, LU and EE only in part). No usable value found for BG, HR, CY, IS, LV, LT, MT and SI; they and the remaining gaps are listed at the end of `levies-and-taxes-2026-11.md`.
+Part H: 23 countries researched (GR, LU and EE only in part). Searched without a usable value: BG, HR, LT, SI; not yet searched: CY, IS, LV, MT; they and the remaining gaps are listed at the end of `levies-and-taxes-2026-11.md`.
 
 ## Assumptions taken
 

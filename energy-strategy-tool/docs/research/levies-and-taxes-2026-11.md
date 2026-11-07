@@ -8,7 +8,7 @@ Confidence labels as in the other notes. The machine-readable list is `levies-an
 
 ## Summary
 
-Twenty-three countries were researched (fourteen first, then nine more on the same day). Eight smaller markets gave no usable value; they are listed at the end.
+Twenty-three countries were researched (fourteen first, then nine more on the same day). Four were searched without a usable result (BG, HR, LT, SI) and four not yet searched (CY, IS, LV, MT); they are listed at the end.
 
 Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; network from Part A, levies and taxes from this note; VAT left out. "Proposed adder" = network + levies and taxes, worked out; today's adder is the tool's indicative default.
 
@@ -239,7 +239,7 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 
 ## Not researched in this pass (next)
 
-**No usable value found in this pass:** Bulgaria, Croatia, Cyprus, Iceland, Latvia, Lithuania, Malta and Slovenia (searches found only network tariffs, household articles or out-of-date figures). Next, the gaps named in the table, above all Hungary's KÁT charge for large users, Poland's network rates and excise, Greece's high voltage levies, Luxembourg's electricity tax and Estonia's renewables fee; and the earlier gaps (Italy's general system charges, Ireland's capacity charges, France's capacity mechanism, Austria's renewables contribution, Norway's data centre rate). Eurostat's breakdown of taxes and levies for the largest industrial band would be a quick cross-check for the EU countries, but its data service could not be reached from this session.
+**Searched, no usable value found:** Bulgaria, Croatia, Lithuania and Slovenia (the searches found only network tariffs, household articles or out-of-date figures). **Not yet searched:** Cyprus, Iceland, Latvia and Malta. Next, the gaps named in the table, above all Hungary's KÁT charge for large users, Poland's network rates and excise, Greece's high voltage levies, Luxembourg's electricity tax and Estonia's renewables fee; and the earlier gaps (Italy's general system charges, Ireland's capacity charges, France's capacity mechanism, Austria's renewables contribution, Norway's data centre rate). Eurostat's breakdown of taxes and levies for the largest industrial band would be a quick cross-check for the EU countries, but its data service could not be reached from this session.
 
 ## Questions for the owner (copied to the progress file)
 
