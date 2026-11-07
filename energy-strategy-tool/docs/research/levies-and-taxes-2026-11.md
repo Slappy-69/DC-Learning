@@ -73,3 +73,18 @@ Confidence labels as in the other notes. The machine-readable list is `levies-an
 - **Adder:** TUoS €34.2/MWh (Part A, including system services of about €27) + tax €1.0 + PSO €0.4 = **about €36/MWh before capacity and imperfections charges**, against **€50** today.
 - **Confidence:** published and clear (tax and PSO).
 - **Sources:** Revenue, "Energy excise duty rates" (tax authority, 15 Oct 2026), https://www.revenue.ie/en/tax-professionals/tdm/excise/excise-duty-rates/energy-excise-duty-rates-20261015030028.pdf; CRU, 29 Jul 2026 (see Part A). Both accessed 7 Nov 2026.
+
+## Italy (IT)
+
+- **General system charges (oneri generali: ASOS for renewables support, ARIM for other costs):** **No published value found in readable form.** ARERA's page confirms the values in force from 1 October 2026 (ASOS as from 1 July 2026, ARIM as from 1 January 2026; decision 343/2026/R/com), but the rate tables (A and B) are in annexes that could not be read. A 2026 decree ("DL Bollette") cut ASOS for non-energy-intensive users at high and very high voltage; energy-intensive classes pay little or no ASOS (data centres are not normally in the energy-intensive classes; not checked).
+- **Electricity excise (accisa):** not read in this pass.
+- **For the tool:** Italy's adder cannot be set yet; the general system charges are known to be the largest non-commodity item on Italian bills.
+- **Sources:** ARERA, "Oneri generali di sistema e ulteriori componenti", https://www.arera.it/area-operatori/prezzi-e-tariffe/oneri-generali-di-sistema-e-ulteriori-componenti; ARERA, technical report to decision 98/2026/R/com, https://www.arera.it/fileadmin/allegati/docs/26/98-2026-R-com_Relazione_tecnica.pdf (regulator, both accessed 7 Nov 2026).
+
+## Finland (FI)
+
+- **Electricity tax 2026 (including the strategic stockpile fee):** class I **2.325 c/kWh (€23.25/MWh)**; class II 0.135 c/kWh (€1.35/MWh) for industry, mining and agriculture.
+- **Data centres moved from class II to class I on 1 July 2026** (Parliament's Finance Committee recommended the bill unchanged, report VaVM 28/2025 vp, signed 5 December 2025). No exception for waste heat in the bill; the government planned a time-limited support scheme for data centres from autumn 2026 (not checked).
+- **Adder:** network €4.8/MWh (Part A) + tax €23.25 = **about €28/MWh**, against **€30** today (before any data centre support).
+- **Confidence:** published and clear.
+- **Sources:** Vero (tax administration), "Tax rates on electricity and certain fuels", https://vero.fi/en/businesses-and-corporations/taxes-and-charges/excise-taxation/sahkovero/Tax-rates-on-electricity-and-certain-fuels/; Eduskunta, Finance Committee report VaVM 28/2025 vp, https://www2.eduskunta.fi/pdf/VaVM+28/2025+vp?lang=fi (parliament). Both accessed 7 Nov 2026.

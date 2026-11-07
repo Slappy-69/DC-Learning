@@ -74,6 +74,8 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | ES | Done 2026-11-07 (tax only; small supplier items not researched) |
 | PT | Done 2026-11-07 |
 | IE | Done 2026-11-07 (capacity and imperfections charges not researched) |
+| FI | Done 2026-11-07 |
+| IT | Partly done 2026-11-07 (rate tables not readable) |
 
 ## Assumptions taken
 
