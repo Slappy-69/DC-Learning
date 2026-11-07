@@ -56,3 +56,20 @@ Confidence labels as in the other notes. The machine-readable list is `levies-an
 - **Adder:** network and charges from Part A (power part about €2.6/MWh with the charges; energy terms by period not averaged, a few €/MWh) + tax €3.9 = **probably €8–12/MWh**, against **€40** today. Too uncertain to propose a single figure until the period hours are averaged.
 - **Confidence:** published and clear (tax rate); the total is a rough working.
 - **Source:** Agencia Tributaria, "Medidas extraordinarias RDL 7/2026" (tax authority, March 2026), https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/II_especiales/electricidad/Medidas_extra_RDL_7_2026.pdf (accessed 7 Nov 2026).
+
+## Portugal (PT)
+
+- **Electricity consumption tax (IEC): €1.0/MWh** (€0.001/kWh, supplier glossary; the tax authority's 2026 circular read covers fuels only). Social-tariff customers are exempt.
+- **Policy costs (CIEG)** are already inside the access tariff of Part A (ERSE's MAT average €11.6/MWh in 2026).
+- **Adder:** network €10.5/MWh (Part A) + IEC €1.0 = **about €11.5/MWh**, against **€40** today.
+- **Confidence:** published, from a supplier's glossary.
+- **Source:** Goldenergy, "Imposto Especial sobre o Consumo de eletricidade (IEC)", https://goldenergy.pt/glossario/imposto-especial-sobre-consumo-eletricidade-iec/ (supplier, 2026, accessed 7 Nov 2026).
+
+## Ireland (IE)
+
+- **Electricity Tax: €1.00/MWh** for business use (since 1 January 2020; Revenue).
+- **PSO levy:** €0.24 per kVA of MIC per month from 1 October 2026 (Part A): about €0.39/MWh for 100 MVA and 745 GWh.
+- **Not researched:** capacity market costs, imperfections and market operator charges passed through by suppliers. Capacity costs in the Single Electricity Market can be significant; they should be checked before the adder is set.
+- **Adder:** TUoS €34.2/MWh (Part A, including system services of about €27) + tax €1.0 + PSO €0.4 = **about €36/MWh before capacity and imperfections charges**, against **€50** today.
+- **Confidence:** published and clear (tax and PSO).
+- **Sources:** Revenue, "Energy excise duty rates" (tax authority, 15 Oct 2026), https://www.revenue.ie/en/tax-professionals/tdm/excise/excise-duty-rates/energy-excise-duty-rates-20261015030028.pdf; CRU, 29 Jul 2026 (see Part A). Both accessed 7 Nov 2026.
