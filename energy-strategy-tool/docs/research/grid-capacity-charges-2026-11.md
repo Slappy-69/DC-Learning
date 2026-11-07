@@ -416,3 +416,11 @@ Five rows of the CSV were drawn at random (Python `random.sample`, seed 20261107
 | HU | Contracted capacity charge NAF 2,376 HUF/kW/year (NAF/KÖF 8,004), from 1 Jan 2026, MEKH H2995/2025 | Matches |
 | ES | 6.4TD power term P1–P6: 6.606205 / 3.935625 / 0.987554 / 0.686109 / 0.020376 / 0.013971 €/kW/year | Matches (BOE text) |
 | GB | 2027/28 forecast locational tariffs: South Western 16.912246, London 5.490841 £/kW | Matches. For 2027/28 zones 1–5 are floored at zero (zones 1–7 in the 2026/27 final tariffs, as recorded) |
+
+## Second pass on the gaps (7 November 2026, after the run)
+
+- **France:** CRE deliberation 2026-104 (21 May 2026) raises the HTB tariff by **3.34 % on average from 1 August 2026** (inflation +0.39 %, factor X −0.05 %, clearing coefficient k +3.00 %). The new coefficients are in its annex 2, which did not extract. **Worked out (approximate):** the August 2025 values in this note × 1.0334, if every coefficient moved by the average. Source: https://www.cre.fr/fileadmin/Documents/Deliberations/2026/260521_2026-104_Evolution_TURPE_7_HTB.pdf (regulator, accessed 7 Nov 2026).
+- **Sweden:** Svenska kraftnät's final report on a new tariff model (19 Feb 2026) says the **network expansion power component is 0 kr/kW at every connection point** on 2026 figures; the yearly subscription is a fixed fee per MW, with no regional values given. The 2026 price list itself was not found. Source: https://www.svk.se/492b56/siteassets/2.utveckling-av-kraftsystemet/systemansvar-o-elmarknad/tariffoversyn/slutrapport_ny-tariffmodell_v0.pdf (operator, accessed 7 Nov 2026).
+- **Ireland 2026/27:** EirGrid's published 2026/27 tariff paper covers generators only; the demand tariffs for 2026/27 were not found. The wholesale market charges for 2026/27 (capacity €24.53, imperfections €18.81, market operator €0.787 per MWh) are in `levies-and-taxes-2026-11.md`.
+- **Slovenia:** the renewables and CHP contribution is charged **per kW of billing power** (€2.97160/kW a month at 110–400 kV, from 1 Oct 2024); **France's** new capacity charge is **€18,646.6 per MW** used at winter peaks (winter 2026–27). Both are per-MW charges that belong with the per-MW tick if it is built (details in `levies-and-taxes-2026-11.md`).
+- **Not retried (no new source found):** CY, LT, MT, the PL rate table, CZ and HR 2026, IS after 2022.

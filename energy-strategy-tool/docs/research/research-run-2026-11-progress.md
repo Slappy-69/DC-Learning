@@ -54,7 +54,7 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | SE | Done 2026-11-07 (no readable value) |
 | CH | Done 2026-11-07 |
 
-All 31 countries done. Values not found or not readable, to try again later: CY, LT, MT, PL (rate table), SE (price list); 2026 values not read for CZ, HR, IE (2026/27), FR (Aug 2026 grid); IS out of date (2022).
+All 31 countries done. Second pass (7 Nov 2026): FR +3.34 % from 1 Aug 2026 (coefficients not read); SE expansion component 0 kr/kW on 2026 figures; IE 2026/27 demand tariffs not found; see the end of the Part A note. Values not found or not readable, to try again later: CY, LT, MT, PL (rate table), SE (price list); 2026 values not read for CZ, HR, IE (2026/27), FR (Aug 2026 grid); IS out of date (2022).
 
 Notes gathered before Part A started (use them, then check):
 
