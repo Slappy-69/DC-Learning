@@ -13,8 +13,8 @@ A new chat that picks this up: read this file, then carry on from the first part
 | B | Closing plant's grid connection, more countries (OQ 155) | `plant-connection-takeover-part2-2026-11.md` | Done | 2026-11-07 |
 | A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | Done (5 random entries checked) | 2026-11-07 |
 | E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | Done | 2026-11-07 |
-| G | Open map data for main utilities (OQ 200) | `utility-maps-2026-11.md` | In progress | Started 2026-11-07 |
-| F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | Not started | |
+| G | Open map data for main utilities (OQ 200) | `utility-maps-2026-11.md` | Done | 2026-11-07 |
+| F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | In progress | Started 2026-11-07 |
 
 ## Part A: countries
 
@@ -91,6 +91,10 @@ Notes gathered before Part A started (use them, then check):
 - E1. Renewable plant source: powerplantmatching (recommended), OpenStreetMap, or both?
 - E2. Group German wind turbines into farms at build time (a judgement distance), or show them turbine by turbine?
 - E3. powerplantmatching's licence mix (about 2 % of renewable rows draw on OpenStreetMap): accept its CC BY 4.0 statement, or ask a licensing adviser?
+- G1. Which utilities first (proposed: electricity 220 kV+, gas, water, heat, telecoms)?
+- G2. Each utility as a default distance that drives a cost (electricity, gas) or only as a flag (water, telecoms, heat)?
+- G3. ODbL data (OpenStreetMap, PyPSA-Eur network) bundled as separate files in the public repository and the Windows program: acceptable?
+- G4. Build a release script for OpenStreetMap extracts (needs a machine that can reach Geofabrik)?
 
 ## Sites not reachable
 
