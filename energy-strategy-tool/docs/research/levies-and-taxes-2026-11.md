@@ -192,3 +192,28 @@ Belgium, Poland and Czechia first (data centre markets), then Bulgaria, Croatia,
 - **Worked out:** about **CZK 28/MWh** (about €1.1) in levies and taxes for 2026–27, on top of Part A's network and system services (CZK 366/MWh in 2025).
 - **Confidence:** published (press and a trade guide; ERÚ's text not read).
 - **Sources:** oEnergetice, "Government approves shift of all supported-energy payments to the state" (16 Dec 2025) https://oenergetice.cz/en/czech-energy-sector/government-approves-shift-of-all-supported-energy-payments-to-the-state-electricity-to-become-cheaper-in-czechia; oEnergetice, "Czech state again to cover all renewable support charges" (21 Sep 2026) https://oenergetice.cz/en/czech-energy-sector/electricity-prices-expected-to-keep-falling-czech-state-again-to-cover-all-renewable-support-charges; Pohoda portal, "Daň z elektřiny" https://portal.pohoda.cz/dane-ucetnictvi-mzdy/ostatni-dane/ekologicke-dane/dan-z-elektriny (all accessed 7 Nov 2026).
+
+## Slovakia (SK)
+
+- **Tariff for system operation (TPS):** **€15.90/MWh**, flat, in a supplier's 2026 price list citing ÚRSO's decision 0099/2025/E (2025–2027). It pays for renewables and CHP support and other items. A banded TPS with big discounts for large users was proposed in 2021; whether a data centre gets a lower band in 2026 was **not confirmed**.
+- **Electricity excise:** **€1.32/MWh** (Act 609/2007 § 6); the exemptions are for electricity-intensive manufacturing.
+- **Nuclear fund payment:** listed, amount not found.
+- **Worked out:** about **€17.2/MWh** in levies and tax, before the nuclear fund payment; Part A's network and system services (€7.7–17.6) come on top.
+- **Confidence:** the excise is published and clear (the law); the TPS is from a supplier's list, not ÚRSO.
+- **Sources:** BTS price list from 1 Jan 2026 https://www.bts.aero/content/00/cennik-dodavatela-elektriny-pre-dodavku-elektriny-nepodliehajucu-cenovej-regulacii-platny-od-1-1-2026.pdf; Act 609/2007 (version from 1 Jan 2026) https://static.slov-lex.sk/static/SK/ZZ/2007/609/20260101.html; SITA, 26 Oct 2021 https://sita.sk/venergetike/podnikatelia-by-mohli-dalsi-rok-usetrit-na-tarife-za-prevadzkovanie-systemu-regulacny-urad-pripravil-tri-alternativy/ (all accessed 7 Nov 2026).
+
+## Romania (RO)
+
+- **Levies 2026 (RON per MWh):** green certificates **73.03** (worked out: quota 0.499387 certificates/MWh × RON 146.2532 each); cogeneration contribution **13.60** (from 1 Nov 2025); CfD contribution **0.166**; business-use excise **3.84**.
+- **Worked out:** about **RON 90.6/MWh** in levies and tax. Network charges for a transmission user (Part A: no capacity charge) are per MWh: extraction TL 36.45 and system services 14.70 (same notice).
+- **Not checked:** the green certificate exemption for energy-intensive industry (data centres taken as not eligible).
+- **Confidence:** published (supplier notices citing ANRE orders).
+- **Sources:** Axpo Romania, regulated tariffs from 1 Jan 2026 https://www.axpo.com/content/dam/axpo19/countries/romania/26012025_Tar%20regl%20EE_01.01.2026.pdf; Egger, 2026 invoice guide https://downloads.egger.com/static/east/2026_Ghid_explicativ_privind_elementele_din_factura.pdf; Capital.ro, 30 Oct 2025 https://www.capital.ro/facturile-la-energie-electrica-cresc-din-nou-de-la-1-noiembrie-anre-a-aprobat-majorarea-contributiei-pentru-cogenerare.html (all accessed 7 Nov 2026).
+
+## Hungary (HU)
+
+- **Energy tax:** **HUF 398/MWh** (an adviser's page dated 5 Aug 2026; the year of the rate is not stated).
+- **KÁT renewables charge:** not a regulated published rate; suppliers pass it on. A business paper (24 May 2026) says it **rose from HUF 2–4 to nearly HUF 15 per kWh** (about HUF 15,000/MWh). If that holds for large users it is the largest item in the bill. **Needs checking** before use.
+- **Not found:** METÁR; any other levies (MAVIR's network charge with its 100 % discount is in Part A).
+- **Confidence:** published, but unclear which tariff applies.
+- **Sources:** RSM Hungary, "Energy tax" https://www.rsm.hu/tax-to-know/energy-tax (5 Aug 2026); Economx, 24 May 2026 https://www.economx.hu/magyar-gazdasag/2026/05/24/aram-koltseg-dragulas-napelem/; E.ON system-use charges 2026 https://www.eon.hu/content/dam/eon/eon-hungary/documents/hatarozatok-szabalyzatok-aram/arak-tarifak/Aram_RHD_EON_20260101.pdf (all accessed 7 Nov 2026).

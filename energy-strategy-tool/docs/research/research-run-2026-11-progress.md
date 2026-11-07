@@ -83,6 +83,9 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | BE | Done 2026-11-07 (2025 surcharges; federal excise not read) |
 | PL | Done 2026-11-07 (excise not read) |
 | CZ | Done 2026-11-07 (POZE state-paid 2026–27; OTE fee not read) |
+| SK | Done 2026-11-07 (TPS banding not confirmed) |
+| RO | Done 2026-11-07 |
+| HU | Done 2026-11-07 (KÁT from press; to check) |
 | IT | Partly done 2026-11-07 (rate tables not readable) |
 
 Part H stopped after 14 countries (DE, NL, GB, FR, ES, PT, IE, IT partly, FI, SE, NO, DK, CH, AT) to save the owner's usage; the other 17 are listed at the end of `levies-and-taxes-2026-11.md`.
