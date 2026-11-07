@@ -10,8 +10,8 @@ A new chat that picks this up: read this file, then carry on from the first part
 |---|---|---|---|---|
 | C | Great Britain's Data Centre Commitment Fee (OQ 199) | `gb-commitment-fee-2026-11.md` | Done | 2026-11-07 |
 | D | Ireland's large energy user policy (OQ 198) | `ireland-large-energy-users-2026-11.md` | Done | 2026-11-07 |
-| B | Closing plant's grid connection, more countries (OQ 155) | `plant-connection-takeover-part2-2026-11.md` | In progress | Started 2026-11-07 |
-| A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | Not started | |
+| B | Closing plant's grid connection, more countries (OQ 155) | `plant-connection-takeover-part2-2026-11.md` | Done | 2026-11-07 |
+| A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | In progress | Started 2026-11-07 |
 | E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | Not started | |
 | G | Open map data for main utilities (OQ 200) | `utility-maps-2026-11.md` | Not started | |
 | F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | Not started | |
@@ -22,7 +22,12 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 
 | Country | State |
 |---|---|
-| (none yet) | |
+| (none finished yet) | |
+
+Notes gathered before Part A started (use them, then check):
+
+- FI: Fingrid 2026 (Appendix 2, 1 Jan 2026): consumption fee €10.47/MWh winter weekday 07–21, €2.97/MWh other times; intake fee €1.07/MWh; no capacity fee for consumption (only plants €189.5/MW/month and storage €94.75/MW/month). 2027 prices published as attachments on Fingrid's fee page.
+- IE: MIC bond = network capacity charge × 18 months × MIC (EirGrid, connection charges and security); the capacity charge rate itself still to find (TUoS statement).
 
 ## Assumptions taken
 
@@ -44,6 +49,8 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 - D2. Do standby gensets count towards Ireland's de-rated test (cautious reading: no)?
 - D3. MVA against MW for Ireland's test: equal (EirGrid's example) or the option's power factor?
 - D4. Bundle the latest T-4 de-rating table (2030/31, August 2026) and update it at each release?
+- B1. Norway's takeover flag: "likely unavailable" (reserved capacity cannot change purpose) rather than "not confirmed"?
+- B2. Should the general takeover flag say, for every country, that a plant's export connection is not an import connection?
 
 ## Sites not reachable
 
@@ -52,3 +59,4 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 - The session's shell cannot reach most websites (for example www.ofgem.gov.uk: refused by the session's network allowlist). Pages were read with the web-reading tool instead; no workaround was tried.
 - Utility Week (article on government support for the GB fee): refused by the site.
 - sinnfein.ie (refused) and stackpath.ie (does not allow automated reading): same content found elsewhere.
+- B: lovdata.no (refused), anwalt.de (refused), gridreadiness.com (does not allow automated reading).
