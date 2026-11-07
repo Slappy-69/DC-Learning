@@ -172,3 +172,21 @@ The summary table is at the top; country sections follow, in the order researche
 - **Worked example, 100 MW peak each month, 2025 items (worked out):** capacity €2.50 m a year; energy about €3.3 m.
 - **Confidence:** published, but the period of the peak charge and the 2026 values were not confirmed.
 - **Sources:** HOPS, "Usluge prijenosa", https://www.hops.hr/usluge-prijenosa (operator, accessed 7 Nov 2026), citing HERA's decision NN 145/2024, https://narodne-novine.nn.hr/clanci/sluzbeni/2024_12_145_2403.html; HERA, notice of 12 December 2025, https://www.hera.hr/hr/docs/2025/Obavijest_2025-12-12.pdf (regulator).
+
+## Cyprus (CY)
+
+- **No published value found.** Searched the regulator CERA's price analysis page and summaries of the EAC tariffs (2026). Network use of system charges in Cyprus are presented per kWh within the supply tariffs (high-voltage commercial and industrial tariff code 50); no per-kVA or per-kW network charge for a high-voltage (132 kV) customer was found. The transmission system operator is TSOC; the grid owner is EAC.
+- **For the tool:** blank and flagged; network charges stay in `grid.priceAdder` (€40/MWh, indicative).
+- **Sources:** CERA, "Analysis of electricity prices", https://www.cera.org.cy/en-gb/katanalotes/details/times-ilektrikis-energeias (regulator, undated, accessed 7 Nov 2026).
+
+## Czechia (CZ)
+
+- **Tariff:** the regulator ERÚ's price decision for network services. The 2025 decision (11/2024) was read; the 2026 decision was not found (ERÚ's 2026 bulletin read holds the methodology for 2026–2030, not the prices; an industry article says regulated components moved about +1.1 % in the 2026 draft). A new tariff structure for 110 kV and transmission starts in 2027 (ERÚ, not researched).
+- **Capacity part (2025):**
+  - **Customers connected to the transmission system (ČEPS, 220 and 400 kV): 104,942 CZK per MW per month**, about **1,259,304 CZK per MW a year**, billed on the month's highest quarter-hour power drawn (point 2.4). Basis: peak.
+  - **110 kV (VVN) distribution customers, annual reserved capacity: 109,554 (ČEZ Distribuce), 95,783 (EG.D), 112,078 (PREdistribuce) CZK per MW per month**, about 1.15–1.34 million CZK per MW a year. Basis: contracted (reserved for the year). Monthly reservations cost more (105,784–123,566).
+- **Energy part (2025):** use of the transmission network 26.91 CZK/MWh; use of 110 kV networks 31.08–54.66 CZK/MWh; system services 170.92 CZK/MWh; renewables support (POZE) 495 CZK/MWh in the 2026 draft.
+- **Worked example, 100 MW at transmission, 2025 prices (worked out):** capacity about 126 million CZK a year (roughly €5 m); energy about 745 GWh × 198 CZK = 147 million CZK, plus POZE.
+- **For the tool:** Czechia has one of the largest capacity charges in this survey (about 1.26 million CZK, roughly €50,000, per MW a year).
+- **Confidence:** published (2025); 2026 values not read.
+- **Sources:** ERÚ, price decision 11/2024 (prices for 2025), copy at https://euroenergie.cz/CenovaRozhodnutiERU/2025/ERU-CR_2024_11.pdf (regulator's decision, accessed 7 Nov 2026); ERÚ, Energetický regulační věstník 9/2025 (methodology 2026–2030), https://portal.gov.cz/vestniky/eeuaau7/1583280064.pdf; energie.cz, "Regulované ceny pro rok 2026" (press, 1 Dec 2025).
