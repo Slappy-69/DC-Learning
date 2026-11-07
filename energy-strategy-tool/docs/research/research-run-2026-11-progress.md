@@ -78,6 +78,8 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | SE | Done 2026-11-07 |
 | NO | Done 2026-11-07 (data centre rate unclear) |
 | DK | Done 2026-11-07 |
+| CH | Done 2026-11-07 |
+| AT | Done 2026-11-07 (renewables contribution % not read) |
 | IT | Partly done 2026-11-07 (rate tables not readable) |
 
 ## Assumptions taken

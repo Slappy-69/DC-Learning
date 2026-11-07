@@ -110,3 +110,21 @@ Confidence labels as in the other notes. The machine-readable list is `levies-an
 - **Adder:** network DKK 23.8/MWh plus losses (Part A) + tax DKK 4 = **about €3.7/MWh plus losses (about €1)**, against **€40** today.
 - **Confidence:** published and clear.
 - **Source:** Skattestyrelsen, "Midlertidig nedsættelse af elafgiften i 2026 og 2027", https://skat.dk/erhverv/afgifter-paa-varer-og-ydelser-punktafgifter/nyhedsbrev-afgifter/midlertidig-nedsaettelse-af-elafgiften-i-2026-og-2027 (tax authority, 1 Jan 2026, accessed 7 Nov 2026).
+
+## Switzerland (CH)
+
+- **Federal grid surcharge (Netzzuschlag) 2026: 2.30 Rp/kWh (CHF 23/MWh)**; "solidarised costs" 0.05 Rp/kWh. (The power reserve 0.41 and Swissgrid's ancillary services 0.27 Rp/kWh are already in Part A's Swissgrid figure.) Read from a municipal utility's 2026 tariff sheet.
+- **Refunds:** electricity-intensive companies can have the grid surcharge refunded under a target agreement; conditions and data centre eligibility were not checked.
+- **Municipal levies** vary by municipality (3.40 Rp/kWh in Nidau) and are not included.
+- **Adder:** Swissgrid CHF 19.7/MWh (Part A) + CHF 23.5 = **about CHF 43/MWh (about €47)**, against **€50** today, before municipal levies.
+- **Confidence:** published (from a local utility's sheet).
+- **Source:** Stadt Nidau, "Elektrizitäts- und Netznutzungstarife 2026", https://www.nidau.ch/verwaltung/abteilungen/infrastruktur/tiefbau-und-umwelt/elektrizitaetsversorgung/stromtarife/elektrizitaets-und-netznutzungstarife-nidau-2026.pdf/download (municipal utility, accessed 7 Nov 2026).
+
+## Austria (AT)
+
+- **Electricity tax (Elektrizitätsabgabe) 2026: 0.82 ct/kWh (€8.2/MWh)** for all supplies except qualifying households.
+- **Renewables flat fee (Erneuerbaren-Förderpauschale):** €60,524 a year per metering point at network levels 3–4 (about €0.08/MWh at 745 GWh); levels 1–2 are not on the sheet read.
+- **Renewables contribution (Erneuerbaren-Förderbeitrag):** a percentage of network usage and loss charges set by ministerial regulation; **the percentage was not read**. Some provinces add a municipal use levy (Salzburg: 0.0562 ct/kWh at level 3).
+- **Adder:** network €6.0/MWh (Part A, level 1) + tax €8.2 + flat fee €0.1 = **about €14/MWh plus the renewables contribution**, against **€45** today.
+- **Confidence:** published and clear (tax and flat fee).
+- **Source:** Salzburg Netz, "Zuschläge zum Systemnutzungsentgelt Strom, 01/2026", https://www.salzburgnetz.at/content/dam/salzburgnetz/dokumente/stromnetz/Strom-Zuschlaege-Systemnnutzung.pdf (network operator, accessed 7 Nov 2026).
