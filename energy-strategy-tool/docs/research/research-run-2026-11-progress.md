@@ -37,6 +37,8 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | CZ | Done 2026-11-07 (2025 prices; 2026 not read) |
 | DK | Done 2026-11-07 |
 | EE | Done 2026-11-07 (package II terms to check) |
+| FI | Done 2026-11-07 (no capacity charge) |
+| GR | Done 2026-11-07 (secondary sources) |
 
 Notes gathered before Part A started (use them, then check):
 

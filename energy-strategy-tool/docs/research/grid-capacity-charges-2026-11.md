@@ -213,3 +213,24 @@ The summary table is at the top; country sections follow, in the order researche
 - **Worked example, 100 MVA at 330 kV, 745 GWh (worked out):** package I: €0.64 m + €10.8 m + €0.09 m ≈ €11.5 m; package II: €1.20 m + €0.09 m ≈ €1.3 m. As read, a large flat load would choose package II; check that package II really carries no transmission fee per MWh.
 - **Confidence:** published, but the package II terms and the capacity basis need checking against Elering's price list document.
 - **Sources:** Elering, "Price list and standard terms and conditions", https://www.elering.ee/en/price-list-and-standard-terms-and-conditions (operator, price list from 5 May 2026, accessed 7 Nov 2026); Elering, "Varustuskindluse tasu", https://elering.ee/varustuskindluse-tasu (operator, accessed 7 Nov 2026).
+
+## Finland (FI)
+
+- **Tariff:** Fingrid's main grid service pricing for 2026 (Appendix 2, in force from 1 January 2026). The main grid is 110, 220 and 400 kV.
+- **Capacity part:** **none for consumption.** Fingrid charges capacity fees only to power plants (€189.5 per MW a month) and energy storage (€94.75 per MW a month on each side). Basis: none.
+- **Energy part:** consumption fee €10.47/MWh on winter weekdays 07:00–21:00 (1 December to end of February) and €2.97/MWh at other times; grid intake fee €1.07/MWh. Reactive power above the connection point's limits: €1,000 per Mvar a month and €5.00/Mvarh.
+- **Fixed part:** none listed.
+- **Worked example, flat 85 MW (745 GWh) (worked out):** about 6 % of hours are winter weekday daytime, so about €2.8 m in consumption fees plus €0.8 m intake fee, about €4.8/MWh. No per-MW charge.
+- **Coming:** Fingrid has proposed that data centres flex 30 % of their demand in faults or shortages, and the government is preparing priority rules for connections (Part B). Fingrid's 2027 prices are published (attachments on its fees page; not read).
+- **For the tool:** the tick should hold €0 per MW for Finland, with a note that the network charge is per MWh.
+- **Confidence:** published and clear.
+- **Sources:** Fingrid, "Kantaverkkopalveluhinnoittelu 2026" (Appendix 2), https://www.fingrid.fi/globalassets/dokumentit/fi/palvelut/kayttovarma-sahkonsiirto/liite-2-kantaverkkopalveluhinnoittelu-2026.pdf (operator, 1 Jan 2026, accessed 7 Nov 2026); Fingrid, "Main grid contract and service fees", https://www.fingrid.fi/en/grid/grid-connection-agreement-phases/main-grid-contract-and-service-fees/ (operator).
+
+## Greece (GR)
+
+- **Tariff:** transmission system use charges (ΧΧΣ) of IPTO (ADMIE), approved by the regulator RAAEY (decision Ε-189/2025, Government Gazette Β΄7211, 31 December 2025), applied from 1 February 2026. The transmission grid customer level is 150 kV ("ΥΤ", high voltage).
+- **Capacity part:** **€4,391 per MW per month** for high-voltage customers, **€52,692 per MW a year** (worked out). The figure comes from two press and supplier summaries of the decision, not from the decision itself; one says it is charged on measured peak power. Basis: taken as **peak**, to confirm.
+- **Energy part:** none for high-voltage customers in the transmission charge (the summaries say so). Other regulated charges per MWh (public service obligations, special levies) are outside this research.
+- **Worked example, 100 MW peak every month (worked out):** €5.27 m a year.
+- **Confidence:** published, but read from secondary summaries; check against decision Ε-189/2025.
+- **Sources:** RAAEY, "Εφαρμογή νέων Χρεώσεων Χρήσης Συστήματος", https://www.raaey.gr/energeia/genika-nea/121807/ (regulator, 15 Jan 2026, accessed 7 Nov 2026); Thriassio, "Οι νέες χρεώσεις Συστήματος σε αριθμούς", https://thriassio.gr/xxs-revma-1-2-2026/ (press, 14 Jan 2026); Selectra Greece, "Χρέωση μεταφοράς ηλεκτρικής ενέργειας 2026", https://selectra.gr/energeia/timologia-reymatos/xreosi-metaforas-ilektrikis-energeias-ti-einai-kai-pos-ypologizetai (supplier comparison site).
