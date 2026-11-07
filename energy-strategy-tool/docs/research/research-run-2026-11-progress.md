@@ -80,6 +80,8 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | DK | Done 2026-11-07 |
 | CH | Done 2026-11-07 |
 | AT | Done 2026-11-07 (renewables contribution % not read) |
+| BE | Done 2026-11-07 (2025 surcharges; federal excise not read) |
+| PL | Done 2026-11-07 (excise not read) |
 | IT | Partly done 2026-11-07 (rate tables not readable) |
 
 Part H stopped after 14 countries (DE, NL, GB, FR, ES, PT, IE, IT partly, FI, SE, NO, DK, CH, AT) to save the owner's usage; the other 17 are listed at the end of `levies-and-taxes-2026-11.md`.

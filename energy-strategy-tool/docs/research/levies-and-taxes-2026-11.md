@@ -165,3 +165,21 @@ Belgium, Poland and Czechia first (data centre markets), then Bulgaria, Croatia,
 1. Set the adder to "network + levies and taxes" for the eight countries where both are clear (DE, NL, PT, FI, SE, DK, CH, IE), now or after the rest are researched?
 2. Should data centre tax rules (France's reduced rate, Finland's change, Great Britain's CCA discount, Norway's unclear rate) appear as flags on the options?
 3. Great Britain: use the levies from the secondary guide (about £78/MWh), or wait until each is read from its issuing body?
+
+## Belgium (BE)
+
+- **Since 1 January 2022 the federal contribution, offshore green certificates, the strategic reserve and the capacity mechanism are paid from the federal budget**, not by surcharges on Elia's tariffs (Elia's 2025 sheet).
+- **Regional surcharges at 380–110 kV (2025, € per MWh):** Flemish levy on pylons and cables **0.4669**; Walloon public domain use **0.3414**; Brussels road levy **4.2636** (Brussels only). Regional renewables support is charged at 70/36/30 kV and below (Flanders 0.3452, cut by 98 % above 250 GWh a year; Wallonia 3.4476), not listed at 380–110 kV.
+- **Not read:** the 2026 values, and the federal excise on electricity for business customers (cut for large users after the 2022 reform; rate not found in this pass).
+- **Adder:** network €8.3/MWh (Part A) + surcharges €0.3–0.5 (Flanders or Wallonia) = **about €9/MWh before the federal excise**, against **€50** today.
+- **Confidence:** published and clear (surcharges, 2025).
+- **Source:** Elia, "Tarieven openbaredienstverplichtingen en toeslagen 2025", https://elia.be/-/media/project/elia/elia-site/customers/tarrifs-and-invoicing/20241202_tarieven-odv_toeslag_2025-vdef.pdf (operator, 2 Dec 2024, accessed 7 Nov 2026).
+
+## Poland (PL)
+
+- **Levies 2026 (PLN per MWh):** renewables (OZE) fee **7.30**; cogeneration fee **3.00**; **capacity fee 219.40 on energy drawn on working days 07:00–21:59**, multiplied by 0.17 for a flat load (PSE tariff, Part A), which is **about 16.0 on all energy** (worked out: those hours are about 43 % of the year); quality rate **33.16** at medium and high voltage (from PSE's tariff). The transitional fee ends in 2026. Read from a supplier's notice of 2 February 2026, citing URE and the Minister's regulation.
+- **Reductions:** industrial customers with declarations can pay 15 % or 25 % of the renewables and cogeneration fees; data centres taken as not eligible.
+- **Not read:** the electricity excise; PSE's fixed network rate (Part A gap).
+- **Worked out:** about **PLN 59.5/MWh** in levies and the quality rate, before excise and network charges.
+- **Confidence:** published (secondary notice citing the official decisions).
+- **Source:** RCEkoenergia (Unimot), "Stawki opłat na 2026", https://rcekoenergia.unimot.pl/media/6209/download/RCE-stawki%20op%C5%82at%20na%202026.pdf (supplier, 2 Feb 2026, accessed 7 Nov 2026).
