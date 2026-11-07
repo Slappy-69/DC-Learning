@@ -273,3 +273,20 @@ The summary table is at the top; country sections follow, in the order researche
 - **For the tool:** the basis is transformer capacity, which is usually larger than the contracted grid capacity (N+1 transformers): charging on the option's contracted MW would understate it.
 - **Confidence:** published and clear.
 - **Sources:** AST, "Transmission tariff", https://ast.lv/en/content/transmission-tariff (operator, tariffs 2026–2028, accessed 7 Nov 2026).
+
+## Lithuania (LT)
+
+- **No published value found for 2026.** The regulator VERT's tariff page refused the request, and Litgrid's price page shows 2017–2019 only. Those older prices had a capacity component (about €1.2–1.3 per kW, period not clear on the page) and an energy component (0.389–0.434 ct/kWh at 330–110 kV), plus system services per kW. ENTSO-E's 2025 synthesis puts Lithuania's transmission charge for its standard customer at €31.1/MWh, one of the highest in Europe, all of it charged to load.
+- **For the tool:** blank and flagged until the 2026 prices are read from VERT's decision.
+- **Sources:** Litgrid, "Service prices", https://www.litgrid.eu/index.php/services/service-prices/2480 (operator, accessed 7 Nov 2026); ENTSO-E, "Overview of Transmission Tariffs in Europe: Synthesis 2025" (EU body). Not reachable: VERT, https://vert.lt/elektra/Puslapiai/tarifai/elektros-energijos-perdavimo-paslaugos-kainos.aspx.
+
+## Luxembourg (LU)
+
+- **Tariff:** Creos network use tariffs for 2026 (version of 26 November 2025), approved by the regulator ILR. In force. Customers at 220 kV and 65 kV.
+- **Capacity part (over 3,000 use hours a year):** **220 kV €6.54 per kW a year (€6,540 per MW)**; 65 kV €8.87 per kW a year. Under 3,000 hours: €1.11 and €3.59. Basis: not stated in the tariff sheet (annual peak or connection capacity); taken as **peak**, to check.
+- **Energy part (over 3,000 h):** 220 kV €0.0005/kWh; 65 kV €0.0031/kWh.
+- **Fixed part:** metering at 220 kV (THT) €124.06 a month.
+- **Note:** the 2026 tariffs include a €150 m state contribution that lowers them.
+- **Worked example, 100 MW at 220 kV, 745 GWh (worked out):** power €0.65 m; energy €0.37 m.
+- **Confidence:** published, but the basis of the power charge was not stated.
+- **Sources:** Creos Luxembourg, "Tarifs électricité 2026", https://www.creos-net.lu/fileadmin/dokumente/downloads/fr_tarif_electricite_2026.pdf (operator, 26 Nov 2025, accessed 7 Nov 2026).
