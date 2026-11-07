@@ -201,3 +201,15 @@ The summary table is at the top; country sections follow, in the order researche
 - **For the tool:** a clean per-MW charge on subscribed capacity (about €7,900 per MW a year), with a cheaper curtailable option that matches the tool's flexibility settings.
 - **Confidence:** published and clear.
 - **Sources:** Energinet, "Energinets tarifkatalog 2026", https://www.energinet.dk/media/ikylsqle/energinets-tarifkatalog-2026.pdf (operator, accessed 7 Nov 2026); Energinet, "Fremskrivning af Energinets eltariffer 2025-2027", https://www.energinet.dk/media/alpn1j0h/fremskrivning-af-energinets-eltariffer-2025-2027-1.pdf (operator, Sep 2024).
+
+## Estonia (EE)
+
+- **Tariff:** Elering's transmission price list, approved by the Competition Authority (decision 7-3/2026-025, 1 February 2026), in force from 5 May 2026. Customers at 330 kV and at 110 kV, with two price packages.
+- **Capacity part (€ per MVA a year):**
+  - **330 kV:** package I **€6,425.85** (plus €14.50/MWh and €90,779.76 a year per consumption point); package II **€11,958.54** (as read, with no per-MWh transmission fee).
+  - **110 kV:** package I **€10,785.86** (plus €23.67/MWh and €11,487.92 a year per point); package II **€19,232.56**.
+  - Basis: taken as contracted (a fee per MVA of capacity); the page does not say whether it is the permitted or the ordered capacity.
+- **Energy part:** package I transmission fee as above; security of supply charge €7.58/MWh from 1 January 2026 on all consumed energy; renewable energy charge (not read); reactive energy €1.88/MVArh.
+- **Worked example, 100 MVA at 330 kV, 745 GWh (worked out):** package I: €0.64 m + €10.8 m + €0.09 m ≈ €11.5 m; package II: €1.20 m + €0.09 m ≈ €1.3 m. As read, a large flat load would choose package II; check that package II really carries no transmission fee per MWh.
+- **Confidence:** published, but the package II terms and the capacity basis need checking against Elering's price list document.
+- **Sources:** Elering, "Price list and standard terms and conditions", https://www.elering.ee/en/price-list-and-standard-terms-and-conditions (operator, price list from 5 May 2026, accessed 7 Nov 2026); Elering, "Varustuskindluse tasu", https://elering.ee/varustuskindluse-tasu (operator, accessed 7 Nov 2026).
