@@ -82,6 +82,8 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | AT | Done 2026-11-07 (renewables contribution % not read) |
 | IT | Partly done 2026-11-07 (rate tables not readable) |
 
+Part H stopped after 14 countries (DE, NL, GB, FR, ES, PT, IE, IT partly, FI, SE, NO, DK, CH, AT) to save the owner's usage; the other 17 are listed at the end of `levies-and-taxes-2026-11.md`.
+
 ## Assumptions taken
 
 (Where the prompt did not settle something, the more cautious reading was taken and recorded here.)
@@ -119,6 +121,10 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 - F1. Approve ACER 2026 as the source for cable route costs, split by voltage band?
 - F2. Keep the network adders unchanged until levies are researched (proposed), or lower them now?
 - F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km?
+
+- H1. Set the adder to network + levies and taxes for DE, NL, PT, FI, SE, DK, CH, IE now, or after the rest are researched?
+- H2. Show data centre tax rules (FR reduced rate, FI change on 1 Jul 2026, GB CCA discount, NO unclear) as flags on the options?
+- H3. GB: use levies from a secondary guide (about £78/MWh), or wait until each is read from its issuing body?
 
 ## Where the next run starts
 

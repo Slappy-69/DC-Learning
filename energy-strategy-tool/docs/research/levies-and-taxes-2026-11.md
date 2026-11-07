@@ -8,7 +8,34 @@ Confidence labels as in the other notes. The machine-readable list is `levies-an
 
 ## Summary
 
-(Filled in when the countries are done.)
+Fourteen countries were researched in this pass: the countries of the studies and the main data centre markets. The other seventeen are listed at the end as next.
+
+Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; network from Part A, levies and taxes from this note; VAT left out. "Proposed adder" = network + levies and taxes, worked out; today's adder is the tool's indicative default.
+
+| Country | Network (Part A) | Levies and taxes | Proposed adder | Adder today | What is still missing |
+|---|---|---|---|---|---|
+| DE | €14.0 | €36.0 (tax €20.5, offshore €9.4, CHP €4.5, others €1.6) | **about €50** | €55 | Whether data centres get the 2026 tax cut (taken as no) |
+| NL | €16.5 | €3.6 (energy tax) | **about €20** | €45 | — |
+| GB | £10.8 | £78 (RO £32.7, BSUoS £13.1, CfD £10, CM £10, FiT £8, Sizewell C £3.5, CCL with CCA £0.6) | **about £89 (about €106)** | €55 | Most levies from a secondary guide; quarterly changes |
+| FR | €4.1 (400 kV) | €10.0 with the data centre rate (€26.35 without) | **about €14** (€30.5 without the data centre rate) | €40 | Capacity mechanism cost; which normal rate is current |
+| ES | Power part about €2.6; energy terms not averaged | about €3.9 (electricity tax) | **probably €8–12** | €40 | Period hours; capacity payments and small fees |
+| PT | €10.5 | €1.0 (IEC) | **about €11.5** | €40 | — |
+| IE | €34.2 (incl. system services about €27) | €1.4 (tax €1.0, PSO €0.4) | **about €36** | €50 | Capacity, imperfections and market operator charges |
+| IT | €4.7 (transmission only) | Not readable | **not set** | €45 | General system charges (the largest item) and excise |
+| FI | €4.8 | €23.25 (class I from 1 July 2026) | **about €28** | €30 | Data centre support scheme (autumn 2026) |
+| SE | about €1–2 | €32.4 (SEK 360) | **about €34** | €30 | Network price list (Part A gap) |
+| NO | NOK 9.1 plus losses | NOK 6.0 (reduced) or NOK 71.3 (standard) | **about €1.5 or €7.7** | €25 | Whether data centres get the reduced rate; regional grids |
+| DK | DKK 23.8 plus losses | DKK 4 (net of refund) | **about €4.7** | €40 | Rate from 2028 |
+| CH | CHF 19.7 | CHF 23.5 (grid surcharge) | **about CHF 43 (about €47)** | €50 | Municipal levies; surcharge refunds |
+| AT | €6.0 | €8.3 | **about €14 plus the renewables contribution** | €45 | The renewables contribution percentage |
+
+**What it shows:**
+
+- **Today's adders are badly off in both directions.** Far too high for the Netherlands, Portugal, Spain, Denmark, Norway, Austria and France (with the data centre tax rate); far too low for Great Britain (about €106 against €55); roughly right for Germany, Finland, Sweden and Switzerland.
+- **Data centre tax treatment differs sharply and changes:** France gives data centres a reduced excise (€10/MWh, with conditions); Finland removed theirs on 1 July 2026; Sweden removed theirs in 2023; Great Britain's data centres get 92 % off the Climate Change Levy through their sector agreement; Norway's treatment was not confirmed; Germany's 2026 tax cut is for manufacturing.
+- **These should be flags in the tool,** not only numbers: a reduced rate with conditions (France) or a rate under change (Finland) is exactly what an engineer needs to see on the option.
+
+**Proposal (for the owner to approve, source by source):** set the adder by country to "network + levies and taxes" where both are published and clear (DE, NL, PT, FI, SE, DK, CH, IE with its caveat), keep the indicative values elsewhere until the gaps are filled, and add a flag where a data centre tax rule applies (FR, FI, GB, NO). If the per-MW grid charge tick (OPEN-QUESTIONS 160–165) is used, its part must come out of the adder at the same time.
 
 ## Germany (DE)
 
@@ -128,3 +155,13 @@ Confidence labels as in the other notes. The machine-readable list is `levies-an
 - **Adder:** network €6.0/MWh (Part A, level 1) + tax €8.2 + flat fee €0.1 = **about €14/MWh plus the renewables contribution**, against **€45** today.
 - **Confidence:** published and clear (tax and flat fee).
 - **Source:** Salzburg Netz, "Zuschläge zum Systemnutzungsentgelt Strom, 01/2026", https://www.salzburgnetz.at/content/dam/salzburgnetz/dokumente/stromnetz/Strom-Zuschlaege-Systemnnutzung.pdf (network operator, accessed 7 Nov 2026).
+
+## Not researched in this pass (next)
+
+Belgium, Poland and Czechia first (data centre markets), then Bulgaria, Croatia, Cyprus, Estonia, Greece, Hungary, Iceland, Latvia, Lithuania, Luxembourg, Malta, Romania, Slovakia and Slovenia; and the gaps named in the table (Italy's general system charges, Ireland's capacity charges, France's capacity mechanism, Austria's renewables contribution, Norway's data centre rate). Eurostat's breakdown of taxes and levies for the largest industrial band would be a quick cross-check for the EU countries, but its data service could not be reached from this session.
+
+## Questions for the owner (copied to the progress file)
+
+1. Set the adder to "network + levies and taxes" for the eight countries where both are clear (DE, NL, PT, FI, SE, DK, CH, IE), now or after the rest are researched?
+2. Should data centre tax rules (France's reduced rate, Finland's change, Great Britain's CCA discount, Norway's unclear rate) appear as flags on the options?
+3. Great Britain: use the levies from the secondary guide (about £78/MWh), or wait until each is read from its issuing body?
