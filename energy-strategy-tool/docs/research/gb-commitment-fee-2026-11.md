@@ -1,0 +1,80 @@
+# Great Britain's Data Centre Commitment Fee (research, 7 November 2026)
+
+Part C of the research run of November 2026 (OPEN-QUESTIONS 199). The owner chose "An optional tick": unticked by default, the engineer enters the fee per MW, and the tool charges the cost of the money tied up until energisation. This note says what the published sources say about the fee today. It is a screening of public sources, not legal advice.
+
+Confidence labels: "published and clear"; "published, but unclear which tariff applies"; "worked out from a formula (calculation shown)"; "No published value found".
+
+## In short
+
+- **Status: proposed, not decided.** Ofgem published the consultation on 29 July 2026. It closed in mid-September 2026. No decision had been published by 7 November 2026 (latest source checked: an article of 18 October 2026 saying it is still a proposal). Ofgem said it would set the final value "in the autumn" and decide later in 2026.
+- **Amount: £237,500 to £712,500 per MW**, a flat rate per MW. Ofgem set the range as 2.5 % to 7.5 % of an average data centre capex of £9.5 m per MW. (The earlier note of 2 November said £237,000; Ofgem's own figure is £237,500.)
+- **Who: data centres of 40 MW or more** connected to the transmission system, and distribution-connected ones of 40 MW or more that go through a Transmission Entry Assessment.
+- **When: secured from acceptance of the connection offer until energisation** (the "Charging Date" in the connection code). Cash, a bank letter of credit or a performance bond.
+- **Returned at energisation.** Kept if the project terminates, reduces its capacity before energisation (on the MW given up), or fails the rules. Forfeited money goes back to all consumers through lower transmission charges.
+- **Not settled in what was read:** whether the fee is released stage by stage on a phased campus, and exactly how much is kept when a milestone is missed.
+
+## Findings
+
+| Item | Finding | Confidence | Source |
+|---|---|---|---|
+| Status and date | Proposal. Consultation "Proposed data centre connection reforms" (the "Curate" strand of Ofgem's demand connections reform), published 29 July 2026. Closing date shown as 16 September 2026 in the text and 17 September 2026 in the page header. The consultation page says "Closed (awaiting decision)". An article of 18 October 2026 says it is still a proposal and should not be treated as policy. | Published and clear | Ofgem consultation page; Ofgem press release; Construction Magazine, 18 Oct 2026 |
+| Decision expected | Later in 2026. The consultation says a final fee value would be set "in the autumn" (paragraph 4.19). A law firm note (28 August 2026) says Ofgem could implement by the end of 2026. No implementation date is fixed: the draft code text has the "DCCF Implementation Date" as a placeholder. | Published and clear (no date) | Ofgem consultation document; A&O Shearman, 28 Aug 2026; Ofgem ancillary document 1 |
+| Amount | £237,500 to £712,500 per MW. A 100 MW project would secure about £23.8 m to £71.3 m (paragraph 4.1). | Published and clear | Ofgem consultation document; Ofgem press release |
+| How it is set | One flat £/MW value for every project: not banded, not by voltage, not tiered (paragraphs 4.20–4.22). Based on 2.5 % to 7.5 % of an average capex of £9.5 m/MW. Not indexed; changed only by a review by NESO or Ofgem (5.18–5.21). The value would be published in a "DCCF Statement" by NESO. | Published and clear | Ofgem consultation document; ancillary document 1 (draft code text) |
+| MW it is charged on | The demand capacity the project requests (draft code: "Demand Capacity" for a transmission connection, "Embedded Demand Capacity" for a distribution one). For a mixed site, only the data centre's demand capacity, if recorded separately (5.28). | Published and clear | Ofgem consultation document; ancillary document 1 |
+| Threshold | 40 MW or more. The threshold is to be set in the DCCF Statement and may change over time (5.22). | Published and clear | Ofgem consultation document (5.1, 5.3); ancillary document 1 |
+| Which connections | Transmission-connected data centres of 40 MW or more. Distribution-connected ones above 40 MW only where a Transmission Entry Assessment (or the proposed equivalent process) applies (5.1, 5.3). Ofgem counted only five distribution projects above 40 MW that are not subject to one (5.10). | Published and clear | Ofgem consultation document |
+| Scotland | The fee sits in the Connection and Use of System Code, which covers Great Britain. The text read names no exception for Scotland. Note that in Scotland 132 kV is transmission, while in England and Wales it is distribution. | Worked out from the scope (no explicit statement found) | Ancillary document 1 |
+| What counts as a data centre | A "Data Centre Service" under the Cyber Security and Resilience Bill: 1 MW or more of rated IT load, or 10 MW or more if run for one enterprise's own use. Every demand project must self-declare in a letter signed by a director (5.14). | Published and clear | Ofgem consultation document (5.13–5.14); ancillary document 1 |
+| When paid | Secured from acceptance of the connection offer (or from the date the rule starts, for projects already holding offers) until energisation. Security kept until 28 days after the Charging Date (draft code, a value in brackets). Projects with signed offers would have three months after implementation to post it, unsigned offers two months (5.42–5.43). | Published and clear | Ofgem consultation document; ancillary document 1 |
+| Form | A cash deposit, a performance bond or letter of credit from a qualified bank, or a performance bond from a qualified company (5.26). | Published and clear | Ofgem consultation document |
+| When returned | At energisation, defined as the "Charging Date" of the construction agreement. Ofgem chose a single lump sum returned at energisation over a fee returned bit by bit. | Published and clear | Ofgem consultation document (footnote 20); Vinson & Elkins, 7 Aug 2026 |
+| Phased campus | No published rule found on whether the fee is released per phase as each part energises. The draft code charges the fee on any reduction in demand capacity before the Charging Date, and a capacity reduction makes the developer pay the fee on the MW given up (5.34). Phasing choices have to be made before the offer is accepted. | No published value found | Ofgem consultation document; ancillary document 1; Vinson & Elkins |
+| Forfeiture | The fee becomes payable if the construction agreement is terminated, or capacity is reduced, before the Charging Date (draft code, Section 15 Part Six). A project that self-terminates before accepting its offer, or before the rule starts, pays nothing (5.35). If the fee value is later raised, existing projects may leave within three months without paying (5.17, 5.36). Forfeited money reduces transmission network charges for all consumers (5.27). | Published and clear | Ofgem consultation document; ancillary document 1 |
+| Missed milestone | A missed data centre milestone counts as failing the milestone requirements; the consultation points to its Chapter 7 for the consequences (loss of queue position is described in the press release). The draft code text read does not link the fee directly to a missed milestone: it is charged on termination or reduction. So a missed milestone leads to the fee through termination of the agreement. Whether part of the fee could be kept on a missed milestone without termination was not found. | Published, but unclear which rule applies | Ofgem consultation document (6.28); ancillary document 1; Ofgem press release |
+| Exemption | Projects whose energisation falls within six months of the rule starting are exempt (5.40). | Published and clear | Ofgem consultation document |
+| Milestones | Three new data centre milestones alongside the existing ones (M1 to M8): **M0.5.Dc** (first after accepting the offer, before M1): choice of route, self-operated or for lease or sale, and non-binding evidence of a compute customer (heads of terms or a memorandum of understanding). **M2.Dc** (with the existing M2): evidence of buying long-lead electrical equipment (transformers, switchgear: a purchase invoice, a signed contract or a binding supplier commitment). **M6.Dc** (with the existing M6, the last before M7): financial capability (credit rating BBB- or better from S&P, or committed credit support), technical capability (design certified to EN 50600, TIA-942 or Uptime Institute Tier I–IV design), and, on the lease or sale route, a binding commitment for at least 20 % of the compute capacity for at least one year (Ofgem's preferred option). Dates of M2 and M6 are set by each project's existing milestone schedule, counted back from its connection date. | Published and clear | Ofgem consultation document (chapter 6) |
+| Cost of holding it, in Ofgem's own case study | Ofgem's case study assumes the fee is held as cash (the worst case for a developer) and a WACC of 10.95 % from developer feedback. It finds the fee equals about 3 to 9 months of a developer's minimum return, and lowers the project's internal rate of return by up to 170 basis points for a 2035 connection at the 7.5 % fee (4.14, 4.17). | Published and clear | Ofgem consultation document |
+
+## Ireland and the Netherlands: anything similar?
+
+- **Ireland:** no £/MW commitment fee of this kind was found. EirGrid asks a demand customer for a **Maximum Import Capacity bond before signing the offer**, sized as the network capacity charge × 18 months × the MIC in MW, kept if the customer fails to build in the time set. Connection charge security is due later, at the consents date. Data centres also carry the large energy user policy (Part D). Source: EirGrid, "Connection charges and security" page; EirGrid data centre policy paper V3, May 2026 (section 4.3).
+- **Netherlands:** no reservation or commitment fee was found in the sources read. The levers are different: congestion rules and priority classes set by the regulator (ACM), a planned "use it or lose it" measure that would let operators take back contracted capacity left unused (not yet in force), and the requirement that connections of 60 MW or more always offer flexible capacity. Source: Slaughter and May, Netherlands chapter of their European data centre guide (undated, cites June 2026); Stibbe on "use it or lose it". Covered further in Part B.
+
+## For the tool (proposals; the owner decides)
+
+1. **Default fee: blank, with the published range shown.** Until Ofgem decides, the honest default is no number: the engineer enters a value inside £237,500–£712,500 per MW. The midpoint (£475,000 per MW, worked out) could be offered as a labelled example, not a default.
+2. **Threshold: 40 MW, Great Britain only.** Ticking the box should flag "proposed, not decided (Ofgem consultation of 29 July 2026)" until a decision is published. A campus below 40 MW, or outside Great Britain, would show the tick greyed out with the reason.
+3. **MW charged on: the option's contracted grid capacity**, which is the closest thing in the tool to the "Demand Capacity" in the connection agreement.
+4. **Time held: from the offer acceptance date to the grid energisation date.** The tool knows the grid date; it does not know the offer acceptance date. A new input, "offer accepted", is needed, or a default of a set number of years before the grid date (judgement).
+5. **Cost of the money tied up:** two readings, for the owner (see question 2 below): cash at the option's discount rate (Ofgem's worst case), or a letter of credit at a yearly fee (a bank charge, typically a small percentage; no published value checked here).
+6. **Phased campus:** until Ofgem says otherwise, hold the whole fee until the grid energises (the cautious reading), and flag that a stage-by-stage release has not been confirmed.
+
+## Assumptions taken
+
+- No decision found up to 7 November 2026. Ofgem's own site cannot be read from the session's shell (blocked), but its pages were read through the web-reading tool. The consultation page still says "Closed (awaiting decision)".
+- The consultation document's Chapter 7 (consequences of missed milestones) was not readable in full from the PDF; the consequences above come from the press release and the draft code text.
+
+## Questions for the owner (copied to the progress file)
+
+1. Fee default: blank (engineer must enter) or the published midpoint as a labelled example?
+2. Cost of the money tied up: cash at the discount rate, or a letter-of-credit fee rate entered by the engineer?
+3. The offer acceptance date: a new input, or a default number of years before the grid date?
+
+## Sources
+
+| Source | Type | Published | Accessed | URL |
+|---|---|---|---|---|
+| Ofgem, "Ofgem acts to free up grid capacity by tackling speculative data centre projects" | Regulator | 29 Jul 2026 | 7 Nov 2026 | https://www.ofgem.gov.uk/press-release/ofgem-acts-free-grid-capacity-tackling-speculative-data-centre-projects |
+| Ofgem, "Proposed data centre connection reforms" (consultation page) | Regulator | 29 Jul 2026 | 7 Nov 2026 | https://www.ofgem.gov.uk/consultation/proposed-data-centre-connection-reforms |
+| Ofgem, "Proposed data centre connection reforms: Curate consultation document" (PDF) | Regulator | 29 Jul 2026 | 7 Nov 2026 | https://www.ofgem.gov.uk/sites/default/files/2026-07/Proposed-data-centre-connection-reforms-curate-consultation-document.pdf |
+| Ofgem, Ancillary document 1: CUSC tracked changes (draft code text) | Regulator | 29 Jul 2026 | 7 Nov 2026 | https://www.ofgem.gov.uk/sites/default/files/2026-07/Ancillary-Document-1-Connection-and-Use-of-System-Code-CUSC-tracked-changes%E2%80%AF.pdf |
+| Vinson & Elkins, "Ofgem's grid queue crackdown: capital lock-up, EPC risk and the push towards behind-the-meter power" | Law firm | 7 Aug 2026 | 7 Nov 2026 | https://www.velaw.com/insights/ofgems-grid-queue-crackdown-capital-lock-up-epc-risk-and-the-push-towards-behind-the-meter-power/ |
+| A&O Shearman, "Connecting data centres to the power grid: Ofgem launches consultation…" | Law firm | 28 Aug 2026 | 7 Nov 2026 | https://www.aoshearman.com/en/insights/connecting-data-centres-to-the-power-grid-ofgem-launches-consultation-to-distinguish |
+| Gowling WLG, "Ofgem demand connection queue reform" | Law firm | 26 Aug 2026 | 7 Nov 2026 | https://gowlingwlg.com/en/insights-resources/articles/2026/ofgem-demand-connection-queue-reform |
+| Construction Magazine, "Grid power becomes critical path for UK data centre build-out" | Press | 18 Oct 2026 | 7 Nov 2026 | https://www.constructionmagazine.uk/2026/10/uk-data-centre-grid-power-critical-path.html |
+| EirGrid, "Connection charges and security" | Operator | Undated | 7 Nov 2026 | https://www.eirgrid.ie/industry/customer-information/connection-charges-and-security |
+| EirGrid, "Data Centre Connection Offer Process and Policy", V3 | Operator | 20 May 2026 | 7 Nov 2026 | https://cms.eirgrid.ie/sites/default/files/publications/Data-Centre-Connection-Offer-Process-and-Policy-V3-May-2026.pdf |
+| Slaughter and May, "Power and place: a regulatory guide to data centre developments in Europe — the Netherlands" | Law firm | Undated (cites June 2026) | 7 Nov 2026 | https://www.slaughterandmay.com/services/practices/infrastructure-and-energy/power-and-place-a-regulatory-guide-to-data-centre-developments-in-europe/the-netherlands/ |
+
+Not reachable: Utility Week's article on government support for the fee (the site refused the request).

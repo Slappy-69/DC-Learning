@@ -8,8 +8,8 @@ A new chat that picks this up: read this file, then carry on from the first part
 
 | Part | Subject | Output | State | Dates |
 |---|---|---|---|---|
-| C | Great Britain's Data Centre Commitment Fee (OQ 199) | `gb-commitment-fee-2026-11.md` | In progress | Started 2026-11-07 |
-| D | Ireland's large energy user policy (OQ 198) | `ireland-large-energy-users-2026-11.md` | Not started | |
+| C | Great Britain's Data Centre Commitment Fee (OQ 199) | `gb-commitment-fee-2026-11.md` | Done | 2026-11-07 |
+| D | Ireland's large energy user policy (OQ 198) | `ireland-large-energy-users-2026-11.md` | In progress | Started 2026-11-07 |
 | B | Closing plant's grid connection, more countries (OQ 155) | `plant-connection-takeover-part2-2026-11.md` | Not started | |
 | A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | Not started | |
 | E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | Not started | |
@@ -28,10 +28,20 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 
 (Where the prompt did not settle something, the more cautious reading was taken and recorded here.)
 
+- C: no Ofgem decision found up to 2026-11-07; the fee is treated as proposed. Its Chapter 7 (consequences of missed milestones) could not be read in full; consequences taken from the press release and the draft code text.
+- C: a phased campus holds the whole fee until the grid energises (no stage-by-stage release found).
+
 ## Questions for the owner
 
 (Anything the owner must decide, gathered as the run goes.)
 
+- C1. GB fee default: blank (engineer enters) or the published midpoint £475,000/MW as a labelled example?
+- C2. Cost of the money tied up: cash at the discount rate (Ofgem's worst case), or a letter-of-credit fee rate entered by the engineer?
+- C3. Offer acceptance date: a new input, or a default number of years before the grid date?
+
 ## Sites not reachable
 
 (Sites that could not be reached, with the source used instead.)
+
+- The session's shell cannot reach most websites (for example www.ofgem.gov.uk: refused by the session's network allowlist). Pages were read with the web-reading tool instead; no workaround was tried.
+- Utility Week (article on government support for the GB fee): refused by the site.
