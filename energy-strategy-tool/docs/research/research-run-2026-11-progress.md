@@ -31,6 +31,7 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | FR | Done 2026-11-07 (August 2025 grid; the 1 August 2026 grid not read) |
 | AT | Done 2026-11-07 |
 | BE | Done 2026-11-07 |
+| BG | Done 2026-11-07 (no capacity charge) |
 
 Notes gathered before Part A started (use them, then check):
 

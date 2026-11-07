@@ -153,3 +153,12 @@ The summary table is at the top; country sections follow, in the order researche
 - **Worked example, 100 MVA contracted, 100 MW peak, 745 GWh (worked out):** contracted €0.88 m; peaks €0.54 m + €1.10 m; energy €3.66 m. About €6.2 m a year; the per-MW contracted line alone is €8,768/MVA.
 - **Confidence:** published and clear.
 - **Sources:** Elia Transmission Belgium, "Tarifs pour accès au réseau, période 2024-2027", https://www.elia.be/-/media/project/elia/elia-site/customers/tarrifs-and-invoicing/20231206_tarifs-pour-acces-au-reseau-2024-2027.pdf (operator, 6 Dec 2023, accessed 7 Nov 2026).
+
+## Bulgaria (BG)
+
+- **Tariff:** prices for access to and transmission through the transmission network of ESO, set yearly by the regulator EWRC (KEVR) from 1 July (decision Ц-13 of 1 July 2026, period 1 July 2026 to 30 June 2027). Bulgaria uses the euro from 2026.
+- **Capacity part:** **none.** ESO's charges to end consumers are per MWh. **No published value found** for a per-MW charge (searched EWRC decisions Ц-12 and Ц-13 of 1 July 2026 and its press release of 2 June 2026).
+- **Energy part:** ESO's application of 31 March 2026 asked for €0.22/MWh (access) and €9.22/MWh (transmission), against €0.18 and €7.60 for 2025/26. EWRC made corrections; the final prices were beyond the part of the decision that could be read. A separate "obligations to society" charge per MWh also applies (not found).
+- **For the tool:** the tick should stay blank for Bulgaria; network charges belong in `grid.priceAdder` (€35/MWh, indicative).
+- **Confidence:** No published value found (capacity); published, but final value not read (energy).
+- **Sources:** EWRC, decision Ц-13 of 1 July 2026, https://www.dker.bg/uploads/reshenia/2026/res-c-13-2026.pdf (regulator, accessed 7 Nov 2026); EWRC, decision Ц-12 of 1 July 2026, https://www.dker.bg/uploads/reshenia/2026/res-c-12-2026.pdf; EWRC press information, 2 June 2026, https://www.dker.bg/uploads/2026/Pres_prices_072026.pdf.
