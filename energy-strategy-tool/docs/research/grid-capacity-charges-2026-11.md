@@ -234,3 +234,23 @@ The summary table is at the top; country sections follow, in the order researche
 - **Worked example, 100 MW peak every month (worked out):** €5.27 m a year.
 - **Confidence:** published, but read from secondary summaries; check against decision Ε-189/2025.
 - **Sources:** RAAEY, "Εφαρμογή νέων Χρεώσεων Χρήσης Συστήματος", https://www.raaey.gr/energeia/genika-nea/121807/ (regulator, 15 Jan 2026, accessed 7 Nov 2026); Thriassio, "Οι νέες χρεώσεις Συστήματος σε αριθμούς", https://thriassio.gr/xxs-revma-1-2-2026/ (press, 14 Jan 2026); Selectra Greece, "Χρέωση μεταφοράς ηλεκτρικής ενέργειας 2026", https://selectra.gr/energeia/timologia-reymatos/xreosi-metaforas-ilektrikis-energeias-ti-einai-kai-pos-ypologizetai (supplier comparison site).
+
+## Hungary (HU)
+
+- **Tariff:** network use charges ("rendszerhasználati díjak") set nationally by the regulator MEKH (decision H2995/2025), in force from 1 January 2026; read from E.ON's published sheet. Large customers connect at high voltage (NAF, 120 kV and above); a customer connected at a high/medium-voltage substation is "NAF/KÖF".
+- **Capacity part:** **contracted capacity charge ("lekötött teljesítménydíj") 2,376 HUF per kW a year at NAF**, **2,376,000 HUF per MW a year** (about €6,000). Basis: contracted. NAF/KÖF: 8,004 HUF/kW a year.
+- **Energy part:** distribution 1.98 HUF/kWh (NAF); transmission 3.39 HUF/kWh, listed with a 100 % discount under MEKH decree 10/2024 (who qualifies was not checked); reactive energy 3.26 HUF/kVArh. Other per-MWh levies (renewables support and others) apply on top (ENTSO-E lists €13.50/MWh for renewables support); not researched.
+- **Fixed part:** 433,008 HUF a year per connection point (NAF).
+- **Worked example, 100 MW contracted, 745 GWh (worked out):** capacity 237.6 million HUF; distribution energy 1.48 billion HUF; transmission energy 2.53 billion HUF before any discount.
+- **Confidence:** published and clear (the capacity charge); the transmission discount needs checking.
+- **Sources:** E.ON Hungary, "Rendszerhasználati díjak" from 1 January 2026 (MEKH H2995/2025), https://www.eon.hu/content/dam/eon/eon-hungary/documents/hatarozatok-szabalyzatok-aram/arak-tarifak/Aram_RHD_EON_20260101.pdf (operator publishing the regulator's charges, accessed 7 Nov 2026).
+
+## Iceland (IS)
+
+- **Tariff:** Landsnet's tariff for transmission and system services. The latest version that could be read is **tariff no. 43, valid from 1 April 2022**; Landsnet has changed its tariff since (a news item "Breytingar á gjaldskrá" could not be read), so these values are old.
+- **Capacity part (2022):** for **large users ("stórnotendur") USD 27,435 per MW a year**; for distribution operators ISK 6,760,830 per MW a year. Charged on the **average of the four highest monthly 60-minute peaks** of the year at each delivery point (art. 4.5). Basis: peak.
+- **Energy part (2022):** large users USD 1.388/MWh; distribution operators ISK 489.56/MWh; system services ISK 69.99/MWh and losses ISK 387.73/MWh on all withdrawals.
+- **Fixed part:** delivery point charge USD 47,097 a year (large users).
+- **Which applies to a data centre:** not checked; most Icelandic data centres buy through distribution operators, whose own tariffs would then apply.
+- **Confidence:** published, but out of date (2022) and the customer class unclear.
+- **Sources:** Landsnet, "Gjaldskrá fyrir flutning á raforku og kerfisþjónustu nr. 43", https://www.landsnet.is/library?itemid=085e1cec-0533-4d22-97a6-03d0643edc20 (operator, 1 Apr 2022, accessed 7 Nov 2026).
