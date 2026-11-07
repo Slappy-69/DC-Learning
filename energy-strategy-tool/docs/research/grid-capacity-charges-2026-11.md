@@ -254,3 +254,22 @@ The summary table is at the top; country sections follow, in the order researche
 - **Which applies to a data centre:** not checked; most Icelandic data centres buy through distribution operators, whose own tariffs would then apply.
 - **Confidence:** published, but out of date (2022) and the customer class unclear.
 - **Sources:** Landsnet, "Gjaldskrá fyrir flutning á raforku og kerfisþjónustu nr. 43", https://www.landsnet.is/library?itemid=085e1cec-0533-4d22-97a6-03d0643edc20 (operator, 1 Apr 2022, accessed 7 Nov 2026).
+
+## Italy (IT)
+
+- **Tariff:** the transmission tariff (TRAS) of the regulator ARERA's integrated text for 2024–2027 (TIT, delibera 616/2023/R/eel), updated for 2026 by delibera 573/2025/R/eel (23 December 2025). Terna is the operator. One value for high voltage, for very high voltage below 380 kV and for 380 kV and above.
+- **Capacity part:** **TRASP 2,939.69 c€ per kW a year, €29.40 per kW, €29,397 per MW a year**, charged per kW of "potenza impegnata" (committed power). Basis: contracted (ARERA's wording); in Italian rules the committed power of a metered customer may be set from the measured monthly maximum: to check.
+- **Energy part:** TRASE 0.076 c€/kWh (€0.76/MWh). Distribution, metering and the general system charges ("oneri generali", mostly per kWh, with some per-kW parts) are separate; not researched.
+- **Worked example, 100 MW committed, 745 GWh (worked out):** power €2.94 m; energy €0.57 m.
+- **Confidence:** published and clear.
+- **Sources:** ARERA, "Tariffa per il servizio di trasmissione", https://www.arera.it/area-operatori/prezzi-e-tariffe/tariffa-per-il-servizio-di-trasmissione (regulator, 2026 values, accessed 7 Nov 2026); ARERA, delibera 573/2025/R/eel, https://www.arera.it/fileadmin/allegati/docs/25/573-2025-R-eel.pdf (regulator, 23 Dec 2025).
+
+## Latvia (LV)
+
+- **Tariff:** AST's transmission tariffs for 2026–2028, approved by the regulator SPRK (Public Utilities Commission) on 27 November 2025. In force from 1 January 2026.
+- **Capacity part:** **330 kV busbars €6.759 per kW a year (€6,759 per MW)**; 110 kV lines €11.376; 110 kV busbars €12.959 per kW a year. Charged on the **nominal capacity (kVA) of the customer's transformers** from their technical documentation. Basis: contracted (installed capacity, fixed whatever is drawn).
+- **Energy part:** €1.39/MWh (330 kV), €1.45 (110 kV lines), €1.98 (110 kV busbars).
+- **Worked example, 100 MVA of transformers at 330 kV, 745 GWh (worked out):** capacity €0.68 m; energy €1.04 m.
+- **For the tool:** the basis is transformer capacity, which is usually larger than the contracted grid capacity (N+1 transformers): charging on the option's contracted MW would understate it.
+- **Confidence:** published and clear.
+- **Sources:** AST, "Transmission tariff", https://ast.lv/en/content/transmission-tariff (operator, tariffs 2026–2028, accessed 7 Nov 2026).

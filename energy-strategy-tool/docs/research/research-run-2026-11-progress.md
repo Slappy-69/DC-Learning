@@ -41,6 +41,8 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | GR | Done 2026-11-07 (secondary sources) |
 | HU | Done 2026-11-07 |
 | IS | Done 2026-11-07 (2022 tariff; later not read) |
+| IT | Done 2026-11-07 |
+| LV | Done 2026-11-07 |
 
 Notes gathered before Part A started (use them, then check):
 
