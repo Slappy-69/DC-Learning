@@ -91,11 +91,15 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | EE | Done 2026-11-07 (partial: one fee only) |
 | LV | Done 2026-11-07 (OIK zero, tax; energy charges missing) |
 | CY | Done 2026-11-07 (partial: two levies; no network) |
+| HR | Done 2026-11-07 (2023 fee; 2024 amendment not readable) |
+| SI | Done 2026-11-07 (per-kW contribution from Oct 2024) |
+| BG | Done 2026-11-07 (PSO not in force 2024; excise not found) |
+| LT | Searched twice 2026-11-07: no value |
 | MT | Searched 2026-11-07: no value (regulated tariff) |
 | IS | Searched 2026-11-07: law not reachable |
 | IT | Partly done 2026-11-07 (rate tables not readable) |
 
-Part H: 23 countries researched (GR, LU and EE only in part). Searched without a usable value: BG, HR, LT, SI, IS, MT; CY and LV added in part; they and the remaining gaps are listed at the end of `levies-and-taxes-2026-11.md`.
+Part H: 23 countries researched (GR, LU and EE only in part). No usable value: LT, IS, MT; CY, LV, HR, SI, BG found in part; they and the remaining gaps are listed at the end of `levies-and-taxes-2026-11.md`.
 
 ## Assumptions taken
 

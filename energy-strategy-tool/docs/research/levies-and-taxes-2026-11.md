@@ -8,7 +8,7 @@ Confidence labels as in the other notes. The machine-readable list is `levies-an
 
 ## Summary
 
-Twenty-three countries were researched (fourteen first, then nine more on the same day). Cyprus and Latvia were then added in part. No usable value was found for BG, HR, LT, SI, IS and MT; they are listed at the end.
+Twenty-three countries were researched (fourteen first, then nine more on the same day). Cyprus, Latvia, Croatia, Slovenia and Bulgaria were then added in part. No usable value was found for Lithuania, Iceland and Malta; they are listed at the end.
 
 Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; network from Part A, levies and taxes from this note; VAT left out. "Proposed adder" = network + levies and taxes, worked out; today's adder is the tool's indicative default.
 
@@ -251,6 +251,31 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 - **Adder:** Part A found no published network charge: **not set**. Cyprus is an island grid with regulated supply; the tool's €40 cannot be checked yet.
 - **Sources:** Fast Forward, 10 Oct 2025 https://fastforward.com.cy/economy/cyprus-50-cent-kwh-electricity-consumption-fee; EAC, "Public Service Obligations" https://eac.com.cy/EN/RegulatedActivities/Supply/tariffs/Pages/Public-Service-Obligations.aspx; dom.com.cy, "Electricity prices in Cyprus 2026" https://dom.com.cy/en/live/blogs/electricity-prices-in-cyprus-2026/ (all accessed 7 Nov 2026).
 
+## Croatia (HR)
+
+- **Renewables and CHP fee:** **€0.013936/kWh (about €13.9/MWh)** for all end customers (decision NN 31/2023, from March 2023). Electricity-intensive customers can pay reduced rates (R1–R3: €3.5–8.4/MWh) under a separate regulation; data centres taken as not eligible. An amendment of February 2024 (NN 24/2024) could not be read: the official gazette site blocks automated reading.
+- **Not found:** the electricity excise.
+- **Adder:** Part A's peak charge (2025: €24,970/MW a year, about €3.4/MWh at 100 MW, worked out) plus energy charges not read, plus €13.9: **not set**.
+- **Source:** Narodne novine 31/2023, "Odluka o naknadi za obnovljive izvore energije i visokoučinkovitu kogeneraciju" https://narodne-novine.nn.hr/clanci/sluzbeni/2023_03_31_537.html (official gazette, accessed 7 Nov 2026).
+
+## Slovenia (SI)
+
+- **Renewables and CHP contribution:** **€2.97160 per kW of billing power per month** for users on a 400, 220 or 110 kV feeder (group 7), from 1 October 2024 (Energy Agency act of 19 Sep 2024). It is charged **per kW, not per MWh**: about **€4.8/MWh** for a flat 100 MW campus (worked out). A reduced rate of €0.89148 (about €1.4/MWh) is only for users meeting the decree's conditions; data centres taken as not eligible. Whether it was revised for 2026 was not checked.
+- **Note for Part A:** this is a levy charged per MW. If the per-MW grid charge tick is built (OPEN-QUESTIONS 160–165), it belongs there, not in the per-MWh adder.
+- **Not found:** the electricity excise.
+- **Source:** Agencija za energijo, "Akt o prispevkih OVE in SPTE" (19 Sep 2024) https://agen-rs.si/documents/10926/331234/Akt+o+prispevkih+OVE_SPTE_20240919_sprejet.pdf/c59d45a7-ca60-4b4b-a717-98d820ceb833 (regulator, accessed 7 Nov 2026).
+
+## Bulgaria (BG)
+
+- **Public service charge ("duty to society"):** **not in force** as of March 2024; it "had been nullified in the past several years", and a proposal to bring it back at €15/MWh for all end customers was discussed in 2024. Its 2026 status was not confirmed.
+- **Not found:** the electricity excise; network charges per MWh (Part A: no capacity charge).
+- **Adder:** not set.
+- **Source:** Economic.bg, 14 Mar 2024 https://economic.bg/en/a/view/the-idea-of-bringing-duty-to-society-energy-tax-back-has-angered-bulgarian-businesses (press, accessed 7 Nov 2026).
+
+## Lithuania (LT)
+
+- **Public service obligation fee (VIAP):** no 2026 value found; the only rate found was from 2012 (not used). A Ministry of Energy letter of 11 Nov 2025 covers a household price reduction only. **No published value found.**
+
 ## Iceland (IS) and Malta (MT)
 
 - **Iceland:** the equalisation fee law (98/2004) could not be read: althingi.is refused the web reader. **No published value found.**
@@ -258,7 +283,7 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 
 ## Not researched in this pass (next)
 
-**Searched, no usable value found:** Bulgaria, Croatia, Lithuania and Slovenia (the searches found only network tariffs, household articles or out-of-date figures). Cyprus and Latvia were added later the same day (part); Iceland (law not reachable) and Malta (regulated all-in tariff) gave no value. Next, the gaps named in the table, above all Hungary's KÁT charge for large users, Poland's network rates and excise, Greece's high voltage levies, Luxembourg's electricity tax and Estonia's renewables fee; and the earlier gaps (Italy's general system charges, Ireland's capacity charges, France's capacity mechanism, Austria's renewables contribution, Norway's data centre rate). Eurostat's breakdown of taxes and levies for the largest industrial band would be a quick cross-check for the EU countries, but its data service could not be reached from this session.
+**Searched, no usable value found:** Lithuania (only household items and a 2012 rate), Iceland (the law could not be read) and Malta (regulated all-in tariff). Croatia, Slovenia and Bulgaria were found on a second search (in part). Cyprus and Latvia were added later the same day (part); Iceland (law not reachable) and Malta (regulated all-in tariff) gave no value. Next, the gaps named in the table, above all Hungary's KÁT charge for large users, Poland's network rates and excise, Greece's high voltage levies, Luxembourg's electricity tax and Estonia's renewables fee; and the earlier gaps (Italy's general system charges, Ireland's capacity charges, France's capacity mechanism, Austria's renewables contribution, Norway's data centre rate). Eurostat's breakdown of taxes and levies for the largest industrial band would be a quick cross-check for the EU countries, but its data service could not be reached from this session.
 
 ## Questions for the owner (copied to the progress file)
 
