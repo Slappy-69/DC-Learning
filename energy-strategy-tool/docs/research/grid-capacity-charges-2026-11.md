@@ -53,3 +53,23 @@ The summary table is at the top; country sections follow, in the order researche
 - **For the tool:** the per-MW line is the power term (tolls and charges). The energy terms are what `grid.priceAdder` (Spain: €40/MWh, indicative) partly covers.
 - **Confidence:** published and clear (the tolls checked against the BOE text, the charges against the Ministry's page; the sums are worked out).
 - **Sources:** CNMC, resolution of 18 December 2025 (2026 access tolls), BOE-A-2025-26348, https://www.boe.es/diario_boe/txt.php?id=BOE-A-2025-26348 (regulator, 22 Dec 2025, accessed 7 Nov 2026); Ministry for the Ecological Transition, "Peajes de acceso … y cargos", with Orden TED/1524/2025 (BOE-A-2025-26705), https://www.miteco.gob.es/en/energia/energia-electrica/electricidad/peajes.html (government, December 2025, accessed 7 Nov 2026); EDP Energía, "Costes regulados del sector eléctrico 2026" (supplier summary used only to cross-check), https://www.edpenergia.es/media/fjwn01qi/peajes-el%C3%A9ctricos-2026.pdf.
+
+## Netherlands (NL)
+
+- **Tariff:** TenneT's transport tariffs ("transporttarieven") for customers on the extra-high-voltage grid (EHS: 220 and 380 kV) and the high-voltage grid (HS: 110 and 150 kV), set by the regulator ACM (tariff decision ACM/UIT/662819, 18 November 2025) for 2026. In force. TenneT's proposal for 2027 (29 September 2026) is with ACM.
+- **Capacity part (2026):**
+
+  | Level | Fixed per year | Contracted, € per kW per year | Weighted monthly maximum, € per kW per month | Option for use of at most 600 h a year |
+  |---|---|---|---|---|
+  | EHS (220/380 kV) | €12,478.96 | **49.28** | 6.17 | 24.63 per kW a year plus 2.13 per kW per week |
+  | HS (110/150 kV) | €2,760.00 | **65.62** | 7.77 | 32.80 per kW a year plus 2.69 per kW per week |
+
+  So **€49,280 per MW a year at EHS and €65,620 at HS on contracted capacity** (basis: contracted), **plus** a charge on the month's highest demand ("kW maxgewogen", weighted under ACM's time-of-use rules; the weighting itself was not checked): €74.04 per kW a year at EHS and €93.24 at HS if the peak is the same every month (basis: peak).
+- **2027 proposal:** EHS 57.03 contracted and 4.44 a month; HS 79.66 and 9.24 a month. Not yet decided.
+- **Energy part:** none in TenneT's transport tariff. (Energy tax and the renewable surcharge are levies outside this research.)
+- **Fixed part:** €12,478.96 (EHS) or €2,760 (HS) a year per connection for the transport service. The connection service and metering are separate and were not researched.
+- **Discounts:** the volume discount for large baseload users ("volumecorrectieregeling") was abolished from 2024 (ACM, 24 May 2023). None found today.
+- **Worked example, 100 MW contracted at EHS, peak 100 MW every month (worked out):** contracted €4.93 m; monthly maximum 100,000 kW × €6.17 × 12 = €7.40 m; fixed €0.01 m. **About €12.3 m a year, about €123,000 per MW**, about €16.6/MWh at an 85 % load factor. At HS: €6.56 m + €9.32 m + €0.003 m ≈ €15.9 m a year.
+- **For the tool:** the Netherlands is the clearest case of a large per-MW charge. Today `grid.priceAdder` (Netherlands: €45/MWh, indicative) carries all network cost per MWh. If the tick is on, the contracted part (€49,280/MW at EHS) is the new line, and the monthly-maximum part either stays in the adder or becomes a second per-MW line charged on the option's peak import. Counting both the adder and the per-MW lines would double count.
+- **Confidence:** published and clear (the 2026 values read from the 2026 column of TenneT's 2027 proposal table, consistent with the corrections in ACM's 2026 decision).
+- **Sources:** ACM, "Tarievenbesluit TenneT 2026", ACM/UIT/662819, https://www.acm.nl/system/files/documents/tarievenbesluit-tennet-2026-acm.pdf (regulator, 18 Nov 2025, accessed 7 Nov 2026); TenneT, tariff proposal 2027 to ACM, https://www.acm.nl/system/files/documents/tarievenvoorstel-tennet-op-land%202027.pdf (operator, 29 Sep 2026, accessed 7 Nov 2026); TenneT, "Transport tariffs 2026 set by ACM", https://www.tennet.eu/nl-en/news/transport-tariffs-2026-set-acm (operator, 27 Nov 2025); ACM, "In 2024 geen volumekorting meer voor grootverbruikers", https://www.acm.nl/nl/node/23740 (regulator, 24 May 2023).
