@@ -75,6 +75,9 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | PT | Done 2026-11-07 |
 | IE | Done 2026-11-07 (capacity and imperfections charges not researched) |
 | FI | Done 2026-11-07 |
+| SE | Done 2026-11-07 |
+| NO | Done 2026-11-07 (data centre rate unclear) |
+| DK | Done 2026-11-07 |
 | IT | Partly done 2026-11-07 (rate tables not readable) |
 
 ## Assumptions taken

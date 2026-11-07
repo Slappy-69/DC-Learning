@@ -88,3 +88,25 @@ Confidence labels as in the other notes. The machine-readable list is `levies-an
 - **Adder:** network €4.8/MWh (Part A) + tax €23.25 = **about €28/MWh**, against **€30** today (before any data centre support).
 - **Confidence:** published and clear.
 - **Sources:** Vero (tax administration), "Tax rates on electricity and certain fuels", https://vero.fi/en/businesses-and-corporations/taxes-and-charges/excise-taxation/sahkovero/Tax-rates-on-electricity-and-certain-fuels/; Eduskunta, Finance Committee report VaVM 28/2025 vp, https://www2.eduskunta.fi/pdf/VaVM+28/2025+vp?lang=fi (parliament). Both accessed 7 Nov 2026.
+
+## Sweden (SE)
+
+- **Energy tax on electricity 2026: 36.0 öre/kWh (SEK 360/MWh)** (43.9 in 2025). **Data centres lost their reduced rate on 1 July 2023** (Skatteverket) and pay the general rate. Manufacturing can deduct tax on process electricity; a 9.6 öre relief in northern municipalities covers services but not industry (whether it covers a data centre was not checked).
+- **Adder:** network about €1–2/MWh (Part A; not read in full) + tax SEK 360 (about €32.4) = **about €34/MWh**, against **€30** today.
+- **Confidence:** published and clear.
+- **Sources:** Skatteverket, "Skatt på el", https://www.skatteverket.se/foretag/skatterochavdrag/punktskatter/energiskatter/skattpael; Skatteverket, "Slopad skattenedsättning för datorhallar" (16 Dec 2022) (tax authority; both accessed 7 Nov 2026).
+
+## Norway (NO)
+
+- **Electricity tax 2026: standard 7.13 øre/kWh (NOK 71.3/MWh); reduced 0.60 øre/kWh** for industry and mining (industry codes 05–33) and some other categories.
+- **Data centres:** a tax authority interpretation statement on data centres with actual withdrawal above 0.5 MW exists (its title was seen; it could not be read), which suggests large data centres can use the reduced rate; the English guidance page does not mention them. Unclear: to check.
+- **Adder:** network NOK 9.1/MWh plus losses (Part A, large-consumer rate) + tax NOK 6.0 (reduced) or NOK 71.3 (standard) = **about €1.5/MWh or €7.7/MWh**, against **€25** today. Regional grid tariffs, where a campus connects below Statnett, would add to this.
+- **Confidence:** published (rates); data centre eligibility unclear.
+- **Sources:** Skatteetaten, "Electrical power tax", https://www.skatteetaten.no/en/business-and-organisation/vat-and-duties/excise-duties/about-the-excise-duties/electrical-power-tax (tax authority, accessed 7 Nov 2026). Not reachable: the 2026 circular PDF (the site does not allow automated reading).
+
+## Denmark (DK)
+
+- **Electricity tax (elafgift): 0.8 øre/kWh in 2026 and 2027** (temporary cut); VAT-registered businesses reclaim down to the EU minimum of 0.4 øre/kWh, so **DKK 4/MWh net**. The rate from 2028 was not stated.
+- **Adder:** network DKK 23.8/MWh plus losses (Part A) + tax DKK 4 = **about €3.7/MWh plus losses (about €1)**, against **€40** today.
+- **Confidence:** published and clear.
+- **Source:** Skattestyrelsen, "Midlertidig nedsættelse af elafgiften i 2026 og 2027", https://skat.dk/erhverv/afgifter-paa-varer-og-ydelser-punktafgifter/nyhedsbrev-afgifter/midlertidig-nedsaettelse-af-elafgiften-i-2026-og-2027 (tax authority, 1 Jan 2026, accessed 7 Nov 2026).
