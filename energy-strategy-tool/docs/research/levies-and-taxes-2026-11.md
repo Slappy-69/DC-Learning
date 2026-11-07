@@ -183,3 +183,12 @@ Belgium, Poland and Czechia first (data centre markets), then Bulgaria, Croatia,
 - **Worked out:** about **PLN 59.5/MWh** in levies and the quality rate, before excise and network charges.
 - **Confidence:** published (secondary notice citing the official decisions).
 - **Source:** RCEkoenergia (Unimot), "Stawki opłat na 2026", https://rcekoenergia.unimot.pl/media/6209/download/RCE-stawki%20op%C5%82at%20na%202026.pdf (supplier, 2 Feb 2026, accessed 7 Nov 2026).
+
+## Czechia (CZ)
+
+- **Renewables support (POZE): zero for 2026**, because the state budget pays it all from 1 January 2026; the government decided on 21 September 2026 to do the same for 2027. In 2025 it was about CZK 495/MWh (Part A note). Whether it returns after 2027 is a political decision: a flag, not a value.
+- **Electricity tax:** **CZK 28.30/MWh** (Act No. 261/2007 Coll.); exemptions are by use (electrolysis, metallurgy, rail and others), not for data centres.
+- **Not read:** the market operator (OTE) fee; ERÚ's price decision itself (a Word file the reader could not open; the shell is refused).
+- **Worked out:** about **CZK 28/MWh** (about €1.1) in levies and taxes for 2026–27, on top of Part A's network and system services (CZK 366/MWh in 2025).
+- **Confidence:** published (press and a trade guide; ERÚ's text not read).
+- **Sources:** oEnergetice, "Government approves shift of all supported-energy payments to the state" (16 Dec 2025) https://oenergetice.cz/en/czech-energy-sector/government-approves-shift-of-all-supported-energy-payments-to-the-state-electricity-to-become-cheaper-in-czechia; oEnergetice, "Czech state again to cover all renewable support charges" (21 Sep 2026) https://oenergetice.cz/en/czech-energy-sector/electricity-prices-expected-to-keep-falling-czech-state-again-to-cover-all-renewable-support-charges; Pohoda portal, "Daň z elektřiny" https://portal.pohoda.cz/dane-ucetnictvi-mzdy/ostatni-dane/ekologicke-dane/dan-z-elektriny (all accessed 7 Nov 2026).
