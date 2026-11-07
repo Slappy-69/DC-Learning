@@ -14,7 +14,7 @@ A new chat that picks this up: read this file, then carry on from the first part
 | A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | Done (5 random entries checked) | 2026-11-07 |
 | E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | Done | 2026-11-07 |
 | G | Open map data for main utilities (OQ 200) | `utility-maps-2026-11.md` | Done | 2026-11-07 |
-| F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | Done for this run (stopped after 26 proposals; next records listed in the file) | 2026-11-07 |
+| F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | Done for this run (26 proposals, then 8 more after the run: gas price, gas transport, gas turbine O&M and efficiency, gas engines, two licences; still-not-reached list in the file) | 2026-11-07 |
 
 ## Part A: countries
 
@@ -138,6 +138,8 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - F1. Approve ACER 2026 as the source for cable route costs, split by voltage band?
 - F2. Keep the network adders unchanged until levies are researched (proposed), or lower them now? **Answered 2026-11-07 by the owner (with H1): wait until all the research is done (OPEN-QUESTIONS 201).**
 - F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km?
+- F4. Gas price: accept the Dutch TTF hub price (press-reported, dated) as the "latest dated price" beside the 2025 average (€42.9)? TTF closed at €85.6 on 6 Nov 2026.
+- F5. ASHRAE climatic design data: buy the developer licence before the first release, or replace the source?
 
 - H1. Set the adder to network + levies and taxes for DE, NL, PT, FI, SE, DK, CH, IE now, or after the rest are researched? **Answered 2026-11-07 by the owner: "Wait for all the research is done before implementing" (OPEN-QUESTIONS 201).**
 - H2. Show data centre tax rules (FR reduced rate, FI change on 1 Jul 2026, GB CCA discount, NO unclear) as flags on the options?

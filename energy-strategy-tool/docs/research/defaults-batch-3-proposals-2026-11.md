@@ -75,16 +75,61 @@ ACER 2026 gives substation costs per asset, not per MW (Table I.2, medians): new
 4. Technology capex not yet sourced (substation connection capex per MW; gas engine and turbine O&M, efficiencies and lead times).
 5. The decision log's list: escalation sources; ASHRAE station data licence; Protomaps and OpenStreetMap licence and map size; NOAA cleaning; deliverability penalties (judgement); run speed.
 
+## Second batch of records (7 November 2026, after the run)
+
+Owner's decision of 7 November 2026 (OPEN-QUESTIONS 201): nothing goes into the tool until all the research is done. These are proposals only.
+
+### 6. Gas commodity price (`country.gas`, by country)
+
+- **Today:** €40–45/MWh_th for most countries (Cyprus 70, Malta 60, Iceland 80), indicative.
+- **Published 2025 average:** **€42.9/MWh_th** (PyPSA technology-data, from the World Bank's 2025 commodity prices and the TYNDP 2024 inputs; dataset commit e5d25186). Today's defaults sit on it.
+- **Latest dated price:** the Dutch TTF hub closed at **€85.6/MWh on 6 November 2026** (SoldiOnline; Investing.com reports €87.40 traded the same day, after a week down 15 % on hopes of an end to the US–Iran conflict). On 23 June 2026 it was €41.6 (Trading Economics). The market has doubled since mid-year.
+- **Proposal:** keep the defaults as the labelled 2025 average, show the latest dated TTF price beside them, and offer the high-price case. Under the walkthrough's rule an exchange price needs the owner's approval as a source. Country spreads to TTF were not researched.
+
+### 7. Gas transport adder (`fuel.gasTransportAdder`)
+
+- **Today:** €4/MWh_th (range 2–8), indicative.
+- **Cross-check:** Germany's proposed single transmission tariff for domestic exits is **€6.06 per kWh/h a year** (ACER report of 8 April 2025): about **€0.7/MWh at full load, €1.4/MWh at 50 % load** (worked out). That is exit only; distribution and metering are extra.
+- **Proposal:** keep €4 as **judgement**, with the German figure recorded as the low end for a transmission-connected campus.
+
+### 8. Gas turbine running costs and efficiency (`tech.gasTurbine.*`)
+
+- **Fixed O&M:** today €12/kW/yr; the Danish Energy Agency's OCGT data gives **€10.6** (1.78 % a year of €594/kW, worked out); EIA's aeroderivative case gives **US$9.56 (about €8.6)**. Proposal: **€10.6**, range 8.6–12.
+- **Variable O&M:** today €6/MWh; the agency gives **€6.01** (EIA aeroderivative US$5.70, about €5.1). Proposal: keep €6, now **sourced**.
+- **Efficiency:** today 0.38 (LHV); the agency gives **0.405**; EIA's heat rate of 9,447 Btu/kWh (higher heating value) is about **40 % LHV** (worked out with the standard ratio of about 1.108). Proposal: **0.40**, range 0.36–0.42.
+- **Sources:** PyPSA technology-data `costs_2025.csv` (Danish Energy Agency inputs) https://raw.githubusercontent.com/PyPSA/technology-data/master/outputs/costs_2025.csv; EIA, capital cost and performance study for AEO2025 https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf (both accessed 7 Nov 2026).
+
+### 9. Gas engines (`tech.gasRecip.*`)
+
+- **No published value found.** PyPSA's dataset has no gas engine row (only the agency's diesel engine farm: €11.5/kW/yr, €8.0/MWh, 35 %); EIA's study has no engine case. The agency's catalogue chapter on gas engines was not read. Proposal: keep today's values as **judgement** until that chapter is read.
+
+### 10. Licences
+
+- **ASHRAE climatic design data:** a **paid licence** (one-time fee, ASHRAE Bookstore) is offered to developers who include the data in their own software; the terms sit in the product preview, which was not read. **Needs checking before release.**
+- **Protomaps basemap:** an **ODbL Produced Work**, OpenStreetMap attribution required; the planet file is about **120 GB** to zoom 15, and each extra zoom level roughly doubles it (use `pmtiles extract --maxzoom`). Offline redistribution follows the ODbL (Part G, question G3).
+
+### Still not reached
+
+Grid connection date and capacity defaults by country (no published table; judgement), escalation sources, NOAA cleaning, deliverability penalties (judgement), run speed; the gas engine chapter of the agency's catalogue; country gas spreads.
+
 ## Questions for the owner (copied to the progress file)
 
 1. Approve ACER 2026 as the source for cable route costs, split by voltage band?
 2. Keep the network adders unchanged until levies are researched (proposed), or lower them now to the network part plus a placeholder for levies?
 3. Gas connection pipe: keep €0.8 m/km as judgement with the ACER flag, or move to the ACER median €2.08 m/km?
+4. Gas price: accept the Dutch TTF hub price, as reported by the press with its date, as the "latest dated price" shown beside the 2025 average? (The walkthrough says an exchange source needs the owner's approval.)
+5. ASHRAE climatic design data: buy the developer licence before the first release, or replace the source?
 
 ## Sources
 
 | Source | Type | Published | Accessed | URL |
 |---|---|---|---|---|
+| PyPSA technology-data, `costs_2025.csv` (Danish Energy Agency and World Bank inputs; commit e5d25186) | Open dataset | 2025–2026 | 7 Nov 2026 | https://raw.githubusercontent.com/PyPSA/technology-data/master/outputs/costs_2025.csv |
+| EIA, "Capital Cost and Performance Characteristics" (AEO2025) | Government | Jan 2024 | 7 Nov 2026 | https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf |
+| ACER, "Gas Tariff Report Germany 2025" | EU body | 8 Apr 2025 | 7 Nov 2026 | https://www.acer.europa.eu/sites/default/files/documents/Publications/ACER-Gas-Tariff-Report-Germany-2025.pdf |
+| SoldiOnline, TTF close 6 Nov 2026; Investing.com, 6 Nov 2026 | Press | 6 Nov 2026 | 7 Nov 2026 | https://soldionline.it/notizie/forex-commodities/gas-perche-il-ttf-scende-del-55-a-856-euro-cosa-ce-dietro |
+| ASHRAE, Climatic Design Data License FAQ | Standards body | undated | 7 Nov 2026 | https://www.ashrae.org/file%20library/technical%20resources/publication%20errata%20and%20updates/_climatic-design-data-license-faq_.pdf |
+| Protomaps, basemap downloads | Project documentation | 2026 | 7 Nov 2026 | https://docs.protomaps.com/basemaps/downloads |
 | ACER, "Unit Investment Cost Indicators" (2026) | EU body | 24 Apr 2026 | 7 Nov 2026 | https://www.acer.europa.eu/sites/default/files/documents/Publications/ACER-2026-Unit-Investment-Cost-Indicators.pdf |
 | fuel-prices.eu, "Europe fuel prices, week of 26 October 2026" (from the EU Weekly Oil Bulletin) | Press (data aggregator) | 26 Oct 2026 | 7 Nov 2026 | https://www.fuel-prices.eu/news/weekly/europe-fuel-prices-week-2026-10-26/ |
 | National tariff sources for the adder table | Regulators and operators | 2025–2026 | 7 Nov 2026 | See `grid-capacity-charges-2026-11.md`, each country |
