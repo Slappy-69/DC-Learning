@@ -28,6 +28,7 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | GB | Done 2026-11-07 |
 | IE | Done 2026-11-07 (2025/26 rate; 2026/27 table not found) |
 | DE | Done 2026-11-07 |
+| FR | In progress: stopped at a usage limit on 2026-11-07. Next source to read: CRE deliberation 2026-104 (TURPE 7 HTB from 1 Aug 2026), https://www.cre.fr/fileadmin/Documents/Deliberations/2026/260521_2026-104_Evolution_TURPE_7_HTB.pdf |
 
 Notes gathered before Part A started (use them, then check):
 
