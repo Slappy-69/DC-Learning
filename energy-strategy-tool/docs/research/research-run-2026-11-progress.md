@@ -47,6 +47,7 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | LU | Done 2026-11-07 |
 | MT | Done 2026-11-07 (no published value found) |
 | NO | Done 2026-11-07 |
+| PL | Done 2026-11-07 (structure only; rate table not readable) |
 
 Notes gathered before Part A started (use them, then check):
 

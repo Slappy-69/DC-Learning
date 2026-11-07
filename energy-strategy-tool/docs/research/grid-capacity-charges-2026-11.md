@@ -306,3 +306,12 @@ The summary table is at the top; country sections follow, in the order researche
 - **Worked example, 100 MW campus qualifying as a large consumer (worked out):** 100,000 kW × NOK 67.50 = NOK 6.75 m a year (about €0.58 m).
 - **Confidence:** published and clear.
 - **Sources:** Statnett, "Tariffer for transmisjonsnettet 2026", https://www.statnett.no/globalassets/for-aktorer-i-kraftsystemet/tariff/tariffhefte-2026.pdf (operator, accessed 7 Nov 2026).
+
+## Poland (PL)
+
+- **Tariff:** PSE's tariff for 2026 (consolidated text of 16 January 2026), approved by the regulator URE.
+- **Capacity part:** final customers connected to the transmission grid (group II) pay the **fixed component of the network rate monthly on their contracted capacity ("moc umowna", ordered by 25 August for the next year)** (section 2.1.1.1). Basis: contracted. **The rate itself could not be read**: the tables of section C did not come through from the PDF. **No published value found** in readable form.
+- **Capacity market fee:** charged per MWh consumed in URE's designated peak hours (2025: PLN 141.20/MWh according to ENTSO-E; 2026 rate in URE notice 58/2025, not read), multiplied by 0.17 to 1.00 according to how much peak-hour use exceeds off-peak use. A flat data centre gets the 0.17 multiplier (worked out). Per MWh, not per MW.
+- **Energy part:** variable network component, quality rate, renewables and CHP fees per MWh (rates not read); industrial customers can get 15 % or 25 % factors on the renewables and CHP fees.
+- **For the tool:** blank and flagged until the rate is read from section C of the tariff.
+- **Sources:** PSE, "Taryfa dla energii elektrycznej na rok 2026" (consolidated, 16 Jan 2026), https://www.pse.pl/documents/20182/7005343691/20260116_Tekst_Taryfy_na_2026_tekst_jednolity.pdf (operator, accessed 7 Nov 2026); ENTSO-E, "Overview of Transmission Tariffs in Europe: Synthesis 2025" (EU body).
