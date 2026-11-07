@@ -86,9 +86,12 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | SK | Done 2026-11-07 (TPS banding not confirmed) |
 | RO | Done 2026-11-07 |
 | HU | Done 2026-11-07 (KÁT from press; to check) |
+| GR | Done 2026-11-07 (partial: MV renewables levy only) |
+| LU | Done 2026-11-07 (partial: tax not found) |
+| EE | Done 2026-11-07 (partial: one fee only) |
 | IT | Partly done 2026-11-07 (rate tables not readable) |
 
-Part H stopped after 14 countries (DE, NL, GB, FR, ES, PT, IE, IT partly, FI, SE, NO, DK, CH, AT) to save the owner's usage; the other 17 are listed at the end of `levies-and-taxes-2026-11.md`.
+Part H: 23 countries researched (GR, LU and EE only in part). No usable value found for BG, HR, CY, IS, LV, LT, MT and SI; they and the remaining gaps are listed at the end of `levies-and-taxes-2026-11.md`.
 
 ## Assumptions taken
 
@@ -134,7 +137,7 @@ Part H stopped after 14 countries (DE, NL, GB, FR, ES, PT, IE, IT partly, FI, SE
 
 ## Where the next run starts
 
-Part F, the list "Not reached in this batch" in `defaults-batch-3-proposals-2026-11.md`, starting with levies and taxes per MWh by country. Part A gaps to retry: CY, LT, MT, PL (section C table), SE (2026 price list), and the 2026 values for CZ, HR, IE (2026/27) and FR (August 2026 grid).
+Part F, the list "Not reached in this batch" in `defaults-batch-3-proposals-2026-11.md` (levies and taxes now done for 23 countries, see Part H), next the gas commodity price by country. Part A gaps to retry: CY, LT, MT, PL (section C table), SE (2026 price list), and the 2026 values for CZ, HR, IE (2026/27) and FR (August 2026 grid).
 
 ## Sites not reachable
 

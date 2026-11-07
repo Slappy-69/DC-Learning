@@ -8,7 +8,7 @@ Confidence labels as in the other notes. The machine-readable list is `levies-an
 
 ## Summary
 
-Fourteen countries were researched in this pass: the countries of the studies and the main data centre markets. The other seventeen are listed at the end as next.
+Twenty-three countries were researched (fourteen first, then nine more on the same day). Eight smaller markets gave no usable value; they are listed at the end.
 
 Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; network from Part A, levies and taxes from this note; VAT left out. "Proposed adder" = network + levies and taxes, worked out; today's adder is the tool's indicative default.
 
@@ -28,10 +28,19 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 | DK | DKK 23.8 plus losses | DKK 4 (net of refund) | **about €4.7** | €40 | Rate from 2028 |
 | CH | CHF 19.7 | CHF 23.5 (grid surcharge) | **about CHF 43 (about €47)** | €50 | Municipal levies; surcharge refunds |
 | AT | €6.0 | €8.3 | **about €14 plus the renewables contribution** | €45 | The renewables contribution percentage |
+| BE | €8.3 | about €0.4–0.5 (Flemish or Walloon surcharge; Brussels €4.3) | **about €9** before the federal excise | €50 | Federal excise |
+| PL | Not read (Part A gap) | PLN 59.5 (quality rate 33.2, capacity fee about 16.0 with the 0.17 factor, renewables and CHP 10.3) | **not set** | €40 | Network rates; excise |
+| CZ | CZK 366 (2025, with system services) | CZK 28.3 (tax; renewables support paid by the state in 2026 and 2027) | **about CZK 394** (rough €16; exchange rate not sourced) | €45 | Market operator fee; 2026 network; support after 2027 |
+| SK | €7.7–17.6 | €17.2 (system operation tariff €15.9, excise €1.3) | **about €25–35** | €40 | Nuclear fund payment; whether large users get a lower band |
+| RO | RON 51.2 (extraction 36.45, system services 14.70; per MWh) | RON 90.6 (green certificates 73.0, CHP 13.6, excise 3.8, CfD 0.2) | **about RON 142** (rough €28; exchange rate not sourced) | €35 | Green certificate exemptions |
+| HU | HUF 5,689 | HUF 398 tax + KÁT charge, about HUF 15,000 in press (to check) | **not set** | €40 | KÁT rate for large users; METÁR |
+| GR | €7.1 (secondary) | Renewables levy about €1 at MV (unclear) | **not set** | €40 | High voltage levies; public service charge; excise |
+| LU | €1.4 | Renewables mechanism paid by the state in 2026 (businesses not confirmed) | **not set** | €45 | Electricity tax; business treatment |
+| EE | about €0.9 (capacity part only) | €3.73 balancing capacity fee | **not set** | €35 | Energy charges; renewables fee; excise |
 
 **What it shows:**
 
-- **Today's adders are badly off in both directions.** Far too high for the Netherlands, Portugal, Spain, Denmark, Norway, Austria and France (with the data centre tax rate); far too low for Great Britain (about €106 against €55); roughly right for Germany, Finland, Sweden and Switzerland.
+- **Today's adders are badly off in both directions.** Far too high for the Netherlands, Portugal, Spain, Denmark, Norway, Austria, Belgium and France (with the data centre tax rate), and probably Czechia (renewables support now paid by the state); far too low for Great Britain (about €106 against €55); roughly right for Germany, Finland, Sweden and Switzerland.
 - **Data centre tax treatment differs sharply and changes:** France gives data centres a reduced excise (€10/MWh, with conditions); Finland removed theirs on 1 July 2026; Sweden removed theirs in 2023; Great Britain's data centres get 92 % off the Climate Change Levy through their sector agreement; Norway's treatment was not confirmed; Germany's 2026 tax cut is for manufacturing.
 - **These should be flags in the tool,** not only numbers: a reduced rate with conditions (France) or a rate under change (Finland) is exactly what an engineer needs to see on the option.
 
@@ -156,16 +165,6 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 - **Confidence:** published and clear (tax and flat fee).
 - **Source:** Salzburg Netz, "Zuschläge zum Systemnutzungsentgelt Strom, 01/2026", https://www.salzburgnetz.at/content/dam/salzburgnetz/dokumente/stromnetz/Strom-Zuschlaege-Systemnnutzung.pdf (network operator, accessed 7 Nov 2026).
 
-## Not researched in this pass (next)
-
-Belgium, Poland and Czechia first (data centre markets), then Bulgaria, Croatia, Cyprus, Estonia, Greece, Hungary, Iceland, Latvia, Lithuania, Luxembourg, Malta, Romania, Slovakia and Slovenia; and the gaps named in the table (Italy's general system charges, Ireland's capacity charges, France's capacity mechanism, Austria's renewables contribution, Norway's data centre rate). Eurostat's breakdown of taxes and levies for the largest industrial band would be a quick cross-check for the EU countries, but its data service could not be reached from this session.
-
-## Questions for the owner (copied to the progress file)
-
-1. Set the adder to "network + levies and taxes" for the eight countries where both are clear (DE, NL, PT, FI, SE, DK, CH, IE), now or after the rest are researched?
-2. Should data centre tax rules (France's reduced rate, Finland's change, Great Britain's CCA discount, Norway's unclear rate) appear as flags on the options?
-3. Great Britain: use the levies from the secondary guide (about £78/MWh), or wait until each is read from its issuing body?
-
 ## Belgium (BE)
 
 - **Since 1 January 2022 the federal contribution, offshore green certificates, the strategic reserve and the capacity mechanism are paid from the federal budget**, not by surcharges on Elia's tariffs (Elia's 2025 sheet).
@@ -217,3 +216,33 @@ Belgium, Poland and Czechia first (data centre markets), then Bulgaria, Croatia,
 - **Not found:** METÁR; any other levies (MAVIR's network charge with its 100 % discount is in Part A).
 - **Confidence:** published, but unclear which tariff applies.
 - **Sources:** RSM Hungary, "Energy tax" https://www.rsm.hu/tax-to-know/energy-tax (5 Aug 2026); Economx, 24 May 2026 https://www.economx.hu/magyar-gazdasag/2026/05/24/aram-koltseg-dragulas-napelem/; E.ON system-use charges 2026 https://www.eon.hu/content/dam/eon/eon-hungary/documents/hatarozatok-szabalyzatok-aram/arak-tarifak/Aram_RHD_EON_20260101.pdf (all accessed 7 Nov 2026).
+
+## Greece (GR)
+
+- **Renewables levy (ETMEAR):** about **€1/MWh** for industrial customers at medium voltage, read from a supplier's list valid until July 2026; the table did not extract cleanly, so this is **unclear**. The public service charge (YKO) could not be read reliably and is not used. **No high voltage figures** found; excise not read.
+- **Adder:** not set.
+- **Source:** Protergia, regulated charges for business customers (2026) https://www.protergia.gr/media/41bpemxv/protergia-regulated-charges_business_2026-09.pdf (supplier, accessed 7 Nov 2026).
+
+## Luxembourg (LU)
+
+- **Compensation mechanism (renewables):** from 2026 **paid from the state budget**, as are network charges for households (Chronicle.lu, 2 Dec 2025). The article gives household figures only; whether large business users also pay nothing was **not confirmed**. The regulator's letter of 5 Feb 2026 speaks of future rate cuts for categories A and B only.
+- **Electricity tax for large users:** not found.
+- **Adder:** network €1.4/MWh (Part A) plus the electricity tax: **not set**.
+- **Sources:** Chronicle.lu, "Electricity bills to fall as government funds network charges" (2 Dec 2025) https://chronicle.lu/category/energy/58271-electricity-bills-to-fall-as-government-funds-network-charges; ILR, letter of 5 Feb 2026 https://www.ilr.lu/wp-content/uploads/ilr-elc-pub-2026-02-05-FournElec-val-MdC-2025.pdf (both accessed 7 Nov 2026).
+
+## Estonia (EE)
+
+- **Balancing capacity fee:** **€3.73/MWh** from January 2026, paid by consumers and producers alike (ERR, 31 Oct 2025). A separate security of supply fee also started in January 2026; no per-MWh figure was read.
+- **Not found:** the renewables fee for 2026, the electricity excise.
+- **Adder:** Part A's capacity charge is about €0.9/MWh (package I, 330 kV, worked out); energy charges and the other levies are missing: **not set**.
+- **Source:** ERR, "Uus tasu elektriarvel saab olema 3,73 eurot megavatt-tunni kohta" (31 Oct 2025) https://www.err.ee/1609844289/uus-tasu-elektriarvel-saab-olema-3-73-eurot-megavatt-tunni-kohta (public broadcaster, accessed 7 Nov 2026).
+
+## Not researched in this pass (next)
+
+**No usable value found in this pass:** Bulgaria, Croatia, Cyprus, Iceland, Latvia, Lithuania, Malta and Slovenia (searches found only network tariffs, household articles or out-of-date figures). Next, the gaps named in the table, above all Hungary's KÁT charge for large users, Poland's network rates and excise, Greece's high voltage levies, Luxembourg's electricity tax and Estonia's renewables fee; and the earlier gaps (Italy's general system charges, Ireland's capacity charges, France's capacity mechanism, Austria's renewables contribution, Norway's data centre rate). Eurostat's breakdown of taxes and levies for the largest industrial band would be a quick cross-check for the EU countries, but its data service could not be reached from this session.
+
+## Questions for the owner (copied to the progress file)
+
+1. Set the adder to "network + levies and taxes" for the eight countries where both are clear (DE, NL, PT, FI, SE, DK, CH, IE), now or after the rest are researched?
+2. Should data centre tax rules (France's reduced rate, Finland's change, Great Britain's CCA discount, Norway's unclear rate) appear as flags on the options?
+3. Great Britain: use the levies from the secondary guide (about £78/MWh), or wait until each is read from its issuing body?
