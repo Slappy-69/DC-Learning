@@ -9,8 +9,8 @@ A new chat that picks this up: read this file, then carry on from the first part
 | Part | Subject | Output | State | Dates |
 |---|---|---|---|---|
 | C | Great Britain's Data Centre Commitment Fee (OQ 199) | `gb-commitment-fee-2026-11.md` | Done | 2026-11-07 |
-| D | Ireland's large energy user policy (OQ 198) | `ireland-large-energy-users-2026-11.md` | In progress | Started 2026-11-07 |
-| B | Closing plant's grid connection, more countries (OQ 155) | `plant-connection-takeover-part2-2026-11.md` | Not started | |
+| D | Ireland's large energy user policy (OQ 198) | `ireland-large-energy-users-2026-11.md` | Done | 2026-11-07 |
+| B | Closing plant's grid connection, more countries (OQ 155) | `plant-connection-takeover-part2-2026-11.md` | In progress | Started 2026-11-07 |
 | A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | Not started | |
 | E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | Not started | |
 | G | Open map data for main utilities (OQ 200) | `utility-maps-2026-11.md` | Not started | |
@@ -30,6 +30,8 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 
 - C: no Ofgem decision found up to 2026-11-07; the fee is treated as proposed. Its Chapter 7 (consequences of missed milestones) could not be read in full; consequences taken from the press release and the draft code text.
 - C: a phased campus holds the whole fee until the grid energises (no stage-by-stage release found).
+- D: standby gensets that never trade do not count towards Ireland's de-rated test (the policy asks for market plant without run-hour limits).
+- D: the 8-hour storage de-rating column of the 2030/31 T-4 pack read the same as 2029/30; marked for checking against the PDF.
 
 ## Questions for the owner
 
@@ -38,6 +40,10 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 - C1. GB fee default: blank (engineer enters) or the published midpoint £475,000/MW as a labelled example?
 - C2. Cost of the money tied up: cash at the discount rate (Ofgem's worst case), or a letter-of-credit fee rate entered by the engineer?
 - C3. Offer acceptance date: a new input, or a default number of years before the grid date?
+- D1. Ireland flag severity: major or minor?
+- D2. Do standby gensets count towards Ireland's de-rated test (cautious reading: no)?
+- D3. MVA against MW for Ireland's test: equal (EirGrid's example) or the option's power factor?
+- D4. Bundle the latest T-4 de-rating table (2030/31, August 2026) and update it at each release?
 
 ## Sites not reachable
 
@@ -45,3 +51,4 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 
 - The session's shell cannot reach most websites (for example www.ofgem.gov.uk: refused by the session's network allowlist). Pages were read with the web-reading tool instead; no workaround was tried.
 - Utility Week (article on government support for the GB fee): refused by the site.
+- sinnfein.ie (refused) and stackpath.ie (does not allow automated reading): same content found elsewhere.
