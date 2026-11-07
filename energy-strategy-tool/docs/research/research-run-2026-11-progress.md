@@ -68,6 +68,8 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | Country | State |
 |---|---|
 | DE | Done 2026-11-07 |
+| NL | Done 2026-11-07 |
+| GB | Done 2026-11-07 (levies mostly from a secondary guide) |
 
 ## Assumptions taken
 
