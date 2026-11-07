@@ -11,8 +11,8 @@ A new chat that picks this up: read this file, then carry on from the first part
 | C | Great Britain's Data Centre Commitment Fee (OQ 199) | `gb-commitment-fee-2026-11.md` | Done | 2026-11-07 |
 | D | Ireland's large energy user policy (OQ 198) | `ireland-large-energy-users-2026-11.md` | Done | 2026-11-07 |
 | B | Closing plant's grid connection, more countries (OQ 155) | `plant-connection-takeover-part2-2026-11.md` | Done | 2026-11-07 |
-| A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | In progress | Started 2026-11-07 |
-| E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | Not started | |
+| A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | Done (5 random entries checked) | 2026-11-07 |
+| E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | In progress | Started 2026-11-07 |
 | G | Open map data for main utilities (OQ 200) | `utility-maps-2026-11.md` | Not started | |
 | F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | Not started | |
 
@@ -52,6 +52,9 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | SK | Done 2026-11-07 |
 | SI | Done 2026-11-07 (group naming to check) |
 | SE | Done 2026-11-07 (no readable value) |
+| CH | Done 2026-11-07 |
+
+All 31 countries done. Values not found or not readable, to try again later: CY, LT, MT, PL (rate table), SE (price list); 2026 values not read for CZ, HR, IE (2026/27), FR (Aug 2026 grid); IS out of date (2022).
 
 Notes gathered before Part A started (use them, then check):
 
@@ -83,6 +86,8 @@ Notes gathered before Part A started (use them, then check):
 - A1. Countries that charge on measured peak (DE today, PT peak hours, NL monthly maximum, GB Triads): charge the per-MW line on the option's contracted grid MW anyway (as decided in OQ 162), or on its peak import?
 - A2. Discounts for large flat loads (DE bandload, ES/PT electro-intensive): leave out, offer as a tick, or apply by default?
 - A3. GB's residual is fixed per site, not per MW: enter it as a yearly lump sum, or divide by the contracted MW?
+- A4. Where the network bill has both a contracted line and a peak line (NL, BE, PT), should the tick carry only the contracted line (the rest stays in the per-MWh adder), or both?
+- A5. Latvia charges on transformer capacity, usually above the contracted MW: accept the understatement, or add a transformer factor?
 
 ## Sites not reachable
 

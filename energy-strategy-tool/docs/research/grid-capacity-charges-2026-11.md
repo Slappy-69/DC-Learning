@@ -14,7 +14,50 @@ The summary table is at the top; country sections follow, in the order researche
 
 ## Summary
 
-(Filled in when every country is done.)
+Per-MW figures are yearly, worked out from the published unit where needed (shown in each section), in the original currency. "Contracted" means charged on contracted, subscribed, reserved or installed capacity; "peak" means charged on measured demand. Energy parts and levies per MWh are in the sections, not here.
+
+| Country | Charge per MW a year at transmission level (main value) | Basis | Other capacity charge | Year | Confidence |
+|---|---|---|---|---|---|
+| AT | €9,000 (level 1); €10,000 (level 2); €20,280–54,840 (110 kV, by area) | Peak (taken) | — | 2026 | Published, period and basis unclear |
+| BE | €8,768 per MVA (power made available) | Contracted | Peaks: €16,450 per MW a year | 2026 | Published and clear |
+| BG | None | — | — | 2026/27 | No published value found (per-MWh only) |
+| CH | CHF 74,280 | Peak (taken) | — | 2026 | Published, basis unclear |
+| CY | — | — | — | 2026 | No published value found |
+| CZ | CZK 1,259,304 (transmission) ; CZK 1.15–1.34 m (110 kV, annual reservation) | Peak (TSO); contracted (110 kV) | — | 2025 | Published (2026 not read) |
+| DE | €53,060 (HöS) ; €76,700 (HöS/HS) | Peak (annual) | — | 2026 | Published and clear; bandload discount possible |
+| DK | DKK 59,187 (DKK 19,729 with limited access) | Contracted | — | 2026 | Published and clear |
+| EE | €6,426 (330 kV) / €10,786 (110 kV) per MVA, package I | Contracted (taken) | Package II: €11,959 / €19,233 per MVA | 2026 | Published, package terms to check |
+| ES | €15,833 (6.4TD, ≥145 kV) ; €27,527 (6.3TD, 72.5–145 kV) | Contracted | Excess power charges | 2026 | Published and clear |
+| FI | None | — | — | 2026 | Published and clear (per-MWh only) |
+| FR | €0 (HTB3, 400 kV) ; €11,280 (HTB2) ; €41,640 (HTB1) | Contracted | — | 2025 grid | Published (2026 grid not read) |
+| GB | Fixed per site: £7.60 m (T-Demand4) ; £2.08 m (EHV4) | Fixed per site | Triad: £0–16.91 per kW | 2026/27 | Published and clear |
+| GR | €52,692 | Peak (taken) | — | 2026 | Published via secondary sources |
+| HR | €24,970 | Peak | — | 2025 | Published (2026 not read) |
+| HU | HUF 2,376,000 | Contracted | — | 2026 | Published and clear |
+| IE | €24,116 (DTS-T, on MIC) | Contracted | PSO levy €2,880 per MVA | 2025/26 | Published and clear |
+| IS | USD 27,435 (large users) | Peak | — | 2022 | Published, out of date |
+| IT | €29,397 | Contracted | — | 2026 | Published and clear |
+| LT | — | — | — | 2026 | No published value found |
+| LU | €6,540 (220 kV) ; €8,870 (65 kV) | Peak (taken) | — | 2026 | Published, basis unclear |
+| LV | €6,759 (330 kV) ; €11,376–12,959 (110 kV) | Contracted (transformer kVA) | — | 2026–2028 | Published and clear |
+| MT | — | — | — | 2026 | No published value found |
+| NL | €49,280 (EHS) ; €65,620 (HS) | Contracted | Monthly maximum: €74,040 (EHS) ; €93,240 (HS) per MW a year | 2026 | Published and clear |
+| NO | NOK 135,000 (NOK 67,500 for large consumers) | Peak (5-year peak hour) | — | 2026 | Published and clear |
+| PL | Not read | Contracted | — | 2026 | No published value found (in readable form) |
+| PT | €4,599 | Contracted | Peak-hour power: €26,134 per MW a year | 2026 | Published and clear |
+| RO | None | — | — | 2026 | Published and clear (per-MWh only) |
+| SE | Not read | Contracted | — | 2024 | No published value found (in readable form) |
+| SI | About €2,280 | Contracted (taken) | — | 2026 | Published, group naming to check |
+| SK | €22,217 | Contracted | — | 2025–2027 | Published and clear |
+
+**What the survey shows:**
+
+- **A per-MW charge on contracted capacity exists in most countries, but it is not the whole network bill.** Many countries split network costs between a contracted charge, a charge on measured peaks and a per-MWh part. Charging the tool's contracted MW with only the contracted line, and leaving the rest in `grid.priceAdder`, avoids double counting.
+- **Five countries charge only on measured demand** (Germany, Croatia, Norway, Iceland, and as read Greece, Switzerland, Austria and Luxembourg); for a flat campus the measured peak is close to the contracted capacity, but not equal to it.
+- **Three have no capacity charge for consumption** (Finland, Romania, Bulgaria), and France's 400 kV level has none.
+- **Great Britain's residual is fixed per site**, not per MW (question A3).
+- **The largest contracted charges found** are the Netherlands (€49,280–65,620 per MW), Czechia (about €50,000 at 2025 prices), Italy (€29,397), Spain at 110–132 kV (€27,527), Ireland (€24,116) and Slovakia (€22,217).
+
 
 ## Portugal (PT)
 
@@ -351,3 +394,25 @@ The summary table is at the top; country sections follow, in the order researche
 - **Scale:** ENTSO-E's 2025 synthesis puts Sweden's transmission charge for its standard case at about €1.16/MWh, the lowest in Europe.
 - **For the tool:** blank and flagged; likely small.
 - **Sources:** Svenska kraftnät, "Prislista 2024 för transmissionsnätet", https://www.svk.se/siteassets/aktorsportalen/anslut-till-transmissionsnatet/transmissionsnatstariff/aktuella-prislistor/prislista-2024-for-transmissionsnatet.pdf (operator, accessed 7 Nov 2026); ENTSO-E, "Overview of Transmission Tariffs in Europe: Synthesis 2025" (EU body).
+
+## Switzerland (CH)
+
+- **Tariff:** Swissgrid's grid usage tariffs for end consumers and distribution operators connected to the transmission grid (network level 1, 220 and 380 kV), overseen by the regulator ElCom. 2026 tariffs (calculation of 17 March 2025) are in force; 2027 tariffs were published on 17 March 2026.
+- **Capacity part:** **power tariff CHF 74,280 per MW (2026)**; CHF 71,880 in 2027. The table prints "CHF/MW" without a period; it is a yearly price charged on measured peaks at the exit point (taken as the yearly average of monthly maxima; to check). Basis: peak.
+- **Fixed part:** no basic tariff per exit point in 2026 and 2027 (it was CHF 427,560 a year in 2025).
+- **Energy part (2026):** working tariff 0.10, general ancillary services 0.27, active losses 0.20, winter reserve 0.41 Rp./kWh: CHF 9.8/MWh in all (CHF 5.3/MWh in 2027).
+- **Worked example, 100 MW peak, 745 GWh, 2026 (worked out):** power CHF 7.43 m; energy CHF 7.3 m. About CHF 14.7 m a year.
+- **Confidence:** published, but the basis and period of the power tariff were not printed in the table.
+- **Sources:** Swissgrid, "Tariffs" table 2017–2027, https://www.swissgrid.ch/dam/jcr:7ee7a834-c48c-4551-a401-e64ce0eac069/Tabelle-Tarife-en.pdf (operator, accessed 7 Nov 2026).
+
+## Check of five entries chosen at random (7 November 2026)
+
+Five rows of the CSV were drawn at random (Python `random.sample`, seed 20261107) and each figure was re-read from its source the same day:
+
+| Country | Entry | Re-read result |
+|---|---|---|
+| SI | Energy items, group 0, blocks 1–5: 0.00774 / 0.00671 / 0.00551 / 0.00602 / 0.00440 €/kWh | Matches. The source does not name the user groups, so "group 0 = transmission-connected" stays an assumption |
+| DK | System tariff 72 DKK/MWh (7.2 øre/kWh); capacity subscription 59,187 DKK/MW/year | Matches |
+| HU | Contracted capacity charge NAF 2,376 HUF/kW/year (NAF/KÖF 8,004), from 1 Jan 2026, MEKH H2995/2025 | Matches |
+| ES | 6.4TD power term P1–P6: 6.606205 / 3.935625 / 0.987554 / 0.686109 / 0.020376 / 0.013971 €/kW/year | Matches (BOE text) |
+| GB | 2027/28 forecast locational tariffs: South Western 16.912246, London 5.490841 £/kW | Matches. For 2027/28 zones 1–5 are floored at zero (zones 1–7 in the 2026/27 final tariffs, as recorded) |
