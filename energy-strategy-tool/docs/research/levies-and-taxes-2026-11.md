@@ -17,17 +17,17 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 | DE | €14.0 | €36.0 (tax €20.5, offshore €9.4, CHP €4.5, others €1.6) | **about €50** | €55 | Whether data centres get the 2026 tax cut (taken as no) |
 | NL | €16.5 | €3.6 (energy tax) | **about €20** | €45 | — |
 | GB | £10.8 | £78 (RO £32.7, BSUoS £13.1, CfD £10, CM £10, FiT £8, Sizewell C £3.5, CCL with CCA £0.6) | **about £89 (about €106)** | €55 | Most levies from a secondary guide; quarterly changes |
-| FR | €4.1 (400 kV) | €10.0 with the data centre rate (€26.35 without) | **about €14** (€30.5 without the data centre rate) | €40 | Capacity mechanism cost; which normal rate is current |
+| FR | €4.1 (400 kV) | €12.5 with the data centre rate (€28.85 without), incl. capacity about €2.5 | **about €16.5** (€33 without the data centre rate) | €40 | Which normal excise rate is current |
 | ES | Power part about €2.6; energy terms not averaged | about €3.9 (electricity tax) | **probably €8–12** | €40 | Period hours; capacity payments and small fees |
 | PT | €10.5 | €1.0 (IEC) | **about €11.5** | €40 | — |
-| IE | €34.2 (incl. system services about €27) | €1.4 (tax €1.0, PSO €0.4) | **about €36** | €50 | Capacity, imperfections and market operator charges |
-| IT | €4.7 (transmission only) | Not readable | **not set** | €45 | General system charges (the largest item) and excise |
+| IE | €34.2 (incl. system services about €27) | €45.5 (market charges 2026/27: capacity €24.53, imperfections €18.81, market operator €0.79; tax €1.0; PSO €0.4) | **about €80** | €50 | — (the first pass missed the market charges: about €36 then) |
+| IT | €4.7 (transmission only) | Excise about €0.1; general system charges not readable | **not set** | €45 | General system charges (the largest item) |
 | FI | €4.8 | €23.25 (class I from 1 July 2026) | **about €28** | €30 | Data centre support scheme (autumn 2026) |
 | SE | about €1–2 | €32.4 (SEK 360) | **about €34** | €30 | Network price list (Part A gap) |
-| NO | NOK 9.1 plus losses | NOK 6.0 (reduced) or NOK 71.3 (standard) | **about €1.5 or €7.7** | €25 | Whether data centres get the reduced rate; regional grids |
+| NO | NOK 9.1 plus losses | NOK 71.3 (standard rate: the data centre reduced rate has ended) | **about NOK 80 (about €7)** | €25 | When the data centre rate ended; regional grids |
 | DK | DKK 23.8 plus losses | DKK 4 (net of refund) | **about €4.7** | €40 | Rate from 2028 |
 | CH | CHF 19.7 | CHF 23.5 (grid surcharge) | **about CHF 43 (about €47)** | €50 | Municipal levies; surcharge refunds |
-| AT | €6.0 | €8.3 | **about €14 plus the renewables contribution** | €45 | The renewables contribution percentage |
+| AT | €6.0 | €8.3 (renewables contribution about €0.04) | **about €14** | €45 | — |
 | BE | €8.3 | about €0.4–0.5 (Flemish or Walloon surcharge; Brussels €4.3) | **about €9** before the federal excise | €50 | Federal excise |
 | PL | Not read (Part A gap) | PLN 59.5 (quality rate 33.2, capacity fee about 16.0 with the 0.17 factor, renewables and CHP 10.3) | **not set** | €40 | Network rates; excise |
 | CZ | CZK 366 (2025, with system services) | CZK 28.3 (tax; renewables support paid by the state in 2026 and 2027) | **about CZK 394** (rough €16; exchange rate not sourced) | €45 | Market operator fee; 2026 network; support after 2027 |
@@ -40,11 +40,11 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 
 **What it shows:**
 
-- **Today's adders are badly off in both directions.** Far too high for the Netherlands, Portugal, Spain, Denmark, Norway, Austria, Belgium and France (with the data centre tax rate), and probably Czechia (renewables support now paid by the state); far too low for Great Britain (about €106 against €55); roughly right for Germany, Finland, Sweden and Switzerland.
+- **Today's adders are badly off in both directions** (second pass: Ireland moves from "too high" to "too low", about €80 against €50). Far too high for the Netherlands, Portugal, Spain, Denmark, Norway, Austria, Belgium and France (with the data centre tax rate), and probably Czechia (renewables support now paid by the state); far too low for Great Britain (about €106 against €55); roughly right for Germany, Finland, Sweden and Switzerland.
 - **Data centre tax treatment differs sharply and changes:** France gives data centres a reduced excise (€10/MWh, with conditions); Finland removed theirs on 1 July 2026; Sweden removed theirs in 2023; Great Britain's data centres get 92 % off the Climate Change Levy through their sector agreement; Norway's treatment was not confirmed; Germany's 2026 tax cut is for manufacturing.
 - **These should be flags in the tool,** not only numbers: a reduced rate with conditions (France) or a rate under change (Finland) is exactly what an engineer needs to see on the option.
 
-**Proposal (for the owner to approve, source by source):** set the adder by country to "network + levies and taxes" where both are published and clear (DE, NL, PT, FI, SE, DK, CH, IE with its caveat), keep the indicative values elsewhere until the gaps are filled, and add a flag where a data centre tax rule applies (FR, FI, GB, NO). If the per-MW grid charge tick (OPEN-QUESTIONS 160–165) is used, its part must come out of the adder at the same time.
+**Proposal (for the owner to approve, source by source; owner 2026-11-07: not before all the research is done):** set the adder by country to "network + levies and taxes" where both are published and clear (DE, NL, PT, FI, SE, DK, CH, IE, AT, NO), keep the indicative values elsewhere until the gaps are filled, and add a flag where a data centre tax rule applies (FR, FI, GB, NO). If the per-MW grid charge tick (OPEN-QUESTIONS 160–165) is used, its part must come out of the adder at the same time.
 
 ## Germany (DE)
 
@@ -280,6 +280,17 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 
 - **Iceland:** the equalisation fee law (98/2004) could not be read: althingi.is refused the web reader. **No published value found.**
 - **Malta:** electricity is sold at regulated all-in tariffs; no separate levy or excise per MWh was found (the Excise Duty Act page showed no text; LN 38/2026 amends its schedules but was not read in full). **No published value found.**
+
+## Second pass: gaps filled (7 November 2026)
+
+- **Ireland:** the first pass missed the **wholesale market charges** that suppliers pass on. For 2026/27 (from 1 October 2026): supplier capacity charge **€24.53/MWh**, imperfections charge **€18.81/MWh**, market operator charge **€0.787/MWh** (SEMO charging statement 2026/27; capacity charge also in SEM Committee decision SEM-26-52, 18 Aug 2026). The adder becomes **about €80/MWh**, not €36. Sources: https://www.sem-o.com/sites/semo/files/2026-09/2026_2027%20SEMO%20Charging%20Statement.pdf; https://www.semcommittee.com/files/semcommittee/2026-08/SEM2652SEMTariffsandChargesforTY2026-27DecisionPaper.pdf (accessed 7 Nov 2026).
+- **France, capacity mechanism:** from 1 November 2026 consumers pay **€18,646.6 per MW used at winter peaks** (winter 2026–27). For a flat 100 MW campus that is about **€2.5/MWh** (worked out). It is charged per MW, so it belongs with the per-MW tick if that is built. Source: Selectra, 25 Sep 2026 https://selectra.info/energie/actualites/marche/cout-mecanisme-capacite-2026-2027-facture (accessed 7 Nov 2026).
+- **Norway, data centre rate:** the reduced electricity tax for data centres **has ended** ("denne særordningen er avviklet", Stortinget proposal of 3 Feb 2026, which asks for a study of a *higher* rate). Data centres taken to pay the standard rate, **7.13 øre/kWh** in 2026. When it ended was not stated. Sources: https://stortinget.no/no/Saker-og-publikasjoner/Publikasjoner/Representantforslag/2025-2026/dok8-202526-105s/; Skatteetaten https://www.skatteetaten.no/en/business-and-organisation/vat-and-duties/excise-duties/about-the-excise-duties/electrical-power-tax (accessed 7 Nov 2026).
+- **Austria, renewables contribution:** **7.32 %** of the network use and loss charges (BGBl. II 301/2025); at network levels 1–2 that is about **€0.04/MWh** (worked out). Source: https://ris.bka.gv.at/Dokumente/BgblAuth/BGBLA_2025_II_301/BGBLA_2025_II_301.rtf (accessed 7 Nov 2026).
+- **Italy:** excise for non-domestic use above 1.2 GWh a month is €0.0125/kWh on the first 200 MWh a month plus a fixed €4,820 a month: about **€0.1/MWh** (worked out; the supplier's table is garbled). The general system charges remain **not readable**: ARERA's tables (227/2026 Table A for ASOS from 1 July 2026; 588/2025 Table B for ARIM) did not extract. Sources: Enel https://www.enel.it/content/dam/enel-it/documenti-supporto/imposte-su-forniture/imposte-forniture.pdf; ARERA https://www.arera.it/en/area-operatori/prezzi-e-tariffe/oneri-generali-di-sistema-e-ulteriori-componenti (accessed 7 Nov 2026).
+- **Poland, excise:** **PLN 5/MWh** since 1 Jan 2019 (2019 article; 2026 not confirmed). Source: https://ksiegowosc.infor.pl/podatki/akcyza/stawki-akcyzy/2908100,Sposob-rozliczania-podatku-akcyzowego-od-energii-elektrycznej.html.
+- **Estonia:** a security of supply fee of about **€7.5/MWh** was estimated for 2026 before its tender (ERR, 19 Oct 2025); the renewables fee for 2026 was not found; a 75–85 % renewables fee discount for users above 1 GWh a year with energy management was planned for 2026–28 (data centre eligibility not stated). Sources: https://www.err.ee/1609832211/jargmisest-aastast-tekib-elektriarvele-kaks-uut-rida-ja-neljaeurone-lisakulu; https://www.err.ee/1609759590/riik-kehtestab-suurtarbijatest-ettevotetele-taastuvenergia-tasu-hinnalae.
+- **Still not found:** Hungary's KÁT charge for large users (only the press figure), Greece at high voltage (the regulator's retail report has no charges), Luxembourg's electricity tax.
 
 ## Not researched in this pass (next)
 
