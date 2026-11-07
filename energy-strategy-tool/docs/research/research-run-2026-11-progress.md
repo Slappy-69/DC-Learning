@@ -12,8 +12,8 @@ A new chat that picks this up: read this file, then carry on from the first part
 | D | Ireland's large energy user policy (OQ 198) | `ireland-large-energy-users-2026-11.md` | Done | 2026-11-07 |
 | B | Closing plant's grid connection, more countries (OQ 155) | `plant-connection-takeover-part2-2026-11.md` | Done | 2026-11-07 |
 | A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | Done (5 random entries checked) | 2026-11-07 |
-| E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | In progress | Started 2026-11-07 |
-| G | Open map data for main utilities (OQ 200) | `utility-maps-2026-11.md` | Not started | |
+| E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | Done | 2026-11-07 |
+| G | Open map data for main utilities (OQ 200) | `utility-maps-2026-11.md` | In progress | Started 2026-11-07 |
 | F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | Not started | |
 
 ## Part A: countries
@@ -88,6 +88,9 @@ Notes gathered before Part A started (use them, then check):
 - A3. GB's residual is fixed per site, not per MW: enter it as a yearly lump sum, or divide by the contracted MW?
 - A4. Where the network bill has both a contracted line and a peak line (NL, BE, PT), should the tick carry only the contracted line (the rest stays in the per-MWh adder), or both?
 - A5. Latvia charges on transformer capacity, usually above the contracted MW: accept the understatement, or add a transformer factor?
+- E1. Renewable plant source: powerplantmatching (recommended), OpenStreetMap, or both?
+- E2. Group German wind turbines into farms at build time (a judgement distance), or show them turbine by turbine?
+- E3. powerplantmatching's licence mix (about 2 % of renewable rows draw on OpenStreetMap): accept its CC BY 4.0 statement, or ask a licensing adviser?
 
 ## Sites not reachable
 
@@ -97,3 +100,5 @@ Notes gathered before Part A started (use them, then check):
 - Utility Week (article on government support for the GB fee): refused by the site.
 - sinnfein.ie (refused) and stackpath.ie (does not allow automated reading): same content found elsewhere.
 - B: lovdata.no (refused), anwalt.de (refused), gridreadiness.com (does not allow automated reading).
+- A: several regulators' pages refused or did not extract tables (ft.dk, vert.lt, cru.ie publications, EirGrid statement of charges, CRE and PSE tariff tables, Ofgem from the shell). Sources used instead are named in each country section.
+- E: overpass-api.de, taginfo.openstreetmap.org, download.geofabrik.de and openinframap.org refused from the shell; OpenInfraMap's statistics pages were read with the web reader. openstreetmap.org/copyright needed a permission that was not granted; the OSM Foundation FAQ was used.
