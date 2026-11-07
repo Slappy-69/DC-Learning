@@ -37,6 +37,11 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 | GR | €7.1 (secondary) | Renewables levy about €1 at MV (unclear) | **not set** | €40 | High voltage levies; public service charge; excise |
 | LU | €1.4 | Renewables mechanism paid by the state in 2026 (businesses not confirmed) | **not set** | €45 | Electricity tax; business treatment |
 | EE | about €0.9 (capacity part only) | €3.73 balancing capacity fee | **not set** | €35 | Energy charges; renewables fee; excise |
+| LV | about €0.9 (capacity part only) | €1.01 tax (renewables component zero since 2023) | **not set** | €35 | Energy charges |
+| CY | Not found | about €5.5 (renewables fund €5, PSO €0.5) | **not set** | €40 | Network charges (island grid, regulated supply) |
+| HR | about €3.4 (2025 peak charge) | about €13.9 (renewables and CHP fee) | **not set** | €40 | Energy charges; excise; 2024 amendment |
+| SI | about €0.3 (contracted, group to check) | about €4.8 (renewables contribution, charged per kW) | **not set** | €40 | Energy charges; excise; 2026 revision |
+| BG | Not worked out (per-MWh only) | public service charge not in force (2024); excise not found | **not set** | €35 | Most items |
 
 **What it shows:**
 

@@ -147,6 +147,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
+**After the run (7 Nov 2026, evening):** the owner asked to carry on until all the research is done (OPEN-QUESTIONS 201). Done since: levies for all 31 countries (second pass included), Part A second pass, defaults batch 3 second set. The session hit the 5-hour usage limit at about 21:00 UTC while opening the Danish Energy Agency's catalogue (gas engine chapter, https://ens.dk/media/3283/download). Next, in order: that chapter; Hungary's KÁT for large users; Italy's general system charges (ARERA tables 227/2026 A and 588/2025 B); Greece at high voltage; Luxembourg's electricity tax; country gas spreads; escalation sources; NOAA cleaning; then the summaries and a check of the new figures against their sources.
+
+
 Part F, the list "Not reached in this batch" in `defaults-batch-3-proposals-2026-11.md` (levies and taxes now done for 23 countries, see Part H), next the gas commodity price by country. Part A gaps to retry: CY, LT, MT, PL (section C table), SE (2026 price list), and the 2026 values for CZ, HR, IE (2026/27) and FR (August 2026 grid).
 
 ## Sites not reachable
