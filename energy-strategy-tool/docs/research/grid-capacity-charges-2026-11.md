@@ -30,3 +30,26 @@ The summary table is at the top; country sections follow, in the order researche
 - **For the tool:** the per-MW charge on contracted capacity is small (€4,599/MW a year). Most of the network cost is the peak-hour power charge, which follows the load, so it behaves more like an energy charge for a flat load. Both together with the energy part are what `grid.priceAdder` (Portugal: €40/MWh, indicative) should cover if the tick is off; if the tick is on, only the contracted-power line belongs in the new charge, or the peak-hour line is counted twice.
 - **Confidence:** published and clear.
 - **Sources:** ERSE, Directive 10/2025 (2026 tariffs), https://www.erse.pt/media/lamnmp31/diretiva-erse-10-2025-tep-se-2026.pdf (regulator, December 2025, accessed 7 Nov 2026); ERSE, questions and answers on the 2027 proposal, https://www.erse.pt/media/5uzj003s/perguntas_e_respostas_proposta_tse_2027.pdf (regulator, 15 Oct 2026, accessed 7 Nov 2026).
+
+## Spain (ES)
+
+- **Tariff:** two parts billed together. (1) The transmission and distribution access tolls ("peajes"), set by the regulator CNMC (resolution of 18 December 2025, BOE 22 December 2025), in force from 1 January 2026. (2) The system charges ("cargos", policy costs), set by the Ministry (Orden TED/1524/2025 of 23 December 2025). The transmission operator is Red Eléctrica. Groups: **6.3TD for 72.5–145 kV** (110 and 132 kV) and **6.4TD for 145 kV and above** (220 and 400 kV, and connections to the transmission grid).
+- **Capacity part (contracted power, € per kW per year, periods P1 to P6):**
+
+  | Group | Part | P1 | P2 | P3 | P4 | P5 | P6 | Sum |
+  |---|---|---|---|---|---|---|---|---|
+  | 6.4TD | Tolls | 6.606205 | 3.935625 | 0.987554 | 0.686109 | 0.020376 | 0.013971 | 12.249840 |
+  | 6.4TD | Charges | 1.299240 | 0.650162 | 0.472451 | 0.472451 | 0.472451 | 0.216540 | 3.583295 |
+  | 6.3TD | Tolls | 10.397365 | 6.258717 | 2.096386 | 1.366437 | 0.044362 | 0.038723 | 20.201990 |
+  | 6.3TD | Charges | 2.656027 | 1.329146 | 0.965679 | 0.965679 | 0.965679 | 0.442671 | 7.324881 |
+
+  Each period's price applies to the power contracted for that period; the rules require the contracted power not to fall from P1 to P6. A flat data centre contracts the same power in all six, so the yearly charge is the sum (worked out): **6.4TD: €12,250 per MW a year in tolls plus €3,583 in charges, €15,833 per MW a year in all. 6.3TD: €20,202 plus €7,325, €27,527 per MW a year.** Basis: contracted.
+- **Excess power:** drawing above the contracted power is billed per kW of excess (CNMC Annex II; for 6.4TD with hourly metering €2.736629 per kW in P1 down to €0.005787 in P6). So the contract must cover the peak.
+- **Energy part (€ per kWh, P1 to P6):** 6.4TD tolls 0.008427 / 0.003946 / 0.001458 / 0.000716 / 0.000038 / 0.000004; 6.4TD charges 0.002848 / 0.002109 / 0.001139 / 0.000570 / 0.000365 / 0.000228. 6.3TD tolls 0.011279 / 0.005324 / 0.001994 / 0.000995 / 0.000048 / 0.000014; 6.3TD charges 0.007496 / 0.005552 / 0.002998 / 0.001499 / 0.000961 / 0.000600.
+- **Fixed part:** none in the tolls or charges.
+- **Worked example, 100 MW contracted in all periods (worked out):** 6.4TD €1.58 m a year (€1.22 m tolls, €0.36 m charges); 6.3TD €2.75 m a year.
+- **Discounts:** consumers with the electro-intensive status (Royal Decree 1106/2020) can get reductions on the charges; whether a data centre qualifies was not checked. Other items on a Spanish bill (capacity payments, interruptibility, the operators' fees, the electricity tax of about 5 %) are outside the tolls and charges and were not researched here.
+- **2027:** no 2027 proposal was found in a quick search.
+- **For the tool:** the per-MW line is the power term (tolls and charges). The energy terms are what `grid.priceAdder` (Spain: €40/MWh, indicative) partly covers.
+- **Confidence:** published and clear (the tolls checked against the BOE text, the charges against the Ministry's page; the sums are worked out).
+- **Sources:** CNMC, resolution of 18 December 2025 (2026 access tolls), BOE-A-2025-26348, https://www.boe.es/diario_boe/txt.php?id=BOE-A-2025-26348 (regulator, 22 Dec 2025, accessed 7 Nov 2026); Ministry for the Ecological Transition, "Peajes de acceso … y cargos", with Orden TED/1524/2025 (BOE-A-2025-26705), https://www.miteco.gob.es/en/energia/energia-electrica/electricidad/peajes.html (government, December 2025, accessed 7 Nov 2026); EDP Energía, "Costes regulados del sector eléctrico 2026" (supplier summary used only to cross-check), https://www.edpenergia.es/media/fjwn01qi/peajes-el%C3%A9ctricos-2026.pdf.
