@@ -333,3 +333,21 @@ The summary table is at the top; country sections follow, in the order researche
 - **Worked example, 100 MW reserved, 745 GWh (worked out):** capacity €2.22 m; transmission and losses €2.69 m; system services €0.8–8.2 m depending on the group.
 - **Confidence:** published and clear.
 - **Sources:** ÚRSO, decision 0010/2025/E (SEPS), https://data.urso.gov.sk/CISRES/Agenda.nsf/0/4A472CEB7C135CFCC1258BBF002DB1D4/$FILE/0010_2025_E.pdf (regulator, 25 Oct 2024, accessed 7 Nov 2026); ÚRSO, decision 0067/2026/E (system services 2026), https://data.urso.gov.sk/CISRES/Agenda.nsf/0/971AC1B41B518692C1258D5400329F43/$FILE/0067_2026_E.pdf (regulator, 3 Dec 2025).
+
+## Slovenia (SI)
+
+- **Tariff:** the Energy Agency's act on tariff items for network charges (consolidated text in force 1 March to 31 December 2026), for the transmission network of ELES. Since 2024 Slovenia charges power by five time blocks: block 1 is the most expensive and applies only in the high season (November to February); block 5 the cheapest, only in the low season.
+- **Capacity part (user group 0, taken as customers on the transmission network; the text read numbers the groups without naming them):** €0.28011 / 0.07462 / 0.02114 / 0.00075 / 0.00015 per kW per month for blocks 1 to 5, charged on the power agreed for each block (Slovenia's method; not printed in the text read). With the same power in every block: **about €2.28 per kW a year, €2,280 per MW** (worked out: four high-season months of blocks 1–4 and eight low-season months of blocks 2–5). Basis: contracted.
+- **Energy part:** €0.00774 / 0.00671 / 0.00551 / 0.00602 / 0.00440 per kWh by block, about €5–6/MWh.
+- **Worked example, 100 MW in all blocks, 745 GWh (worked out):** power €0.23 m; energy about €4.3 m.
+- **Confidence:** published, but the group naming and the power basis need checking against the act itself (read through a consolidated copy).
+- **Sources:** "Akt o določitvi tarifnih postavk za omrežnine elektrooperaterjev", consolidated 1 March 2026, https://tax-fin-lex.si/dokument/podrobnosti/b12a35d0-81c2-4df5-946b-f6bb5c074f52 (regulator's act via a legal database, accessed 7 Nov 2026).
+
+## Sweden (SE)
+
+- **Tariff:** Svenska kraftnät's transmission grid tariff, overseen by the regulator Ei. The latest price list found was for 2024; the 2026 list was not found. A tariff review is under way (Svenska kraftnät's papers on fixed and subscription charges, 2025).
+- **Capacity part:** a **power charge ("effektavgift") on the annual subscribed power for withdrawal**, varying by connection point with latitude. Basis: contracted. The withdrawal values in the 2024 list did not come through as SEK/kW (they extracted as percentages: 49–50 at Stockholm points, 56–57 in Skåne), so **no published value found** in readable form. Temporary subscriptions: 1/200 of the yearly charge per week and kW. Overrun: SEK 2,800 per MW per hour from the third hour.
+- **Energy part:** losses: (spot price + SEK 13/MWh) × the point's loss factor (negative, a credit, at southern withdrawal points).
+- **Scale:** ENTSO-E's 2025 synthesis puts Sweden's transmission charge for its standard case at about €1.16/MWh, the lowest in Europe.
+- **For the tool:** blank and flagged; likely small.
+- **Sources:** Svenska kraftnät, "Prislista 2024 för transmissionsnätet", https://www.svk.se/siteassets/aktorsportalen/anslut-till-transmissionsnatet/transmissionsnatstariff/aktuella-prislistor/prislista-2024-for-transmissionsnatet.pdf (operator, accessed 7 Nov 2026); ENTSO-E, "Overview of Transmission Tariffs in Europe: Synthesis 2025" (EU body).

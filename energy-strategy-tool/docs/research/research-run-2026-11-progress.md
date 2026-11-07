@@ -50,6 +50,8 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | PL | Done 2026-11-07 (structure only; rate table not readable) |
 | RO | Done 2026-11-07 (no capacity charge) |
 | SK | Done 2026-11-07 |
+| SI | Done 2026-11-07 (group naming to check) |
+| SE | Done 2026-11-07 (no readable value) |
 
 Notes gathered before Part A started (use them, then check):
 
