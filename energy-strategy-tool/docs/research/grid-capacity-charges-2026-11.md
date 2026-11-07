@@ -315,3 +315,21 @@ The summary table is at the top; country sections follow, in the order researche
 - **Energy part:** variable network component, quality rate, renewables and CHP fees per MWh (rates not read); industrial customers can get 15 % or 25 % factors on the renewables and CHP fees.
 - **For the tool:** blank and flagged until the rate is read from section C of the tariff.
 - **Sources:** PSE, "Taryfa dla energii elektrycznej na rok 2026" (consolidated, 16 Jan 2026), https://www.pse.pl/documents/20182/7005343691/20260116_Tekst_Taryfy_na_2026_tekst_jednolity.pdf (operator, accessed 7 Nov 2026); ENTSO-E, "Overview of Transmission Tariffs in Europe: Synthesis 2025" (EU body).
+
+## Romania (RO)
+
+- **Tariff:** Transelectrica's transmission tariff for extraction (TL) and the system services tariff, set by the regulator ANRE (orders 74/2025 and 73/2025), from 1 January 2026; read from a supplier's summary (Axpo Romania).
+- **Capacity part:** **none.** All transmission, system service and distribution charges are per MWh. Basis: none.
+- **Energy part:** TL 36.45 RON/MWh; system services 14.70 RON/MWh (changed from 1 October 2026: not read); 110 kV distribution 23.83 to 40.46 RON/MWh by distribution operator.
+- **For the tool:** €0 per MW; network charges stay per MWh.
+- **Confidence:** published and clear (from a supplier summary of the ANRE orders).
+- **Sources:** Axpo Romania, "Tarife reglementate EE 01.01.2026", https://www.axpo.com/content/dam/axpo19/countries/romania/26012025_Tar%20regl%20EE_01.01.2026.pdf (supplier, accessed 7 Nov 2026).
+
+## Slovakia (SK)
+
+- **Tariff:** SEPS's tariffs for users connected directly to the transmission system, set by the regulator ÚRSO (decision 0010/2025/E of 25 October 2024) for 1 January 2025 to 31 December 2027; system services by decision 0067/2026/E (3 December 2025) for 2026.
+- **Capacity part:** **reserved capacity tariff €22,217.50 per MW a year** on the reserved capacity. Basis: contracted. (Before 2025: €26,489.57.)
+- **Energy part:** transmission €1.9358/MWh; losses €1.6745/MWh; system services 2026 €1.0979 to €10.9796/MWh by group (how a customer is grouped was not read).
+- **Worked example, 100 MW reserved, 745 GWh (worked out):** capacity €2.22 m; transmission and losses €2.69 m; system services €0.8–8.2 m depending on the group.
+- **Confidence:** published and clear.
+- **Sources:** ÚRSO, decision 0010/2025/E (SEPS), https://data.urso.gov.sk/CISRES/Agenda.nsf/0/4A472CEB7C135CFCC1258BBF002DB1D4/$FILE/0010_2025_E.pdf (regulator, 25 Oct 2024, accessed 7 Nov 2026); ÚRSO, decision 0067/2026/E (system services 2026), https://data.urso.gov.sk/CISRES/Agenda.nsf/0/971AC1B41B518692C1258D5400329F43/$FILE/0067_2026_E.pdf (regulator, 3 Dec 2025).
