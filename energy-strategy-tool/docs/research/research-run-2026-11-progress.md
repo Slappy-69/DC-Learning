@@ -22,7 +22,7 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 
 | Country | State |
 |---|---|
-| (none finished yet) | |
+| PT | Done 2026-11-07 |
 
 Notes gathered before Part A started (use them, then check):
 
