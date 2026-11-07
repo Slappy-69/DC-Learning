@@ -89,9 +89,13 @@ Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT,
 | GR | Done 2026-11-07 (partial: MV renewables levy only) |
 | LU | Done 2026-11-07 (partial: tax not found) |
 | EE | Done 2026-11-07 (partial: one fee only) |
+| LV | Done 2026-11-07 (OIK zero, tax; energy charges missing) |
+| CY | Done 2026-11-07 (partial: two levies; no network) |
+| MT | Searched 2026-11-07: no value (regulated tariff) |
+| IS | Searched 2026-11-07: law not reachable |
 | IT | Partly done 2026-11-07 (rate tables not readable) |
 
-Part H: 23 countries researched (GR, LU and EE only in part). Searched without a usable value: BG, HR, LT, SI; not yet searched: CY, IS, LV, MT; they and the remaining gaps are listed at the end of `levies-and-taxes-2026-11.md`.
+Part H: 23 countries researched (GR, LU and EE only in part). Searched without a usable value: BG, HR, LT, SI, IS, MT; CY and LV added in part; they and the remaining gaps are listed at the end of `levies-and-taxes-2026-11.md`.
 
 ## Assumptions taken
 

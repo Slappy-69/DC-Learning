@@ -8,7 +8,7 @@ Confidence labels as in the other notes. The machine-readable list is `levies-an
 
 ## Summary
 
-Twenty-three countries were researched (fourteen first, then nine more on the same day). Four were searched without a usable result (BG, HR, LT, SI) and four not yet searched (CY, IS, LV, MT); they are listed at the end.
+Twenty-three countries were researched (fourteen first, then nine more on the same day). Cyprus and Latvia were then added in part. No usable value was found for BG, HR, LT, SI, IS and MT; they are listed at the end.
 
 Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; network from Part A, levies and taxes from this note; VAT left out. "Proposed adder" = network + levies and taxes, worked out; today's adder is the tool's indicative default.
 
@@ -237,9 +237,28 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 - **Adder:** Part A's capacity charge is about €0.9/MWh (package I, 330 kV, worked out); energy charges and the other levies are missing: **not set**.
 - **Source:** ERR, "Uus tasu elektriarvel saab olema 3,73 eurot megavatt-tunni kohta" (31 Oct 2025) https://www.err.ee/1609844289/uus-tasu-elektriarvel-saab-olema-3-73-eurot-megavatt-tunni-kohta (public broadcaster, accessed 7 Nov 2026).
 
+## Latvia (LV)
+
+- **Mandatory procurement component (OIK):** **zero** since 1 January 2023; the support costs are no longer on bills (government decision of 20 December 2022). The last supported plants leave the scheme between 2026 and 2033. A 2025 article confirms the zero rate but does not name 2026.
+- **Electricity tax:** **€1.01/MWh** (Ministry of Finance); households and transport are exempt, businesses pay.
+- **Adder:** Part A's network charge (€6,759 per MW of transformer capacity at 330 kV, about €0.9/MWh worked out at 100 MW) plus energy charges not read, plus €1.01: **not set** (energy charges missing).
+- **Sources:** LV portāls, 21 Jul 2025 https://lvportals.lv/norises/378630-oik-atbalsta-sistema-izmaksati-29-miljardi-eiro-galalietotaju-izredzes-atgut-maksajumus-tiek-vertetas-dazadi-2025; LSM, 20 Dec 2022 https://www.lsm.lv/raksts/zinas/ekonomika/valdiba-atbalsta-oik-segsanu-no-valsts-budzeta.a487961/; Ministry of Finance, "Electricity tax" https://www.fm.gov.lv/en/electricity-tax-1 (all accessed 7 Nov 2026).
+
+## Cyprus (CY)
+
+- **Renewables and energy saving fund fee:** **0.5 cent/kWh (€5/MWh)**, approved by Parliament for 2025 and set yearly; a property website lists it on 2026 bills for homes and businesses alike.
+- **Public service obligation charge:** **€0.51/MWh** from 1 January 2025 (CERA decision 407/2024); whether large business users pay it is not stated.
+- **Adder:** Part A found no published network charge: **not set**. Cyprus is an island grid with regulated supply; the tool's €40 cannot be checked yet.
+- **Sources:** Fast Forward, 10 Oct 2025 https://fastforward.com.cy/economy/cyprus-50-cent-kwh-electricity-consumption-fee; EAC, "Public Service Obligations" https://eac.com.cy/EN/RegulatedActivities/Supply/tariffs/Pages/Public-Service-Obligations.aspx; dom.com.cy, "Electricity prices in Cyprus 2026" https://dom.com.cy/en/live/blogs/electricity-prices-in-cyprus-2026/ (all accessed 7 Nov 2026).
+
+## Iceland (IS) and Malta (MT)
+
+- **Iceland:** the equalisation fee law (98/2004) could not be read: althingi.is refused the web reader. **No published value found.**
+- **Malta:** electricity is sold at regulated all-in tariffs; no separate levy or excise per MWh was found (the Excise Duty Act page showed no text; LN 38/2026 amends its schedules but was not read in full). **No published value found.**
+
 ## Not researched in this pass (next)
 
-**Searched, no usable value found:** Bulgaria, Croatia, Lithuania and Slovenia (the searches found only network tariffs, household articles or out-of-date figures). **Not yet searched:** Cyprus, Iceland, Latvia and Malta. Next, the gaps named in the table, above all Hungary's KÁT charge for large users, Poland's network rates and excise, Greece's high voltage levies, Luxembourg's electricity tax and Estonia's renewables fee; and the earlier gaps (Italy's general system charges, Ireland's capacity charges, France's capacity mechanism, Austria's renewables contribution, Norway's data centre rate). Eurostat's breakdown of taxes and levies for the largest industrial band would be a quick cross-check for the EU countries, but its data service could not be reached from this session.
+**Searched, no usable value found:** Bulgaria, Croatia, Lithuania and Slovenia (the searches found only network tariffs, household articles or out-of-date figures). Cyprus and Latvia were added later the same day (part); Iceland (law not reachable) and Malta (regulated all-in tariff) gave no value. Next, the gaps named in the table, above all Hungary's KÁT charge for large users, Poland's network rates and excise, Greece's high voltage levies, Luxembourg's electricity tax and Estonia's renewables fee; and the earlier gaps (Italy's general system charges, Ireland's capacity charges, France's capacity mechanism, Austria's renewables contribution, Norway's data centre rate). Eurostat's breakdown of taxes and levies for the largest industrial band would be a quick cross-check for the EU countries, but its data service could not be reached from this session.
 
 ## Questions for the owner (copied to the progress file)
 
