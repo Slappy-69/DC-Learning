@@ -190,3 +190,14 @@ The summary table is at the top; country sections follow, in the order researche
 - **For the tool:** Czechia has one of the largest capacity charges in this survey (about 1.26 million CZK, roughly €50,000, per MW a year).
 - **Confidence:** published (2025); 2026 values not read.
 - **Sources:** ERÚ, price decision 11/2024 (prices for 2025), copy at https://euroenergie.cz/CenovaRozhodnutiERU/2025/ERU-CR_2024_11.pdf (regulator's decision, accessed 7 Nov 2026); ERÚ, Energetický regulační věstník 9/2025 (methodology 2026–2030), https://portal.gov.cz/vestniky/eeuaau7/1583280064.pdf; energie.cz, "Regulované ceny pro rok 2026" (press, 1 Dec 2025).
+
+## Denmark (DK)
+
+- **Tariff:** Energinet's tariff catalogue for 2026, under methods approved by the regulator Forsyningstilsynet. In force. From 2026, consumers connected directly to the transmission grid pay the grid tariff as a capacity subscription instead of per kWh.
+- **Capacity part:** **"effektabonnement" DKK 59,187 per MW a year** for transmission-connected consumers, set by how much capacity the customer needs (read as subscribed capacity; the catalogue does not say measured or subscribed). Basis: contracted. With a limited grid access agreement (curtailable access): **DKK 19,729 per MW a year**.
+- **Energy part:** grid loss tariff 1.42 % of the spot price; system tariff 7.2 øre/kWh (DKK 72/MWh), **cut by 90 % to 0.72 øre/kWh for consumption above 100 GWh a year**. (Distribution-connected users pay a grid tariff of 4.3 øre/kWh instead of the subscription.)
+- **Fixed part:** system subscription DKK 187 a year per metering point.
+- **Worked example, 100 MW subscribed, 745 GWh (worked out):** subscription DKK 5.92 m; system tariff 100 GWh × DKK 72 + 645 GWh × DKK 7.2 = DKK 11.8 m; losses about 1.4 % of the energy bill. With a limited-access agreement the subscription falls to DKK 1.97 m.
+- **For the tool:** a clean per-MW charge on subscribed capacity (about €7,900 per MW a year), with a cheaper curtailable option that matches the tool's flexibility settings.
+- **Confidence:** published and clear.
+- **Sources:** Energinet, "Energinets tarifkatalog 2026", https://www.energinet.dk/media/ikylsqle/energinets-tarifkatalog-2026.pdf (operator, accessed 7 Nov 2026); Energinet, "Fremskrivning af Energinets eltariffer 2025-2027", https://www.energinet.dk/media/alpn1j0h/fremskrivning-af-energinets-eltariffer-2025-2027-1.pdf (operator, Sep 2024).

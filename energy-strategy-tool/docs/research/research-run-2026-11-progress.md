@@ -35,6 +35,7 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | HR | Done 2026-11-07 (2025 items; 2026 not read) |
 | CY | Done 2026-11-07 (no published value found) |
 | CZ | Done 2026-11-07 (2025 prices; 2026 not read) |
+| DK | Done 2026-11-07 |
 
 Notes gathered before Part A started (use them, then check):
 
