@@ -61,6 +61,14 @@ Notes gathered before Part A started (use them, then check):
 - FI: Fingrid 2026 (Appendix 2, 1 Jan 2026): consumption fee €10.47/MWh winter weekday 07–21, €2.97/MWh other times; intake fee €1.07/MWh; no capacity fee for consumption (only plants €189.5/MW/month and storage €94.75/MW/month). 2027 prices published as attachments on Fingrid's fee page.
 - IE: MIC bond = network capacity charge × 18 months × MIC (EirGrid, connection charges and security); the capacity charge rate itself still to find (TUoS statement).
 
+## Part H: levies and taxes per MWh (owner's choice, 7 November 2026, after the run)
+
+Output: `levies-and-taxes-2026-11.md` and `.csv`. Order: DE, NL, GB, FR, ES, PT, IE, IT, then the others alphabetically. Eurostat's component data could not be reached (shell refused; the DBnomics mirror shows only 2022 for band IG).
+
+| Country | State |
+|---|---|
+| DE | Done 2026-11-07 |
+
 ## Assumptions taken
 
 (Where the prompt did not settle something, the more cautious reading was taken and recorded here.)
