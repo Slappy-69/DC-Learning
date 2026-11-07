@@ -14,7 +14,7 @@ A new chat that picks this up: read this file, then carry on from the first part
 | A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | Done (5 random entries checked) | 2026-11-07 |
 | E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | Done | 2026-11-07 |
 | G | Open map data for main utilities (OQ 200) | `utility-maps-2026-11.md` | Done | 2026-11-07 |
-| F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | In progress | Started 2026-11-07 |
+| F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | Done for this run (stopped after 26 proposals; next records listed in the file) | 2026-11-07 |
 
 ## Part A: countries
 
@@ -95,6 +95,13 @@ Notes gathered before Part A started (use them, then check):
 - G2. Each utility as a default distance that drives a cost (electricity, gas) or only as a flag (water, telecoms, heat)?
 - G3. ODbL data (OpenStreetMap, PyPSA-Eur network) bundled as separate files in the public repository and the Windows program: acceptable?
 - G4. Build a release script for OpenStreetMap extracts (needs a machine that can reach Geofabrik)?
+- F1. Approve ACER 2026 as the source for cable route costs, split by voltage band?
+- F2. Keep the network adders unchanged until levies are researched (proposed), or lower them now?
+- F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km?
+
+## Where the next run starts
+
+Part F, the list "Not reached in this batch" in `defaults-batch-3-proposals-2026-11.md`, starting with levies and taxes per MWh by country. Part A gaps to retry: CY, LT, MT, PL (section C table), SE (2026 price list), and the 2026 values for CZ, HR, IE (2026/27) and FR (August 2026 grid).
 
 ## Sites not reachable
 
