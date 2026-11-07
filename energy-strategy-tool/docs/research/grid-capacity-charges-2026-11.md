@@ -290,3 +290,19 @@ The summary table is at the top; country sections follow, in the order researche
 - **Worked example, 100 MW at 220 kV, 745 GWh (worked out):** power €0.65 m; energy €0.37 m.
 - **Confidence:** published, but the basis of the power charge was not stated.
 - **Sources:** Creos Luxembourg, "Tarifs électricité 2026", https://www.creos-net.lu/fileadmin/dokumente/downloads/fr_tarif_electricite_2026.pdf (operator, 26 Nov 2025, accessed 7 Nov 2026).
+
+## Malta (MT)
+
+- **No published value found.** Malta has no separate transmission tariff: Enemalta runs the network and sells bundled supply tariffs to non-residential customers. A search of Enemalta's non-residential pages and general searches found no separately published network or demand charge per kVA or kW for a high-voltage customer. Malta is not in the tables of ENTSO-E's 2025 synthesis.
+- **For the tool:** blank and flagged; the bundled supply price would have to come from Enemalta.
+- **Sources:** Enemalta, "Non-residential property services", https://enemalta.com.mt/?p=13811 (operator, accessed 7 Nov 2026).
+
+## Norway (NO)
+
+- **Tariff:** Statnett's transmission tariffs for 2026 (tariff booklet 2026), under the regulator RME. In force. Statnett's 2027 booklet is published (not read). Many Norwegian data centres connect to regional grids, which publish their own tariffs (not researched).
+- **Capacity part:** **fixed component for consumption NOK 135 per kW a year (NOK 135,000 per MW)**, charged on the **average withdrawal in the national peak-load hour over the previous five years**, times the connection point's k-factor (which lowers it where generation shares the connection point; floor 0.6). Basis: peak (a historical average in one hour a year, so a new campus has no history at first: how a new connection is billed was not stated). **Large consumers** (one enterprise at one site with withdrawal above 15 MW and more than 100 GWh a year) **get 50 % off: about NOK 67.50 per kW a year**. Billed monthly.
+- **Energy part:** the hourly area price × the marginal loss rate (day and night/weekend rates, capped at ±15 %), published weekly.
+- **Reactive power:** NOK 40 per kVAr above 10 MVAr.
+- **Worked example, 100 MW campus qualifying as a large consumer (worked out):** 100,000 kW × NOK 67.50 = NOK 6.75 m a year (about €0.58 m).
+- **Confidence:** published and clear.
+- **Sources:** Statnett, "Tariffer for transmisjonsnettet 2026", https://www.statnett.no/globalassets/for-aktorer-i-kraftsystemet/tariff/tariffhefte-2026.pdf (operator, accessed 7 Nov 2026).

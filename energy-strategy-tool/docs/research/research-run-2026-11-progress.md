@@ -45,6 +45,8 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | LV | Done 2026-11-07 |
 | LT | Done 2026-11-07 (no 2026 value found) |
 | LU | Done 2026-11-07 |
+| MT | Done 2026-11-07 (no published value found) |
+| NO | Done 2026-11-07 |
 
 Notes gathered before Part A started (use them, then check):
 
