@@ -128,10 +128,10 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value fo
 - G3. ODbL data (OpenStreetMap, PyPSA-Eur network) bundled as separate files in the public repository and the Windows program: acceptable?
 - G4. Build a release script for OpenStreetMap extracts (needs a machine that can reach Geofabrik)?
 - F1. Approve ACER 2026 as the source for cable route costs, split by voltage band?
-- F2. Keep the network adders unchanged until levies are researched (proposed), or lower them now?
+- F2. Keep the network adders unchanged until levies are researched (proposed), or lower them now? **Answered 2026-11-07 by the owner (with H1): wait until all the research is done (OPEN-QUESTIONS 201).**
 - F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km?
 
-- H1. Set the adder to network + levies and taxes for DE, NL, PT, FI, SE, DK, CH, IE now, or after the rest are researched?
+- H1. Set the adder to network + levies and taxes for DE, NL, PT, FI, SE, DK, CH, IE now, or after the rest are researched? **Answered 2026-11-07 by the owner: "Wait for all the research is done before implementing" (OPEN-QUESTIONS 201).**
 - H2. Show data centre tax rules (FR reduced rate, FI change on 1 Jul 2026, GB CCA discount, NO unclear) as flags on the options?
 - H3. GB: use levies from a secondary guide (about £78/MWh), or wait until each is read from its issuing body?
 

@@ -243,6 +243,6 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 
 ## Questions for the owner (copied to the progress file)
 
-1. Set the adder to "network + levies and taxes" for the eight countries where both are clear (DE, NL, PT, FI, SE, DK, CH, IE), now or after the rest are researched?
+1. Set the adder to "network + levies and taxes" for the eight countries where both are clear (DE, NL, PT, FI, SE, DK, CH, IE), now or after the rest are researched? **Answered 2026-11-07 by the owner: wait until all the research is done (OPEN-QUESTIONS 201).**
 2. Should data centre tax rules (France's reduced rate, Finland's change, Great Britain's CCA discount, Norway's unclear rate) appear as flags on the options?
 3. Great Britain: use the levies from the secondary guide (about £78/MWh), or wait until each is read from its issuing body?
