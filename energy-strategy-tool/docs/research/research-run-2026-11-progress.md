@@ -27,6 +27,7 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | NL | Done 2026-11-07 |
 | GB | Done 2026-11-07 |
 | IE | Done 2026-11-07 (2025/26 rate; 2026/27 table not found) |
+| DE | Done 2026-11-07 |
 
 Notes gathered before Part A started (use them, then check):
 
@@ -55,6 +56,9 @@ Notes gathered before Part A started (use them, then check):
 - D4. Bundle the latest T-4 de-rating table (2030/31, August 2026) and update it at each release?
 - B1. Norway's takeover flag: "likely unavailable" (reserved capacity cannot change purpose) rather than "not confirmed"?
 - B2. Should the general takeover flag say, for every country, that a plant's export connection is not an import connection?
+- A1. Countries that charge on measured peak (DE today, PT peak hours, NL monthly maximum, GB Triads): charge the per-MW line on the option's contracted grid MW anyway (as decided in OQ 162), or on its peak import?
+- A2. Discounts for large flat loads (DE bandload, ES/PT electro-intensive): leave out, offer as a tick, or apply by default?
+- A3. GB's residual is fixed per site, not per MW: enter it as a yearly lump sum, or divide by the contracted MW?
 
 ## Sites not reachable
 
