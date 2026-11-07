@@ -29,6 +29,7 @@ Order: PT, ES, NL, GB, IE, DE, FR, then AT BE BG HR CY CZ DK EE FI GR HU IS IT L
 | IE | Done 2026-11-07 (2025/26 rate; 2026/27 table not found) |
 | DE | Done 2026-11-07 |
 | FR | Done 2026-11-07 (August 2025 grid; the 1 August 2026 grid not read) |
+| AT | Done 2026-11-07 |
 
 Notes gathered before Part A started (use them, then check):
 
