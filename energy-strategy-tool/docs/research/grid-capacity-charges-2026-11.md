@@ -162,3 +162,13 @@ The summary table is at the top; country sections follow, in the order researche
 - **For the tool:** the tick should stay blank for Bulgaria; network charges belong in `grid.priceAdder` (€35/MWh, indicative).
 - **Confidence:** No published value found (capacity); published, but final value not read (energy).
 - **Sources:** EWRC, decision Ц-13 of 1 July 2026, https://www.dker.bg/uploads/reshenia/2026/res-c-13-2026.pdf (regulator, accessed 7 Nov 2026); EWRC, decision Ц-12 of 1 July 2026, https://www.dker.bg/uploads/reshenia/2026/res-c-12-2026.pdf; EWRC press information, 2 June 2026, https://www.dker.bg/uploads/2026/Pres_prices_072026.pdf.
+
+## Croatia (HR)
+
+- **Tariff:** transmission tariff items of HOPS, set by the regulator HERA. The 2025 items (HERA decision, NN 145/2024) were read from HOPS's page; the 2026 items (NN 150/2025, in force 1 January 2026) were not found, but HERA's notice of 12 December 2025 says it accepted a 10 % increase for HOPS.
+- **Capacity part (2025, high voltage):** **billing peak active power €2.081 per kW**, taken as a monthly charge on the month's measured peak (the page does not print the period; Croatian peak-power prices are monthly), about **€24.97 per kW a year, €24,970 per MW a year**. Basis: peak.
+- **Energy part (2025):** €0.005946/kWh (higher daily tariff) and €0.002972/kWh (lower), about €3–6/MWh (the page's columns were poorly aligned). Excess reactive energy €0.023784/kvarh.
+- **Fixed part:** €10.108 a month per metering point.
+- **Worked example, 100 MW peak each month, 2025 items (worked out):** capacity €2.50 m a year; energy about €3.3 m.
+- **Confidence:** published, but the period of the peak charge and the 2026 values were not confirmed.
+- **Sources:** HOPS, "Usluge prijenosa", https://www.hops.hr/usluge-prijenosa (operator, accessed 7 Nov 2026), citing HERA's decision NN 145/2024, https://narodne-novine.nn.hr/clanci/sluzbeni/2024_12_145_2403.html; HERA, notice of 12 December 2025, https://www.hera.hr/hr/docs/2025/Obavijest_2025-12-12.pdf (regulator).
