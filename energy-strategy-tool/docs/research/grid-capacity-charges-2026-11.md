@@ -140,3 +140,16 @@ The summary table is at the top; country sections follow, in the order researche
 - **Change ahead:** a new principles ordinance (SNE-G-V, BGBl. II 2026/299) under the new electricity law is to change tariff structures from 2027 (not researched).
 - **Confidence:** published, but the period of the capacity price and its basis were not stated in the text read.
 - **Sources:** BGBl. II Nr. 305/2025 (SNE-V 2018, amendment 2026), copy published by TINETZ, https://www.tinetz.at/uploads/tx_bh/765/tinetz_sne-v_2026.pdf?mod=1766133961 (regulator's ordinance, 18 Dec 2025, accessed 7 Nov 2026); ENTSO-E, "Overview of Transmission Tariffs in Europe: Synthesis 2025", https://eepublicdownloads.blob.core.windows.net/public-cdn-container/clean-documents/mc-documents/transmission-tariffs/l_260405_entso-e_TTO_2025_03.pdf (EU body, 2026, accessed 7 Nov 2026).
+
+## Belgium (BE)
+
+- **Tariff:** Elia's grid access tariffs for 2024–2027, approved by the regulator CREG; 2026 values. In force. One level covers the 380, 220, 150 and 110 kV network; 70/36/30 kV is the next level down.
+- **Capacity part (380/220/150/110 kV, 2026):**
+  - **Power made available for offtake ("puissance mise à disposition"): €8.7676 per kVA a year** on the contracted offtake capacity, **€8,768 per MVA a year**. Basis: contracted. Drawing above it is billed for that month and the next 11 months at this tariff plus 50 %.
+  - **Monthly peak: €0.4525 per kW per month** (the month's highest quarter-hour, outside April–September weekdays 10:00–19:00) and **annual peak: €11.0243 per kW a year** (highest quarter-hour in winter weekday evenings over 12 months). Basis: peak. Together about €16.45 per kW a year at a constant peak (worked out).
+  - At 70/36/30 kV: €14.9049/kVA a year, €0.6765/kW a month and €16.3701/kW a year.
+- **Energy part:** system management €2.5209, market integration €0.6851, power and black-start reserves €1.7108 per MWh: €4.92/MWh. Federal and regional levies are extra (not researched; ENTSO-E notes €0.81/MWh for regional taxes on towers and cables).
+- **Fixed part:** a yearly fee for managing the connection bay (in Elia's separate connection tariffs; not researched).
+- **Worked example, 100 MVA contracted, 100 MW peak, 745 GWh (worked out):** contracted €0.88 m; peaks €0.54 m + €1.10 m; energy €3.66 m. About €6.2 m a year; the per-MW contracted line alone is €8,768/MVA.
+- **Confidence:** published and clear.
+- **Sources:** Elia Transmission Belgium, "Tarifs pour accès au réseau, période 2024-2027", https://www.elia.be/-/media/project/elia/elia-site/customers/tarrifs-and-invoicing/20231206_tarifs-pour-acces-au-reseau-2024-2027.pdf (operator, 6 Dec 2023, accessed 7 Nov 2026).
