@@ -237,7 +237,7 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Effect on T1:** all 17,344 combinations are screened (about 50 s on one thread instead of 17 s); the leader becomes the best of every combination (gas engines kept as prime with diesel backup in the trial).
 - **Acceptance tests:** Node test 54 (`app/tests/screen-all-tests.mjs`); the browser checks run T1 with the default.
 - **Memory** (owner 2026-11-06, "Keep detail for the top 2,000", OPEN-QUESTIONS 154): with T1 screened in full the page held about 1 GB and a re-run crashed it. The best 2,000 options keep their full detail; the others keep the figures the ranking and the views read, and are rebuilt when shown (`engine/detail.js`, Node test 55). T1: 1,033 MB to 287 MB.
-- **Progress:** built 2026-11-06 on `feature/screen-all`. Not merged.
+- **Progress:** built 2026-11-06 on `feature/screen-all`; Node 97/97, browser 43/43, GitHub's checks passed; merged into `main` the same day with the owner's yes ("Merge").
 
 ### Next, chosen by the owner (2026-11-02)
 
