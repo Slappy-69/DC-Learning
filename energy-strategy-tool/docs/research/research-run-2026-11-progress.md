@@ -145,7 +145,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km? **Answered 2026-11-07 by the owner: "Switch" to ACER's €2.08 m/km (OPEN-QUESTIONS 227).**
 - F4. Gas price: accept the Dutch TTF hub price (press-reported, dated) as the "latest dated price" beside the 2025 average (€42.9)? TTF closed at €85.6 on 6 Nov 2026. **Replaced after the owner asked for better sources (section 6b of the defaults note): the World Bank's monthly series. Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 228). F4b, which price is the default: **answered 2026-11-07 by the owner: the latest month, 2025 average beside it (OPEN-QUESTIONS 229).**
 - F5. (Withdrawn 8 Nov 2026: ASHRAE was already decided in OPEN-QUESTIONS 64, not bundled.)
-- F6. Gas engines' minimum stable load: the Danish Energy Agency's 50 % (today 30 %), or keep 30 % as judgement?
+- F6. Gas engines' minimum stable load: the Danish Energy Agency's 50 % (today 30 %), or keep 30 % as judgement? **Answered 2026-11-07 by the owner: "30", kept as judgement (OPEN-QUESTIONS 230).**
 - F7. Agency catalogue values are in 2015 money: use as published, or escalate (needs an escalation source)?
 - F8. Escalation: World Bank (April 2026) for 2026–27, then the TYNDP 2026 path for gas and carbon?
 - F9. (Withdrawn 8 Nov 2026: the tool already uses GHCNh; the ISD retirement does not affect it.)
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:45 local (OPEN-QUESTIONS 229):** the default gas price is the latest month of the World Bank series. Next question: F6.
+**Owner, 7 Nov 2026, 23:46 local (OPEN-QUESTIONS 230):** the gas engine minimum stable load stays at 30 % (judgement). Next question: F7.
+
+**Owner, 7 Nov 2026, 23:45 local (OPEN-QUESTIONS 229):** the default gas price is the latest month of the World Bank series.
 
 **Owner, 7 Nov 2026, 23:44 local (OPEN-QUESTIONS 228):** the gas price source is the World Bank's monthly series.
 
