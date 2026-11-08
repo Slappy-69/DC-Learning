@@ -58,7 +58,7 @@ Confidence labels: "published and clear"; "published, but unclear which tariff a
 ## Questions for the owner (copied to the progress file)
 
 1. Fee default: blank (engineer must enter) or the published midpoint as a labelled example? **Answered 2026-11-07 by the owner: blank, with Ofgem's range shown beside the field (OPEN-QUESTIONS 206).**
-2. Cost of the money tied up: cash at the discount rate, or a letter-of-credit fee rate entered by the engineer?
+2. Cost of the money tied up: cash at the discount rate, or a letter-of-credit fee rate entered by the engineer? **Answered 2026-11-07 by the owner: no extra cost other than the money on the deposit, read as cash at the discount rate (OPEN-QUESTIONS 207).**
 3. The offer acceptance date: a new input, or a default number of years before the grid date?
 
 ## Sources
