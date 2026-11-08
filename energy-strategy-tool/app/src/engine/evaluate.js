@@ -1,7 +1,7 @@
 // Per-option evaluation: time-to-power (§9.8), economics ledger (§9.5), carbon and water (§9.6),
 // resilience check (§9.7), flags (§15) and deliverability (§9.9).
 
-import { TECH, FUEL, PPA, COUNTRIES, choiceLabel } from './defaults.js';
+import { TECH, FUEL, PPA, COUNTRIES, choiceLabel, GAS_PRICE_WB } from './defaults.js';
 import { decarbFactor, contractedCap, contractLimit, ctxFor } from './context.js';
 import { assumedFlags } from './assumed.js';
 import { fuelPrice, fuelEF } from './dispatch.js';
@@ -11,7 +11,7 @@ import { NA } from './generator.js';
 import { adequacyOf, adequacyText } from './adequacy.js';
 import { addMonths } from './dates.js';
 import { PLANT_SOURCE } from './plants.js';
-import { DC_TAX, CONDITIONAL_RATE, DE_DISCOUNT, deDiscountFactor, GB_RESIDUAL } from './countryrules.js';
+import { DC_TAX, CONDITIONAL_RATE, DE_DISCOUNT, deDiscountFactor, GB_RESIDUAL, gasPathFactor, carbonPathFactor } from './countryrules.js';
 import { plantCandidates, PLANT_DEFAULTS } from './defaults.js';
 
 const PERMIT_NOTE = 'Screening flag, not a permitting determination.';
@@ -148,7 +148,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     if (v.C1 !== 'islanded' && contractLimit(inputs, v.C1) > 0) {
       addCapex('Grid connection charge', gridYear, (Number(inputs.grid.connectionCharge) || 0) * newShare, 40);
       // Cable route from the POC (§5.4): route length from the site model (sizing.js, sz.grid.cableKm).
-      addCapex('Grid cable route (POC to site)', gridYear, sp.cablePerKm * (sz.grid.cableKm || 0) * (newShare > 0 ? 1 : 0), 40);
+      addCapex('Grid cable route (POC to site)', gridYear, (sp[`cablePerKm_${band}`] ?? sp.cablePerKm) * (sz.grid.cableKm || 0) * (newShare > 0 ? 1 : 0), 40);
     }
     addCapex(`Substation (${band.toUpperCase()}, ${v.C17})`, gridYear, fullMW * sp[`subCapexPerMW_${band}`] * (v.C17 === 'GIS' ? sp.gisMultiplier : 1), 40);
   }
@@ -321,8 +321,9 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     const calYear = ctx.baseYear + y;
     const df = decarbFactor(country, calYear, ctx.baseYear);
     const elecEsc = Math.pow(1 + E.elecEscalation, y);
-    const gasEsc = Math.pow(1 + E.gasEscalation, y);
-    const cEsc = Math.pow(1 + E.carbonEscalation, y);
+    // Work package 25 (OPEN-QUESTIONS 232): a number is a constant real rate; otherwise the published forecast path.
+    const gasEsc = Number.isFinite(E.gasEscalation) ? Math.pow(1 + E.gasEscalation, y) : gasPathFactor(calYear);
+    const cEsc = Number.isFinite(E.carbonEscalation) ? Math.pow(1 + E.carbonEscalation, y) : carbonPathFactor(calYear, ctx.carbonPrice);
     const cPrice = ctx.carbonPrice * cEsc;
     let scope1 = 0;
     for (const pr of d.plants) {
@@ -694,6 +695,9 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
 
   // Fuel and utilities
   const usesGas = [sz.prime, sz.bridge].some((p) => p && TECH[p.tech].fuel === 'gas' && !TECH[p.tech].offsite) || (sz.backup.tech && TECH[sz.backup.tech].fuel === 'gas');
+  // Work package 25 (OPEN-QUESTIONS 229, 232): the gas price's date and the published forecast it follows.
+  if (usesGas && !Number.isFinite(inputs.economics.gasEscalation)) flags.push(flag('fuel-gas-path', 'info', 'Fuel and utilities', `Gas price follows the published forecast (World Bank outlook April 2026, then TYNDP 2026): from €${ctx.gasCommodity.toFixed(1)}/MWh_th it falls to about €${(ctx.gasCommodity * gasPathFactor(ctx.baseYear)).toFixed(0)} in ${ctx.baseYear} and €${(ctx.gasCommodity * gasPathFactor(2030)).toFixed(0)} in 2030, far below the TTF price of November 2026 (€85.6/MWh), so gas gets cheaper over time in this model (OPEN-QUESTIONS 232)`));
+  if (usesGas && !Number.isFinite(inputs.utilities.gasPrice) && typeof GAS_PRICE_WB === 'object' && ctx.gasCommodity === GAS_PRICE_WB.value) flags.push(flag('fuel-gas-month', 'info', 'Fuel and utilities', `Gas commodity price €${GAS_PRICE_WB.value}/MWh_th: the World Bank "Natural gas, Europe" price for July 2026, the latest month read (later months exist and were not read); 2025 average €${GAS_PRICE_WB.avg2025} for comparison. Enter a current quote to replace it (OPEN-QUESTIONS 229)`));
   if (usesGas && inputs.utilities.gasAvailable === 'Unknown') flags.push(flag('fuel-gas-unknown', 'minor', 'Fuel and utilities', 'Gas connection unconfirmed (gas availability "Unknown")'));
   if (usesGas && inputs.utilities.gasAvailable !== 'No') flags.push(flag('fuel-gas-assumed', 'info', 'Fuel and utilities', 'Gas capacity and date assumed, not confirmed'));
   if (usesGas && inputs.utilities.gasAvailable === 'No') flags.push(flag('fuel-gas-none', 'major', 'Fuel and utilities', 'Gas-using plant with gas availability "No": the plant does not run'));

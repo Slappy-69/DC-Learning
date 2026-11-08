@@ -273,9 +273,11 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           placeholder={`${COUNTRIES[countryNow].carbonPrice} (country default)`} hint={`Empty = the ${COUNTRIES[countryNow].name} EU/UK ETS default, ${COUNTRIES[countryNow].carbonPrice} €/tCO₂e; it escalates at the carbon escalation rate. Applied to Scope 1 combustion.`} />
         <div className="row2">
           <NumberField label="Electricity escalation (real)" unit="%/yr" scale={100} value={inputs.economics.elecEscalation} onCommit={set('economics.elecEscalation')} path="economics.elecEscalation" inputs={inputs} min={-0.1} max={0.1} />
-          <NumberField label="Gas escalation (real)" unit="%/yr" scale={100} value={inputs.economics.gasEscalation} onCommit={set('economics.gasEscalation')} path="economics.gasEscalation" inputs={inputs} min={-0.1} max={0.1} />
+          <NumberField label="Gas escalation (real)" unit="%/yr" scale={100} value={typeof inputs.economics.gasEscalation === 'number' ? inputs.economics.gasEscalation : null} onCommit={set('economics.gasEscalation')} path="economics.gasEscalation" inputs={inputs} min={-0.1} max={0.1} nullable placeholder="Published forecast"
+            hint="Empty = the published forecast (OPEN-QUESTIONS 232): World Bank outlook (April 2026) for 2026 and 2027, then the TYNDP 2026 path to 2040, flat after; applied relative to the gas price's own date. A number replaces it with a constant real rate." />
         </div>
-        <NumberField label="Carbon price escalation (real)" unit="%/yr" scale={100} value={inputs.economics.carbonEscalation} onCommit={set('economics.carbonEscalation')} path="economics.carbonEscalation" inputs={inputs} min={-0.1} max={0.2} />
+        <NumberField label="Carbon price escalation (real)" unit="%/yr" scale={100} value={typeof inputs.economics.carbonEscalation === 'number' ? inputs.economics.carbonEscalation : null} onCommit={set('economics.carbonEscalation')} path="economics.carbonEscalation" inputs={inputs} min={-0.1} max={0.2} nullable placeholder="Published forecast"
+          hint="Empty = the published forecast (OPEN-QUESTIONS 232): from today's price to the TYNDP 2026 values (€97.5/t in 2030, €197.5 in 2035, €297.5 in 2040), flat after. A number replaces it with a constant real rate." />
         <p className="note">Currency: euro ({COUNTRIES[countryNow].name} profile; prices are converted to € in the country data). Revenue options are off by default and are opened in the choices below: export income (C1 = Grid + export), battery grid services (C12r role) and heat reuse (C15). The gas price is in section 4; the grid connection charge is with the grid.</p>
       </Section>
 

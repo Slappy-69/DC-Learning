@@ -36,6 +36,12 @@ const SRC = {
   wartsila: { source: 'Wärtsilä press release, 16 Apr 2026: 40 Wärtsilä 34SG engines, 412 MW, for a hyperscale data centre in Ohio (about 10.3 MW per engine)', year: '2026-04-16', url: 'https://www.wartsila.com/media/news/16-04-2026-wartsila-s-34sg-engine-makes-its-data-center-debut-with-new-412-mw-u-s-project-3740972', accessed: '2026-10-23', approved: '2026-10-23' },
   gensetLead: { source: 'Global Power Supply, "Generator lead times in 2026" (11 May 2026): standby diesel generators 1,250–3,250 kW, 52 to 70 weeks', year: '2026-05-11', url: 'https://globalpwr.com/blog/generator-lead-times-in-2026', accessed: '2026-10-23', approved: '2026-10-23' },
   levelten: { source: 'LevelTen Energy European PPA Price Index Q2 2026, reported by PV Tech (23 Jul 2026): solar €56.59/MWh, wind US$95.86/MWh (at 1.1181 $/€ €85.7/MWh)', year: '2026-Q2', url: 'https://www.pv-tech.org/solar-ppa-prices-buck-trends-increasing-europe-falling-north-america-q2-2026/', accessed: '2026-10-23', approved: '2026-10-23' },
+  // Batch 3 (research run of November 2026; owner 2026-11-07, OPEN-QUESTIONS 226–232; built 2026-11-08, work package 25).
+  acerCable: { source: 'ACER, Unit Investment Cost Indicators (24 April 2026), Table I.1: medians of underground AC cable, 110–150 kV single circuit €0.68 m/km (n = 20), 220 kV single circuit €2.08 m/km (n = 20); ranges wide (€0.36–5.56 m/km)', year: '2026-04-24', url: 'https://www.acer.europa.eu/documents/official-documents/acts-of-the-agency', accessed: '2026-11-07', approved: '2026-11-07' },
+  acerPipe: { source: 'ACER, Unit Investment Cost Indicators (24 April 2026), Table I.4: onshore pipelines of 12–16 inch, median €2.08 m/km (n = 4; gas, hydrogen and biomethane blending pipelines)', year: '2026-04-24', url: 'https://www.acer.europa.eu/documents/official-documents/acts-of-the-agency', accessed: '2026-11-07', approved: '2026-11-07' },
+  wbGas: { source: 'World Bank Commodity Price Data ("Pink Sheet"), series "Natural gas, Europe" (TTF): July 2026 US$18.06/mmbtu, as reported by APA (5 Aug 2026); the World Bank file itself could not be opened in the session, and later months were not read. At 0.293071 MWh/mmbtu and 1.1181 $/€: €55.1/MWh_th. 2025 average for comparison: €42.9/MWh_th', year: '2026-07', url: 'https://en.apa.az/energy-and-industry/world-bank-releases-natural-gas-price-data-for-europe-and-the-us-519077', accessed: '2026-11-08', approved: '2026-11-07' },
+  dea: { source: 'Danish Energy Agency, Technology Data for Generation of Electricity and District Heating, sheet 06 (spark ignition engine, natural gas, 1–10 MWe), 2020 column, in 2015 € (not escalated: OPEN-QUESTIONS 231)', year: '2015 €', url: 'https://ens.dk/media/3283/download', accessed: '2026-11-08', approved: '2026-11-07' },
+  escalation: { source: 'World Bank, Commodity Markets Outlook (April 2026): natural gas Europe US$15.0/mmbtu in 2026 and 12.0 in 2027 (€45.8 and €36.6/MWh); then ENTSOG and ENTSO-E, TYNDP 2026 scenarios methodology (June 2026), Table 6, 2024 money: gas €33.1/MWh in 2030, €35.3 in 2035, €37.4 in 2040; CO2 €97.5/t in 2030, €197.5 in 2035, €297.5 in 2040', year: '2026', url: 'https://www.worldbank.org/en/research/commodity-markets', accessed: '2026-11-07', approved: '2026-11-07' },
   fx: { source: 'European Central Bank euro foreign exchange reference rates', year: '2026-10-22', url: 'https://www.ecb.europa.eu/stats/shared/pdf/eurofxref.pdf', accessed: '2026-10-22', approved: '2026-10-22' },
 };
 
@@ -149,6 +155,14 @@ for (const [cc, c] of Object.entries(COUNTRIES)) {
   void r;
   if (researched) Object.assign(REGISTRY[`country.adder.${cc}`], { source: `Research run of November 2026, ${RESEARCH_NOTE}: ${d.adderHow}`, year: '2026', url: d.perMWUrl, accessed: d.accessed, approved: '2026-11-07', confidence: 'B', label: LABEL_SOURCED });
 }
+// Gas commodity price (owner 2026-11-07, OPEN-QUESTIONS 228, 229; work package 25): the latest month of the World Bank
+// "Natural gas, Europe" (TTF) series for every country on the European gas network; Cyprus, Malta and Iceland (no hub
+// connection) keep their indicative values (Claude's reading, OPEN-QUESTIONS 237).
+export const GAS_PRICE_WB = { value: 55.1, month: '2026-07', avg2025: 42.9 };
+const GAS_ISLANDS = ['CY', 'MT', 'IS'];
+if (!LEGACY_ADDERS) for (const [cc, c] of Object.entries(COUNTRIES)) if (!GAS_ISLANDS.includes(cc)) c.gas = GAS_PRICE_WB.value;
+rec('country.gasPrice', LEGACY_ADDERS ? 'by country (indicative)' : GAS_PRICE_WB.value, '€/MWh_th (latest month of the World Bank series; CY, MT, IS by country)', { dist: 'fixed', ref: '§5.4', src: LEGACY_ADDERS ? undefined : SRC.wbGas,
+  note: `Owner 2026-11-07 (OPEN-QUESTIONS 229): the latest month, ${GAS_PRICE_WB.month}, shown with the 2025 average (€${GAS_PRICE_WB.avg2025}/MWh_th) beside it; the engineer can enter a current quote. The latest month found was July 2026 (press report of the World Bank figure); later months exist and were not read: flagged.` });
 REGISTRY['profiles.countries'] = {
   path: 'profiles.countries', value: 'built-in synthetic country set (31)', unit: '', low: null, high: null,
   distribution: 'fixed', basis: 'source', source: '', year: '', url: '', accessed: '', confidence: 'C', verified: false,
@@ -324,9 +338,9 @@ tech('bess', { name: 'BESS (Li-ion, containerised)', role: 'storage', maturity: 
   rte: [0.88, 'round-trip efficiency', 0.85, 0.92], life: [15, 'yr', 12, 20], m2PerMWh: [50, 'm²/MWh', 30, 90],
   socInit: [0.5, 'fraction', 0.5, 0.5], procM: [9, 'months', 6, 15], buildM: [6, 'months', 3, 9] });
 tech('gasRecip', { name: 'Gas reciprocating engines', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Danish Energy Agency Technology Catalogue; vendor data' }, {
-  capexPerKW: [900, '€/kW', 715, 1075], fomPerKW: [15, '€/kW/yr', 10, 20], vomPerMWh: [8, '€/MWh', 5, 12], eff: [0.44, 'electrical efficiency (LHV)', 0.40, 0.48],
-  msl: [0.3, 'min stable load fraction', 0.2, 0.4], unitMW: [10, 'MW', 4.5, 10.3], life: [20, 'yr', 15, 25], m2PerMW: [200, 'm²/MWe', 120, 300],
-  stackM: [25, 'm', 20, 30], procM: [9, 'months', 6, 15], buildM: [6, 'months', 4, 9] });
+  capexPerKW: [900, '€/kW', 715, 1075], fomPerKW: [9.75, '€/kW/yr (2015 €)', 7, 20], vomPerMWh: [5.4, '€/MWh (2015 €)', 4, 12], eff: [0.45, 'electrical efficiency (LHV)', 0.38, 0.48],
+  msl: [0.3, 'min stable load fraction', 0.2, 0.5], unitMW: [10, 'MW', 4.5, 10.3], life: [25, 'yr', 25, 30], m2PerMW: [200, 'm²/MWe', 120, 300],
+  stackM: [25, 'm', 20, 30], procM: [9, 'months', 6, 15], buildM: [12, 'months', 6, 18] });
 tech('gasTurbine', { name: 'Gas turbines (OCGT / aeroderivative)', role: 'firm', maturity: 'Commercial', fuel: 'gas', combustion: true, verify: 'Danish Energy Agency Technology Catalogue; vendor data' }, {
   capexPerKW: [1450, '€/kW', 750, 1650], fomPerKW: [12, '€/kW/yr', 8, 16], vomPerMWh: [6, '€/MWh', 4, 9], eff: [0.38, 'electrical efficiency (LHV)', 0.33, 0.42],
   msl: [0.4, 'min stable load fraction', 0.3, 0.5], unitMW: [30, 'MW', 10, 50], life: [25, 'yr', 20, 30], m2PerMW: [120, 'm²/MWe', 80, 200],
@@ -612,13 +626,16 @@ tech('substation', { name: 'Grid connection and on-site substation', role: 'grid
   subCapexPerMW_mv: [60000, '€/MW (11–33 kV)', 40000, 90000], subCapexPerMW_hv: [80000, '€/MW (110–150 kV)', 50000, 120000],
   subCapexPerMW_ehv: [70000, '€/MW (220–400 kV)', 45000, 110000], gisMultiplier: [1.4, '× AIS cost', 1.2, 1.7],
   cablePerKm: [1.5e6, '€/km of cable route from the POC (route length from the site model, §5.2)', 0.8e6, 3e6],
+  // Work package 25 (OPEN-QUESTIONS 226): one value per voltage band, ACER's 2026 medians where ACER has a figure.
+  cablePerKm_mv: [1.5e6, '€/km of cable route, 11–33 kV', 0.8e6, 3e6], cablePerKm_hv: [0.68e6, '€/km of cable route, 110–150 kV (single circuit)', 0.36e6, 1.87e6],
+  cablePerKm_ehv: [2.08e6, '€/km of cable route, 220–400 kV (ACER 220 kV single circuit)', 1.0e6, 5.56e6],
   m2Per20MVA_mv: [500, 'm² per 20 MVA', 300, 800], haAIS_hv: [1.2, 'ha', 0.8, 2.0], haGIS_hv: [0.4, 'ha', 0.25, 0.6], haAIS_ehv: [4.0, 'ha', 2.5, 6.0], haGIS_ehv: [1.2, 'ha', 0.8, 2.0],
   bandMvMaxMW: [20, 'MW (MV/HV band edge)', 20, 20], bandHvMaxMW: [150, 'MW (HV/EHV band edge)', 150, 150] });
 // Gas connection (§5.2: the gas main location "drives gas-plant placement and connection cost"). Applied only to
 // options that burn gas on site, and only when a gas main location is given; the route length comes from the
 // site model (straight line from the gas main to the buildable envelope).
 tech('gasConnection', { name: 'Gas connection pipe', role: 'utility', maturity: 'Commercial', verify: 'Gas network connection charging statements; pipeline cost benchmarks' }, {
-  pipePerKm: [800000, '€/km of connection pipe from the gas main', 400000, 2000000] });
+  pipePerKm: [2080000, '€/km of connection pipe from the gas main', 400000, 3000000] });
 tech('heatRejection', { name: 'Heat rejection (dry / adiabatic coolers, chillers)', role: 'cooling plant', maturity: 'Commercial', verify: 'Vendor data' }, {
   m2PerMW: [60, 'm² per MW rejected', 40, 100], roofPlantFraction: [0.4, 'fraction of roof if heat rejection on roof', 0.3, 0.6] });
 
@@ -830,12 +847,22 @@ const SOURCED_TECH = {
   'tech.gasRecip.capexPerKW': SRC.dcGas, 'tech.gasRecip.unitMW': SRC.wartsila,
   'tech.gasTurbine.capexPerKW': SRC.eiaTurbine, 'tech.smr.capexPerKW': SRC.eiaSmr, 'tech.smr.unitMW': SRC.eiaSmr,
   'tech.backupDiesel.procM': SRC.gensetLead, 'tech.backupHvo.procM': SRC.gensetLead, 'tech.dieselPrime.procM': SRC.gensetLead,
+  'tech.substation.cablePerKm_hv': SRC.acerCable, 'tech.substation.cablePerKm_ehv': SRC.acerCable, 'tech.gasConnection.pipePerKm': SRC.acerPipe,
+  'tech.gasRecip.fomPerKW': SRC.dea, 'tech.gasRecip.vomPerMWh': SRC.dea, 'tech.gasRecip.eff': SRC.dea, 'tech.gasRecip.life': SRC.dea, 'tech.gasRecip.buildM': SRC.dea,
 };
 const SOURCED_NOTES = {
   'tech.wind.fomPerKW': 'Fraunhofer €32/kW a year fixed + €0.007/kWh variable; at about 2,600 full-load hours that is about €50/kW a year, all booked as fixed.',
   'tech.bess.capexPerKWh': '€125/kWh + €135/kW gives €158.75/kWh for a 4-hour system (BNEF Europe 2025 turnkey); the split is a judgement.',
   'tech.bess.capexPerKW': 'See tech.bess.capexPerKWh.',
   'tech.gasRecip.unitMW': 'Data centre gas engine orders now use units of about 10 MW (was 4.5 MW).',
+  'tech.substation.cablePerKm_hv': 'Owner 2026-11-07 (OPEN-QUESTIONS 226): ACER 110–150 kV single circuit; double circuit €1.87 m/km is the high end. Small sample (20 cables), flagged.',
+  'tech.substation.cablePerKm_ehv': 'Owner 2026-11-07 (OPEN-QUESTIONS 226): ACER 220 kV single circuit. ACER has no 400 kV underground figure; the band covers 220–400 kV and uses the 220 kV median (Claude\'s reading, OPEN-QUESTIONS 237). Was €1.5 m/km for every band.',
+  'tech.gasConnection.pipePerKm': 'Owner 2026-11-07 (OPEN-QUESTIONS 227): switched from €0.8 m/km (judgement). The ACER figure is for 12–16 inch pipe, larger than a campus spur usually needs, from four samples: flagged.',
+  'tech.gasRecip.fomPerKW': 'Owner 2026-11-07 (OPEN-QUESTIONS 231): used as published, in 2015 € (not raised for inflation, so probably below today\'s cost); at 4,000 h a year. Was €15.',
+  'tech.gasRecip.vomPerMWh': 'As published, 2015 € (OPEN-QUESTIONS 231). Was €8.',
+  'tech.gasRecip.eff': 'Annual average 0.45 (nominal 0.47). Was 0.44.',
+  'tech.gasRecip.life': 'Agency: 25 years. Was 20.',
+  'tech.gasRecip.buildM': 'Agency: 1 year (0.5–1.5). Was 6 months.',
   'tech.gasTurbine.capexPerKW': 'EIA aeroderivative (4 × 54 MW) US$1,606/kW at 1.1181 $/€ = €1,436, rounded to €1,450 for 30 MW aeroderivative or industrial units (was €750, then €1,100 between the EIA figures until Haiku check H2 judged that a judgement). Low end: EIA H-class simple cycle €748; high end: Lazard 2026 peaking US$1,650 = €1,476 plus margin.',
   'tech.smr.capexPerKW': 'EIA generic 6 × 80 MW SMR, 2023 dollars not escalated; Darlington suggests higher (about CAD17,400/kW for four 300 MWe units).',
   'tech.backupDiesel.procM': '52–70 weeks quoted for 1.25–3.25 MW standby units in 2026; was 12 months.',
@@ -846,6 +873,16 @@ for (const [path, src] of Object.entries(SOURCED_TECH)) {
   applySource(REGISTRY[path], src);
   if (SOURCED_NOTES[path]) REGISTRY[path].note = SOURCED_NOTES[path];
 }
+// The Node test suite's pinned figures were set with the earlier values (tests/test-env.mjs): restore them there.
+if (LEGACY_ADDERS) {
+  Object.assign(TECH.gasRecip.p, { fomPerKW: 15, vomPerMWh: 8, eff: 0.44, life: 20, buildM: 6 });
+  Object.assign(TECH.substation.p, { cablePerKm_mv: 1.5e6, cablePerKm_hv: 1.5e6, cablePerKm_ehv: 1.5e6 });
+  TECH.gasConnection.p.pipePerKm = 800000;
+}
+// Gas engine minimum stable load (owner 2026-11-07, OPEN-QUESTIONS 230): kept at 30 % as judgement.
+Object.assign(REGISTRY['tech.gasRecip.msl'], { basis: 'judgement', note: 'Owner 2026-11-07 (OPEN-QUESTIONS 230): 30 % kept as judgement, the lower end of the Danish Energy Agency\'s 30–50 % range; its central value 50 % shown for comparison.' });
+Object.assign(REGISTRY['tech.substation.cablePerKm_mv'], { basis: 'judgement', note: 'Owner 2026-11-07 (OPEN-QUESTIONS 226): ACER has no figure below 110 kV, so €1.5 m/km stays as judgement.' });
+Object.assign(REGISTRY['tech.substation.cablePerKm'], { basis: 'judgement', note: 'Used only for the connection from a nearby plant to the campus (work package 19); the grid route from the POC uses the band values since work package 25.' });
 rec('country.gridCarbon', 'by country', 'gCO2e/kWh, life-cycle, 2025', { dist: 'fixed', ref: '§5.4, §18', src: SRC.carbonEmber, note: 'Ember 2025 for all 31 countries (one basis: life-cycle intensity of generation). The GHG Protocol location-based method often uses direct-combustion factors, which are lower; the basis is a judgement recorded in OPEN-QUESTIONS 66.' });
 rec('country.wholesalePrice', 'by country', '€/MWh, mean day-ahead 2025', { dist: 'fixed', ref: '§5.4, §18', src: SRC.priceEM, note: 'Batch 2 updated France 85 → 62, Finland 55 → 41, Norway 50 → 44, Portugal 75 → 66; Czechia 95 → 96 and Slovenia 105 → 106 after Haiku check H2 (to match the cited 2025 figures; Austria 100 against 100.4 kept). Cyprus, Malta, Switzerland and Iceland keep unresearched values (no published day-ahead figure found).' });
 
@@ -1088,13 +1125,13 @@ export function buildDefaultInputs(opts = {}) {
       capexLow: rec('economics.capexLow', -0.30, 'fraction (AACE Class 5)', { basis: 'source', verify: 'AACE International RP 18R-97 (confirm revision and year)', ref: '§5.6' }),
       capexHigh: rec('economics.capexHigh', 0.50, 'fraction (AACE Class 5)', { basis: 'source', verify: 'AACE International RP 18R-97 (confirm revision and year)', ref: '§5.6' }),
       carbonPrice: rec('economics.carbonPrice', 'by country', '€/tCO2e', { basis: 'source', derived: true, verify: 'EU ETS / UK ETS exchange data, official projections', ref: '§5.6', note: 'The country default comes from the scheme records country.carbonPrice.euEts and country.carbonPrice.ukEts (sourced); Switzerland is unresearched.' }),
-      carbonEscalation: rec('economics.carbonEscalation', 0.02, 'real per yr', { low: 0, high: 0.05, basis: 'source', verify: 'EU ETS / UK ETS forward curves', ref: '§5.6' }),
+      carbonEscalation: rec('economics.carbonEscalation', LEGACY_ADDERS ? 0.02 : 'published forecast', 'real per yr, or the published forecast path', { low: 0, high: 0.05, basis: 'source', verify: 'EU ETS / UK ETS forward curves', ref: '§5.6', src: SRC.escalation, note: 'Owner 2026-11-07 (OPEN-QUESTIONS 232): from the latest price (its date) in a straight line to the TYNDP 2026 values for the EU ETS (€97.5/t in 2030, €197.5 in 2035, €297.5 in 2040), flat after; the UK ETS follows the same ratios (Claude\'s reading, OPEN-QUESTIONS 237). A number replaces it with a constant real rate. Was 2 % a year.' }),
       // Sensitivity multipliers (work package 9): 1 = as entered; the tornado moves them. Judgement, no source.
       capexFactor: rec('economics.capexFactor', 1, '× every capex line', { low: 0.7, high: 1.5, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "capex"; range the AACE Class 5 band (−30 % / +50 %).' }),
       bessCapexFactor: rec('economics.bessCapexFactor', 1, '× battery capex', { low: 0.7, high: 1.3, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "battery capex". No source.' }),
       gridCapexFactor: rec('economics.gridCapexFactor', 1, '× grid connection capex', { low: 0.5, high: 2, basis: 'judgement', ref: '§13.3', note: 'Tornado driver "grid connection capex". Scales the grid connection charge and the grid cable route only, not the substation, which moves with the capex driver (owner, 2026-10-26). No source.' }),
       elecEscalation: rec('economics.elecEscalation', 0, 'real per yr', { low: -0.02, high: 0.02, basis: 'source', verify: 'ENTSO-E / forward curves', ref: '§5.6' }),
-      gasEscalation: rec('economics.gasEscalation', 0, 'real per yr', { low: -0.02, high: 0.02, basis: 'source', verify: 'TTF/NBP forward curves', ref: '§5.6' }),
+      gasEscalation: rec('economics.gasEscalation', LEGACY_ADDERS ? 0 : 'published forecast', 'real per yr, or the published forecast path', { low: -0.02, high: 0.02, basis: 'source', verify: 'TTF/NBP forward curves', ref: '§5.6', src: SRC.escalation, note: 'Owner 2026-11-07 (OPEN-QUESTIONS 232): World Bank outlook for 2026 and 2027, then the TYNDP 2026 path (2024 money), flat after 2040; applied as the ratio of the forecast in each year to the forecast in the year of the gas price\'s date. A number replaces it with a constant real rate. Both forecasts sit far below the price of November 2026 (TTF €85.6/MWh), so gas gets cheaper over time; a flag says so.' }),
       salvageFraction: rec('economics.salvageFraction', 0.5, 'of remaining book value when removed', { low: 0.2, high: 0.7, basis: 'judgement', ref: '§9.5' }),
       revenueExport: rec('economics.revenueExport', false, 'toggle', { basis: 'judgement', ref: '§5.6' }),
       // Work package 2 (OPEN-QUESTIONS 21 answered 2026-10-23 with Claude's recommendation): the evaluation period above

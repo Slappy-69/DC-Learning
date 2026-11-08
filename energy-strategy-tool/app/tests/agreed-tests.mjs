@@ -8,7 +8,7 @@ import { buildContext } from '../src/engine/context.js';
 import { runModel } from '../src/engine/run.js';
 import { contractedCap } from '../src/engine/context.js';
 import { GRID_CHARGE_DATA } from '../src/engine/gridcharges-data.js';
-import { GB_RESIDUAL, FLAT_LOAD_MWH_PER_MW, deDiscountFactor } from '../src/engine/countryrules.js';
+import { GB_RESIDUAL, FLAT_LOAD_MWH_PER_MW, deDiscountFactor, gasPathFactor, carbonPathFactor } from '../src/engine/countryrules.js';
 
 const near = (a, b, tol = 1e-6) => Math.abs(a - b) <= tol * Math.max(1, Math.abs(b));
 
@@ -91,6 +91,36 @@ export async function agreedTests(test, ctxRuns) {
     const es = smallRun(START, 'ES', { flatLoadDiscount: true }, 20);
     assert.ok(es.options.every((x) => x.eco.ledger.every((L) => L.gridFixed === 0)) && es.options.find((x) => x.v.C1 !== 'islanded').flags.some((f) => f.id === 'grid-discount-none'), 'ES: not researched, nothing applied');
     out.push('flags: FR tax (normal info, reduced minor), IE checks, DE discount, LV transformer, CY none');
+    return out.join('; ');
+  });
+
+  await test('57. Work package 25: cable cost by voltage band (ACER 2026), gas pipe €2.08 m/km, gas engines from the Danish Energy Agency in 2015 € with the minimum load kept at 30 %, gas price from the World Bank (islands kept), gas and carbon following the published forecast unless a rate is entered', () => {
+    const out = [];
+    const url = new URL('../src/engine/defaults.js', import.meta.url).href;
+    const env = { ...process.env }; delete env.ESTOOL_LEGACY_ADDERS;
+    const code = `import { TECH, COUNTRIES, buildDefaultInputs, getRegistry } from '${url}'; const i = buildDefaultInputs(); const r = getRegistry();
+      console.log(JSON.stringify({ sp: TECH.substation.p, pipe: TECH.gasConnection.p.pipePerKm, ge: TECH.gasRecip.p, DE: COUNTRIES.DE.gas, GB: COUNTRIES.GB.gas, CY: COUNTRIES.CY.gas, IS: COUNTRIES.IS.gas, gEsc: i.economics.gasEscalation, cEsc: i.economics.carbonEscalation, lbl: r['tech.substation.cablePerKm_hv'].label, mslBasis: r['tech.gasRecip.msl'].basis, gasLbl: r['country.gasPrice'].label }));`;
+    const r = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', code], { env }).toString());
+    assert.equal(r.sp.cablePerKm_hv, 680000); assert.equal(r.sp.cablePerKm_ehv, 2080000); assert.equal(r.sp.cablePerKm_mv, 1500000);
+    assert.equal(r.pipe, 2080000);
+    assert.deepEqual([r.ge.fomPerKW, r.ge.vomPerMWh, r.ge.eff, r.ge.life, r.ge.buildM, r.ge.msl], [9.75, 5.4, 0.45, 25, 12, 0.3]);
+    assert.equal(r.DE, 55.1); assert.equal(r.GB, 55.1); assert.equal(r.CY, 70); assert.equal(r.IS, 80);
+    assert.equal(r.gEsc, 'published forecast'); assert.equal(r.cEsc, 'published forecast');
+    assert.equal(r.lbl, 'sourced — not independently checked'); assert.equal(r.mslBasis, 'judgement'); assert.equal(r.gasLbl, 'sourced — not independently checked');
+    out.push(`cable hv €${r.sp.cablePerKm_hv / 1e6} m, ehv €${r.sp.cablePerKm_ehv / 1e6} m, mv €${r.sp.cablePerKm_mv / 1e6} m per km; pipe €2.08 m/km; gas €${r.DE} (CY €${r.CY} kept)`);
+    // Paths: gas falls from the 2026 forecast, carbon rises to the TYNDP values; flat after 2040.
+    assert.ok(near(gasPathFactor(2026), 1) && near(gasPathFactor(2027), 36.6 / 45.8) && near(gasPathFactor(2050), 37.4 / 45.8), 'gas path');
+    assert.ok(near(carbonPathFactor(2030, 88.3), 97.5 / 88.3) && near(carbonPathFactor(2040, 75), 297.5 / 88.3) && near(carbonPathFactor(2060, 88.3), 297.5 / 88.3), 'carbon path');
+    out.push(`gas ×${gasPathFactor(2027).toFixed(3)} in 2027, ×${gasPathFactor(2030).toFixed(3)} in 2030; carbon ×${carbonPathFactor(2035, 88.3).toFixed(2)} in 2035`);
+    // In a run: the ledger's fuel follows the path; an entered rate replaces it.
+    const i = referenceT1({ analysisStart: START }); i.settings.generationCap = 30; i.project.country = 'DE';
+    i.economics.gasEscalation = 'published forecast'; i.economics.carbonEscalation = 'published forecast';
+    const run = runModel(i);
+    const g = run.options.find((o) => o.flags.some((f) => f.id === 'fuel-gas-path'));
+    assert.ok(g, 'a gas option carries the path flag');
+    const j = JSON.parse(JSON.stringify(i)); j.economics.gasEscalation = 0; j.economics.carbonEscalation = 0.02;
+    const run2 = runModel(j);
+    assert.ok(run2.options.every((o) => !o.flags.some((f) => f.id === 'fuel-gas-path')), 'an entered rate: no path flag');
     return out.join('; ');
   });
 }

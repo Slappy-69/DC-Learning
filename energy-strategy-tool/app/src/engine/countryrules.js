@@ -91,3 +91,32 @@ export const DC_TAX = {
     site: 'GOV.UK, "Climate Change Levy rates" (read 7 November 2026); the sector agreement from techUK (16 October 2025)',
   },
 };
+
+// Published price paths (owner 2026-11-07, OPEN-QUESTIONS 232; work package 25). Gas: World Bank Commodity Markets
+// Outlook (April 2026) for 2026 and 2027, then the TYNDP 2026 scenarios methodology (June 2026, Table 6, 2024 money);
+// straight lines between the years given, flat after 2040. The factor is the forecast in a year over the forecast in the
+// year of the gas price's own date (2026: the July 2026 price), so an entered price keeps its level and follows the
+// forecast's shape. Carbon: from today's price (October 2026) in a straight line to the TYNDP values.
+export const GAS_PATH = [[2026, 45.8], [2027, 36.6], [2030, 33.1], [2035, 35.3], [2040, 37.4]];
+export const GAS_PATH_ANCHOR = 2026;
+export const CARBON_PATH = [[2030, 97.5], [2035, 197.5], [2040, 297.5]];
+export const CARBON_ANCHOR = 2026;
+function interp(path, year) {
+  if (year <= path[0][0]) return path[0][1];
+  for (let i = 1; i < path.length; i++) {
+    const [y1, v1] = path[i], [y0, v0] = path[i - 1];
+    if (year <= y1) return v0 + ((v1 - v0) * (year - y0)) / (y1 - y0);
+  }
+  return path[path.length - 1][1];
+}
+export function gasPathFactor(year) {
+  return interp(GAS_PATH, year) / interp(GAS_PATH, GAS_PATH_ANCHOR);
+}
+export function carbonPathFactor(year, todayPrice) {
+  const p0 = Number(todayPrice) > 0 ? Number(todayPrice) : 88.3;
+  // The EU path relative to the EU ETS price of the release (€88.3/t); the same ratios for any other price (UK ETS, an
+  // entered price).
+  const path = [[CARBON_ANCHOR, 88.3], ...CARBON_PATH];
+  void p0;
+  return interp(path, year) / 88.3;
+}

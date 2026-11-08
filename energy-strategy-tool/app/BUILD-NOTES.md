@@ -2221,3 +2221,12 @@ Owner, 2026-11-08: "Update the app with everything we've discussed and agreed th
 - **Flags:** `grid-permw`, `grid-permw-none`, `grid-lumpsum`, `grid-permw-adder-entered`, `grid-lv-transformer`, `grid-de-discount`, `grid-discount-none`, `grid-dc-tax` (FR, FI, SE, NO, GB; minor when a reduced rate is ticked), `grid-ie-check`, `grid-price-calibration` (GB, IE). None is a permitting flag, so none moves the score.
 - **Tests:** the Node suite keeps the indicative adders (`ESTOOL_LEGACY_ADDERS=1` in `tests/test-env.mjs`) so its pinned T1 and T3 figures (both in Great Britain) stay; test 56 checks the researched adders in a child process without the switch, and the per-MW charge, lump sum, discount and flags.
 - **Not done:** the user guide chapters for these inputs.
+
+### Work package 25: defaults batch 3
+
+- **Cable route by voltage band** (OPEN-QUESTIONS 226): `tech.substation.cablePerKm_mv` €1.5 m/km (judgement), `_hv` €0.68 m/km and `_ehv` €2.08 m/km (ACER 2026 medians, single circuit); the grid route from the POC uses its band; `cablePerKm` stays for a nearby plant's link.
+- **Gas pipe** (227): €2.08 m/km (ACER 2026, 12–16 inch), flagged as larger pipe than a spur needs.
+- **Gas price** (228, 229): €55.1/MWh_th, the World Bank "Natural gas, Europe" price for July 2026 (latest month read, from a press report; the World Bank file could not be opened), for every country on the European network; CY, MT, IS keep theirs (OPEN-QUESTIONS 237). Flag `fuel-gas-month`.
+- **Escalation** (232): `economics.gasEscalation` and `carbonEscalation` default to "published forecast": gas follows the World Bank outlook (2026, 2027) then TYNDP 2026 (to 2040, flat after) as a ratio to 2026; carbon goes in a straight line from €88.3/t (2026) to €97.5 (2030), €197.5 (2035), €297.5 (2040). A number replaces either with a constant rate. Flag `fuel-gas-path`. Paths in `countryrules.js`.
+- **Gas engines** (230, 231): Danish Energy Agency values in 2015 € (fixed O&M €9.75/kW/yr, variable €5.4/MWh, efficiency 0.45, life 25 years, build 12 months); minimum stable load 30 % kept as judgement with the agency's 50 % in its note.
+- **Tests:** the suite's switch (`ESTOOL_LEGACY_ADDERS`) also restores the earlier engine, cable, pipe, gas and escalation values for the pinned figures; test 57 checks the new ones outside it.

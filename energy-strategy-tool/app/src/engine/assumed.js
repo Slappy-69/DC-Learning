@@ -96,7 +96,9 @@ export function assumedBase(ctx) {
       }
     } else if (r && !RESOLVED.includes(path)) {
       if (r.derived && typeof r.value === 'string' && r.value.startsWith('by ')) {
-        if (cur == null || cur === r.value) text = `${cname} default (${r.basis}, ${r.label})`;
+        // Work packages 24 and 25: the adder and the gas price carry a record per country (or one sourced record).
+        const cr = path === 'grid.priceAdder' ? reg[`country.adder.${ctx.country}`] : path === 'utilities.gasPrice' && !['CY', 'MT', 'IS'].includes(ctx.country) && typeof (reg['country.gasPrice'] || {}).value === 'number' ? reg['country.gasPrice'] : null;
+        if (cur == null || cur === r.value) text = cr ? `${cname} default ${valueText(path, ctx[path === 'grid.priceAdder' ? 'priceAdder' : 'gasCommodity'], cr, inputs)} (${cr.label}${cr.source ? `: ${cr.source}` : ''})` : `${cname} default (${r.basis}, ${r.label})`;
       } else if (same(cur, r.value)) {
         text = `${valueText(path, cur, r, inputs)}, default (${r.basis}, ${r.label})`;
       }
