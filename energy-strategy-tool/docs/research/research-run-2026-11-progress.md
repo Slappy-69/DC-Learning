@@ -127,7 +127,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - D3. MVA against MW for Ireland's test: equal (EirGrid's example) or the option's power factor? **Answered 2026-11-07 by the owner: power factor 0.975, labelled judgement (OPEN-QUESTIONS 212).**
 - D4. Bundle the latest T-4 de-rating table (2030/31, August 2026) and update it at each release? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 213).**
 - B1. Norway's takeover flag: "likely unavailable" (reserved capacity cannot change purpose) rather than "not confirmed"? **Answered 2026-11-07 by the owner: "Likely not available" (OPEN-QUESTIONS 214).**
-- B2. Should the general takeover flag say, for every country, that a plant's export connection is not an import connection?
+- B2. Should the general takeover flag say, for every country, that a plant's export connection is not an import connection? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 215).**
 - A1. **(Answered before the run: OPEN-QUESTIONS 162, contracted MW.)** Countries that charge on measured peak (DE today, PT peak hours, NL monthly maximum, GB Triads): charge the per-MW line on the option's contracted grid MW anyway (as decided in OQ 162), or on its peak import?
 - A2. Discounts for large flat loads (DE bandload, ES/PT electro-intensive): leave out, offer as a tick, or apply by default?
 - A3. GB's residual is fixed per site, not per MW: enter it as a yearly lump sum, or divide by the contracted MW?
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:25 local (OPEN-QUESTIONS 214):** Norway's takeover flag reads "likely not available". Next question: B2.
+**Owner, 7 Nov 2026, 23:26 local (OPEN-QUESTIONS 215):** the general takeover flag says an export connection is not an import connection. Part B is done. Next question: A2.
+
+**Owner, 7 Nov 2026, 23:25 local (OPEN-QUESTIONS 214):** Norway's takeover flag reads "likely not available".
 
 **Owner, 7 Nov 2026, 23:24 local (OPEN-QUESTIONS 213):** the tool includes the latest Irish de-rating table, updated at each release. Part D is done.
 

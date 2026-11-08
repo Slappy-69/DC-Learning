@@ -49,7 +49,7 @@ These extend the wording agreed in OPEN-QUESTIONS 155 (Spain and Portugal: tende
 ## Questions for the owner (copied to the progress file)
 
 1. Norway: the guide's "no change of purpose" is the clearest statement found against a takeover. Should Norway's flag say "likely unavailable" (as proposed) rather than "not confirmed"? **Answered 2026-11-07 by the owner: "Likely not available" (OPEN-QUESTIONS 214).**
-2. The import-against-export point applies everywhere. Should the general takeover flag say once, for every country, that a plant's export connection is not an import connection?
+2. The import-against-export point applies everywhere. Should the general takeover flag say once, for every country, that a plant's export connection is not an import connection? **Answered 2026-11-07 by the owner: yes (OPEN-QUESTIONS 215).**
 
 ## Sources
 
