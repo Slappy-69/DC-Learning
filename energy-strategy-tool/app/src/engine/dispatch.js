@@ -139,6 +139,9 @@ export function dispatchConfig(ctx, v, sz) {
     bessRole: sz.storage.role, bessDurN: durationH >= 8 ? 12 : durationH >= 3 ? 4 : durationH >= 1.5 ? 2 : 1,
     rte: TECH.bess.p.rte,
     ppaType: sz.ppa ? sz.ppa.type : null, ppaCoverage: sz.ppa ? sz.ppa.coverage : 0,
+    // Work package 33: a nearby renewable plant (C23).
+    nrMW: sz.renewPlant ? sz.renewPlant.mw : 0, nrProfile: sz.renewPlant ? sz.renewPlant.profile : null, nrCF: sz.renewPlant ? sz.renewPlant.cf : null,
+    nrGrid: !!(sz.renewPlant && sz.renewPlant.route === 'grid'), nrAvailM: sz.renewPlant ? sz.renewPlant.availM : Infinity, nrEndM: sz.renewPlant ? sz.renewPlant.endM : 0,
     flex: v.C16 === 'on',
     reYield: inputs.utilities.reYieldFactor ?? 1, // tornado driver "capacity factors" (work package 9)
     gridLimit: v.C1 === 'islanded' || ctx.contractApplied ? Infinity : contractLimit(inputs, v.C1), // contracted capacity (work package 3); already applied for a takeover in place (OPEN-QUESTIONS 126)
@@ -154,7 +157,7 @@ export function dispatchKey(cfg) {
     +cfg.solarMWp.toFixed(6), cfg.solarAvailM, +cfg.windMW.toFixed(6), cfg.windAvailM, +cfg.bessMW.toFixed(6), +cfg.bessMWh.toFixed(6), cfg.bessAvailM, cfg.bessRole,
     cfg.ppaType, cfg.ppaCoverage, cfg.flex, cfg.reYield, cfg.gridLimit < Infinity ? cfg.gridLimit : null,
     cfg.plants.map((p) => [p.role, p.tech, +p.mw.toFixed(6), Array.from(p.mode).join(''), p.hourMask ? p.hourMask.count : 0]),
-    ...(cfg.takeover ? [cfg.takeover] : [])]);
+    ...(cfg.takeover ? [cfg.takeover] : []), ...(cfg.nrMW > 0 ? [[+cfg.nrMW.toFixed(6), cfg.nrProfile, cfg.nrCF, cfg.nrGrid, cfg.nrAvailM, cfg.nrEndM]] : [])]);
 }
 
 // Which model years must be dispatched explicitly? Years after the last change repeat (steady state).
@@ -186,7 +189,7 @@ function emptyYear() {
   return {
     demandMWh: 0, grossDemandMWh: 0, netDemandMWh: 0, servedMWh: 0, unmetMWh: 0, unmetHours: 0, unmetPeakMW: 0,
     exceedMWh: 0, exceedHours: 0, exceedPeakMW: 0,
-    gridMWh: 0, gridChargeMWh: 0, gridPeakMW: 0, gridCost: 0, gridCarbonT: 0, ppaCarbonT: 0, gridCarbonWeighted: 0,
+    gridMWh: 0, gridChargeMWh: 0, gridPeakMW: 0, nrOutMWh: 0, nrUsedMWh: 0, nrSurMWh: 0, nrSurValue: 0, gridCost: 0, gridCarbonT: 0, ppaCarbonT: 0, gridCarbonWeighted: 0,
     reGenMWh: 0, solarMWh: 0, windMWh: 0, reUsedMWh: 0, curtailMWh: 0, exportMWh: 0, exportRevenue: 0,
     ppaContractMWh: 0, ppaDeliveredMWh: 0, ppaUndeliveredMWh: 0, ppaUndeliveredSpotValue: 0, ppaLimitedMWh: 0, ppaLimitedHours: 0, ppaMslBackMWh: 0,
     bessChargeMWh: 0, bessDischargeMWh: 0, bessLossMWh: 0, socStart: 0, socEnd: 0,
@@ -240,6 +243,9 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
   const respectRH = cfg.respectRunHours;
   const maxRH = cfg.maxRunHours;
   const solarMWp = cfg.solarMWp, solarAvailM = cfg.solarAvailM, windMW = cfg.windMW, windAvailM = cfg.windAvailM;
+  const nrMW = cfg.nrMW || 0, nrGrid = cfg.nrGrid, nrAvailM = cfg.nrAvailM ?? Infinity, nrEndM = cfg.nrEndM ?? 0, nrFlat = cfg.nrProfile === 'flat' ? cfg.nrCF : null;
+  const pNr = cfg.nrProfile === 'solar' ? p.solar : cfg.nrProfile === 'wind' ? p.wind : null;
+  let nrOutMWh = 0, nrUsedMWh = 0, nrSurMWh = 0, nrSurValue = 0;
   const reYield = cfg.reYield ?? 1;
   const bessAvailM = cfg.bessAvailM, exportMW = cfg.exportMW, exportFactor = ctx.inputs.grid.exportFactor;
   const pSolar = p.solar, pWind = p.wind, pPrice = p.price, pCarbon = p.carbon;
@@ -343,6 +349,16 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
       // settlement is not energy taken from the grid). Not in the cost ledger: "PPA hedge (not counted)".
       ppaUndeliveredMWh += (ppaV - ppaUse) * w;
       ppaUndeliveredSpotValue += (ppaV - ppaUse) * pPrice[h] * priceMult * w;
+    }
+
+    // 2b. A nearby renewable plant (work package 33): after on-site solar and wind and the PPA; through the grid it uses
+    // import capacity like the PPA. What the campus does not take stays with the plant (it keeps selling it).
+    if (nrMW > 0 && m >= nrAvailM && m < nrEndM) {
+      const out = nrMW * (nrFlat !== null ? nrFlat : pNr[h]);
+      let take = out < R ? out : R;
+      if (nrGrid) { const c = capPhys < capRem ? capPhys : capRem; take = take < c ? take : c; if (take < 0) take = 0; if (capRem !== Infinity) capRem -= take; }
+      R -= take;
+      nrOutMWh += out * w; nrUsedMWh += take * w; nrSurMWh += (out - take) * w; nrSurValue += (out - take) * pPrice[h] * priceMult * w;
     }
 
     // Firm capacity available this hour (for the BESS shortfall rule)
@@ -544,6 +560,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
     ppaNetworkCost, ppaMslBackMWh, ppaLimitedMWh, ppaLimitedHours, ppaDeliveredMWh, ppaUndeliveredMWh, ppaUndeliveredSpotValue, exportRevenue, exceedMWh, exceedHours, exceedPeakMW,
     grossDemandMWh, netDemandMWh, servedMWh, unmetMWh, unmetHours, unmetPeakMW, unmetLongestH, designDayShortfall, gridMWh, gridChargeMWh, gridPeakMW,
     gridCost, gridCarbonT, ppaCarbonT, reGenMWh, solarMWh, windMWh, reUsedMWh, curtailMWh, exportMWh, bessChargeMWh,
+    nrOutMWh, nrUsedMWh, nrSurMWh, nrSurValue,
     bessDischargeMWh, firmMWh, chpCreditMWh, flexMWh, itMWh, cfeMWh, maxBalanceError,
     flexEvents, flexTrigHours, flexTrigMWh, flexShortMWh, flexShortHours, battRespMWh,
   });

@@ -143,3 +143,51 @@ function PlantUses({ p, val, edit }) {
     </fieldset>
   );
 }
+
+// Nearby renewable plants added from the results (work package 33, OPEN-QUESTIONS 195, 243): their uses and inputs.
+export function RenewablePlantsField({ inputs, update }) {
+  const P = inputs.plants || {};
+  const list = Array.isArray(P.renewables) ? P.renewables : [];
+  if (!list.length) return null;
+  const edits = P.renewEdits || {};
+  const val = (id, k) => (edits[id] && edits[id][k] !== undefined ? edits[id][k] : null);
+  const edit = (id, k, x) => { const e = { ...(edits[id] || {}) }; if (x === null || x === undefined || x === '') delete e[k]; else e[k] = x; update('plants.renewEdits', { ...edits, [id]: e }); update('choices.C23', null); };
+  const remove = (id) => { update('plants.renewables', list.filter((r) => r.id !== id)); update('choices.C23', null); };
+  return (
+    <fieldset className="subgroup" id="renew-plants-field">
+      <legend>Nearby renewable plants in the analysis</legend>
+      <p className="note">Each adds its uses to choice C23: bought (at the price entered, blank = the tool's new-build cost of the type, indicative), leased (once a rent is entered) and a supply contract (once a price is entered). Output follows the country's wind or solar profile scaled to the plant's MW (hydro: flat at the capacity factor), not the plant's own output.</p>
+      {list.map((r) => {
+        const method = val(r.id, 'contractMethod') || 'fixed';
+        return (
+          <details key={r.id} className="plant-detail" open>
+            <summary>{r.name}: {Math.round(r.mw)} MW {String(r.typeLabel || r.type).toLowerCase()}, {Number(r.km).toFixed(1)} km <button type="button" className="chip-btn" aria-label={`Take ${r.name} out of the analysis`} onClick={() => remove(r.id)}>Remove</button></summary>
+            <div className="row2">
+              <NumberField label="Capacity used" unit="MW" value={val(r.id, 'mw')} placeholder={`${r.mw} (listed)`} onCommit={(x) => edit(r.id, 'mw', x)} nullable min={0} />
+              <SelectField label="Route to the campus" value={val(r.id, 'route') || 'wire'} onCommit={(x) => edit(r.id, 'route', x === 'wire' ? null : x)} options={[['wire', 'Private wire'], ['grid', 'Through the public grid']]} />
+            </div>
+            {r.type && r.type.startsWith('hydro') ? <NumberField label="Capacity factor (hydro)" unit="fraction" value={val(r.id, 'capacityFactor')} placeholder="0.5 (judgement)" onCommit={(x) => edit(r.id, 'capacityFactor', x)} nullable min={0} max={1} step={0.01} /> : null}
+            <div className="row2">
+              <NumberField label="Purchase price" unit="€/MW" value={val(r.id, 'buyPricePerMW')} placeholder="New-build cost of the type" onCommit={(x) => edit(r.id, 'buyPricePerMW', x)} nullable min={0} step={10000} />
+              <NumberField label="Rent" unit="€/MW/month" value={val(r.id, 'leasePerMWMonth')} placeholder="Not entered" onCommit={(x) => edit(r.id, 'leasePerMWMonth', x)} nullable min={0} />
+            </div>
+            <div className="row2">
+              <SelectField label="Contract price set by" value={method} onCommit={(x) => edit(r.id, 'contractMethod', x === 'fixed' ? null : x)} options={[['fixed', 'Fixed price'], ['market', 'Wholesale price ± an adder']]} />
+              {method === 'fixed' ? <NumberField label="Contract price" unit="€/MWh" value={val(r.id, 'contractPrice')} placeholder="Not entered" onCommit={(x) => edit(r.id, 'contractPrice', x)} nullable min={0} />
+                : <NumberField label="Adder to the wholesale price" unit="€/MWh" value={val(r.id, 'contractAdder')} placeholder="Not entered" onCommit={(x) => edit(r.id, 'contractAdder', x)} nullable />}
+            </div>
+            <div className="row2">
+              <NumberField label="Contract years" unit="years" value={val(r.id, 'contractYears')} placeholder="The evaluation period" onCommit={(x) => edit(r.id, 'contractYears', x)} nullable min={1} step={1} />
+              <NumberField label="Surplus sold at" unit="€/MWh" value={val(r.id, 'surplusPrice')} placeholder="Hourly wholesale" onCommit={(x) => edit(r.id, 'surplusPrice', x)} nullable min={0} />
+            </div>
+            <div className="row2">
+              <NumberField label="Surplus kept: bought" unit="%" value={val(r.id, 'surplusShareBuy')} placeholder="0" onCommit={(x) => edit(r.id, 'surplusShareBuy', x)} nullable min={0} max={100} />
+              <NumberField label="Surplus kept: leased" unit="%" value={val(r.id, 'surplusShareLease')} placeholder="0" onCommit={(x) => edit(r.id, 'surplusShareLease', x)} nullable min={0} max={100} />
+            </div>
+            <NumberField label="Surplus kept: supply contract" unit="%" value={val(r.id, 'surplusShareContract')} placeholder="0" onCommit={(x) => edit(r.id, 'surplusShareContract', x)} nullable min={0} max={100} />
+          </details>
+        );
+      })}
+    </fieldset>
+  );
+}

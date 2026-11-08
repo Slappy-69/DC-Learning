@@ -13,7 +13,8 @@
 //    decision with the screened and total counts: run flag gen-sampling, and warning
 //    cap-sampling in the run event log. Switching sampling off screens them all.
 
-import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel, existingEntered, plantPowerValues, plantTakeoverValues, plantCandidates, registryValue } from './defaults.js';
+import { parseRenewValue } from './renewplants.js';
+import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel, existingEntered, plantPowerValues, plantTakeoverValues, plantCandidates, registryValue, renewPlants } from './defaults.js';
 import { parsePlantValue, isPlantPower, isTakeover } from './plants.js';
 import { mulberry32, subSeed, shuffle, hashString } from './prng.js';
 import { permanentShortfallCoolings, shortfallAnalysis } from './adequacy.js';
@@ -129,6 +130,8 @@ export const RULES = [
   { id: 'p', name: '(p) A grid connection is taken over only from a plant that offers it',
     detail: 'C21 = a plant\'s grid connection is generated only for a plant within reach whose closure falls within the study period (or that has closed), with a connection to take over.',
     fails: (v, inputs) => isTakeover(v.C21) && !plantSets(inputs).takeover.has(v.C21) },
+  { id: 'w', name: '(w) A nearby renewable plant through the grid needs a grid connection', detail: 'C23 = a nearby renewable plant delivered through the public grid is not generated for an islanded option (work package 33).',
+    fails: (v, inputs) => { const r = parseRenewValue(v.C23); if (!r || v.C1 !== 'islanded') return false; const c = renewPlants(inputs).find((x) => x.id === r.id); return !c || c.route === 'grid'; } },
   // OPEN-QUESTIONS 129: a replacement backup only where the bought plant kept as the backup stops within the period.
   { id: 'r', name: '(r) A replacement backup needs a bought backup plant that stops within the period',
     detail: 'C22 = New standby gensets is generated only when the bought existing plant kept as the backup (C5 = Retained) stops before the end of the evaluation period; otherwise it would repeat C22 = Flag only.',
@@ -184,7 +187,7 @@ export function canonical(v) {
 // C21 (work package 19) is left out of the key while it is None or n/a, so option keys and ids of studies without a
 // takeover are unchanged from before.
 export function choiceKey(v) {
-  return IDS.filter((id) => !((id === 'C21' || id === 'C22') && (v[id] === 'none' || v[id] === NA || v[id] === undefined))).map((id) => `${id}=${v[id]}`).join('|');
+  return IDS.filter((id) => !((id === 'C21' || id === 'C22' || id === 'C23') && (v[id] === 'none' || v[id] === NA || v[id] === undefined))).map((id) => `${id}=${v[id]}`).join('|');
 }
 
 function firstFailingRule(v, inputs) {
@@ -405,7 +408,7 @@ function lhsSample(valid, n, inputs, seed, exclude) {
     for (let i = 0; i < n; i++) arr.push(d[i % d.length]);
     // C21 (work package 19) with no takeover to choose draws nothing from the seeded stream, so the sample of a study
     // without plants is the one drawn before C21 existed.
-    if ((IDS[j] === 'C21' || IDS[j] === 'C22') && d.length === 1) return arr;
+    if ((IDS[j] === 'C21' || IDS[j] === 'C22' || IDS[j] === 'C23') && d.length === 1) return arr;
     return shuffle(arr, rand);
   });
   const validByKey = new Map(valid.map((v) => [choiceKey(v), v]));

@@ -6,7 +6,7 @@ import { plantCandidates, TECH_TICKS, techTicked } from '../engine/defaults.js';
 import { PLANT_DEFAULTS, COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
 import MapPicker from './MapPicker.jsx';
 import WeatherField from './WeatherField.jsx';
-import PlantsField from './PlantsField.jsx';
+import PlantsField, { RenewablePlantsField } from './PlantsField.jsx';
 
 const YM = '^\\d{4}-(0[1-9]|1[0-2])$';
 
@@ -257,6 +257,7 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           <NumberField label="Months from closure to using its connection" unit="months" value={inputs.existing.takeoverLagMonths} onCommit={set('existing.takeoverLagMonths')} path="existing.takeoverLagMonths" inputs={inputs} nullable min={0} step={1} placeholder="12 (default)" />
         </> : null}
         <PlantsField inputs={inputs} norm={norm} update={update} />
+        <RenewablePlantsField inputs={inputs} update={update} />
         <SelectField label="District heating offtake nearby" value={inputs.utilities.districtHeating} onCommit={(v) => { update('utilities.districtHeating', v); update('choices.C15', null); }} path="utilities.districtHeating" inputs={inputs}
           options={[['No', 'No'], ['Yes', 'Yes']]} hint="Heat reuse is not costed in this slice." />
       </Section>

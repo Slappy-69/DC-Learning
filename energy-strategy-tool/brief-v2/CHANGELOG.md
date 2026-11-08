@@ -406,3 +406,4 @@ The owner, 2026-11-08: "Update the app with everything we've discussed and agree
 6. §5.4 / work package 30 (194, 196, 219–221): renewable plants on the map and the results (powerplantmatching, German turbines grouped). Their uses in the analysis (row 195) are not built: row 240.
 7. §4, §8 / work package 31 (181–187): technologies ticked into the search, a first-run box, a "?" on every parameter with T1's numbers.
 8. §5.2 / work package 32 (200, 222–225, 234–235): seven utility warnings in the agreed order; no data bundled yet (row 242).
+9. §5.4 / work package 33 (OPEN-QUESTIONS 195, 243; owner 2026-11-08, "Yes"): a nearby renewable plant in the analysis as choice C23 (bought, leased, supply contract; private wire or through the grid), on the country's profile scaled to its MW.

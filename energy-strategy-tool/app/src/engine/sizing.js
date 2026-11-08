@@ -2,7 +2,8 @@
 // and plain sizing sentences. Every option is sized by the same rules before any check.
 // The grid connection is the offered capacity per period and is never resized.
 
-import { TECH, COOLING_ID, SPATIAL, choiceLabel } from './defaults.js';
+import { TECH, COOLING_ID, SPATIAL, choiceLabel, renewPlants } from './defaults.js';
+import { parseRenewValue, renewLabel } from './renewplants.js';
 import { designDemandByMonth, demandYear, designDayPUE, contractedCap, ctxFor } from './context.js';
 import { NA } from './generator.js';
 import { permittingTriggers, permitRegimes, permitOutlookItem } from './permitting.js';
@@ -603,6 +604,18 @@ export function sizeOption(ctx, v) {
   const ppa = v.C13 === 'none' ? null : { type: v.C13, coverage: Number(v.C14) / 100 };
   if (ppa) sentences.push(`Offsite PPA (${choiceLabel('C13', v.C13).toLowerCase()}): ${v.C14} % of each year's facility consumption (steady state ≈ ${Math.round(ppa.coverage * ssDem.sum).toLocaleString('en-GB')} MWh/yr), delivered over the grid connection and capped by import capacity.`);
 
+  // Nearby renewable plant (C23, work package 33): its MW, profile, route and the months it supplies.
+  let renewPlant = null;
+  const rv = parseRenewValue(v.C23);
+  if (rv) {
+    const c = renewPlants(ctx.inputs).find((x) => x.id === rv.id);
+    if (c) {
+      const endM = rv.mode === 'contract' ? Math.min(ctx.nMonths, Math.round(c.contract.years * 12)) : ctx.nMonths;
+      renewPlant = { id: c.id, name: c.name, mode: rv.mode, mw: c.mw, profile: c.profile, cf: c.cf, route: c.route, availM: 0, endM, cand: c };
+      sentences.push(`Nearby renewable plant: ${renewLabel(c, rv.mode)}, ${c.km.toFixed(1)} km away; output on the country's ${c.profile === 'flat' ? `flat profile at ${Math.round(c.cf * 100)} % of capacity` : `${c.profile} profile`} scaled to ${Math.round(c.mw)} MW.`);
+    }
+  }
+
   // Grid sentence: offered capacity, shortfall at design load per period (§9.2).
   const firmByMonth = new Float64Array(ctx.nMonths);
   for (let m = 0; m < ctx.nMonths; m++) {
@@ -678,7 +691,7 @@ export function sizeOption(ctx, v) {
     coolingId, peakPUE, designMW, avgMW, criticalMW, itMW, check50,
     building: { whitespaceM2: whitespace, gfaM2: gfa, footprintM2: footprint, heightM },
     backup, prime, bridge, bridgeBess, bess, storage, permitOutlook, shortfallBess, reserve, replacementBackup,
-    solarMWp, solarRoofMWp, solarGroundMWp, roofPvOverFreeM2, windMW, windTurbines, ppa,
+    solarMWp, solarRoofMWp, solarGroundMWp, roofPvOverFreeM2, windMW, windTurbines, ppa, renewPlant,
     grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })), cableKm },
     gasConnection,
     area: { grossM2, netM2, landTakeM2, residualM2: netM2 - landTakeM2, parts: { building: footprint, substation: subM2, backup: backupM2, fuel: fuelM2, bess: bessM2, prime: primeM2, bridge: bridgeM2, heatRejection: hrM2, wind: windM2, groundSolar: groundSolarM2 } },

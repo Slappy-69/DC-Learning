@@ -15,6 +15,7 @@ import { monthsBetween } from './dates.js';
 import { nearbyPlants, mergeDuplicates, plantValue, parsePlantValue, PLANT_SOURCE } from './plants.js';
 import { GRID_CHARGE_DATA } from './gridcharges-data.js';
 import { RESEARCH_NOTE } from './countryrules.js';
+import { renewCandidates, renewChoiceValues, renewLabel } from './renewplants.js';
 
 export const LABEL = 'indicative — unverified';
 export const LABEL_SOURCED = 'sourced — not independently checked';
@@ -235,6 +236,8 @@ export const CHOICES = [
   // OPEN-QUESTIONS 129 (owner, 2026-11-02, "C"): when a bought existing plant kept as the backup stops within the period,
   // the option is generated with and without new standby gensets from that month.
   { id: 'C22', name: 'Backup after a bought existing plant stops', values: [['none', 'Flag only'], ['replace', 'New standby gensets from then']] },
+  // Work package 33 (OPEN-QUESTIONS 195, 243): a nearby renewable plant ticked on the results; values added per plant.
+  { id: 'C23', name: 'Nearby renewable plant', values: [['none', 'None']] },
 ];
 export const CHOICE_BY_ID = Object.fromEntries(CHOICES.map((c) => [c.id, c]));
 export function choiceLabel(id, value) {
@@ -242,7 +245,16 @@ export function choiceLabel(id, value) {
   const c = CHOICE_BY_ID[id];
   const v = c && c.values.find((x) => x[0] === value);
   if (v) return v[1];
-  return plantLabel(value) || value;
+  return plantLabel(value) || renewPlantLabel(value) || value;
+}
+// Labels of the nearby renewable plants' C23 values (work package 33), filled when their candidates are built.
+const RENEW_LABELS = new Map();
+function renewPlantLabel(value) { return RENEW_LABELS.get(value) || null; }
+const RENEW_COST = () => ({ solar: TECH.solarGround.p.capexPerKW, wind: TECH.wind.p.capexPerKW });
+export function renewPlants(inputs) {
+  const cs = renewCandidates(inputs, RENEW_COST());
+  for (const c of cs) for (const m of ['contract', 'buy', 'lease']) RENEW_LABELS.set(c.values[m], renewLabel(c, m));
+  return cs;
 }
 
 // Technologies ticked into existence (work package 31; owner 2026-11-07, OPEN-QUESTIONS 181, 182): only what is ticked is
@@ -325,6 +337,7 @@ function defaultChoiceState0(id, inputs) {
     case 'C19': return { state: 'locked', values: ['perPhase'] };
     case 'C20': return { state: 'locked', values: ['none'] };
     case 'C21': return { state: 'open', values: ['none', ...(inputs ? plantTakeoverValues(inputs) : [])] };
+    case 'C23': { if (inputs) renewPlants(inputs); const r = inputs ? renewChoiceValues(inputs, RENEW_COST()) : []; return r.length ? { state: 'open', values: ['none', ...r] } : { state: 'locked', values: ['none'] }; }
     case 'C22': return { state: 'open', values: ['none', 'replace'] };
     default: return { state: 'locked', values: [CHOICE_BY_ID[id].values[0][0]] };
   }
@@ -1321,6 +1334,8 @@ export function buildDefaultInputs(opts = {}) {
     // saved before work package 28 has no list (undefined): every nearby plant stays in, as it was saved.
     ticked: rec('plants.ticked', [], 'ids of the nearby plants ticked into the analysis', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 156, 158): the first run leaves existing plants out; the engineer picks a plant from the drop box on the results.' }),
     // Work package 30 (owner 2026-11-07, OPEN-QUESTIONS 196): renewable plants near the site, no default size or distance.
+    renewables: rec('plants.renewables', [], 'nearby renewable plants ticked into the analysis (snapshots: id, name, type, MW, km)', { basis: 'judgement', ref: '§5.4', note: 'Work package 33 (OPEN-QUESTIONS 195, 243): ticked on the results; each adds its uses to choice C23.' }),
+    renewEdits: rec('plants.renewEdits', {}, 'uses and corrections per renewable plant', { basis: 'judgement', ref: '§5.4', note: 'Supply contract price (fixed, or wholesale ± an adder), purchase price, rent, route, surplus shares; every value blank by default.' }),
     renewMinMW: rec('plants.renewMinMW', null, 'MW, smallest renewable plant listed (blank = none listed)', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 196): the engineer sets both the size and the distance, with no default; no renewable plant appears until both are entered. The bundled list holds plants of 5 MW or more (OPEN-QUESTIONS 240).' }),
     renewRadiusKm: rec('plants.renewRadiusKm', null, 'km from the site (blank = none listed)', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 196).' }),
     edits: rec('plants.edits', {}, 'corrections per plant', { basis: 'judgement', ref: '§5.4', derived: true, note: 'Empty = the values of the bundled list and the defaults, each flagged with its source.' }),
@@ -1364,6 +1379,7 @@ export function normalizeInputs(inputs) {
   out.grid = { perMWInclude: false, perMWCharge: 'by country', lumpSumPerYear: 'by country', flatLoadDiscount: false, dcReducedRate: false, gbFeeInclude: false, gbFeePerMW: null, ...out.grid };
   out.ireland = { derating: {}, ...(out.ireland || {}) };
   out.flagNotes = { byOption: {}, byType: {}, ...(out.flagNotes || {}) };
+  if (out.plants) { if (!Array.isArray(out.plants.renewables)) out.plants.renewables = []; if (!out.plants.renewEdits) out.plants.renewEdits = {}; }
   // Inputs saved before the weather work have none: the synthetic profile.
   if (!out.weather || typeof out.weather !== 'object') out.weather = { source: 'none' };
   out.choices = out.choices || {};

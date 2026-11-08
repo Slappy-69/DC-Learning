@@ -2286,3 +2286,11 @@ Owner, 2026-11-08: "Update the app with everything we've discussed and agreed th
 - B19 (phone): "Nearby plants and utilities" on the results is now a closed disclosure with a one-line heading (the number of gas plants found), so the tabs stay on the first screen; B43 opens it first.
 - B42 (weather): the check waited for "Last run" while the previous run's status was still shown; it now waits for the re-run to start, and compares the active tab's figures as well as the header (with the starter set the leader's score to one decimal can stay the same).
 - Node suite 106/106 locally.
+
+### Work package 33: a nearby renewable plant in the analysis (owner 2026-11-08, "Yes"; OPEN-QUESTIONS 195, 243)
+
+- "Add" beside a renewable plant on the results puts a snapshot in `inputs.plants.renewables` (id, name, type, MW, km); its uses are entered in section 4 ("Nearby renewable plants in the analysis", `inputs.plants.renewEdits`). `src/engine/renewplants.js`: candidates and values; choice **C23** (`rc:` supply contract once priced, `rb:` bought, `rl:` leased once a rent is entered); locked at None without a plant, and left out of the option key and the sample's random stream while None, so other studies are unchanged. Rule (w): a plant through the grid needs a grid connection.
+- Sizing `sz.renewPlant`; dispatch step 2b after the PPA: output = MW × the country's wind or solar profile (hydro flat at its capacity factor); through the grid it uses import capacity; yearly `nrOutMWh`, `nrUsedMWh`, `nrSurMWh`, `nrSurValue` (in the dispatch cache key).
+- Ledger: contract price on what is taken (`contract`), rent (`rental`), purchase in year 0 (capex) and fixed O&M (`fom`); the grid adder on what is taken through the grid (`grid`); the kept share of the surplus sales (`revenue`). Minor flag `renew-plant`: not the plant's own output; how it is priced; route; GWh a year.
+- The "Nearby plants and utilities" box moved into the Options tab (below the tab bar) after browser check B19 failed by 20 px on the second run.
+- Test 65: 50 MW of wind on T1 (Great Britain's profile): 149 GWh a year (34 %), the campus takes 134 GWh under a €60/MWh contract.

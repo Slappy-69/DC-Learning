@@ -25,10 +25,14 @@ export default function NearbyPlantsBox({ inputs, update }) {
       {rn === null ? <p className="note">Enter both the smallest size and the distance to list wind, solar and hydro plants (no default, OPEN-QUESTIONS 196).</p>
         : !rn.length ? <p className="note">No renewable plant of {P.renewMinMW} MW or more within {P.renewRadiusKm} km in the bundled list.</p>
         : <>
-          <ul className="plain small">{rn.slice(0, 20).map((r) => <li key={r.id}>{r.name}: {r.mw.toLocaleString('en-GB')} MW {r.typeLabel.toLowerCase()}, {r.km.toFixed(1)} km{r.dateIn ? `, from ${r.dateIn}` : ''}</li>)}</ul>
+          <ul className="plain small">{rn.slice(0, 20).map((r) => {
+            const inAn = (P.renewables || []).some((x) => x.id === r.id);
+            return <li key={r.id}>{r.name}: {r.mw.toLocaleString('en-GB')} MW {r.typeLabel.toLowerCase()}, {r.km.toFixed(1)} km{r.dateIn ? `, from ${r.dateIn}` : ''}{' '}
+              {inAn ? <span className="note">(in the analysis)</span> : <button type="button" className="chip-btn" aria-label={`Add ${r.name} to the analysis`} onClick={() => { update('plants.renewables', [...(P.renewables || []), { id: r.id, name: r.name, type: r.type, typeLabel: r.typeLabel, mw: r.mw, km: Math.round(r.km * 10) / 10 }]); update('choices.C23', null); }}>Add</button>}</li>;
+          })}</ul>
           {rn.length > 20 ? <p className="note">and {rn.length - 20} more (on the map in section 1).</p> : null}
         </>}
-      <p className="note">Shown on the map and listed here. Their uses in the analysis (supply contract, private wire, buy, lease, surplus sales: OPEN-QUESTIONS 195) are not modelled yet: a renewable plant needs its own hourly output, which the tool does not hold for a named plant (OPEN-QUESTIONS 240). {RENEWABLE_SOURCE.credit}; {RENEWABLE_SOURCE.filter}.</p>
+      <p className="note">Shown on the map and listed here. "Add" puts a plant in the analysis with every use (bought, leased once a rent is entered, a supply contract once a price is entered; by private wire or through the grid); its inputs are in section 4. Its output follows the country's typical wind or solar profile scaled to its MW, not the plant's own output (OPEN-QUESTIONS 195, 243). {RENEWABLE_SOURCE.credit}; {RENEWABLE_SOURCE.filter}.</p>
     </div>
   );
   // Folded by default (2026-11-08): on a phone the box would push the tabs below the first screen (browser check B19).

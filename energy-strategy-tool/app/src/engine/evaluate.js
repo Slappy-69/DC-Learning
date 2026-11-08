@@ -398,6 +398,38 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     }
   }
 
+  // A nearby renewable plant (C23, work package 33, OPEN-QUESTIONS 195, 243): bought (purchase price in year 0, its own
+  // fixed O&M), leased (rent per MW a month) or a supply contract (price per MWh taken); through the grid the per-MWh
+  // grid adder is paid on what the campus takes; the campus keeps the share entered of the surplus the plant sells.
+  let renewInfo = null;
+  const rnp = sz.renewPlant;
+  if (rnp) {
+    const c = rnp.cand;
+    const fomT = rnp.profile === 'solar' ? TECH.solarGround : TECH.wind;
+    const share = Math.max(0, Math.min(100, c.share[rnp.mode] || 0)) / 100;
+    renewInfo = { name: c.name, mode: rnp.mode, mw: rnp.mw, route: rnp.route, outMWh: 0, usedMWh: 0, surMWh: 0, cost: 0, revenue: 0, capex: 0, price: null };
+    if (rnp.mode === 'buy') { addCapex(`Nearby renewable plant bought (${c.name})`, 0, c.buy.pricePerMW * rnp.mw, 0); renewInfo.capex = c.buy.pricePerMW * rnp.mw; }
+    for (let y = 0; y < N; y++) {
+      let mo = 0;
+      for (let m = y * 12; m < y * 12 + 12; m++) if (m >= rnp.availM && m < rnp.endM) mo++;
+      if (!mo) continue;
+      const d = disp.years[Math.min(y, nExp - 1)];
+      const elecEsc = Math.pow(1 + E.elecEscalation, y);
+      const L = ledger[y];
+      let cost = 0;
+      if (rnp.mode === 'contract') {
+        const price = c.contract.method === 'market' ? avgWholesale(ctx) * elecEsc + (c.contract.adder || 0) : c.contract.price || 0;
+        if (y === 0) renewInfo.price = price;
+        cost = (d.nrUsedMWh || 0) * price; L.contract += cost;
+      } else if (rnp.mode === 'lease') { cost = (c.lease.perMWMonth || 0) * rnp.mw * mo; L.rental += cost; }
+      else { cost = (fomT.p.fomPerKW || 0) * 1000 * rnp.mw * (mo / 12); L.fom += cost; }
+      if (rnp.route === 'grid') { const g = (d.nrUsedMWh || 0) * ctx.priceAdder * elecEsc; L.grid += g; cost += g; }
+      const sur = c.surplusPrice != null ? (d.nrSurMWh || 0) * c.surplusPrice * elecEsc : (d.nrSurValue || 0) * elecEsc;
+      const rev = share * sur; L.revenue += rev;
+      renewInfo.outMWh += d.nrOutMWh || 0; renewInfo.usedMWh += d.nrUsedMWh || 0; renewInfo.surMWh += d.nrSurMWh || 0; renewInfo.cost += cost; renewInfo.revenue += rev;
+    }
+  }
+
   // Uses C and D of a nearby plant (work package 29, OPEN-QUESTIONS 177–178, 180, 188–191): the plant keeps selling the
   // capacity the campus holds and does not use, at one flat price (the year's average grid wholesale price unless
   // entered, no export factor), whenever that price beats its running cost; the campus keeps the share the engineer set
@@ -492,6 +524,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     reconciliation: { lcoeTimesEnergy: lcoe * pvEnergy, npv: pvCost, pvEnergy },
     ppaHedge: hedge, // outside the ledger (see above); null without a PPA
     plantIncome, // work package 29: uses C and D of a nearby plant
+    renewInfo, // work package 33: a nearby renewable plant (C23)
     gbFee, // work package 26: Great Britain's commitment fee (null when not ticked or outside Great Britain)
   };
 }
@@ -826,6 +859,13 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
       const how = t.p.contractMethod === 'costPlus' ? `the plant's fuel, carbon and running cost plus a margin of €${t.p.contractMargin}/MWh` : t.p.contractMethod === 'market' ? `the grid's average wholesale price (one flat figure a year, not hourly: OPEN-QUESTIONS 239) ${t.p.contractAdder >= 0 ? 'plus' : 'less'} €${Math.abs(t.p.contractAdder)}/MWh` : `a fixed €${t.p.contractPrice}/MWh`;
       flags.push(flag('plant-contract', 'info', 'Existing plant', `${t.name}: priced at ${how}, about €${contractPrice(ctx, t).toFixed(1)}/MWh in the first year; ${t.p.contractRoute === 'grid' ? `delivered through the public grid, so the grid's per-MWh adder (€${ctx.priceAdder.toFixed(1)}) is added; the contract's MW are not checked against the contracted grid capacity (OPEN-QUESTIONS 239), and the rule of 2026-10-18 applies (no benefit without physical delivery)` : 'delivered by private wire, outside the grid connection, so no grid charges apply; the wire is costed as the connection to the campus'} (OPEN-QUESTIONS 166–168)`, { plant: t.plantKey }));
     }
+  }
+  // Work package 33 (OPEN-QUESTIONS 195, 243): a nearby renewable plant on the country's profile, not its own output.
+  const ri = eco && eco.renewInfo;
+  if (ri) {
+    const yrs = Math.max(1, ctx.inputs.economics.periodYears);
+    const how = ri.mode === 'contract' ? `a supply contract at about €${(ri.price ?? 0).toFixed(1)}/MWh in the first year` : ri.mode === 'buy' ? `bought for €${(ri.capex / 1e6).toFixed(1)} m (${sz.renewPlant.cand.buy.basis}), with its own fixed O&M` : `leased at €${Math.round(sz.renewPlant.cand.lease.perMWMonth).toLocaleString('en-GB')} per MW a month`;
+    flags.push(flag('renew-plant', 'minor', 'Existing plant', `${ri.name}: ${how}, ${ri.route === 'grid' ? `through the public grid (the per-MWh grid adder, €${ctx.priceAdder.toFixed(1)}, is paid on what the campus takes; it uses import capacity)` : 'by private wire, outside the grid connection (no grid charges; the wire itself is not costed: OPEN-QUESTIONS 243)'}. Its output follows the country's typical ${sz.renewPlant.profile === 'flat' ? `flat profile at ${Math.round(sz.renewPlant.cf * 100)} % of capacity (hydro, judgement)` : `${sz.renewPlant.profile} profile`} scaled to ${Math.round(ri.mw)} MW, not this plant's own output: about ${(ri.outMWh / yrs / 1000).toFixed(0)} GWh a year, of which the campus takes ${(ri.usedMWh / yrs / 1000).toFixed(0)} GWh; the plant keeps selling the rest (the campus keeps ${Math.round((sz.renewPlant.cand.share[ri.mode] || 0))} %: €${(ri.revenue / 1e6).toFixed(1)} m over the period). Its output may already be committed to another buyer (OPEN-QUESTIONS 169, 195, 243)`));
   }
   for (const pi of (eco && eco.plantIncome) || []) {
     if (pi.share > 0) flags.push(flag('plant-surplus', 'info', 'Existing plant', `${pi.name}: the plant keeps selling the ${Math.round(pi.capMW)} MW the campus holds and does not use, at one flat price a year (no export factor), when it beats its running cost (€${pi.cost.toFixed(1)}/MWh); the campus keeps ${Math.round(pi.share * 100)} % (entered): €${(pi.revenue / 1e6).toFixed(1)} m over the evaluation period (OPEN-QUESTIONS 177–190)`));

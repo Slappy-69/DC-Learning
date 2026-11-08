@@ -423,7 +423,6 @@ export default function App() {
             <div className="hs-item"><span className="hs-k">Weights</span><span className="hs-v">Cost {(w.cost * 100).toFixed(0)} · Carbon {(w.carbon * 100).toFixed(0)} · TTP {(w.ttp * 100).toFixed(0)} · {penaltyOn ? 'Deliverability (incl. site fit)' : 'Deliv.'} {(w.deliverability * 100).toFixed(0)} %</span></div>
             <div className="hs-item"><span className="hs-k">Unverified defaults</span><span className="hs-v">{unverifiedCount} of {recordCount} default records are <span className="tag tag-unverified">{LABEL}</span>{recordCount - unverifiedCount > 0 ? <> · {recordCount - unverifiedCount} <span className="tag tag-sourced">sourced — not independently checked</span></> : null}</span><span className="hs-sub">The count affecting the leader needs a per-option record map (not in this slice)</span></div>
           </div>
-          <NearbyPlantsBox inputs={inputs} update={update} />
 
           {studyMsg ? <p className="study-msg" role="status" aria-live="polite">{studyMsg}</p> : null}
           <div className="status" role="status" aria-live="polite">
@@ -471,6 +470,7 @@ export default function App() {
                 ))}
               </div>
               <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+                {tab === 'options' ? <NearbyPlantsBox inputs={inputs} update={update} /> : null}
                 {tab === 'options' ? <RankedList run={run} view={view} setView={setView} start={start} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} onCompare={toggleCompare} compareIds={compareIds}
                   summary={<SummaryPanel run={run} sensitivity={latestSensitivity(run) ? latestSensitivity(run).result : null} breakevens={latestBreakevens(run)} monteCarlo={latestMonteCarlo(run)} siteBeta={siteBeta} note={summaryNote} onSaveNote={setSummaryNote} onDiscardNote={() => setSummaryNote(null)}
                     onShowSensitivity={() => { setSensOptionId(null); setTab('sensitivity'); setTimeout(() => document.getElementById('tab-sensitivity')?.focus(), 0); }} open={summaryShown} onToggle={setSummaryShown} />} />

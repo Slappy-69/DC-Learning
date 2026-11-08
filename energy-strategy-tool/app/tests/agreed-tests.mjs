@@ -14,6 +14,8 @@ import { HELP_T1 } from '../src/data/help-t1.js';
 import { nearbyRenewables, RENEWABLE_SOURCE } from '../src/engine/renewables.js';
 import { RENEWABLE_PLANTS } from '../src/data/renewable-plants.js';
 import { scoreOptions } from '../src/engine/scoring.js';
+import { choiceKey } from '../src/engine/generator.js';
+const choiceKeyOf = (o) => choiceKey(o.v);
 import { buildContext } from '../src/engine/context.js';
 import { runModel } from '../src/engine/run.js';
 import { contractedCap } from '../src/engine/context.js';
@@ -313,5 +315,34 @@ export async function agreedTests(test, ctxRuns) {
     const r = ctxRuns.runT1;
     assert.ok(r.options.every((o) => o.flags.some((f) => f.id === 'utilities-near' && f.severity === 'info')), 'flag on every option');
     return line;
+  });
+
+  await test('65. Work package 33: a nearby renewable plant ticked on the results adds its uses to C23 (bought always, leased and a supply contract once priced); its output follows the country\'s profile scaled to its MW; the campus takes it after its own solar and wind; costs per use; through the grid the adder is paid and import capacity used; the flag says it is not the plant\'s own output', () => {
+    const i = referenceT1({ analysisStart: START }); i.settings.generationCap = 60;
+    i.plants.renewables = [{ id: 'w1', name: 'Test wind farm', type: 'wind', typeLabel: 'Wind onshore', mw: 50, km: 5 }];
+    assert.deepEqual(defaultChoiceState('C23', normalizeInputs(i)).values, ['none', 'rb:w1'], 'unpriced: bought only');
+    i.plants.renewEdits = { w1: { contractPrice: 60, leasePerMWMonth: 4000, surplusShareBuy: 100 } };
+    assert.deepEqual(defaultChoiceState('C23', normalizeInputs(i)).values, ['none', 'rc:w1', 'rb:w1', 'rl:w1']);
+    const r = runModel(i);
+    const get = (m) => r.options.find((o) => o.v.C23 === `${m}:w1`);
+    const k = get('rc'), b = get('rb'), l = get('rl');
+    assert.ok(k && b && l, 'every use generated');
+    const yrs = r.inputs ? r.inputs.economics.periodYears : 20;
+    const cf = k.eco.renewInfo.outMWh / (50 * 8760 * yrs);
+    assert.ok(cf > 0.15 && cf < 0.5, `capacity factor ${cf}`);
+    assert.ok(Math.abs(k.eco.renewInfo.cost - k.eco.renewInfo.usedMWh * 60) < 1, 'contract: €60 on what is taken');
+    assert.ok(Math.abs(l.eco.renewInfo.cost - 4000 * 50 * 12 * yrs) < 1, 'lease: rent each month');
+    assert.ok(b.eco.capexLines.some((c) => /Nearby renewable plant bought/.test(c.item)) && b.eco.renewInfo.revenue > 0, 'bought: purchase and surplus kept at 100 %');
+    assert.ok([k, b, l].every((o) => o.flags.some((f) => f.id === 'renew-plant' && /not this plant's own output/.test(f.message))), 'flag');
+    // Through the grid: the adder is paid on what is taken, and an islanded option is not generated with it.
+    const g = JSON.parse(JSON.stringify(i)); g.plants.renewEdits.w1.route = 'grid';
+    const rg = runModel(g);
+    const kg = rg.options.find((o) => o.v.C23 === 'rc:w1');
+    assert.ok(kg && kg.flags.some((f) => f.id === 'renew-plant' && /through the public grid/.test(f.message)), 'grid route');
+    assert.ok(rg.options.every((o) => !(o.v.C1 === 'islanded' && o.v.C23 !== 'none')), 'rule (w)');
+    // A study without renewable plants: C23 locked at None, option keys unchanged (no C23 in the key).
+    const t1 = ctxRuns.runT1;
+    assert.ok(t1.options.every((o) => !/C23/.test(choiceKeyOf(o))), 'keys without C23');
+    return `50 MW wind on the GB profile: ${(k.eco.renewInfo.outMWh / yrs / 1000).toFixed(0)} GWh a year (capacity factor ${(cf * 100).toFixed(0)} %), campus takes ${(k.eco.renewInfo.usedMWh / yrs / 1000).toFixed(0)} GWh under the contract; LCOE contract €${k.eco.lcoe.toFixed(1)}, bought €${b.eco.lcoe.toFixed(1)}, leased €${l.eco.lcoe.toFixed(1)}/MWh`;
   });
 }
