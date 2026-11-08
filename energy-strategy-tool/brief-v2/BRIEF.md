@@ -856,6 +856,8 @@ Reference machine: a 4-core laptop CPU from 2020 or later, 16 GB RAM, current Ch
 
 ---
 
+> **As built, 2026-11-08 (work packages 24 to 32, `feature/agreed-decisions`, not merged):** every decision of OPEN-QUESTIONS 155–235 is built except the uses of a nearby renewable plant in the analysis (row 195, see row 240) and the utility map data (row 242). Claude's readings where a decision left a point open: rows 236–242. See `CHANGELOG.md`, "as-built notes (2026-11-08)".
+
 ## 18. Data sources and default requirements
 
 Every built-in default is stored as:

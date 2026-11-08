@@ -393,3 +393,16 @@ Research and proposals only; nothing in the app or the defaults register changed
 34. Utility map / OPEN-QUESTIONS 234: hydrogen added as a seventh mapped utility, a warning only, after district cooling (owner, 2026-11-07, "Add hydrogen to the utilities"). No open hydrogen pipeline data is bundled until the official map's publishers give permission or OpenStreetMap coverage is checked (further research list, item 5). Not built yet.
 35. Utility map / OPEN-QUESTIONS 235: the hydrogen warning shows planned pipelines as well as built ones, planned ones marked "planned" with the year (owner, 2026-11-07, "Yes"). Not built yet. With this, every question in the research run of November 2026 is answered.
 36. §18 (network charges and levies row) / OPEN-QUESTIONS 202, closed: the owner will not attach Italy's ARERA tables or EirGrid's 2026/27 demand tariffs (owner, 2026-11-07, "No I don't. Skip this one"). Italy's general system charges stay "no published value found"; Ireland's demand transmission charges use the 2025/26 rates, flagged. The research run is closed. Not built yet.
+
+## Revision 5, as-built notes (2026-11-08): work packages 24 to 32, everything agreed in OPEN-QUESTIONS 155–235
+
+The owner, 2026-11-08: "Update the app with everything we've discussed and agreed that wasn't implemented yet. Go uninterrupted. Update the windows app too." Built on `feature/agreed-decisions`, not merged. Details in `app/BUILD-NOTES.md`; Claude's readings where a decision left a point open are OPEN-QUESTIONS 236–242, for the owner to confirm.
+
+1. §5.4, §18 / work package 24 (OPEN-QUESTIONS 160–165, 201–205, 216–218, 233): researched country adders (network + levies) for 12 countries; optional per-MW grid charge on contracted MW, its part taken out of the adder; Great Britain's residual as a lump sum; Germany's flat-load discount tick; data centre tax flags, normal rate by default.
+2. §5.4, §5.6, §18 / work package 25 (226–232): cable cost by voltage band (ACER 2026); gas pipe €2.08 m/km; gas price from the World Bank (July 2026, €55.1/MWh_th); gas and carbon follow the published forecasts; gas engines from the Danish Energy Agency in 2015 €; minimum load 30 % as judgement.
+3. §5.4 / work package 26 (155, 198, 199, 206–215): takeover wording by country with "export is not import"; Ireland's minor flag with the de-rated plant test; Great Britain's commitment fee as a deposit.
+4. §15 / work package 27 (170–176): the engineer's comment on a flag; a lowered permitting flag moves deliverability.
+5. §5.4 / work packages 28 and 29 (156–169, 177–180, 188–193): nearby plants left out of the first run and added from the results; supply contract, surplus sales, standby income, committed-output flag.
+6. §5.4 / work package 30 (194, 196, 219–221): renewable plants on the map and the results (powerplantmatching, German turbines grouped). Their uses in the analysis (row 195) are not built: row 240.
+7. §4, §8 / work package 31 (181–187): technologies ticked into the search, a first-run box, a "?" on every parameter with T1's numbers.
+8. §5.2 / work package 32 (200, 222–225, 234–235): seven utility warnings in the agreed order; no data bundled yet (row 242).
