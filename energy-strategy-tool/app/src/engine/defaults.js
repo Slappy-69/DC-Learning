@@ -1220,6 +1220,8 @@ export function buildDefaultInputs(opts = {}) {
     takeoverCostPerMW: rec('existing.takeoverCostPerMW', null, '€/MW', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.takeoverCostFrac × the extra-high-voltage connection rate.' }),
     takeoverLagMonths: rec('existing.takeoverLagMonths', null, 'months', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.takeoverLagMonths.' }),
   };
+  // The engineer's comments on flags (work package 27, OPEN-QUESTIONS 170–176): applied after the run, no re-run.
+  inputs.flagNotes = rec('flagNotes', { byOption: {}, byType: {} }, 'comments on flags { byOption, byType }', { basis: 'judgement', ref: '§15', note: 'None by default. A comment can mark a flag mitigated and lower its severity; a lowered permitting flag changes the deliverability score (OPEN-QUESTIONS 172–174).' });
   // Ireland's de-rating factors (work package 26, OPEN-QUESTIONS 213): the bundled T-4 table unless the engineer
   // overrides a factor (gas, storage, wind, solar).
   inputs.ireland = { derating: rec('ireland.derating', {}, 'factor overrides { gas, storage, wind, solar }', { basis: 'source', ref: '§5.4', note: 'Empty = the latest T-4 capacity auction table bundled with the release (SEMO 2030/31, 4 August 2026).' }) };
@@ -1269,6 +1271,7 @@ export function normalizeInputs(inputs) {
   // Inputs saved before work package 24 have no per-MW charge settings: unticked.
   out.grid = { perMWInclude: false, perMWCharge: 'by country', lumpSumPerYear: 'by country', flatLoadDiscount: false, dcReducedRate: false, gbFeeInclude: false, gbFeePerMW: null, ...out.grid };
   out.ireland = { derating: {}, ...(out.ireland || {}) };
+  out.flagNotes = { byOption: {}, byType: {}, ...(out.flagNotes || {}) };
   // Inputs saved before the weather work have none: the synthetic profile.
   if (!out.weather || typeof out.weather !== 'object') out.weather = { source: 'none' };
   out.choices = out.choices || {};

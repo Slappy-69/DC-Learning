@@ -11,7 +11,15 @@ const lower = (s) => (/^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : 
 const num = (s) => String(s).trim();
 
 // One line for a flag, in plain words, with its figures. start: the analysis start (months are counted from it).
+import { noteText } from '../engine/flagnotes.js';
+
+// The headline of a flag, with the engineer's comment beside it (work package 27, OPEN-QUESTIONS 176).
 export function flagHeadline(f, start) {
+  const h = flagHeadline0(f, start);
+  const n = noteText(f);
+  return n ? `${h}. ${n}` : h;
+}
+function flagHeadline0(f, start) {
   const m = String(f.message || '');
   const id = String(f.id || '').replace(/:.*/, '');
   let x;

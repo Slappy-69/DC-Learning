@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { FlagWithNote, useFlagNotes } from './FlagNotes.jsx';
+import { annotateFlags, optionNoteKey } from '../engine/flagnotes.js';
 import { rebuildOption } from '../engine/detail.js';
 import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
@@ -112,8 +114,10 @@ export default function OptionDetail({ o: o0, run = null, start, onClose, domina
   // Work package 23: an option outside the best 2,000 keeps a light record; its detail is rebuilt here, with the run's
   // own per-option chain, so every figure is the run's (the first one takes about a second: the context is built once).
   const o = useMemo(() => (o0 && o0.light && run ? rebuildOption(run, o0) : o0), [o0, run]);
+  // Work package 27: the engineer's comments beside each flag (an option rebuilt from a light record gets them here).
+  const fnCtx = useFlagNotes();
   if (o && o.light) return <section className="detail"><p className="note">The detail of this option was not kept (it ranks below the best 2,000).</p></section>;
-  const shownFlags = visibleFlags(o, siteBeta);
+  const shownFlags = visibleFlags(fnCtx ? { ...o, flags: annotateFlags(o.flags, fnCtx.notes, optionNoteKey(o)) } : o, siteBeta);
   const sz = o.sizing;
   const ss = o.dispatch.years[o.dispatch.years.length - 1];
   return (
@@ -210,7 +214,7 @@ export default function OptionDetail({ o: o0, run = null, start, onClose, domina
       <h4>Sizing</h4>
       <ul className="sizing">{sz.sentences.map((s, i) => <li key={i}>{s}</li>)}</ul>
       <h4>Flags ({shownFlags.filter((f) => !f.assumed).length})</h4>
-      <ul className="flags-list">{shownFlags.filter((f) => !f.assumed).map((f, i) => <li key={i} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
+      <ul className="flags-list">{shownFlags.filter((f) => !f.assumed).map((f, i) => <li key={i} className={`sev-${f.severity}`}><span className="sev">{f.severity}{f.originalSeverity && f.originalSeverity !== f.severity ? ` (was ${f.originalSeverity})` : ''}</span> <span className="cat">{f.category}</span> {f.message}<FlagWithNote f={f} o={o} /></li>)}</ul>
       <h4>Assumed defaults ({shownFlags.filter((f) => f.assumed && f.path).length})</h4>
       <p className="small">Values you did not enter that this option uses, with their source. Entering a value removes its flag from every option (§15).</p>
       <ul className="flags-list assumed-list">{shownFlags.filter((f) => f.assumed).map((f, i) => <li key={i} className="sev-info" data-assumed={f.path || 'records'}><span className="sev">info</span> {f.message.replace(/^Assumed /, '')}</li>)}</ul>

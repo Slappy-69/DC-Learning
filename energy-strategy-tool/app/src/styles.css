@@ -726,3 +726,9 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 /* Report details in the inputs panel (work package 21): printed on the PDF's front page only. */
 .report-details { border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 10px; margin: 6px 0 10px; }
 .report-details > summary { cursor: pointer; font-weight: 600; min-height: 28px; display: flex; align-items: center; }
+
+/* Work package 27: the engineer's comment on a flag */
+.flag-note { font-style: italic; }
+.flag-note-btn { margin-left: 0.4em; font-size: 0.85em; }
+.flag-note-editor { display: flex; flex-direction: column; gap: 0.3em; margin: 0.4em 0 0.6em; padding: 0.5em; border: 1px solid var(--border, #ccc); border-radius: 6px; }
+.flag-note-editor textarea { width: 100%; font: inherit; }

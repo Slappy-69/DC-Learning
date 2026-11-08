@@ -2237,3 +2237,10 @@ Owner, 2026-11-08: "Update the app with everything we've discussed and agreed th
 - **Ireland** (198, 210–213): a minor `ireland-leu` flag on every Irish option: the policy (CRU/2025236, EirGrid process paper V3, judicial review) and the de-rated test at full build: the option's largest contracted grid MW ÷ 0.975 against firm plant, retained bridging plant, battery, solar and wind × the bundled 2030/31 T-4 factors; standby gensets do not count. Factors can be overridden in section 4 when the pin is in Ireland (`inputs.ireland.derating`). OPEN-QUESTIONS 238 for the readings.
 - **Great Britain's commitment fee** (199, 206–209): `grid.gbFeeInclude` (off) and `grid.gbFeePerMW` (blank); a deposit in the new ledger column `deposit`, paid in year 0 and returned in the year each MW of contracted capacity comes; it enters the capex present value, so its cost is the money tied up. Flag `grid-gb-fee` (minor) says stage-by-stage return is not confirmed. Great Britain only, 40 MW or more (238).
 - **Test 58.**
+
+### Work package 27: the engineer's comment on a flag
+
+- `src/engine/flagnotes.js`: notes in `inputs.flagNotes` (`byOption` keyed by the option's choice key, `byType` by flag id); applied after the run (no re-run: `flagNotes` is left out of the compute key), on copies in `App.jsx`'s scored run. A note can carry a comment, "mitigated" and a lower severity (never higher). A lowered permitting flag moves the deliverability score by the penalty difference (8 − 3 = 5 points from major to minor), and the options are rescored, so the ranking can move (OPEN-QUESTIONS 173). Adequacy and resilience results never change (174, 175).
+- Screen: each flag in the option panel has "Add comment" (comment, mitigated, severity no higher than raised, "apply to every option with this flag"); the severity shows "(was major)" when lowered.
+- Report: the comment prints beside the flag in sections 3 and 6 (through `flagHeadline`) and in Appendix F, with the original and lowered severity (176).
+- Test 59.

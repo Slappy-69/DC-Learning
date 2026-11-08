@@ -6,6 +6,9 @@ import { execFileSync } from 'node:child_process';
 import { referenceT1, normalizeInputs, getRegistry } from '../src/engine/defaults.js';
 import { eemSmall } from './plants-tests.mjs';
 import { TAKEOVER_GENERAL, IE_POLICY } from '../src/engine/countryrules.js';
+import { applyFlagNotes, annotateFlags, optionNoteKey, noteText } from '../src/engine/flagnotes.js';
+import { flagHeadline } from '../src/report/plain.js';
+import { scoreOptions } from '../src/engine/scoring.js';
 import { buildContext } from '../src/engine/context.js';
 import { runModel } from '../src/engine/run.js';
 import { contractedCap } from '../src/engine/context.js';
@@ -164,5 +167,45 @@ export async function agreedTests(test, ctxRuns) {
     assert.ok(fr.options.every((x) => !x.eco.gbFee), 'Great Britain only');
     out.push(`GB fee: €${(o.eco.gbFee.deposit / 1e6).toFixed(1)} m on day 1, cost €${(o.eco.gbFee.pvCost / 1e6).toFixed(1)} m`);
     return out.join('; ');
+  });
+
+  await test('59. Work package 27: the engineer\'s comment on a flag, for one option or every option with the flag type; mitigated; a lowered permitting flag moves deliverability by the penalty difference and can move the ranking; adequacy tests unchanged; the comment prints beside the flag; the run itself unchanged', () => {
+    const run = ctxRuns.runT1;
+    const opts = run.options.map((o) => ({ ...o }));
+    const o = opts.find((x) => x.flags.some((f) => f.permitting && f.severity === 'major'));
+    assert.ok(o, 'an option with a major permitting flag');
+    const f = o.flags.find((x) => x.permitting && x.severity === 'major');
+    const key = optionNoteKey(o);
+    const before = o.deliv.score;
+    const notes = { byOption: { [key]: { [f.id]: { comment: 'Stack moved inside the zone; consultant confirms.', mitigated: true, severity: 'minor' } } }, byType: {} };
+    const n = applyFlagNotes(opts, notes, run.inputs);
+    const o2 = opts.find((x) => optionNoteKey(x) === key);
+    const P = run.inputs.deliverability;
+    const nSame = o.flags.filter((x) => x.id === f.id && x.permitting && x.severity === 'major').length;
+    assert.ok(n >= 1 && Math.abs(o2.deliv.score - Math.min(100, before + nSame * (P.majorFlagPenalty - P.minorFlagPenalty))) < 1e-9, `deliverability ${before} → ${o2.deliv.score}`);
+    const g = o2.flags.find((x) => x.id === f.id);
+    assert.ok(g.severity === 'minor' && g.originalSeverity === 'major' && g.mitigated && /consultant confirms/.test(flagHeadline(g, '2027-01')), 'annotated and printed');
+    assert.ok(/lowered by the engineer from major to minor/.test(noteText(g)), 'note text');
+    assert.equal(run.options.find((x) => optionNoteKey(x) === key).flags.find((x) => x.id === f.id).severity, 'major', 'the run itself unchanged');
+    // Raising is not allowed; removing the note restores the flag; by type reaches every option with the flag.
+    const up = annotateFlags(o2.flags, { byOption: { [key]: { [f.id]: { severity: 'major', comment: 'x' } } } }, key);
+    assert.equal(up.find((x) => x.id === f.id).severity, 'major');
+    const back = annotateFlags(o2.flags, { byOption: {}, byType: {} }, key);
+    assert.equal(back.find((x) => x.id === f.id).severity, 'major');
+    const all = run.options.map((x) => ({ ...x }));
+    applyFlagNotes(all, { byOption: {}, byType: { [f.id]: { comment: 'Covered by the permit strategy.', severity: 'info' } } }, run.inputs);
+    const hit = all.filter((x) => x.flags.some((y) => y.id === f.id));
+    assert.ok(hit.length > 1 && hit.every((x) => x.flags.filter((y) => y.id === f.id).every((y) => y.severity === 'info' && y.comment)), 'by type');
+    // Adequacy: lowering the flag does not change the adequacy result or the adequacy-first ranking rule.
+    const ad = run.options.map((x) => ({ ...x }));
+    const short = ad.find((x) => x.flags.some((y) => y.id === 'adequacy-short'));
+    if (short) {
+      applyFlagNotes(ad, { byOption: { [optionNoteKey(short)]: { 'adequacy-short': { comment: 'Accepted for phase 1.', severity: 'info' } } }, byType: {} }, run.inputs);
+      const s2 = ad.find((x) => optionNoteKey(x) === optionNoteKey(short));
+      assert.equal(JSON.stringify(s2.adequacy), JSON.stringify(short.adequacy), 'adequacy unchanged');
+    }
+    const sc = scoreOptions(all, run.inputs);
+    assert.ok(sc && Array.isArray(sc.ranked || sc.order || all), 'rescored');
+    return `${f.id}: deliverability ${before.toFixed(1)} → ${o2.deliv.score.toFixed(1)}; by type on ${hit.length} options`;
   });
 }

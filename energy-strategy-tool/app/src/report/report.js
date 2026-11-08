@@ -26,6 +26,7 @@ import { nearestFlips, gridDateAt } from '../engine/breakeven.js';
 import { itInstalledByMonth, gridCapByMonth, monthOf } from '../engine/context.js';
 import { recommendations, gapFacts, runnerUp } from '../engine/recommend.js';
 import { flagHeadline, inputName, inputApplies } from './plain.js';
+import { noteText } from '../engine/flagnotes.js';
 import { ensureDetail, detailIds } from '../engine/detail.js';
 import { GUARDRAIL, sig, money, monthLabel, pct, perMWh, cur, displayCurrency } from '../format.js';
 
@@ -612,7 +613,7 @@ export function buildReport(run0, view = {}) {
     doc.heading(`#${c.o.rank} ${c.o.name}`, 3);
     if (!fl.length) { doc.para('No flags.', { size: 8.5, color: MUTED }); continue; }
     const order = { major: 0, minor: 1, info: 2 };
-    doc.table([{ label: 'Severity', w: 0.55 }, { label: 'Category', w: 0.8 }, { label: 'Flag', w: 3.6 }], fl.slice().sort((a, b) => (order[a.severity] ?? 3) - (order[b.severity] ?? 3)).map((f) => [f.severity, f.category || '', f.message]), { size: 6.8, headSize: 7.3, headFill: HEAD_FILL });
+    doc.table([{ label: 'Severity', w: 0.55 }, { label: 'Category', w: 0.8 }, { label: 'Flag', w: 3.6 }], fl.slice().sort((a, b) => (order[a.severity] ?? 3) - (order[b.severity] ?? 3)).map((f) => [f.originalSeverity && f.originalSeverity !== f.severity ? `${f.severity} (was ${f.originalSeverity})` : f.severity, f.category || '', noteText(f) ? `${f.message} ${noteText(f)}` : f.message]), { size: 6.8, headSize: 7.3, headFill: HEAD_FILL });
   }
   if (run.runFlags && run.runFlags.length) {
     doc.heading('Run notes', 3);

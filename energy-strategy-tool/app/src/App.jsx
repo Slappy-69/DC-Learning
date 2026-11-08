@@ -17,7 +17,8 @@ import { buildReport, reportFileName } from './report/report.js';
 import { saveFile, saveRefusal, hostDownloads } from './saveFile.js';
 import { useCompute } from './useCompute.js';
 import { withDetail } from './engine/detail.js';
-import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount, studyFile, studyFileName, readStudyFile, compareWithSaved, hashInputs } from './engine/index.js';
+import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount, studyFile, studyFileName, readStudyFile, compareWithSaved, hashInputs, applyFlagNotes } from './engine/index.js';
+import { FlagNotesContext } from './components/FlagNotes.jsx';
 import { viewSetting, withoutSiteFilters } from './engine/view.js';
 import { UnverifiedTag } from './components/Field.jsx';
 import { scoreOptions, effectiveWeights, applyView } from './engine/scoring.js';
@@ -44,7 +45,8 @@ function setIn(obj, path, val) {
 }
 
 function computeKeyOf(inputs) {
-  const { weights, ...rest } = inputs;
+  const { weights, flagNotes, ...rest } = inputs; // flag comments are applied after the run (work package 27)
+  void flagNotes;
   const s = { ...rest.settings };
   delete s.costMetric; delete s.carbonMetric; delete s.rankCompliantFirst; delete s.absoluteScaling; delete s.hideDominated;
   // The display currency (work package 1) converts the figures shown; it never needs a re-run.
@@ -163,11 +165,13 @@ export default function App() {
     // Dominance depends on the cost and carbon measures, not the weights: kept from the run when those match.
     const rs = compute.run.inputs.settings || {};
     const keepDominance = rs.costMetric === inputs.settings.costMetric && rs.carbonMetric === inputs.settings.carbonMetric && compute.run.options.every((o) => 'dominatedBy' in o);
-    r.scoring = scoreOptions(r.options, normalizeInputs(inputs), { keepDominance });
+    // The engineer's comments on flags (work package 27): applied to copies, a lowered permitting flag moves deliverability.
+    const nf = applyFlagNotes(r.options, inputs.flagNotes, normalizeInputs(inputs));
+    r.scoring = scoreOptions(r.options, normalizeInputs(inputs), { keepDominance: keepDominance && !nf });
     r.sortedFigures = sortedFigures;
-    r.inputs = { ...r.inputs, weights: inputs.weights, settings: { ...r.inputs.settings, costMetric: inputs.settings.costMetric, carbonMetric: inputs.settings.carbonMetric, rankCompliantFirst: inputs.settings.rankCompliantFirst } };
+    r.inputs = { ...r.inputs, flagNotes: inputs.flagNotes, weights: inputs.weights, settings: { ...r.inputs.settings, costMetric: inputs.settings.costMetric, carbonMetric: inputs.settings.carbonMetric, rankCompliantFirst: inputs.settings.rankCompliantFirst } };
     return r;
-  }, [compute.run, inputs.weights, inputs.settings.costMetric, inputs.settings.carbonMetric, inputs.settings.rankCompliantFirst]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [compute.run, inputs.weights, inputs.flagNotes, inputs.settings.costMetric, inputs.settings.carbonMetric, inputs.settings.rankCompliantFirst]); // eslint-disable-line react-hooks/exhaustive-deps
   // Work package 23 (owner 2026-11-06, "Keep detail for the top 2,000"): options below the best 2,000 hold light records.
   // Those the screens read in full (the top 50, the strategy cards, the options on the Dispatch, Site, Sensitivity and
   // Compare tabs) are rebuilt here; an option opened further down the list is rebuilt by its detail panel.
@@ -334,6 +338,20 @@ export default function App() {
       ) : null}
     </>
   ) : null;
+  // The engineer's comments on flags (work package 27): read and set from any option panel.
+  const flagNotesCtx = useMemo(() => ({
+    notes: inputs.flagNotes || { byOption: {}, byType: {} },
+    setNote: (key, flagId, note, toType) => setInputs((cur) => {
+      const fn = cur.flagNotes || { byOption: {}, byType: {} };
+      const byOption = { ...(fn.byOption || {}) }, byType = { ...(fn.byType || {}) };
+      const own = { ...(byOption[key] || {}) };
+      const empty = !note || !(note.comment || note.mitigated || note.severity);
+      if (toType) { if (empty) delete byType[flagId]; else byType[flagId] = note; delete own[flagId]; }
+      else if (empty) delete own[flagId]; else own[flagId] = note;
+      if (Object.keys(own).length) byOption[key] = own; else delete byOption[key];
+      return { ...cur, flagNotes: { byOption, byType } };
+    }),
+  }), [inputs.flagNotes]); // eslint-disable-line react-hooks/exhaustive-deps
   const foldProgress = narrow && compute.status === 'done';
   const foldSummary = narrow && !!run;
   const prog = compute.progress;
@@ -343,6 +361,7 @@ export default function App() {
   ].filter(Boolean).join(' · ');
 
   return (
+    <FlagNotesContext.Provider value={flagNotesCtx}>
     <div className="app">
       <a className="skip" href="#results">Skip to results</a>
       {run ? <a className="skip" href={`#tradeoffs-chart`} onClick={skipToChart}>Skip to trade-offs chart</a> : null}
@@ -471,5 +490,6 @@ export default function App() {
         <p className="sub">Not built yet: parallel coordinates, choice-impact and radar charts, the rest of the tornado drivers, scenarios, manual layout editing, 2.5D massing, map tiles and underlays, exports, a range for every numeric input in the Monte Carlo, an automatic Monte Carlo. Site layouts and noise figures are concept-stage proxies. PPA settlement counts only on PPA energy delivered over the grid connection. Profiles are synthetic and seeded; every default is indicative — unverified.</p>
       </footer>
     </div>
+    </FlagNotesContext.Provider>
   );
 }

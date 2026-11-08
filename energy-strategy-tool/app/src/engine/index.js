@@ -1,5 +1,6 @@
 // Public engine API (pure functions, no UI).
 export * from './defaults.js';
+export * from './flagnotes.js';
 export * from './weather.js';
 export * from './generator.js';
 export * from './scoring.js';
