@@ -153,9 +153,11 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - H1. Set the adder to network + levies and taxes for DE, NL, PT, FI, SE, DK, CH, IE now, or after the rest are researched? **Answered 2026-11-07 by the owner: "Wait for all the research is done before implementing" (OPEN-QUESTIONS 201).**
 - H2. Show data centre tax rules (FR reduced rate, FI change on 1 Jul 2026, SE removal, GB CCA discount, NO ended rate) as flags on the options? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 204).** The owner also asked for the local website that mentions each tax: done in `data-centre-tax-rules-2026-11.md`.
 - H2b. (New, to ask later.) Where the rate depends on conditions (FR, GB), which is the default: the reduced rate, or the normal rate until the engineer ticks that the conditions are met? Recommendation: normal rate by default.
-- H3. GB: use levies from a secondary guide (about £78/MWh), or wait until each is read from its issuing body?
+- H3. GB: use levies from a secondary guide (about £78/MWh), or wait until each is read from its issuing body? **Answered 2026-11-07 by the owner: "Yes", use the guide's figures labelled "sourced — not independently checked" (OPEN-QUESTIONS 205).**
 
 ## Where the next run starts
+
+**Owner, 7 Nov 2026, 23:14 local (OPEN-QUESTIONS 205):** Great Britain's levies are used from the guide, labelled. Next question: C1.
 
 **Owner, 7 Nov 2026, 22:15 local (OPEN-QUESTIONS 204):** data centre tax rules are shown as flags ("Yes"), and the notes must name the local website for each tax: done in `data-centre-tax-rules-2026-11.md` (impots.gouv.fr and BOFiP, Vero.fi, Skatteverket, Skatteetaten and Stortinget, GOV.UK). Next question to ask, one at a time: H3 (Great Britain levies: secondary guide or issuing bodies), then H2b, then the rest of the open list.
 
