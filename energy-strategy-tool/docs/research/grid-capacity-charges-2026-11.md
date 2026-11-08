@@ -55,7 +55,7 @@ Per-MW figures are yearly, worked out from the published unit where needed (show
 - **A per-MW charge on contracted capacity exists in most countries, but it is not the whole network bill.** Many countries split network costs between a contracted charge, a charge on measured peaks and a per-MWh part. Charging the tool's contracted MW with only the contracted line, and leaving the rest in `grid.priceAdder`, avoids double counting.
 - **Eight countries charge only on measured demand:** Germany, Croatia, Norway and Iceland clearly, and as read Greece, Switzerland, Austria and Luxembourg; for a flat campus the measured peak is close to the contracted capacity, but not equal to it.
 - **Three have no capacity charge for consumption** (Finland, Romania, Bulgaria), and France's 400 kV level has none.
-- **Great Britain's residual is fixed per site**, not per MW (question A3).
+- **Great Britain's residual is fixed per site**, not per MW (question A3). **Answered 2026-11-07 by the owner: enter it as a yearly lump sum (OPEN-QUESTIONS 217).**
 - **The largest contracted charges found** are the Netherlands (€49,280–65,620 per MW), Czechia (about €50,000 at 2025 prices), Italy (€29,397), Spain at 110–132 kV (€27,527), Ireland (€24,116) and Slovakia (€22,217).
 
 
