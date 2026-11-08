@@ -407,3 +407,7 @@ The owner, 2026-11-08: "Update the app with everything we've discussed and agree
 7. §4, §8 / work package 31 (181–187): technologies ticked into the search, a first-run box, a "?" on every parameter with T1's numbers.
 8. §5.2 / work package 32 (200, 222–225, 234–235): seven utility warnings in the agreed order; no data bundled yet (row 242).
 9. §5.4 / work package 33 (OPEN-QUESTIONS 195, 243; owner 2026-11-08, "Yes"): a nearby renewable plant in the analysis as choice C23 (bought, leased, supply contract; private wire or through the grid), on the country's profile scaled to its MW.
+
+## Revision 5, decision (2026-11-08): resilience gates the ranking like power
+
+The owner, 2026-11-08, after the full review of the options and ranking (OPEN-QUESTIONS 244): "Gate resilience like power". Options that do not meet the resilience requirement rank below every option that meets it; within each group the weighted score decides; scores do not change. This is a second exception to principle 5 (flag, never enforce), recorded by the owner, and it amends principle 9 (resilience was "a requirement, not a weight"; it is now also a ranking gate). Not yet built and not yet in the brief text: the change is on `feature/resilience-gate`, to be built and merged only on a further written yes. The existing "Rank requirement-compliant options first" setting (§11, off by default) is the same gate in a weaker form, to be reviewed when this is built.
