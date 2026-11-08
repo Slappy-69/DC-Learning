@@ -113,6 +113,8 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - D: standby gensets that never trade do not count towards Ireland's de-rated test (the policy asks for market plant without run-hour limits).
 - D: the 8-hour storage de-rating column of the 2030/31 T-4 pack read the same as 2029/30; marked for checking against the PDF.
 
+**Double-counting check (owner's question, 7 Nov 2026, 23:12 local).** The tool's hourly grid price is wholesale only and the adder is added on top (`defaults.js` comment: "price (wholesale €/MWh), adder (non-commodity €/MWh)"; brief §5.4), so the levies are not in the price. Two places still need a check before anything is built: (1) Ireland: EirGrid's System Services Charge (€26.5–29.1/MWh, in the network part) and SEMO's imperfections charge (€18.81/MWh, in the levies part) are taken as two different bills; the two documents were not read side by side. (2) The country price profiles are synthetic and calibrated to indicative annual figures (GB 95, IE 110 €/MWh, "indicative — unverified"); their calibration to a wholesale figure should be confirmed when the grid price source record is filled. Per-MW parts (for example GB TNUoS, FR capacity mechanism) are covered by OPEN-QUESTIONS 203.
+
 ## Questions for the owner
 
 (Anything the owner must decide, gathered as the run goes.)
