@@ -140,7 +140,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - G2. Each utility as a default distance that drives a cost (electricity, gas) or only as a flag (water, telecoms, heat)? **Answered 2026-11-07 by the owner: all six utilities are warnings only; no mapped distance changes a cost (OPEN-QUESTIONS 223).**
 - G3. ODbL data (OpenStreetMap, PyPSA-Eur network) bundled as separate files in the public repository and the Windows program: acceptable? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 224).**
 - G4. Build a release script for OpenStreetMap extracts (needs a machine that can reach Geofabrik)? **Answered 2026-11-07 by the owner: "Not yet" (OPEN-QUESTIONS 225).**
-- F1. Approve ACER 2026 as the source for cable route costs, split by voltage band?
+- F1. Approve ACER 2026 as the source for cable route costs, split by voltage band? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 226).**
 - F2. Keep the network adders unchanged until levies are researched (proposed), or lower them now? **Answered 2026-11-07 by the owner (with H1): wait until all the research is done (OPEN-QUESTIONS 201).**
 - F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km?
 - F4. Gas price: accept the Dutch TTF hub price (press-reported, dated) as the "latest dated price" beside the 2025 average (€42.9)? TTF closed at €85.6 on 6 Nov 2026.
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:40 local (OPEN-QUESTIONS 225):** no OpenStreetMap release script for now. Part G is done. Next question: F1.
+**Owner, 7 Nov 2026, 23:41 local (OPEN-QUESTIONS 226):** the grid cable cost comes from ACER by voltage band. Next question: F3.
+
+**Owner, 7 Nov 2026, 23:40 local (OPEN-QUESTIONS 225):** no OpenStreetMap release script for now. Part G is done.
 
 **Owner, 7 Nov 2026, 23:39 local (OPEN-QUESTIONS 224):** ODbL data may be bundled as separate files with credit.
 

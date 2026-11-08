@@ -142,7 +142,7 @@ Grid connection date and capacity defaults by country (no published table; judge
 
 ## Questions for the owner (copied to the progress file)
 
-1. Approve ACER 2026 as the source for cable route costs, split by voltage band?
+1. Approve ACER 2026 as the source for cable route costs, split by voltage band? **Answered 2026-11-07 by the owner: yes (OPEN-QUESTIONS 226).**
 2. Keep the network adders unchanged until levies are researched (proposed), or lower them now to the network part plus a placeholder for levies?
 3. Gas connection pipe: keep €0.8 m/km as judgement with the ACER flag, or move to the ACER median €2.08 m/km?
 4. Gas price: accept the Dutch TTF hub price, as reported by the press with its date, as the "latest dated price" shown beside the 2025 average? (The walkthrough says an exchange source needs the owner's approval.)
