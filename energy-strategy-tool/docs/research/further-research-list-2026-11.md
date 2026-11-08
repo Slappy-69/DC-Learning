@@ -36,3 +36,11 @@ Items the owner asked to research later. They do not block the questions being a
 
 **What is needed:** where district cooling networks exist and whether a data centre can buy cooling from or reject heat to them; open data on network locations (city and utility maps, EU heating and cooling mapping layers such as the Heat Roadmap Europe and Hotmaps layers, OpenStreetMap tagging); the licence and coverage of each; cooling-water sources that could serve the same purpose (seas, rivers, lakes, aquifers); and how the tool would use it (a flag on the cooling options, as proposed for district heating).
 
+## 4. An index to raise the agency's 2015-euro costs to today's prices
+
+**Follows the owner's answer of 2026-11-07** (OPEN-QUESTIONS 231, "As published": the values are used as published for now).
+
+**Why:** the Danish Energy Agency's engine and turbine costs (and its cable and substation cross-checks, if used) are in 2015 euros, and the tool shows them flagged as "not raised for inflation". A suitable index would let the tool raise them in a labelled step.
+
+**What is needed:** an official, free, dated index from 2015 to the latest month: for example a euro-area construction cost or capital goods price index (Eurostat), or a producer price index for machinery and electrical equipment; which index fits plant capex and which fits operating costs; the licence and update frequency; and how big the difference is against a general consumer price index. The result should come back as a proposal for the owner to approve, with the source named.
+
