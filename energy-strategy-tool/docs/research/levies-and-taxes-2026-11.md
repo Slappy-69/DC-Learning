@@ -299,6 +299,20 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 
 - **Third pass (8 November 2026):** France's normal excise for businesses above 250 kVA is confirmed at **€26.58/MWh from 1 Feb 2026 and €26.35 from 1 Aug 2026** (EDF, 15 Sep 2026, https://www.edf.fr/entreprises/decryptages/normes-et-reglementations/taxes-et-contributions-electricite-des-entreprises-evolutions-2026). Hungary: no regulated KÁT rate for large users was found; as a cross-check, industrial users of 70–150 GWh a year paid **€0.163/kWh net** in the second half of 2024, the EU's fourth highest (Xpatloop citing Eurostat, 13 May 2025). Italy's general system charges, Greece at high voltage, Luxembourg's electricity tax and Estonia's 2026 renewables fee were searched again without a readable value.
 
+## Check of five random new entries (8 November 2026)
+
+Five entries were drawn at random (seed 20261108) from the 54 values added after the first summary, in this note and in the batch 3 proposals, and each was read again at its source.
+
+| Entry | Recorded | Source says | Result |
+|---|---|---|---|
+| CY public service obligation charge | €0.51/MWh from 1 Jan 2025 | "from €0,00102/kWh to €0,00051/kWh from 1 January 2025" (EAC) | Matches |
+| GB Feed-in Tariff levy | about £7–9/MWh | "It remains in the 0.7-0.9p/kWh region" (Energy Advice Hub) | Matches |
+| GR renewables levy (ETMEAR), MV industrial | 0.001 €/kWh, unclear | Row "4,592 - 63,789 0,001 4,14 για > 13GWh/έτος …"; column alignment lost | Matches as recorded (still unclear). The row also shows lower values for users above 13 GWh a year (4.14 and 2.47 against 6.91 and 8.78), which cannot be assigned to a charge without the original table |
+| CY renewables and energy saving fund fee | 0.5 cent/kWh, 2025 | "a consumption fee of 0.5 euro-cent per kilowatt-hour" (Fast Forward, 10 Oct 2025) | Matches |
+| PL electricity excise | PLN 5/MWh since 1 Jan 2019 | "z 20 zł na 5 zł za megawatogodzinę (MWh)", "Obowiązujące od 1 stycznia 2019 r." | Matches (2026 still not confirmed) |
+
+All five match as recorded. This is a spot check by the same model that did the research, not an independent check.
+
 ## Not researched in this pass (next)
 
 **Searched, no usable value found:** Lithuania (only household items and a 2012 rate), Iceland (the law could not be read) and Malta (regulated all-in tariff). Croatia, Slovenia and Bulgaria were found on a second search (in part). Cyprus and Latvia were added later the same day (part); Iceland (law not reachable) and Malta (regulated all-in tariff) gave no value. Next, the gaps named in the table, above all Hungary's KÁT charge for large users, Poland's network rates and excise, Greece's high voltage levies, Luxembourg's electricity tax and Estonia's renewables fee; and the earlier gaps (Italy's general system charges, Ireland's capacity charges, France's capacity mechanism, Austria's renewables contribution, Norway's data centre rate). Eurostat's breakdown of taxes and levies for the largest industrial band would be a quick cross-check for the EU countries, but its data service could not be reached from this session.

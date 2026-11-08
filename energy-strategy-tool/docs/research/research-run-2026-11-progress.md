@@ -151,6 +151,8 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
+**8 Nov 2026 (after the usage limit reset):** done: the Danish Energy Agency's gas engine and 5–40 MW turbine sheets (turbine proposals revised to "keep as judgement"); France's excise confirmed; Hungary cross-check; escalation sources (World Bank April 2026, TYNDP 2026); NOAA's ISD found retired (GHCNh proposed); five random new entries checked, all match as recorded (see the levies note). **Gaps that remain need documents this session cannot read or the owner's input:** ARERA's general system charges tables (Italy), Svenska kraftnät's 2026 price list, EirGrid's 2026/27 demand tariffs, PSE's rate table (Poland), Iceland's law (althingi.is refuses), Greece at high voltage, Hungary's KÁT rate for large users, Luxembourg's electricity tax, Estonia's 2026 renewables fee, Lithuania and Malta; and judgement items (grid connection date defaults, country gas spreads, an electricity price forecast by country).
+
 **After the run (7 Nov 2026, evening):** the owner asked to carry on until all the research is done (OPEN-QUESTIONS 201). Done since: levies for all 31 countries (second pass included), Part A second pass, defaults batch 3 second set. The session hit the 5-hour usage limit at about 21:00 UTC while opening the Danish Energy Agency's catalogue (gas engine chapter, https://ens.dk/media/3283/download). Next, in order: that chapter; Hungary's KÁT for large users; Italy's general system charges (ARERA tables 227/2026 A and 588/2025 B); Greece at high voltage; Luxembourg's electricity tax; country gas spreads; escalation sources; NOAA cleaning; then the summaries and a check of the new figures against their sources.
 
 
