@@ -126,7 +126,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - A1. Countries that charge on measured peak (DE today, PT peak hours, NL monthly maximum, GB Triads): charge the per-MW line on the option's contracted grid MW anyway (as decided in OQ 162), or on its peak import?
 - A2. Discounts for large flat loads (DE bandload, ES/PT electro-intensive): leave out, offer as a tick, or apply by default?
 - A3. GB's residual is fixed per site, not per MW: enter it as a yearly lump sum, or divide by the contracted MW?
-- A4. Where the network bill has both a contracted line and a peak line (NL, BE, PT), should the tick carry only the contracted line (the rest stays in the per-MWh adder), or both?
+- A4. Where the network bill has both a contracted line and a peak line (NL, BE, PT), should the tick carry only the contracted line (the rest stays in the per-MWh adder), or both? **Answered 2026-11-07 (OPEN-QUESTIONS 203): the adder holds everything; the per-MW part, both lines, moves to the per-MW charge when ticked.**
 - A5. Latvia charges on transformer capacity, usually above the contracted MW: accept the understatement, or add a transformer factor?
 - E1. Renewable plant source: powerplantmatching (recommended), OpenStreetMap, or both?
 - E2. Group German wind turbines into farms at build time (a judgement distance), or show them turbine by turbine?
