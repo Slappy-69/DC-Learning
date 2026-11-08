@@ -97,6 +97,8 @@ The owner asked for better sources than a news site's daily close. What was foun
 | **ACER** (EU energy regulators' agency), hub price data (AEGIS "CHEST" application) | Hub prices | Not checked | Surfaced by search, not read |
 | Daily TTF close (SoldiOnline, Investing.com) | One day's price (€85.6/MWh on 6 Nov 2026) | No (news site, one day) | Read |
 
+**Answered 2026-11-07 by the owner: yes, the World Bank's monthly series is the source (OPEN-QUESTIONS 228).**
+
 **Proposal (replaces the one in section 6):** use the World Bank's monthly "Natural gas, Europe" series as the source of the latest published price, read at each release and bundled with its month; keep the daily TTF close only as a cross-check; use Eurostat's large-user bands for country spreads later. A monthly average smooths a one-day spike. The World Bank's value converts from US dollars per million BTU to €/MWh with the tool's exchange rate (1 MWh = 3.412 million BTU).
 
 ### 7. Gas transport adder (`fuel.gasTransportAdder`)
