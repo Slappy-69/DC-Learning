@@ -15,6 +15,7 @@ import { nearbyRenewables, RENEWABLE_SOURCE } from '../src/engine/renewables.js'
 import { RENEWABLE_PLANTS } from '../src/data/renewable-plants.js';
 import { scoreOptions } from '../src/engine/scoring.js';
 import { choiceKey } from '../src/engine/generator.js';
+import { studyFile, readStudyFile } from '../src/engine/study.js';
 const choiceKeyOf = (o) => choiceKey(o.v);
 import { buildContext } from '../src/engine/context.js';
 import { runModel } from '../src/engine/run.js';
@@ -344,5 +345,21 @@ export async function agreedTests(test, ctxRuns) {
     const t1 = ctxRuns.runT1;
     assert.ok(t1.options.every((o) => !/C23/.test(choiceKeyOf(o))), 'keys without C23');
     return `50 MW wind on the GB profile: ${(k.eco.renewInfo.outMWh / yrs / 1000).toFixed(0)} GWh a year (capacity factor ${(cf * 100).toFixed(0)} %), campus takes ${(k.eco.renewInfo.usedMWh / yrs / 1000).toFixed(0)} GWh under the contract; LCOE contract €${k.eco.lcoe.toFixed(1)}, bought €${b.eco.lcoe.toFixed(1)}, leased €${l.eco.lcoe.toFixed(1)}/MWh`;
+  });
+
+  await test('66. Known issue 37: a saved study keeps the engineer\'s keyed entries when reopened: renewable plant edits, flag comments and Ireland derating are read back as saved, with no "not known to this version" warning', () => {
+    const i = referenceT1({ analysisStart: START });
+    i.plants.renewables = [{ id: 'w1', name: 'Test wind farm', type: 'wind', typeLabel: 'Wind onshore', mw: 50, km: 5 }];
+    i.plants.renewEdits = { w1: { route: 'grid', contractPrice: 45 } };
+    i.flagNotes = { ...(i.flagNotes || {}), byOption: { 'k1|ied': { text: 'Permit route agreed', lower: true } }, byType: { ied: { text: 'Checked with the regulator' } } };
+    i.ireland = { ...(i.ireland || {}), derating: { gasRecip: 0.9 } };
+    const r = readStudyFile(JSON.stringify(studyFile(i)));
+    assert.ok(r.ok, r.error);
+    assert.deepEqual(r.inputs.plants.renewEdits, i.plants.renewEdits, 'renewable plant edits');
+    assert.deepEqual(r.inputs.flagNotes.byOption, i.flagNotes.byOption, 'flag comments by option');
+    assert.deepEqual(r.inputs.flagNotes.byType, i.flagNotes.byType, 'flag comments by type');
+    assert.deepEqual(r.inputs.ireland.derating, i.ireland.derating, 'Ireland derating');
+    assert.ok(!(r.warnings || []).some((w) => /not known to this version/.test(w)), (r.warnings || []).join(' | '));
+    return 'renewable plant edits, flag comments and Ireland derating read back as saved; no warning';
   });
 }

@@ -79,8 +79,10 @@ function fillFromDefaults(def, saved, path, added, dropped, nulled = []) {
   for (const [k, dv] of Object.entries(def)) {
     const p = path ? `${path}.${k}` : k;
     if (!(k in saved)) { out[k] = dv; added.push(p); }
-    // The plant corrections (work package 19) are keyed by list entry: kept as saved, like the choices.
-    else if (isObj(dv) && isObj(saved[k]) && k !== 'choices' && p !== 'plants.edits') out[k] = fillFromDefaults(dv, saved[k], p, added, dropped, nulled);
+    // The plant corrections (work package 19) are keyed by list entry: kept as saved, like the choices. So is every other
+    // map whose default is empty (renewable plant edits, flag comments, Ireland derating): its keys are the engineer's,
+    // not the defaults', and were dropped as unknown before (known issue 37).
+    else if (isObj(dv) && isObj(saved[k]) && k !== 'choices' && p !== 'plants.edits' && Object.keys(dv).length) out[k] = fillFromDefaults(dv, saved[k], p, added, dropped, nulled);
   }
   return out;
 }

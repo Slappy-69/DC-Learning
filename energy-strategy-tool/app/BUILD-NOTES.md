@@ -2298,3 +2298,7 @@ Owner, 2026-11-08: "Update the app with everything we've discussed and agreed th
 ## Known issue 36: map markers and pin when zoomed in (2026-11-08, branch feature/map-markers)
 
 Found while filming the Pego walkthrough. The marker stroke (0.5) and the pin stroke (0.06) were in map units, so each zoom step made them wider until they drew white rings far larger than the markers. Both strokes are now in screen pixels (`vector-effect: non-scaling-stroke`; 1 px for markers, 1.5 px for the pin) and the markers are two-thirds of the pin's radius (was two-fifths). Drawing only; no figure changes. Browser checks B36 and B43 pass (axe: no serious or critical issue).
+
+## Known issue 37: studies kept every keyed entry (2026-11-08, branch feature/map-markers)
+
+The study reader (`study.js`, `fillFromDefaults`) matched each saved key against the defaults and dropped what it did not know. Maps whose default is empty have no default keys, so a reopened study lost its renewable plant edits (`plants.renewEdits`), flag comments (`flagNotes.byOption`, `flagNotes.byType`) and Ireland derating overrides (`ireland.derating`), with a "not known to this version" warning. Every map whose default is empty is now kept as saved, as `plants.edits` already was. Node test 66.
