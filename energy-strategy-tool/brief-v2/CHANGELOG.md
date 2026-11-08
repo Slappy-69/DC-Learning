@@ -368,3 +368,4 @@ Research and proposals only; nothing in the app or the defaults register changed
 9. OPEN-QUESTIONS 209 (follows 208): the Great Britain commitment fee is paid out on day 1 of the analysis; no acceptance-date input. Answered by the owner on 2026-11-07 ("Goes out on day 1"). Not built yet.
 10. OPEN-QUESTIONS 210 (follows 198): the flag on every Irish run is minor severity. Answered by the owner on 2026-11-07 ("Minor"). Not built yet.
 11. OPEN-QUESTIONS 211 (follows 198, 210): standby generators do not count towards Ireland's de-rated plant test. Answered by the owner on 2026-11-07 ("No"). Not built yet.
+12. OPEN-QUESTIONS 212 (follows 198, 210, 211): Ireland's de-rated plant test converts MW to MVA at a power factor of 0.975, the owner's value, labelled "judgement". Answered by the owner on 2026-11-07 ("Power factor 0.975"). The substation footprint power factor (0.9) is unchanged. Not built yet.
