@@ -213,7 +213,7 @@ export async function plantTests(test) {
     const tl = ot.eco.capexLines.find((l) => /^Grid connection charge \(taken over from/.test(l.item));
     assert.ok(tl && Math.abs(tl.amount - ct.takeover.mw * old.takeoverCostPerMW) < 1, 'takeover capex line');
     const fl = ot.flags.find((f) => f.id === 'plant-takeover');
-    assert.ok(fl && fl.severity === 'major' && /not a confirmed right/.test(fl.message));
+    assert.ok(fl && fl.severity === 'major' && /Not confirmed: an assumed right|Looks unavailable|Likely not available/.test(fl.message));
     assert.ok(ot.sz.grid.byMonth.every((x, m) => Math.abs(x - ct.gridCap[m]) < 1e-9 || x <= ct.gridCap[m]), 'sizing reads the option grid');
     assert.ok(!ot.sz.bridge || ot.sz.bridge.shortfallMonth < ct.fullGridM, 'bridging sized only up to the takeover');
     // The same option without the takeover: the run context is untouched.

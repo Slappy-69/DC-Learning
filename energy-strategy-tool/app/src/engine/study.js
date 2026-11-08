@@ -103,6 +103,11 @@ export function readStudyFile(text) {
   if ('choices' in f.inputs && f.inputs.choices !== null && !isObj(f.inputs.choices)) return { ok: false, error: 'This study file is damaged: the choices are not a set of choices.' };
   const added = [], dropped = [], nulled = [];
   const inputs = fillFromDefaults(def, f.inputs, '', added, dropped, nulled);
+  // Saved before work package 28 (no list of plants picked from the results): every nearby plant stays in, as saved.
+  if (!isObj(f.inputs.plants) || !('ticked' in f.inputs.plants)) {
+    if (inputs.plants) delete inputs.plants.ticked;
+    const i = added.indexOf('plants.ticked'); if (i >= 0) added.splice(i, 1);
+  }
   const savedChoices = isObj(f.inputs.choices) ? f.inputs.choices : {};
   for (const k of Object.keys(savedChoices)) if (!(k in def.choices)) dropped.push(`choices.${k}`);
   inputs.choices = { ...def.choices, ...Object.fromEntries(Object.entries(savedChoices).filter(([k]) => k in def.choices)) };
