@@ -19,3 +19,20 @@ Items the owner asked to research later. They do not block the questions being a
 **What is needed, per country:** whether a data centre qualifies (yes, no, only if conditions are met); the rule and its legal reference; the size of the reduction and what it applies to (network charge, levies, or both); the conditions (hours, volume, sector code, approval); the expiry or review date; the local website that states it (as for the data centre tax rules, OPEN-QUESTIONS 204). Also the same question for reductions on levies (for example Germany's Energiefinanzierungsgesetz reductions, Poland's 15 % and 25 % rates, Switzerland's refunds, Croatia's reduced classes, Slovenia's reduced contribution), which `levies-and-taxes-2026-11.md` records as "data centre taken as not eligible".
 
 **Until then:** the tick uses Germany's researched rule; for other countries it stays unavailable or blank and flagged "no published value found".
+
+## 2. Fibre routes: an open source, or permission to use PeeringDB
+
+**Asked by the owner on 2026-11-07** (OPEN-QUESTIONS 222, "Add fiber").
+
+**Why:** the owner wants fibre on the utility map. `utility-maps-2026-11.md` (section 4) found **no open source for fibre routes**. PeeringDB (internet exchanges and colocation facilities) is not open for redistribution without permission; TeleGeography's submarine cable map is a commercial licence for the geocoded data; OpenStreetMap's telecom tagging is patchy and long-distance fibre is rarely mapped.
+
+**What is needed:** whether any open national or European fibre route or backbone data exists (regulators, national broadband maps, European Commission broadband mapping, research networks); the licence and coverage of each; whether PeeringDB would give permission for a bundled, dated extract of exchange and facility points; what the tool could show (a flag with "nearest mapped exchange or cable landing station: X km", mapped, straight line).
+
+## 3. District cooling: networks and sources
+
+**Asked by the owner on 2026-11-07** (OPEN-QUESTIONS 222, "And district cooling").
+
+**Why:** the owner wants district cooling added to the utilities. It was not covered in `utility-maps-2026-11.md`, which looked at district heating only.
+
+**What is needed:** where district cooling networks exist and whether a data centre can buy cooling from or reject heat to them; open data on network locations (city and utility maps, EU heating and cooling mapping layers such as the Heat Roadmap Europe and Hotmaps layers, OpenStreetMap tagging); the licence and coverage of each; cooling-water sources that could serve the same purpose (seas, rivers, lakes, aquifers); and how the tool would use it (a flag on the cooling options, as proposed for district heating).
+
