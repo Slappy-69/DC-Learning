@@ -367,3 +367,4 @@ Research and proposals only; nothing in the app or the defaults register changed
 8. OPEN-QUESTIONS 208 (follows 199, 206, 207): the Great Britain commitment fee is returned stage by stage, each MW when the grid capacity it was paid for becomes available. Answered in part by the owner on 2026-11-07 ("Just whenever the grid capacity for which the deposit was paid becomes available"). When the deposit goes out is still open. Not built yet.
 9. OPEN-QUESTIONS 209 (follows 208): the Great Britain commitment fee is paid out on day 1 of the analysis; no acceptance-date input. Answered by the owner on 2026-11-07 ("Goes out on day 1"). Not built yet.
 10. OPEN-QUESTIONS 210 (follows 198): the flag on every Irish run is minor severity. Answered by the owner on 2026-11-07 ("Minor"). Not built yet.
+11. OPEN-QUESTIONS 211 (follows 198, 210): standby generators do not count towards Ireland's de-rated plant test. Answered by the owner on 2026-11-07 ("No"). Not built yet.
