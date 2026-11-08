@@ -734,8 +734,10 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .flag-note-editor textarea { width: 100%; font: inherit; }
 
 /* Work package 28: nearby plants on the results */
-.nearby-plants { margin: 0.6em 0; padding: 0.6em 0.8em; border: 1px solid var(--border, #ccc); border-radius: 6px; }
-.nearby-plants h3 { margin: 0 0 0.3em; font-size: 1em; }
+.nearby-plants { margin: 0.25em 0; padding: 0.2em 0.6em; border: 1px solid var(--border, #ccc); border-radius: 6px; }
+.nearby-plants[open] { padding: 0.5em 0.8em; }
+.nearby-plants > summary { cursor: pointer; min-height: 24px; line-height: 24px; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nearby-plants .nearby-title { font-weight: 600; }
 .nearby-pick { display: flex; flex-wrap: wrap; gap: 0.5em; align-items: center; }
 .nearby-pick select { max-width: 100%; }
 
@@ -750,7 +752,8 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 
 /* Work package 31: technologies ticked into the search */
 .tick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(13em, 1fr)); gap: 0.2em 0.8em; }
-.tick-grid .tick { display: flex; gap: 0.4em; align-items: center; }
+.tick-grid .tick { display: flex; gap: 0.4em; align-items: center; min-height: 24px; }
+.tick-grid .tick input[type=checkbox], .flag-note-editor input[type=checkbox] { width: 24px; height: 24px; margin: 0; flex: none; }
 
 /* Work package 31: the "?" next to every parameter */
 .help { display: inline; }

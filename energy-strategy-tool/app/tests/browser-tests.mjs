@@ -1430,7 +1430,10 @@ await check('B42. Hourly weather (owner 2026-10-30): "Upload EPW file…" in sec
   const { ctx, page, errors } = await openPage();
   const outside = [];
   page.on('request', (r) => { if (/^https?:/.test(r.url())) outside.push(r.url()); });
-  const before = (await page.locator('.header-strip').innerText()).replace(/\s+/g, ' ');
+  // The header and the active tab's figures (2026-11-08: with the starter set the leader's score to one decimal can stay
+  // the same; the tab's figures move).
+  const shot = async () => `${await page.locator('.header-strip').innerText()} ${await page.locator('[role=tabpanel]').first().innerText()}`.replace(/\s+/g, ' ');
+  const before = await shot();
   const path = join(tmpdir(), 'b42-test.epw');
   writeFileSync(path, fakeEpw({ offset: 6, lat: 52.0, lon: -0.5 }));
   await page.locator('input[aria-label="EPW weather file"]').setInputFiles(path);
@@ -1439,10 +1442,13 @@ await check('B42. Hourly weather (owner 2026-10-30): "Upload EPW file…" in sec
   unlinkSync(path);
   const txt = (await page.locator('.weather-field').innerText()).replace(/\s+/g, ' ');
   ok(/Measured: uploaded EPW file "b42-test\.epw".*km from the pin; sized to n = 20: 36 °C dry bulb and 20 °C wet bulb; check at n = 50: 37 °C/.test(txt), txt.slice(0, 300));
+  // Wait for the re-run to start, then to finish: the status still shows the previous run's "Last run" for a moment after
+  // the upload (2026-11-08: with the starter set of technologies the first run ends sooner, which exposed the race).
+  await page.waitForFunction(() => /Screening options/.test(document.querySelector('.status').textContent), null, { timeout: 60000, polling: 100 });
   await page.waitForFunction(() => { const t = document.querySelector('.status').textContent; return /Last run/.test(t) && !/Screening options/.test(t); }, null, { timeout: 180000, polling: 250 });
   // The hotter year moves the results shown in the header (the option flags are checked in Node test 48b).
-  const after = (await page.locator('.header-strip').innerText()).replace(/\s+/g, ' ');
-  ok(after !== before, `the header did not change: ${after.slice(0, 200)}`);
+  const after = await shot();
+  ok(after !== before, `the results did not change: ${after.slice(0, 200)}`);
   await page.getByRole('button', { name: 'Use the synthetic profile' }).click();
   await page.waitForFunction(() => /Synthetic country profile/.test(document.querySelector('.weather-field').textContent), null, { timeout: 10000 });
   ok(!outside.length, `outside requests: ${outside.slice(0, 3).join(', ')}`);
@@ -1459,6 +1465,7 @@ await check('B43. Existing gas plants (work packages 19 and 28): with the pin at
   for (const [label, v] of [[/^Latitude/, '53.425'], [/^Longitude/, '6.875']]) { const f = page.getByLabel(label); await f.fill(v); await f.press('Tab'); }
   await page.waitForFunction(() => /Magnum Centrale/.test((document.querySelector('.nearby-plants') || {}).textContent || ''), null, { timeout: 30000 });
   await ran();
+  await page.locator('.nearby-plants > summary').click();
   const box = (await page.locator('.nearby-plants').innerText()).replace(/\s+/g, ' ');
   ok(/powerplantmatching, PyPSA \(CC BY 4\.0\)/.test(box), 'credit missing');
   ok(/4 plants of/.test(box) && /leaves them out/.test(box), box.slice(0, 300));

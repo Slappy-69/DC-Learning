@@ -2279,3 +2279,10 @@ Owner, 2026-11-08: "Update the app with everything we've discussed and agreed th
 - `src/engine/utilities.js`: the seven utilities in the agreed order (electricity 220 kV and above, gas, water, district heating, telecoms with fibre named, district cooling, hydrogen; OPEN-QUESTIONS 222, 234); `utilitiesNear` finds the nearest built feature and the nearest planned one (with its year, OPEN-QUESTIONS 235) in bundled data, "mapped, straight line". Every option carries one info flag `utilities-near`; "Nearby plants" on the results lists them. No distance changes a cost (223).
 - Data: `src/data/utilities/index.js`, empty: one file per utility to be added at release, under its own licence with its credit (ODbL files with "© OpenStreetMap contributors", 224). The sources could not be reached from the session (OPEN-QUESTIONS 242).
 - Test 64.
+
+### Fixes after GitHub's checks on d0357bf (2026-11-08)
+
+- Browser checks B7, B11, B17, B18, B26, B27, B38–B40 and B43: the technology tick boxes were 13 px; now 24 px (accessibility target size), as the flag-comment editor's boxes.
+- B19 (phone): "Nearby plants and utilities" on the results is now a closed disclosure with a one-line heading (the number of gas plants found), so the tabs stay on the first screen; B43 opens it first.
+- B42 (weather): the check waited for "Last run" while the previous run's status was still shown; it now waits for the re-run to start, and compares the active tab's figures as well as the header (with the starter set the leader's score to one decimal can stay the same).
+- Node suite 106/106 locally.

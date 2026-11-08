@@ -31,15 +31,17 @@ export default function NearbyPlantsBox({ inputs, update }) {
       <p className="note">Shown on the map and listed here. Their uses in the analysis (supply contract, private wire, buy, lease, surplus sales: OPEN-QUESTIONS 195) are not modelled yet: a renewable plant needs its own hourly output, which the tool does not hold for a named plant (OPEN-QUESTIONS 240). {RENEWABLE_SOURCE.credit}; {RENEWABLE_SOURCE.filter}.</p>
     </div>
   );
-  if (P.auto === false || !all.length) return <section className="nearby-plants" aria-label="Nearby plants"><h3>Nearby plants</h3>{P.auto === false ? null : <p className="note">No gas plant of {PLANT_DEFAULTS.minMW} MW or more within {PLANT_DEFAULTS.radiusKm} km in the bundled list.</p>}{renew}<UtilitiesList inputs={inputs} /></section>;
+  // Folded by default (2026-11-08): on a phone the box would push the tabs below the first screen (browser check B19).
+  const head = (txt) => <summary><span className="nearby-title">Nearby plants and utilities</span> <span className="note">{txt}</span></summary>;
+  if (P.auto === false || !all.length) return <details className="nearby-plants">{head(P.auto === false ? 'plant list off' : 'no gas plant found')}{P.auto === false ? null : <p className="note">No gas plant of {PLANT_DEFAULTS.minMW} MW or more within {PLANT_DEFAULTS.radiusKm} km in the bundled list.</p>}{renew}<UtilitiesList inputs={inputs} /></details>;
   const free = ticked ? all.filter((p) => !ticked.includes(p.id)) : [];
   const inRun = ticked ? all.filter((p) => ticked.includes(p.id)) : all;
   const reset = () => { update('choices.C2', null); update('choices.C4', null); update('choices.C21', null); };
   const add = () => { if (!pick) return; update('plants.ticked', [...(ticked || []), pick]); reset(); setPick(''); };
   const label = (p) => `${p.name}: ${Math.round(p.mw).toLocaleString('en-GB')} MW ${p.typeLabel.toLowerCase()}, ${p.km.toFixed(1)} km${p.dataCentre ? ' (probably a data centre\'s own plant)' : ''}`;
   return (
-    <section className="nearby-plants" aria-label="Nearby plants">
-      <h3>Nearby plants</h3>
+    <details className="nearby-plants">
+      {head(`${all.length} gas plant${all.length === 1 ? '' : 's'} found${ticked && inRun.length ? `, ${inRun.length} in the analysis` : ticked ? ', none in the analysis: open to add one' : ''}`)}
       <p className="note">{all.length} plant{all.length === 1 ? '' : 's'} of {PLANT_DEFAULTS.minMW} MW or more within {PLANT_DEFAULTS.radiusKm} km of the site. {ticked ? 'The first run leaves them out.' : 'This study was saved before plants were picked from the results, so every nearby plant is in the analysis.'} Picking a plant adds every use of it (leased, bought, its grid connection taken over) and runs again; its inputs are in section 4.</p>
       {free.length ? (
         <div className="nearby-pick">
@@ -54,7 +56,7 @@ export default function NearbyPlantsBox({ inputs, update }) {
       {ticked && inRun.length ? <p className="note">In the analysis: {inRun.map((p) => p.name).join(', ')}. <a href="#plants-field">Plant inputs in section 4</a>.</p> : null}
       {renew}
       <UtilitiesList inputs={inputs} />
-    </section>
+    </details>
   );
 }
 
