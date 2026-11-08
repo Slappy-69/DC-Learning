@@ -124,7 +124,7 @@ export const RULES = [
     } },
   { id: 'm', name: '(m) Leased existing plant as bridging plant is handed back or kept running',
     detail: 'C2 = a leased existing plant is generated only with C3 = Remove (the lease ends when the grid arrives) or Retain as prime (the lease continues), and never with C5 = Retained bridging plant: it stands outside the campus and is not its standby. A bought plant may be kept as backup (OPEN-QUESTIONS 122).',
-    fails: (v) => isPlantPower(v.C2) && parsePlantValue(v.C2).mode === 'lease' && ((v.C3 !== 'remove' && v.C3 !== 'prime' && v.C3 !== NA) || v.C5 === 'retained') },
+    fails: (v) => isPlantPower(v.C2) && ['lease', 'contract'].includes(parsePlantValue(v.C2).mode) && ((v.C3 !== 'remove' && v.C3 !== 'prime' && v.C3 !== NA) || v.C5 === 'retained') },
   // Work package 19 (OPEN-QUESTIONS 119–120): the grid connection of a plant that closes within the study period.
   { id: 'p', name: '(p) A grid connection is taken over only from a plant that offers it',
     detail: 'C21 = a plant\'s grid connection is generated only for a plant within reach whose closure falls within the study period (or that has closed), with a connection to take over.',

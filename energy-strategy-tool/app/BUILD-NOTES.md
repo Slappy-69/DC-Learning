@@ -2251,3 +2251,11 @@ Owner, 2026-11-08: "Update the app with everything we've discussed and agreed th
 - Results: `components/NearbyPlantsBox.jsx` under the results header lists the plants found (name, MW, type, distance) in a drop box; "Add and run again" ticks one and the run starts (every use: leased, bought, bought whole, its connection taken over). Takeover options then rank on merit with their major flag (157).
 - Section 4: the plant table and correction panels show only the ticked plants, each with "Remove" (179, 193); with none ticked, one line says how many were found and where to pick them.
 - Test 60.
+
+### Work package 29: new uses of a nearby plant
+
+- **B, supply contract** (OPEN-QUESTIONS 166–169, 192): plant value `xc:<id>` (`plants.js`), offered for C2 and C4 only once its price is entered in the plant's panel (`inputs.plants.edits[id]`: `contractMethod` fixed / costPlus / market, `contractPrice`, `contractMargin`, `contractAdder`, `contractMW`, `contractYears`, `contractRoute` wire / grid). Technology record with no capex, no lease and no fuel bought; dispatch prices it at the contract price (`contractPrice` in `dispatch.js`); the ledger books it in a new column `contract`; emissions go to scope 2. Rule (m) treats it like a lease as bridging plant.
+- **C, the plant keeps selling** (177–178, 180, 188–190) and **D, standby income** (191): booked as revenue in the ledger for options that use a ticked plant (`eco.plantIncome`): the unused capacity the campus holds × the hours available, sold at one flat price a year (the grid's average wholesale price unless entered) when it beats the plant's running cost, times the share entered for the use; standby €/MW a year on the MW held.
+- **Flags:** `plant-committed` (minor, every option using a plant's output, 169), `plant-contract`, `plant-surplus`, `plant-standby`.
+- **Screen:** "Other uses of this plant" in each ticked plant's panel in section 4. Readings: OPEN-QUESTIONS 239.
+- **Test 61.**

@@ -62,14 +62,15 @@ export function mergeDuplicates(list, { mergeKm = 1, sizeFrac = 0.25, split = ne
 // OPEN-QUESTIONS 124 (owner, 2026-10-31, "C"): bought in part (xb:, the units used) and bought whole (xw:).
 // OPEN-QUESTIONS 126 (owner, 2026-10-31, "C"): a taken-over connection in place of part of the new one (tk:) or as well
 // as it (ta:).
-export const plantValue = { lease: (id) => `xl:${id}`, buy: (id) => `xb:${id}`, buyWhole: (id) => `xw:${id}`, takeover: (id) => `tk:${id}`, takeoverAdd: (id) => `ta:${id}` };
+export const plantValue = { lease: (id) => `xl:${id}`, buy: (id) => `xb:${id}`, buyWhole: (id) => `xw:${id}`, takeover: (id) => `tk:${id}`, takeoverAdd: (id) => `ta:${id}`, contract: (id) => `xc:${id}` };
+// Work package 29 (OPEN-QUESTIONS 166–169, 192): a supply contract with the plant (xc:), generated once a price is entered.
 // The manual plant of work package 12 keeps its value "existing" for the lease (study files from before stay valid).
 export function parsePlantValue(val) {
   if (val === 'existing') return { id: 'manual', mode: 'lease' };
   // Fast path: every plant value has ':' as its third character (the rules call this for every combination).
   if (typeof val !== 'string' || val.charCodeAt(2) !== 58) return null;
-  const m = /^(xl|xb|xw|tk|ta):(.+)$/.exec(String(val || ''));
-  return m ? { id: m[2], mode: m[1] === 'xl' ? 'lease' : m[1] === 'xb' ? 'buy' : m[1] === 'xw' ? 'buyWhole' : 'takeover', ...(m[1] === 'ta' ? { add: true } : m[1] === 'tk' ? { add: false } : {}) } : null;
+  const m = /^(xl|xb|xw|xc|tk|ta):(.+)$/.exec(String(val || ''));
+  return m ? { id: m[2], mode: m[1] === 'xl' ? 'lease' : m[1] === 'xb' ? 'buy' : m[1] === 'xw' ? 'buyWhole' : m[1] === 'xc' ? 'contract' : 'takeover', ...(m[1] === 'ta' ? { add: true } : m[1] === 'tk' ? { add: false } : {}) } : null;
 }
 export const isPlantPower = (val) => { const p = parsePlantValue(val); return !!p && p.mode !== 'takeover'; };
 export const isTakeover = (val) => { const p = parsePlantValue(val); return !!p && p.mode === 'takeover'; };

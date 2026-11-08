@@ -1,5 +1,5 @@
 import React from 'react';
-import { NumberField, TextField, ToggleField } from './Field.jsx';
+import { NumberField, TextField, ToggleField, SelectField } from './Field.jsx';
 import { plantCandidates, PLANT_DEFAULTS, PLANT_SOURCE, addMonths } from '../engine/index.js';
 
 // Existing gas plants near the site from the bundled list (work package 19, owner 2026-10-31, OPEN-QUESTIONS 116–123).
@@ -96,10 +96,50 @@ export default function PlantsField({ inputs, norm, update }) {
               </div>
               {p.mergedFrom.length ? <ToggleField label="Keep the merged entries apart" checked={!!val(p.id, 'split')} onCommit={(v) => { const ids = [p.id, ...p.mergedFrom.map((m) => m.id)]; const next = { ...edits }; for (const id of ids) { const e = { ...(next[id] || {}) }; if (v) e.split = true; else delete e.split; if (Object.keys(e).length) next[id] = e; else delete next[id]; } update('plants.edits', next); resetChoices(); }}
                 hint="The list may hold one plant twice; the tool merges entries that are close, of the same type and of similar size. Tick to treat them as separate plants." /> : null}
+              <PlantUses p={p} val={val} edit={edit} />
             </details>
           ))}
         </>
       ) : null}
     </div>
+  );
+}
+
+// The new uses of a ticked plant (work package 29, OPEN-QUESTIONS 159, 161, 166–169, 177–180, 188–192), shown only for a
+// plant ticked into the analysis (179). Every value is blank by default and flagged when used.
+function PlantUses({ p, val, edit }) {
+  const u = p.uses || { contract: {}, surplus: { share: {} }, standby: {} };
+  const k = u.contract;
+  const method = val(p.id, 'contractMethod') || 'fixed';
+  return (
+    <fieldset className="subgroup">
+      <legend>Other uses of this plant <span className="legend-note">(blank = not used)</span></legend>
+      <p className="note">B · Supply contract: generated as its own option once its price is entered (OPEN-QUESTIONS 192). C · The plant keeps selling the capacity the campus does not use; the campus keeps the share entered (blank = 0 %). D · Standby and flexibility income. A private wire carries the plant's power outside the grid connection, so no grid charges apply to it.</p>
+      <div className="row2">
+        <SelectField label="Contract price set by" value={method} onCommit={(v) => edit(p.id, 'contractMethod', v === 'fixed' ? null : v)} options={[['fixed', 'Fixed price'], ['costPlus', "The plant's cost plus a margin"], ['market', 'Wholesale price ± an adder']]} />
+        {method === 'fixed' ? <NumberField label="Contract price" unit="€/MWh" value={val(p.id, 'contractPrice')} placeholder="Not entered" onCommit={(v) => edit(p.id, 'contractPrice', v)} nullable min={0} />
+          : method === 'costPlus' ? <NumberField label="Margin" unit="€/MWh" value={val(p.id, 'contractMargin')} placeholder="Not entered" onCommit={(v) => edit(p.id, 'contractMargin', v)} nullable />
+          : <NumberField label="Adder to the wholesale price" unit="€/MWh" value={val(p.id, 'contractAdder')} placeholder="Not entered" onCommit={(v) => edit(p.id, 'contractAdder', v)} nullable />}
+      </div>
+      <div className="row2">
+        <NumberField label="Contract MW" unit="MW" value={val(p.id, 'contractMW')} placeholder={`${Math.round(k.mw || 0)} (up to the design load)`} onCommit={(v) => edit(p.id, 'contractMW', v)} nullable min={0} />
+        <NumberField label="Contract years" unit="years" value={val(p.id, 'contractYears')} placeholder={`${k.years || ''} (the evaluation period)`} onCommit={(v) => edit(p.id, 'contractYears', v)} nullable min={1} step={1} />
+      </div>
+      <SelectField label="Route to the campus" value={val(p.id, 'contractRoute') || 'wire'} onCommit={(v) => edit(p.id, 'contractRoute', v === 'wire' ? null : v)} options={[['wire', 'Private wire'], ['grid', 'Through the public grid']]} />
+      <div className="row2">
+        <NumberField label="Surplus kept: bought" unit="%" value={val(p.id, 'surplusShareBuy')} placeholder="0" onCommit={(v) => edit(p.id, 'surplusShareBuy', v)} nullable min={0} max={100} />
+        <NumberField label="Surplus kept: leased" unit="%" value={val(p.id, 'surplusShareLease')} placeholder="0" onCommit={(v) => edit(p.id, 'surplusShareLease', v)} nullable min={0} max={100} />
+      </div>
+      <div className="row2">
+        <NumberField label="Surplus kept: supply contract" unit="%" value={val(p.id, 'surplusShareContract')} placeholder="0" onCommit={(v) => edit(p.id, 'surplusShareContract', v)} nullable min={0} max={100} />
+        <NumberField label="Surplus sold at" unit="€/MWh" value={val(p.id, 'surplusPrice')} placeholder="Grid average" onCommit={(v) => edit(p.id, 'surplusPrice', v)} nullable min={0} />
+      </div>
+      <div className="row2">
+        <NumberField label="Export limit" unit="MW" value={val(p.id, 'exportLimitMW')} placeholder="The plant's capacity" onCommit={(v) => edit(p.id, 'exportLimitMW', v)} nullable min={0} />
+        <NumberField label="Standby income" unit="€/MW/yr" value={val(p.id, 'standbyPerMWYear')} placeholder="0" onCommit={(v) => edit(p.id, 'standbyPerMWYear', v)} nullable min={0} />
+      </div>
+      <NumberField label="Income when called" unit="€/MWh" value={val(p.id, 'standbyPerMWh')} placeholder="0" onCommit={(v) => edit(p.id, 'standbyPerMWh', v)} nullable min={0}
+        hint="Recorded; not modelled, since the hours the plant is called are not known (OPEN-QUESTIONS 239)." />
+    </fieldset>
   );
 }

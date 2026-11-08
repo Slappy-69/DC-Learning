@@ -66,8 +66,26 @@ export function topPriceHours(ctx, n) {
   return mask;
 }
 
+// A supply contract's price per MWh (work package 29, OPEN-QUESTIONS 166, 167): fixed; the plant's own fuel, carbon and
+// running cost plus a margin; or the grid's average wholesale price plus an adder (one flat figure a year: OPEN-QUESTIONS
+// 239). Through the grid the per-MWh grid adder is added.
+const AVG = new WeakMap();
+export function avgWholesale(ctx) {
+  let a = AVG.get(ctx.prof);
+  if (a == null) { let s = 0; for (let h = 0; h < ctx.prof.price.length; h++) s += ctx.prof.price[h]; a = s / Math.max(1, ctx.prof.price.length); AVG.set(ctx.prof, a); }
+  return a * (ctx.priceMult ?? 1);
+}
+export function contractPrice(ctx, t) {
+  const p = t.p;
+  let x;
+  if (p.contractMethod === 'costPlus') x = fuelPrice(ctx, t.fuel) / p.eff + (p.vomPerMWh || 0) + (ctx.carbonPrice * fuelEF(t.fuel)) / p.eff + (p.contractMargin || 0);
+  else if (p.contractMethod === 'market') x = avgWholesale(ctx) + (p.contractAdder || 0);
+  else x = p.contractPrice || 0;
+  return x + (p.contractRoute === 'grid' ? ctx.priceAdder : 0);
+}
 export function plantMarginalCost(ctx, pl) {
   const t = TECH[pl.tech];
+  if (t && t.contract) return contractPrice(ctx, t);
   if (pl.tech === 'smr') return t.p.fuelPerMWhE + t.p.vomPerMWh;
   return fuelPrice(ctx, pl.fuel) / pl.eff + (t.p.vomPerMWh || 0) + (ctx.carbonPrice * fuelEF(pl.fuel)) / pl.eff;
 }

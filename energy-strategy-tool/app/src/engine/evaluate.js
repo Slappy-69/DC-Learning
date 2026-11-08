@@ -4,7 +4,7 @@
 import { TECH, FUEL, PPA, COUNTRIES, choiceLabel, GAS_PRICE_WB } from './defaults.js';
 import { decarbFactor, contractedCap, contractLimit, ctxFor } from './context.js';
 import { assumedFlags } from './assumed.js';
-import { fuelPrice, fuelEF } from './dispatch.js';
+import { fuelPrice, fuelEF, contractPrice, avgWholesale, plantMarginalCost } from './dispatch.js';
 import { bridgeActive, techAvailMonth } from './sizing.js';
 import { permittingTriggers } from './permitting.js';
 import { NA } from './generator.js';
@@ -103,7 +103,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   const cont = E.contingency;
   const capexLines = []; // { item, year, amount }
   const ledger = [];
-  for (let y = 0; y <= N; y++) ledger.push({ year: y, capex: 0, contingency: 0, replacement: 0, residual: 0, fom: 0, vom: 0, fuel: 0, grid: 0, gridFixed: 0, deposit: 0, ppa: 0, carbon: 0, rental: 0, testRun: 0, flex: 0, revenue: 0, deliveredMWh: 0, scope1T: 0, scope2LocT: 0, scope2MktT: 0, cfeMWh: 0, netDemandMWh: 0, unmetMWh: 0 });
+  for (let y = 0; y <= N; y++) ledger.push({ year: y, capex: 0, contingency: 0, replacement: 0, residual: 0, fom: 0, vom: 0, fuel: 0, grid: 0, gridFixed: 0, deposit: 0, contract: 0, ppa: 0, carbon: 0, rental: 0, testRun: 0, flex: 0, revenue: 0, deliveredMWh: 0, scope1T: 0, scope2LocT: 0, scope2MktT: 0, cfeMWh: 0, netDemandMWh: 0, unmetMWh: 0 });
 
   const assets = []; // for replacement and residual value
   // Sensitivity multipliers (work package 9; 1 = as entered).
@@ -328,6 +328,14 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     let scope1 = 0;
     for (const pr of d.plants) {
       const t = TECH[pr.tech];
+      // A supply contract (work package 29): the contract price on the energy taken; its emissions are the plant's,
+      // counted with the grid's (scope 2), and its carbon cost is in the price.
+      if (t && t.contract) {
+        L.contract += pr.mwh * contractPrice(ctx, t) * (t.p.contractMethod === 'market' ? elecEsc : t.p.contractMethod === 'costPlus' ? gasEsc : 1);
+        const tco2 = pr.fuelMWhTh * fuelEF(t.fuel);
+        L.scope2LocT += tco2; L.scope2MktT += tco2;
+        continue;
+      }
       L.vom += pr.mwh * (t.p.vomPerMWh || 0);
       if (pr.tech === 'smr') L.fuel += pr.mwh * t.p.fuelPerMWhE;
       else L.fuel += pr.fuelMWhTh * fuelPrice(ctx, t.fuel) * (t.fuel === 'gas' ? gasEsc : 1);
@@ -389,6 +397,42 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     }
   }
 
+  // Uses C and D of a nearby plant (work package 29, OPEN-QUESTIONS 177–178, 180, 188–191): the plant keeps selling the
+  // capacity the campus holds and does not use, at one flat price (the year's average grid wholesale price unless
+  // entered, no export factor), whenever that price beats its running cost; the campus keeps the share the engineer set
+  // for the use (blank = 0 %). Standby income: €/MW a year on the MW the campus holds (the €/MWh when called is not
+  // modelled: the hours the plant is called are not known; OPEN-QUESTIONS 239).
+  const plantIncome = [];
+  for (const role of [sz.prime, sz.bridge]) {
+    if (!role || !role.tech) continue;
+    const t = TECH[role.tech];
+    if (!t || !t.existingPlant || t.plantKey === 'manual') continue;
+    const cand = plantCandidates(inputs).all.find((c) => c.id === t.plantKey);
+    if (!cand || !cand.uses) continue;
+    const mode = t.contract ? 'contract' : t.bought ? 'buy' : 'lease';
+    const share = Math.max(0, Math.min(100, cand.uses.surplus.share[mode] || 0)) / 100;
+    const sb = cand.uses.standby.perMWYear || 0;
+    if (!(share > 0) && !(sb > 0)) continue;
+    const capMW = Math.min(role.mw, cand.uses.surplus.exportMW != null ? cand.uses.surplus.exportMW : role.mw);
+    const cost = t.contract ? contractPrice(ctx, t) : plantMarginalCost(ctx, { tech: role.tech, fuel: t.fuel, eff: t.p.eff });
+    const info = { name: t.name, mode, share, capMW, cost, standbyPerMWYear: sb, surplusMWh: 0, revenue: 0, standby: 0 };
+    for (let y = 0; y < N; y++) {
+      let mo = 0;
+      for (let m = y * 12; m < y * 12 + 12; m++) if (m >= role.availMonth && m < (role.endMonth ?? t.p.endM ?? Infinity)) mo++;
+      if (!mo) continue;
+      const d = disp.years[Math.min(y, nExp - 1)];
+      const used = d.plants.filter((x) => x.tech === role.tech).reduce((a, x) => a + x.mwh, 0);
+      const elecEsc = Math.pow(1 + E.elecEscalation, y);
+      const price = (cand.uses.surplus.price != null ? cand.uses.surplus.price : avgWholesale(ctx)) * elecEsc;
+      const surplus = Math.max(0, capMW * 8760 * (mo / 12) - used);
+      const margin = price > cost ? (price - cost) * surplus * share : 0;
+      const stand = sb * role.mw * (mo / 12);
+      ledger[y].revenue += margin + stand;
+      info.surplusMWh += price > cost ? surplus : 0; info.revenue += margin; info.standby += stand;
+    }
+    plantIncome.push(info);
+  }
+
   // Great Britain's proposed Data Centre Commitment Fee (OPEN-QUESTIONS 199, 206–209): a deposit paid on day 1 and
   // returned as the contracted grid capacity it was paid for becomes available; booked in its own ledger column, at the
   // start of each year like capex, so its only cost is the money tied up.
@@ -417,7 +461,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   for (let y = 0; y <= N; y++) {
     const L = ledger[y];
     L.capexTotal = L.capex + L.contingency + L.replacement + L.residual + L.deposit;
-    L.opex = L.fom + L.vom + L.fuel + L.grid + L.gridFixed + L.ppa + L.carbon + L.rental + L.testRun + L.flex - L.revenue;
+    L.opex = L.fom + L.vom + L.fuel + L.grid + L.gridFixed + L.contract + L.ppa + L.carbon + L.rental + L.testRun + L.flex - L.revenue;
     const dfC = Math.pow(1 + r, -y);
     const dfO = Math.pow(1 + r, -(y + 1));
     L.pvCapex = L.capexTotal * dfC;
@@ -446,6 +490,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     capexShare: pvCost !== 0 ? pvCapex / pvCost : 0,
     reconciliation: { lcoeTimesEnergy: lcoe * pvEnergy, npv: pvCost, pvEnergy },
     ppaHedge: hedge, // outside the ledger (see above); null without a PPA
+    plantIncome, // work package 29: uses C and D of a nearby plant
     gbFee, // work package 26: Great Britain's commitment fee (null when not ticked or outside Great Britain)
   };
 }
@@ -769,6 +814,21 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
       flags.push(flag('plant-closes', 'minor', 'Existing plant', `${t.name} stops in month ${p.endMonth} (${ym(p.endMonth)})${own ? `, when the campus takes over its grid connection${t.lease ? '; assumed the owner keeps it running until then' : ''}` : ''}${p.endMonth <= p.availMonth ? ': it never supplies the campus' : '; from then on it supplies nothing, and nothing new is sized to replace it (see the adequacy and resilience flags)'}.`, { plant: t.plantKey, value: p.endMonth }));
     }
     if (t.bought) flags.push(flag('plant-ownership', 'minor', 'Existing plant', `${t.name}: bought, it keeps its own permit and is not added to the campus's combustion total; one owner of neighbouring sites may be treated as one installation (a point for the permitting adviser). Screening flag, not a permitting determination.`, { plant: t.plantKey }));
+  }
+  // Work package 29 (OPEN-QUESTIONS 167, 169, 177–191): a plant's output may be committed elsewhere; the supply contract
+  // and the plant's other income, with their bases.
+  for (const role of [sz.prime, sz.bridge]) {
+    const t = role && TECH[role.tech];
+    if (!t || !t.existingPlant) continue;
+    flags.push(flag('plant-committed', 'minor', 'Existing plant', `${t.name}: its output may already be committed to another buyer (for example a long-term contract with the plant's other owner); confirm with the owner before relying on it (OPEN-QUESTIONS 169)`, { plant: t.plantKey }));
+    if (t.contract) {
+      const how = t.p.contractMethod === 'costPlus' ? `the plant's fuel, carbon and running cost plus a margin of €${t.p.contractMargin}/MWh` : t.p.contractMethod === 'market' ? `the grid's average wholesale price (one flat figure a year, not hourly: OPEN-QUESTIONS 239) ${t.p.contractAdder >= 0 ? 'plus' : 'less'} €${Math.abs(t.p.contractAdder)}/MWh` : `a fixed €${t.p.contractPrice}/MWh`;
+      flags.push(flag('plant-contract', 'info', 'Existing plant', `${t.name}: priced at ${how}, about €${contractPrice(ctx, t).toFixed(1)}/MWh in the first year; ${t.p.contractRoute === 'grid' ? `delivered through the public grid, so the grid's per-MWh adder (€${ctx.priceAdder.toFixed(1)}) is added; the contract's MW are not checked against the contracted grid capacity (OPEN-QUESTIONS 239), and the rule of 2026-10-18 applies (no benefit without physical delivery)` : 'delivered by private wire, outside the grid connection, so no grid charges apply; the wire is costed as the connection to the campus'} (OPEN-QUESTIONS 166–168)`, { plant: t.plantKey }));
+    }
+  }
+  for (const pi of (eco && eco.plantIncome) || []) {
+    if (pi.share > 0) flags.push(flag('plant-surplus', 'info', 'Existing plant', `${pi.name}: the plant keeps selling the ${Math.round(pi.capMW)} MW the campus holds and does not use, at one flat price a year (no export factor), when it beats its running cost (€${pi.cost.toFixed(1)}/MWh); the campus keeps ${Math.round(pi.share * 100)} % (entered): €${(pi.revenue / 1e6).toFixed(1)} m over the evaluation period (OPEN-QUESTIONS 177–190)`));
+    if (pi.standbyPerMWYear > 0) flags.push(flag('plant-standby', 'info', 'Existing plant', `${pi.name}: standby and flexibility income €${Math.round(pi.standbyPerMWYear).toLocaleString('en-GB')} per MW a year (entered): €${(pi.standby / 1e6).toFixed(1)} m over the evaluation period. Income per MWh when called is not modelled, since the hours called are not known (OPEN-QUESTIONS 191, 239)`));
   }
   if (ctx.takeover) {
     const k = ctx.takeover;

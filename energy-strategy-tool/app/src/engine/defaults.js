@@ -521,7 +521,36 @@ function candidateFrom(p, edit, inputs, opts) {
     takeoverMW: tkMW.v, takeoverM, takeoverCostPerMW: tkCost.v, takeoverLagMonths: tkLag, buyExtraYears: extraYears, availM: opts.availM || 0,
     offersPower: include && status !== 'closed', offersTakeover: include && !opts.noTakeover && takeoverM < periodM && tkMW.v > 0,
     basis: { mw: mw.basis, units: units.basis, unitMW: unitMW.basis, firstYear: firstYear.basis, closeYear: closeYear.basis, eff: eff.basis, linkCapex: link.basis, takeoverMW: tkMW.basis, takeoverCostPerMW: tkCost.basis },
-    values: { lease: opts.manual ? 'existing' : plantValue.lease(p.id), buy: plantValue.buy(p.id), buyWhole: plantValue.buyWhole(p.id), takeover: plantValue.takeover(p.id), takeoverAdd: plantValue.takeoverAdd(p.id) },
+    values: { lease: opts.manual ? 'existing' : plantValue.lease(p.id), buy: plantValue.buy(p.id), buyWhole: plantValue.buyWhole(p.id), takeover: plantValue.takeover(p.id), takeoverAdd: plantValue.takeoverAdd(p.id), contract: plantValue.contract(p.id) },
+    uses: plantUses(edit, mw.v, inputs),
+  };
+}
+
+// The new uses of a ticked plant (work package 29, owner 2026-11-07, OPEN-QUESTIONS 159, 161, 166–169, 177–180, 188–192),
+// from the engineer's entries for that plant (inputs.plants.edits[id]); every value blank by default.
+// B, supply contract: method 'fixed' (€/MWh), 'costPlus' (the plant's fuel, carbon and running cost + a margin) or
+// 'market' (the grid's average wholesale price ± an adder); generated only once its price is entered (192); MW (default
+// the plant's capacity up to the design load) and years (default the evaluation period) (168); route 'grid' or
+// 'wire' (167). C, the plant keeps selling: the share of the surplus margin the campus keeps, per use (blank = 0 %,
+// 177–178), at a flat price (blank = the year's average grid wholesale price, no export factor, 180, 188, 189), up to an
+// export limit (blank = the plant's capacity, 190). D, standby and flexibility income: €/MW a year and €/MWh when called
+// (blank = 0, 191).
+const num0 = (x) => (x !== null && x !== undefined && x !== '' && Number.isFinite(Number(x)) ? Number(x) : null);
+export function plantUses(edit, plantMW, inputs) {
+  const e = edit || {};
+  const method = ['fixed', 'costPlus', 'market'].includes(e.contractMethod) ? e.contractMethod : 'fixed';
+  const priceIn = method === 'fixed' ? num0(e.contractPrice) : method === 'costPlus' ? num0(e.contractMargin) : num0(e.contractAdder);
+  const it = inputs && inputs.load ? Number(inputs.load.itMW) || 0 : 0;
+  const design = it * (inputs && inputs.load ? Number(inputs.load.pueMax) || 1.5 : 1.5);
+  return {
+    contract: {
+      offered: priceIn !== null, method, price: num0(e.contractPrice), margin: num0(e.contractMargin), adder: num0(e.contractAdder),
+      mw: num0(e.contractMW) ?? (design > 0 ? Math.min(plantMW, design) : plantMW), mwBasis: num0(e.contractMW) != null ? 'entered' : 'default',
+      years: num0(e.contractYears) ?? (inputs && inputs.economics ? inputs.economics.periodYears : 20), yearsBasis: num0(e.contractYears) != null ? 'entered' : 'default',
+      route: e.contractRoute === 'grid' ? 'grid' : 'wire',
+    },
+    surplus: { share: { buy: num0(e.surplusShareBuy) ?? 0, lease: num0(e.surplusShareLease) ?? 0, contract: num0(e.surplusShareContract) ?? 0 }, price: num0(e.surplusPrice), exportMW: num0(e.exportLimitMW) },
+    standby: { perMWYear: num0(e.standbyPerMWYear) ?? 0, perMWh: num0(e.standbyPerMWh) ?? 0 },
   };
 }
 
@@ -553,7 +582,7 @@ export function plantCandidates(inputs) {
   return out;
 }
 // Bought whole is a value of its own only for a list plant of more than one unit (otherwise it is the same as in part).
-export const plantPowerValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersPower).flatMap((c) => [c.values.lease, c.values.buy, ...(!c.manual && c.units > 1 ? [c.values.buyWhole] : [])]);
+export const plantPowerValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersPower).flatMap((c) => [c.values.lease, c.values.buy, ...(!c.manual && c.units > 1 ? [c.values.buyWhole] : []), ...(!c.manual && c.uses && c.uses.contract.offered ? [c.values.contract] : [])]);
 export const plantTakeoverValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersTakeover).flatMap((c) => [c.values.takeover, c.values.takeoverAdd]);
 export function plantOf(inputs, val) {
   const pv = parsePlantValue(val);
@@ -582,6 +611,7 @@ export function applyPlants(inputs) {
     PLANT_LABELS.set(c.values.buyWhole, `${nm} (bought whole)`);
     PLANT_LABELS.set(c.values.takeover, `${nm}: its grid connection, in place of part of the new one`);
     PLANT_LABELS.set(c.values.takeoverAdd, `${nm}: its grid connection, as well as the new one`);
+    PLANT_LABELS.set(c.values.contract, `${nm} (supply contract)`);
     if (!c.offersPower) continue;
     const ty = EXISTING_TYPES[c.type];
     const base = {
@@ -597,6 +627,15 @@ export function applyPlants(inputs) {
     TECH[c.values.buy] = { ...base, id: c.values.buy, name: c.manual ? `${nm} (bought)` : `${nm} (bought, units used)`, lease: false, bought: true, p: pB };
     // Bought whole (OPEN-QUESTIONS 124): every unit bought, refurbished and maintained; the campus uses what it needs.
     if (!c.manual && c.units > 1) TECH[c.values.buyWhole] = { ...base, id: c.values.buyWhole, name: `${nm} (bought whole)`, lease: false, bought: true, wholePlant: true, capUnits: false, p: { ...pB } };
+    // Supply contract (work package 29, OPEN-QUESTIONS 166–169, 192): no capex or lease; the energy at the contract price;
+    // by private wire the link to the campus is built, through the grid the grid's per-MWh adder is added (OPEN-QUESTIONS 239).
+    const k = c.uses && c.uses.contract;
+    if (!c.manual && k && k.offered) {
+      const units = Math.max(1, Math.min(c.units, Math.ceil(k.mw / Math.max(1e-9, c.unitMW) - 1e-9)));
+      const endK = Math.min(c.closeM, c.availM + Math.round(k.years * 12));
+      TECH[c.values.contract] = { ...base, id: c.values.contract, name: `${nm} (supply contract)`, lease: true, contract: true, fixedUnits: units, combustion: false,
+        p: { ...p, rentalPerKWMonth: 0, linkCapex: k.route === 'wire' ? c.linkCapex : 0, endM: endK, contractMethod: k.method, contractPrice: k.price, contractMargin: k.margin, contractAdder: k.adder, contractRoute: k.route } };
+    }
   }
   return cands;
 }

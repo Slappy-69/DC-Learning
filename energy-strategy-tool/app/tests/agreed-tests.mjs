@@ -229,4 +229,29 @@ export async function agreedTests(test, ctxRuns) {
     assert.ok(plantCandidates(legacy).plants.length >= 3, 'saved before: every nearby plant in');
     return `${cN.all.length} found near Eemshaven, none in the first run; ticking ${id}: ${r.options.filter((o) => [o.v.C2, o.v.C4, o.v.C21].some((x) => String(x).includes(id))).length} of ${r.options.length} options use it`;
   });
+
+  await test('61. Work package 29: a supply contract is generated only once its price is entered (fixed, cost plus margin, or wholesale ± adder), priced per MWh with no fuel or capex, by private wire or through the grid; the plant keeps selling its unused capacity for the share entered; standby income; the committed-output flag', () => {
+    const base = eemSmall({ cap: 300 }); base.plants = { auto: true, edits: {}, ticked: [] };
+    const id = plantCandidates(normalizeInputs(base)).all.find((p) => !p.manual && p.status !== 'closed').id;
+    const blank = JSON.parse(JSON.stringify(base)); blank.plants.ticked = [id];
+    assert.ok(!defaultChoiceState('C4', normalizeInputs(blank)).values.includes(`xc:${id}`), 'blank price: no contract option');
+    const withK = JSON.parse(JSON.stringify(blank)); withK.plants.edits = { [id]: { contractPrice: 70, surplusShareBuy: 50, surplusPrice: 400, standbyPerMWYear: 20000 } };
+    const nK = normalizeInputs(withK);
+    assert.ok(defaultChoiceState('C4', nK).values.includes(`xc:${id}`) && defaultChoiceState('C2', nK).values.includes(`xc:${id}`), 'contract offered');
+    const r = runModel(withK);
+    const ks = r.options.filter((o) => o.v.C4 === `xc:${id}` || o.v.C2 === `xc:${id}`);
+    assert.ok(ks.length, 'contract options');
+    const k = ks.find((o) => o.eco.ledger.some((L) => L.contract > 0));
+    assert.ok(k, 'a contract option that draws power pays the contract price');
+    assert.ok(k.eco.ledger.every((L) => !(L.fuel > 0) || k.sizing.bridge || k.sizing.prime.tech !== `xc:${id}`), 'no fuel bought for the contract plant');
+    assert.ok(k.flags.some((f) => f.id === 'plant-contract' && /fixed €70\/MWh/.test(f.message) && /private wire/.test(f.message)), 'contract flag');
+    assert.ok(k.flags.some((f) => f.id === 'plant-committed'), 'committed-output flag');
+    const b = r.options.find((o) => (o.v.C4 === `xb:${id}` || o.v.C2 === `xb:${id}`) && o.eco.plantIncome && o.eco.plantIncome.length);
+    assert.ok(b && b.eco.plantIncome[0].revenue > 0 && b.eco.plantIncome[0].standby > 0, 'surplus margin and standby income on a bought plant');
+    assert.ok(b.flags.some((f) => f.id === 'plant-surplus') && b.flags.some((f) => f.id === 'plant-standby'), 'income flags');
+    const g = JSON.parse(JSON.stringify(withK)); g.plants.edits[id].contractRoute = 'grid';
+    const rg = runModel(g).options.find((o) => o.v.C4 === `xc:${id}` || o.v.C2 === `xc:${id}`);
+    assert.ok(rg && rg.flags.some((f) => f.id === 'plant-contract' && /through the public grid/.test(f.message)), 'grid route');
+    return `contract option ${k.name}; bought plant keeps €${(b.eco.plantIncome[0].revenue / 1e6).toFixed(1)} m of surplus margin and €${(b.eco.plantIncome[0].standby / 1e6).toFixed(1)} m standby income`;
+  });
 }
