@@ -22,7 +22,7 @@ function paths() {
   return PATHS;
 }
 
-export default function MapPicker({ lat, lon, onPick }) {
+export default function MapPicker({ lat, lon, onPick, markers = [] }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const svgRef = useRef(null);
   const [zoom, setZoom] = useState(1);
@@ -64,6 +64,7 @@ export default function MapPicker({ lat, lon, onPick }) {
         aria-describedby={`${uid}-src`} onKeyDown={onKey} onClick={(e) => { const [la, lo] = toLatLon(e); pick(la, lo); }}>
         <rect x={FULL.x - 50} y={FULL.y - 50} width={FULL.w + 100} height={FULL.h + 100} className="map-sea" />
         {P.map((c, i) => <path key={i} d={c.d} className={c.iso2 ? 'map-land map-builtin' : 'map-land'} style={{ strokeWidth: vb.w / 900 }} />)}
+          {markers.length ? <g className="map-markers" aria-hidden="true">{markers.map((m) => <circle key={m.id} cx={px(m.lon)} cy={py(m.lat)} r={pinR / 2.5} className={`map-marker map-marker-${m.kind}`}><title>{m.title}</title></circle>)}</g> : null}
         {Number.isFinite(lat) && Number.isFinite(lon) ? (
           <g className="map-pin" aria-hidden="true">
             <circle cx={px(lon)} cy={py(lat)} r={pinR} />

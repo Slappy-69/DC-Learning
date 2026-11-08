@@ -8,6 +8,8 @@ import { eemSmall } from './plants-tests.mjs';
 import { TAKEOVER_GENERAL, IE_POLICY } from '../src/engine/countryrules.js';
 import { applyFlagNotes, annotateFlags, optionNoteKey, noteText } from '../src/engine/flagnotes.js';
 import { flagHeadline } from '../src/report/plain.js';
+import { nearbyRenewables, RENEWABLE_SOURCE } from '../src/engine/renewables.js';
+import { RENEWABLE_PLANTS } from '../src/data/renewable-plants.js';
 import { scoreOptions } from '../src/engine/scoring.js';
 import { buildContext } from '../src/engine/context.js';
 import { runModel } from '../src/engine/run.js';
@@ -253,5 +255,17 @@ export async function agreedTests(test, ctxRuns) {
     const rg = runModel(g).options.find((o) => o.v.C4 === `xc:${id}` || o.v.C2 === `xc:${id}`);
     assert.ok(rg && rg.flags.some((f) => f.id === 'plant-contract' && /through the public grid/.test(f.message)), 'grid route');
     return `contract option ${k.name}; bought plant keeps €${(b.eco.plantIncome[0].revenue / 1e6).toFixed(1)} m of surplus margin and €${(b.eco.plantIncome[0].standby / 1e6).toFixed(1)} m standby income`;
+  });
+
+  await test('62. Work package 30: renewable plants from powerplantmatching (CC BY 4.0, credited), German turbines grouped into farms, 5 MW or more bundled; none listed until the engineer enters both the size and the distance; sorted by distance', () => {
+    assert.equal(RENEWABLE_PLANTS.licence, 'CC BY 4.0'); assert.ok(/powerplantmatching/.test(RENEWABLE_SOURCE.credit));
+    assert.ok(RENEWABLE_PLANTS.germanFarms > 1000 && RENEWABLE_PLANTS.germanFarms < RENEWABLE_PLANTS.germanTurbines, 'turbines grouped');
+    assert.ok(RENEWABLE_PLANTS.rows.every((r) => r[4] >= 5), '5 MW or more');
+    assert.equal(nearbyRenewables(53.425, 6.875, null, 20), null, 'no size: none'); assert.equal(nearbyRenewables(53.425, 6.875, 10, null), null, 'no distance: none');
+    const near = nearbyRenewables(53.425, 6.875, 10, 25);
+    assert.ok(near.length > 0 && near.every((r, i) => r.mw >= 10 && r.km <= 25 && (i === 0 || near[i - 1].km <= r.km)), 'Eemshaven: sorted, within limits');
+    const de = nearbyRenewables(52.5, 13.4, 20, 60);
+    assert.ok(de.some((r) => r.turbines > 1), 'a German farm of several turbines near Berlin');
+    return `${RENEWABLE_PLANTS.count} plants bundled (${RENEWABLE_PLANTS.germanTurbines} German turbines in ${RENEWABLE_PLANTS.germanFarms} farms); Eemshaven 10 MW / 25 km: ${near.length}, nearest ${near[0].name} ${near[0].mw} MW at ${near[0].km.toFixed(1)} km`;
   });
 }

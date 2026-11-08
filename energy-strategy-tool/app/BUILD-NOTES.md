@@ -2259,3 +2259,10 @@ Owner, 2026-11-08: "Update the app with everything we've discussed and agreed th
 - **Flags:** `plant-committed` (minor, every option using a plant's output, 169), `plant-contract`, `plant-surplus`, `plant-standby`.
 - **Screen:** "Other uses of this plant" in each ticked plant's panel in section 4. Readings: OPEN-QUESTIONS 239.
 - **Test 61.**
+
+### Work package 30: renewable plants near the site
+
+- Data: `plant-data/build-renewables.mjs` → `src/data/renewable-plants.js` (powerplantmatching, CC BY 4.0, pinned `2889ad9`; 17,407 wind, solar and hydro plants of 5 MW or more, German turbines grouped into 3,409 farms within 2 km). Lookup `src/engine/renewables.js`, imported by the screens only, so the run's worker stays the same size (single file 3.5 MB, worker 761 KB).
+- Inputs `plants.renewMinMW` and `plants.renewRadiusKm`, no defaults: nothing listed until both are entered (OPEN-QUESTIONS 196). "Nearby plants" on the results lists them (nearest first, 20 shown); the map in section 1 shows them (and the gas plants found) as markers.
+- **Not built:** their uses in the analysis (OPEN-QUESTIONS 195): a named renewable plant needs its own hourly output; logged as OPEN-QUESTIONS 240 with a suggested way.
+- Test 62.

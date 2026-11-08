@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTag } from './Field.jsx';
 import { gridChargeData, CONDITIONAL_RATE, DC_TAX, GB_RESIDUAL, GB_FEE, IE_POLICY } from '../engine/countryrules.js';
+import { nearbyRenewables } from '../engine/renewables.js';
+import { plantCandidates } from '../engine/defaults.js';
 import { PLANT_DEFAULTS, COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
 import MapPicker from './MapPicker.jsx';
 import WeatherField from './WeatherField.jsx';
@@ -30,7 +32,7 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
             <TextField label="Prepared by" value={report.preparedBy || ''} placeholder="Author or team" onCommit={(v) => onReport({ ...report, preparedBy: v })} />
           </details>
         ) : null}
-        <MapPicker lat={inputs.project.lat} lon={inputs.project.lon} onPick={(la, lo) => { update('project.lat', la); update('project.lon', lo); }} />
+        <MapPicker lat={inputs.project.lat} lon={inputs.project.lon} onPick={(la, lo) => { update('project.lat', la); update('project.lon', lo); }} markers={mapMarkers(inputs, norm)} />
         <div className="row2">
           <NumberField label="Latitude" unit="°" value={inputs.project.lat} onCommit={set('project.lat')} required min={-90} max={90} />
           <NumberField label="Longitude" unit="°" value={inputs.project.lon} onCommit={set('project.lon')} required min={-180} max={180} />
@@ -544,4 +546,17 @@ function IrelandFactors({ inputs, set }) {
       </div>
     </fieldset>
   );
+}
+
+// Plants near the site on the map (work packages 28 and 30, OPEN-QUESTIONS 194): gas plants found in the bundled list
+// (filled when in the analysis) and renewable plants once the engineer has set their size and distance.
+function mapMarkers(inputs, norm) {
+  const out = [];
+  try {
+    for (const p of plantCandidates(norm).all) if (!p.manual) out.push({ id: `g${p.id}`, lat: p.lat, lon: p.lon, kind: p.include ? 'gas-in' : 'gas', title: `${p.name}, ${Math.round(p.mw)} MW gas, ${p.km.toFixed(1)} km` });
+    const P = inputs.plants || {};
+    const rn = nearbyRenewables(Number(inputs.project.lat), Number(inputs.project.lon), P.renewMinMW, P.renewRadiusKm);
+    for (const r of (rn || []).slice(0, 300)) out.push({ id: `r${r.id}`, lat: r.lat, lon: r.lon, kind: r.type.startsWith('wind') ? 'wind' : r.type === 'solar' ? 'solar' : 'hydro', title: `${r.name}, ${r.mw} MW ${r.typeLabel.toLowerCase()}, ${r.km.toFixed(1)} km` });
+  } catch { /* a map without markers */ }
+  return out;
 }

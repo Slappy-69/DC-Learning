@@ -23,3 +23,12 @@ Then rebuild the app (`cd ../app && npm run build`), run the tests (test 50 chec
 ## What the list is and is not
 
 The list merges GEM, ENTSO-E, OPSD, JRC, MaStR (Germany), WRI, OSM and other open lists. It carries some plants twice, few closure dates (70 of the 626 large gas plants in Europe at the research date) and some "first year" values that are the site's, not the plant's (`docs/research/existing-plant-2026-10-31.md`). The engine uses each value only where plausible and shows its basis; the engineer checks every plant with its owner.
+
+## Renewable plants (work package 30, 2026-11-08)
+
+`build-renewables.mjs` builds `../app/src/data/renewable-plants.js` from the same pinned `powerplants.csv`: wind, solar and hydro (not pumped storage), in operation in 2026, 5 MW or more, with German wind turbines (listed one by one from MaStR) grouped into farms within 2 km (OPEN-QUESTIONS 219–221, 240). At commit `2889ad9`: 17,407 plants, 30,712 German turbines in 3,409 farms, about 1.3 MB. Read by the screens only (the map and "Nearby plants" on the results), not by the run.
+
+```
+node build-renewables.mjs                 # the pinned version (downloads from GitHub)
+node build-renewables.mjs --csv <file>    # a local copy of powerplants.csv
+```

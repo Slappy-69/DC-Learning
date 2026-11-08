@@ -1277,6 +1277,9 @@ export function buildDefaultInputs(opts = {}) {
     // the plants found near the site in a drop box, and a plant picked there joins the next run with every use. A study
     // saved before work package 28 has no list (undefined): every nearby plant stays in, as it was saved.
     ticked: rec('plants.ticked', [], 'ids of the nearby plants ticked into the analysis', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 156, 158): the first run leaves existing plants out; the engineer picks a plant from the drop box on the results.' }),
+    // Work package 30 (owner 2026-11-07, OPEN-QUESTIONS 196): renewable plants near the site, no default size or distance.
+    renewMinMW: rec('plants.renewMinMW', null, 'MW, smallest renewable plant listed (blank = none listed)', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 196): the engineer sets both the size and the distance, with no default; no renewable plant appears until both are entered. The bundled list holds plants of 5 MW or more (OPEN-QUESTIONS 240).' }),
+    renewRadiusKm: rec('plants.renewRadiusKm', null, 'km from the site (blank = none listed)', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 196).' }),
     edits: rec('plants.edits', {}, 'corrections per plant', { basis: 'judgement', ref: '§5.4', derived: true, note: 'Empty = the values of the bundled list and the defaults, each flagged with its source.' }),
   };
   // Measured hourly weather (owner 2026-10-30, OPEN-QUESTIONS 106–107): an uploaded EPW file or a NOAA station year.
