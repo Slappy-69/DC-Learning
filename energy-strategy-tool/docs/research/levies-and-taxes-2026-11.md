@@ -17,7 +17,7 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 | DE | €14.0 | €36.0 (tax €20.5, offshore €9.4, CHP €4.5, others €1.6) | **about €50** | €55 | Whether data centres get the 2026 tax cut (taken as no) |
 | NL | €16.5 | €3.6 (energy tax) | **about €20** | €45 | — |
 | GB | £10.8 | £78 (RO £32.7, BSUoS £13.1, CfD £10, CM £10, FiT £8, Sizewell C £3.5, CCL with CCA £0.6) | **about £89 (about €106)** | €55 | Most levies from a secondary guide; quarterly changes |
-| FR | €4.1 (400 kV) | €12.5 with the data centre rate (€28.85 without), incl. capacity about €2.5 | **about €16.5** (€33 without the data centre rate) | €40 | Which normal excise rate is current |
+| FR | €4.1 (400 kV) | €12.5 with the data centre rate (€28.85 without), incl. capacity about €2.5 | **about €16.5** (€33 without the data centre rate) | €40 | — (normal excise confirmed: €26.35 from 1 Aug 2026) |
 | ES | Power part about €2.6; energy terms not averaged | about €3.9 (electricity tax) | **probably €8–12** | €40 | Period hours; capacity payments and small fees |
 | PT | €10.5 | €1.0 (IEC) | **about €11.5** | €40 | — |
 | IE | €34.2 (incl. system services about €27) | €45.5 (market charges 2026/27: capacity €24.53, imperfections €18.81, market operator €0.79; tax €1.0; PSO €0.4) | **about €80** | €50 | — (the first pass missed the market charges: about €36 then) |
@@ -296,6 +296,8 @@ Per MWh, for a 100 MW transmission-connected campus using about 745 GWh a year; 
 - **Poland, excise:** **PLN 5/MWh** since 1 Jan 2019 (2019 article; 2026 not confirmed). Source: https://ksiegowosc.infor.pl/podatki/akcyza/stawki-akcyzy/2908100,Sposob-rozliczania-podatku-akcyzowego-od-energii-elektrycznej.html.
 - **Estonia:** a security of supply fee of about **€7.5/MWh** was estimated for 2026 before its tender (ERR, 19 Oct 2025); the renewables fee for 2026 was not found; a 75–85 % renewables fee discount for users above 1 GWh a year with energy management was planned for 2026–28 (data centre eligibility not stated). Sources: https://www.err.ee/1609832211/jargmisest-aastast-tekib-elektriarvele-kaks-uut-rida-ja-neljaeurone-lisakulu; https://www.err.ee/1609759590/riik-kehtestab-suurtarbijatest-ettevotetele-taastuvenergia-tasu-hinnalae.
 - **Still not found:** Hungary's KÁT charge for large users (only the press figure), Greece at high voltage (the regulator's retail report has no charges), Luxembourg's electricity tax.
+
+- **Third pass (8 November 2026):** France's normal excise for businesses above 250 kVA is confirmed at **€26.58/MWh from 1 Feb 2026 and €26.35 from 1 Aug 2026** (EDF, 15 Sep 2026, https://www.edf.fr/entreprises/decryptages/normes-et-reglementations/taxes-et-contributions-electricite-des-entreprises-evolutions-2026). Hungary: no regulated KÁT rate for large users was found; as a cross-check, industrial users of 70–150 GWh a year paid **€0.163/kWh net** in the second half of 2024, the EU's fourth highest (Xpatloop citing Eurostat, 13 May 2025). Italy's general system charges, Greece at high voltage, Luxembourg's electricity tax and Estonia's 2026 renewables fee were searched again without a readable value.
 
 ## Not researched in this pass (next)
 

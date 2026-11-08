@@ -122,9 +122,24 @@ The catalogue is from 2016 (amended 2020) and in 2015 money; the figures are not
 - **ASHRAE climatic design data:** a **paid licence** (one-time fee, ASHRAE Bookstore) is offered to developers who include the data in their own software; the terms sit in the product preview, which was not read. **Needs checking before release.**
 - **Protomaps basemap:** an **ODbL Produced Work**, OpenStreetMap attribution required; the planet file is about **120 GB** to zoom 15, and each extra zoom level roughly doubles it (use `pmtiles extract --maxzoom`). Offline redistribution follows the ODbL (Part G, question G3).
 
+### 11. Escalation sources (walkthrough: "published forecast per commodity, overridable")
+
+- **Gas, near term:** World Bank, Commodity Markets Outlook (April 2026): natural gas Europe **US$12.0/mmbtu in 2025, 15.0 in 2026, 12.0 in 2027** (about €36.6, €45.8 and €36.6 per MWh, worked out at 1.1181 $/€). It stops at 2027. An October 2026 edition may exist (press reports) but was not read.
+- **Gas and carbon, long term:** ENTSOG and ENTSO-E, TYNDP 2026 scenarios methodology (June 2026), Table 6, in 2024 money: gas **€9.2/GJ in 2030 (€33.1/MWh), €9.8 in 2035 (€35.3), €10.4 in 2040 (€37.4)**; CO2 **€97.5/t in 2030, €197.5 in 2035, €297.5 in 2040**, the Commission's recommended values for national climate plans.
+- **Electricity:** no published forecast per country was found in this pass; the TYNDP market results would be the next place to look.
+- **Proposal:** World Bank for the first two years, then the TYNDP 2026 path, each labelled with its edition; the engineer can override. Note that both sit far below the TTF price of November 2026 (€85.6/MWh).
+
+### 12. NOAA hourly weather: source and cleaning
+
+- **The source the tool plans to use has been retired.** NOAA's Integrated Surface Data (Global Hourly) is **superseded, with no update beyond 24 August 2025**; NCEI's direct download and FTP stopped on **31 July 2026**; the NOAA Open Data cloud buckets remain (NESDIS notice, 23 June 2026).
+- **Replacement:** **GHCNh** (Global Historical Climatology Network hourly), which NCEI says "replaces the Integrated Surface Dataset": hourly land-station data, bulk files in PSV or parquet, automated quality checks on part of the variables and the source quality flags kept. No licence terms are stated on its page.
+- **Cleaning reference:** NOAA's ISD-Lite takes one value per hour from a 10-minute window ending at the top of the hour and marks gaps as −9999; that is a fair model for the first cleaning step. How to fill gaps into a full 8,760-hour year is a method choice for the owner.
+- **Proposal:** prepare weather from GHCNh at each release (the program stays offline).
+- **Sources:** https://www.nesdis.noaa.gov/news/service-location-change-integrated-surface-data-global-hourly; https://ncei.noaa.gov/products/global-historical-climatology-network-hourly; https://www.ncei.noaa.gov/pub/data/noaa/isd-lite/isd-lite-technical-document.pdf (accessed 8 Nov 2026).
+
 ### Still not reached
 
-Grid connection date and capacity defaults by country (no published table; judgement), escalation sources, NOAA cleaning, deliverability penalties (judgement), run speed; country gas spreads.
+Grid connection date and capacity defaults by country (no published table; judgement), deliverability penalties (judgement), run speed (a test, not research); country gas spreads; an electricity price forecast by country.
 
 ## Questions for the owner (copied to the progress file)
 
@@ -135,6 +150,8 @@ Grid connection date and capacity defaults by country (no published table; judge
 5. ASHRAE climatic design data: buy the developer licence before the first release, or replace the source?
 6. Gas engines' minimum stable load: the agency's 50 % (today 30 %), or keep 30 % for modern 10 MW engines as judgement?
 7. Values from the agency's catalogue are in 2015 money: use them as published, or escalate them to today's money (needs an escalation source)?
+8. Escalation: World Bank (April 2026) for the first two years, then the TYNDP 2026 path for gas and carbon?
+9. Weather: switch the NOAA source from the retired ISD to GHCNh, and how should gaps be filled into a full year?
 
 ## Sources
 
@@ -146,6 +163,11 @@ Grid connection date and capacity defaults by country (no published table; judge
 | SoldiOnline, TTF close 6 Nov 2026; Investing.com, 6 Nov 2026 | Press | 6 Nov 2026 | 7 Nov 2026 | https://soldionline.it/notizie/forex-commodities/gas-perche-il-ttf-scende-del-55-a-856-euro-cosa-ce-dietro |
 | ASHRAE, Climatic Design Data License FAQ | Standards body | undated | 7 Nov 2026 | https://www.ashrae.org/file%20library/technical%20resources/publication%20errata%20and%20updates/_climatic-design-data-license-faq_.pdf |
 | Protomaps, basemap downloads | Project documentation | 2026 | 7 Nov 2026 | https://docs.protomaps.com/basemaps/downloads |
+| World Bank, Commodity Markets Outlook, April 2026 (forecast table) | International organisation | Apr 2026 | 8 Nov 2026 | https://thedocs.worldbank.org/en/doc/f3138644a1e8e2bb631399ae11d6c408-0050012026/related/CMO-April-2026-Forecasts.pdf |
+| ENTSOG and ENTSO-E, TYNDP 2026 Scenarios Methodology Report | EU bodies | Jun 2026 | 8 Nov 2026 | https://www.entsog.eu/sites/default/files/2026-06/ENTSOs_TYNDP2026_Scenarios_Methodology_Report_260611.pdf |
+| NOAA NESDIS, service location change for ISD (Global Hourly) | Government | 23 Jun 2026 | 8 Nov 2026 | https://www.nesdis.noaa.gov/news/service-location-change-integrated-surface-data-global-hourly |
+| NCEI, GHCNh product page | Government | 2026 | 8 Nov 2026 | https://ncei.noaa.gov/products/global-historical-climatology-network-hourly |
+| Danish Energy Agency, technology data workbook (via PyPSA technology-data, commit e5d25186) | Government (via open dataset) | 2016, amended 2020 | 8 Nov 2026 | https://raw.githubusercontent.com/PyPSA/technology-data/e5d2518647b3ade0e448679141550a4c6f0c602e/inputs/technology_data_for_el_and_dh.xlsx |
 | ACER, "Unit Investment Cost Indicators" (2026) | EU body | 24 Apr 2026 | 7 Nov 2026 | https://www.acer.europa.eu/sites/default/files/documents/Publications/ACER-2026-Unit-Investment-Cost-Indicators.pdf |
 | fuel-prices.eu, "Europe fuel prices, week of 26 October 2026" (from the EU Weekly Oil Bulletin) | Press (data aggregator) | 26 Oct 2026 | 7 Nov 2026 | https://www.fuel-prices.eu/news/weekly/europe-fuel-prices-week-2026-10-26/ |
 | National tariff sources for the adder table | Regulators and operators | 2025–2026 | 7 Nov 2026 | See `grid-capacity-charges-2026-11.md`, each country |
