@@ -86,5 +86,5 @@ Each flag says which rate the tool used, why, and links the local website.
 
 ## Left for the owner
 
-- **H2b (new, to ask later):** for France and Great Britain the rate depends on conditions the engineer must meet. Which rate should the tool use by default: the reduced rate (a note says the conditions are assumed met) or the normal rate until the engineer ticks that they are met? Claude's recommendation when asked: normal rate by default, reduced rate on a tick, because the tool must not present a conditional saving as certain.
+- **H2b (answered 2026-11-07 by the owner: "Normal", OPEN-QUESTIONS 233: normal rate by default, reduced rate when the engineer ticks that the conditions are met):** for France and Great Britain the rate depends on conditions the engineer must meet. Which rate should the tool use by default: the reduced rate (a note says the conditions are assumed met) or the normal rate until the engineer ticks that they are met? Claude's recommendation when asked: normal rate by default, reduced rate on a tick, because the tool must not present a conditional saving as certain.
 - Sweden's and Norway's rules need no choice: one rate applies and the flag only explains it.

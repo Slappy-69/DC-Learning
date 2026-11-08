@@ -152,12 +152,14 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 - H1. Set the adder to network + levies and taxes for DE, NL, PT, FI, SE, DK, CH, IE now, or after the rest are researched? **Answered 2026-11-07 by the owner: "Wait for all the research is done before implementing" (OPEN-QUESTIONS 201).**
 - H2. Show data centre tax rules (FR reduced rate, FI change on 1 Jul 2026, SE removal, GB CCA discount, NO ended rate) as flags on the options? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 204).** The owner also asked for the local website that mentions each tax: done in `data-centre-tax-rules-2026-11.md`.
-- H2b. (New, to ask later.) Where the rate depends on conditions (FR, GB), which is the default: the reduced rate, or the normal rate until the engineer ticks that the conditions are met? Recommendation: normal rate by default.
+- H2b. (New, to ask later.) Where the rate depends on conditions (FR, GB), which is the default: the reduced rate, or the normal rate until the engineer ticks that the conditions are met? Recommendation: normal rate by default. **Answered 2026-11-07 by the owner: "Normal" (OPEN-QUESTIONS 233).** This was the last open question.
 - H3. GB: use levies from a secondary guide (about £78/MWh), or wait until each is read from its issuing body? **Answered 2026-11-07 by the owner: "Yes", use the guide's figures labelled "sourced — not independently checked" (OPEN-QUESTIONS 205).**
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:48 local (OPEN-QUESTIONS 232):** gas and carbon escalation uses the World Bank outlook, then the TYNDP 2026 path. Next question (the last one): H2b.
+**Owner, 7 Nov 2026, 23:49 local (OPEN-QUESTIONS 233):** where a tax rate depends on conditions (FR, GB), the normal rate is the default and the reduced rate applies on a tick. **Every question in the research run is now answered (OPEN-QUESTIONS 204 to 233). Next: only if the owner attaches Italy's ARERA tables or EirGrid's 2026/27 demand tariffs (OPEN-QUESTIONS 202), fill those first; otherwise wait for the owner to ask for a build (a new work package).**
+
+**Owner, 7 Nov 2026, 23:48 local (OPEN-QUESTIONS 232):** gas and carbon escalation uses the World Bank outlook, then the TYNDP 2026 path.
 
 **Owner, 7 Nov 2026, 23:47 local (OPEN-QUESTIONS 231):** the agency's 2015-euro values are used as published, flagged.
 
