@@ -407,3 +407,7 @@ The owner, 2026-11-08: "Update the app with everything we've discussed and agree
 7. §4, §8 / work package 31 (181–187): technologies ticked into the search, a first-run box, a "?" on every parameter with T1's numbers.
 8. §5.2 / work package 32 (200, 222–225, 234–235): seven utility warnings in the agreed order; no data bundled yet (row 242).
 9. §5.4 / work package 33 (OPEN-QUESTIONS 195, 243; owner 2026-11-08, "Yes"): a nearby renewable plant in the analysis as choice C23 (bought, leased, supply contract; private wire or through the grid), on the country's profile scaled to its MW.
+
+## Revision 5, decision (2026-11-08): permit outlook "unlikely" costs deliverability
+
+The owner, 2026-11-08 (OPEN-QUESTIONS 245): a held plant whose permit outlook is "unlikely" costs 8 points of deliverability, the same as a major permit flag. New default `deliverability.unlikelyPermitPenalty` (judgement, §9.9). Built on `feature/permit-outlook-penalty`; not merged. "Uncertain" permit outlooks are not penalised, which is an open point for the owner.

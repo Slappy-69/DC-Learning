@@ -978,6 +978,10 @@ export function deliverability(ctx, v, sz, disp, flags, siteFit = null) {
   const majors = flags.filter((f) => f.permitting && f.severity === 'major').length;
   const minors = flags.filter((f) => f.permitting && f.severity === 'minor').length;
   items.push({ item: `Permitting flags: ${majors} major, ${minors} minor`, value: majors + minors, points: -P.majorFlagPenalty * majors - P.minorFlagPenalty * minors });
+  // Owner's decision, 2026-11-08 (OPEN-QUESTIONS 244): a held plant whose permit outlook is "unlikely" is penalised here,
+  // so the score tells likely permits from unlikely ones. The outlook is still shown as its own flag.
+  const unlikelyPermits = (sz.permitOutlook || []).filter((x) => x.outlook === 'unlikely' && x.regimes && x.regimes.length);
+  if (unlikelyPermits.length) items.push({ item: `Permit unlikely: ${unlikelyPermits.map((x) => x.name).join(', ')}`, value: unlikelyPermits.length, points: -P.unlikelyPermitPenalty * unlikelyPermits.length });
   const usesGas = [sz.prime, sz.bridge].some((p) => p && TECH[p.tech].fuel === 'gas' && !TECH[p.tech].offsite) || (sz.backup.tech && TECH[sz.backup.tech].fuel === 'gas');
   if (usesGas && ctx.inputs.utilities.gasAvailable === 'Unknown') items.push({ item: 'Gas used with availability "Unknown"', value: 1, points: -P.gasUnknownPenalty });
   if (sz.prime && sz.prime.tech === 'hydrogen') items.push({ item: 'Hydrogen fuel dependency', value: 1, points: -P.hydrogenPenalty });
