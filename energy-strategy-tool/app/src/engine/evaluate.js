@@ -11,6 +11,7 @@ import { NA } from './generator.js';
 import { adequacyOf, adequacyText } from './adequacy.js';
 import { addMonths } from './dates.js';
 import { PLANT_SOURCE } from './plants.js';
+import { utilitiesText } from './utilities.js';
 import { DC_TAX, CONDITIONAL_RATE, DE_DISCOUNT, deDiscountFactor, GB_RESIDUAL, gasPathFactor, carbonPathFactor, takeoverRule, TAKEOVER_GENERAL, IE_POLICY, ieGasFactor, ieStorageFactor, GB_FEE } from './countryrules.js';
 import { plantCandidates, PLANT_DEFAULTS } from './defaults.js';
 
@@ -838,6 +839,8 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
     flags.push(flag('plant-takeover', 'major', 'Existing plant', `${k.plant.defaultPassed ? `${k.plant.name} has no closure date and its ${PLANT_DEFAULTS.lifeYears}-year default has passed: the date its connection comes free is a guess (OPEN-QUESTIONS 125). ` : ''}Grid connection taken over from ${k.plant.name}: ${Math.round(k.mw)} MW${k.mw + 1e-6 < k.offeredMW ? ` (of its ${Math.round(k.offeredMW)} MW, capped at the campus's design load)` : ''} from month ${k.month} (${ym(k.month)}), ${eurM(k.cost)} at €${Math.round(k.costPerMW / 1000)}k/MW. ${takeoverRule(ctx.country)} ${TAKEOVER_GENERAL} Size, date (${k.plant.takeoverLagMonths} months after the plant stops) and cost are judgement defaults (OPEN-QUESTIONS 120).`, { plant: k.plant.id, value: k.mw }));
   }
 
+  // Utilities near the site (work package 32, OPEN-QUESTIONS 222–225, 234–235): warnings only, in the agreed order.
+  flags.push(flag('utilities-near', 'info', 'Site and utilities', `Utilities near the site (warnings only; no mapped distance changes a cost; check each with the local operators): ${utilitiesText(Number(ctx.inputs.project.lat), Number(ctx.inputs.project.lon))}`));
   // Ireland's large energy user policy (OPEN-QUESTIONS 198, 210–213): a minor flag on every Irish option, with the
   // de-rated plant test. Never hides, demotes or resizes an option.
   if (ctx.country === 'IE') flags.push(irelandFlag(ctx, v, sz));

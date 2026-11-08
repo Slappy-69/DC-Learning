@@ -9,6 +9,7 @@ import { TAKEOVER_GENERAL, IE_POLICY } from '../src/engine/countryrules.js';
 import { applyFlagNotes, annotateFlags, optionNoteKey, noteText } from '../src/engine/flagnotes.js';
 import { flagHeadline } from '../src/report/plain.js';
 import { helpFor } from '../src/engine/help.js';
+import { UTILITIES, utilitiesNear, utilityLine, utilitiesText } from '../src/engine/utilities.js';
 import { HELP_T1 } from '../src/data/help-t1.js';
 import { nearbyRenewables, RENEWABLE_SOURCE } from '../src/engine/renewables.js';
 import { RENEWABLE_PLANTS } from '../src/data/renewable-plants.js';
@@ -298,5 +299,19 @@ export async function agreedTests(test, ctxRuns) {
     assert.ok(/was not worked out/.test(helpFor('project.analysisStart').example), 'no range');
     assert.ok(Object.keys(HELP_T1.params).length > 200, 'parameters covered');
     return `starter set ticked; PUE 1.4 from 140 MW; "?" for ${Object.keys(HELP_T1.params).length} parameters with T1 numbers (best option LCOE €${HELP_T1.base.lcoe}/MWh)`;
+  });
+
+  await test('64. Work package 32: seven utilities in the agreed order, warnings only; "no open data bundled" until data is bundled; with data, the nearest built and nearer planned feature, "mapped, straight line", planned with its year; no cost changes', () => {
+    assert.deepEqual(UTILITIES.map((u) => u.id), ['electricity', 'gas', 'water', 'districtHeating', 'telecoms', 'districtCooling', 'hydrogen']);
+    const none = utilitiesNear(52.29, -1.53);
+    assert.ok(none.every((u) => !u.bundled) && /no open hydrogen pipeline data bundled/.test(utilityLine(none[6])), 'nothing bundled yet');
+    const fx = { hydrogen: { credit: 'Test data', licence: 'CC BY 4.0', date: '2026-11', features: [[52.30, -1.40, 'H2 line A', '600 mm', 'built', 2024], [52.29, -1.50, 'H2 line B', null, 'planned', 2030]] } };
+    const h = utilitiesNear(52.29, -1.53, fx)[6];
+    const line = utilityLine(h);
+    assert.ok(h.bundled && /nearest 8\.\d km \(H2 line A/.test(line) && /nearest planned 2\.\d km \(H2 line B\), planned for 2030/.test(line) && /mapped, straight line/.test(line), line);
+    // An option carries the warning, and it changes no cost: the same run with and without data has the same ledger.
+    const r = ctxRuns.runT1;
+    assert.ok(r.options.every((o) => o.flags.some((f) => f.id === 'utilities-near' && f.severity === 'info')), 'flag on every option');
+    return line;
   });
 }

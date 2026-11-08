@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { plantCandidates, normalizeInputs, PLANT_DEFAULTS } from '../engine/index.js';
 import { nearbyRenewables, RENEWABLE_SOURCE } from '../engine/renewables.js';
 import { NumberField } from './Field.jsx';
+import { utilitiesNear, utilityLine } from '../engine/utilities.js';
 
 // Nearby plants on the results (work package 28, owner 2026-11-07, OPEN-QUESTIONS 156–158, 193): the first run leaves
 // existing plants out; when plants are found near the site, a drop box offers them, and picking one starts a new run
@@ -30,7 +31,7 @@ export default function NearbyPlantsBox({ inputs, update }) {
       <p className="note">Shown on the map and listed here. Their uses in the analysis (supply contract, private wire, buy, lease, surplus sales: OPEN-QUESTIONS 195) are not modelled yet: a renewable plant needs its own hourly output, which the tool does not hold for a named plant (OPEN-QUESTIONS 240). {RENEWABLE_SOURCE.credit}; {RENEWABLE_SOURCE.filter}.</p>
     </div>
   );
-  if (P.auto === false || !all.length) return <section className="nearby-plants" aria-label="Nearby plants"><h3>Nearby plants</h3>{P.auto === false ? null : <p className="note">No gas plant of {PLANT_DEFAULTS.minMW} MW or more within {PLANT_DEFAULTS.radiusKm} km in the bundled list.</p>}{renew}</section>;
+  if (P.auto === false || !all.length) return <section className="nearby-plants" aria-label="Nearby plants"><h3>Nearby plants</h3>{P.auto === false ? null : <p className="note">No gas plant of {PLANT_DEFAULTS.minMW} MW or more within {PLANT_DEFAULTS.radiusKm} km in the bundled list.</p>}{renew}<UtilitiesList inputs={inputs} /></section>;
   const free = ticked ? all.filter((p) => !ticked.includes(p.id)) : [];
   const inRun = ticked ? all.filter((p) => ticked.includes(p.id)) : all;
   const reset = () => { update('choices.C2', null); update('choices.C4', null); update('choices.C21', null); };
@@ -52,6 +53,19 @@ export default function NearbyPlantsBox({ inputs, update }) {
       ) : null}
       {ticked && inRun.length ? <p className="note">In the analysis: {inRun.map((p) => p.name).join(', ')}. <a href="#plants-field">Plant inputs in section 4</a>.</p> : null}
       {renew}
+      <UtilitiesList inputs={inputs} />
     </section>
+  );
+}
+
+// Utilities near the site (work package 32): warnings only, in the agreed order (OPEN-QUESTIONS 222, 234).
+function UtilitiesList({ inputs }) {
+  const u = utilitiesNear(Number(inputs.project.lat), Number(inputs.project.lon));
+  return (
+    <div className="nearby-utilities">
+      <h4>Utilities near the site</h4>
+      <ol className="plain small">{u.map((x) => <li key={x.id}>{utilityLine(x)}</li>)}</ol>
+      <p className="note">Warnings only: no mapped distance changes a cost; the grid cable and gas pipe stay as entered (OPEN-QUESTIONS 223).</p>
+    </div>
   );
 }

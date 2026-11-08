@@ -2273,3 +2273,9 @@ Owner, 2026-11-08: "Update the app with everything we've discussed and agreed th
 - **First run** (185–187): a "First run" box above section 1: location (link to the map), IT load, annual PUE, the maximum demand as the maximum PUE or the maximum facility demand in MW (`load.maxDemandBasis`, `load.maxDemandMW`; MW sets `pueMax` = demand ÷ IT load in `normalizeInputs`), and the grid's full-connection date and capacity.
 - **"?"** (181, 183, 184): `components/Help.jsx` next to every field with a record (number, text, select and toggle fields); text from `engine/help.js`: unit and note, source or basis and label, range, and T1's numbers from `src/data/help-t1.js`, built at release by `scripts/build-help.mjs` (about 40 s; 239 parameters: LCOE and present-value cost of T1's best option at the low and high end of each range, or "no effect in this example", or the technology the option does not use).
 - **Browser test B43** rewritten for work package 28 (plants added from the results). Readings: OPEN-QUESTIONS 241. Node test 63.
+
+### Work package 32: utility map warnings
+
+- `src/engine/utilities.js`: the seven utilities in the agreed order (electricity 220 kV and above, gas, water, district heating, telecoms with fibre named, district cooling, hydrogen; OPEN-QUESTIONS 222, 234); `utilitiesNear` finds the nearest built feature and the nearest planned one (with its year, OPEN-QUESTIONS 235) in bundled data, "mapped, straight line". Every option carries one info flag `utilities-near`; "Nearby plants" on the results lists them. No distance changes a cost (223).
+- Data: `src/data/utilities/index.js`, empty: one file per utility to be added at release, under its own licence with its credit (ODbL files with "© OpenStreetMap contributors", 224). The sources could not be reached from the session (OPEN-QUESTIONS 242).
+- Test 64.
