@@ -94,14 +94,28 @@ Owner's decision of 7 November 2026 (OPEN-QUESTIONS 201): nothing goes into the 
 
 ### 8. Gas turbine running costs and efficiency (`tech.gasTurbine.*`)
 
-- **Fixed O&M:** today €12/kW/yr; the Danish Energy Agency's OCGT data gives **€10.6** (1.78 % a year of €594/kW, worked out); EIA's aeroderivative case gives **US$9.56 (about €8.6)**. Proposal: **€10.6**, range 8.6–12.
-- **Variable O&M:** today €6/MWh; the agency gives **€6.01** (EIA aeroderivative US$5.70, about €5.1). Proposal: keep €6, now **sourced**.
-- **Efficiency:** today 0.38 (LHV); the agency gives **0.405**; EIA's heat rate of 9,447 Btu/kWh (higher heating value) is about **40 % LHV** (worked out with the standard ratio of about 1.108). Proposal: **0.40**, range 0.36–0.42.
-- **Sources:** PyPSA technology-data `costs_2025.csv` (Danish Energy Agency inputs) https://raw.githubusercontent.com/PyPSA/technology-data/master/outputs/costs_2025.csv; EIA, capital cost and performance study for AEO2025 https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf (both accessed 7 Nov 2026).
+Revised on 8 November 2026 after reading the Danish Energy Agency's sheet for 5–40 MW turbines, which fits the tool's 30 MW unit better than the large OCGT sheet used first.
+
+- **Fixed O&M:** today €12/kW/yr. Published: agency, 5–40 MW, **€19.5** (2015 €, insurance excluded, daily start); agency, large OCGT, **€10.6** (worked out); EIA aeroderivative **about €8.6**. Proposal: **keep €12 as judgement** inside the published range €8.6–19.5.
+- **Variable O&M:** today €6/MWh. Published: agency €5.4 (5–40 MW) and €6.01 (large); EIA about €5.1. Proposal: keep €6, now **sourced**.
+- **Efficiency:** today 0.38 (LHV). Published: agency 0.37 nominal / 0.35 annual average (5–40 MW), 0.405 (large); EIA about 0.40 LHV (worked out). Proposal: **keep 0.38 as judgement** inside the published range.
+- **Sources:** Danish Energy Agency, "Technology Data for Energy Plants for Electricity and District Heating Generation" (August 2016, amended January 2020), workbook mirrored in PyPSA technology-data (commit e5d25186) https://raw.githubusercontent.com/PyPSA/technology-data/e5d2518647b3ade0e448679141550a4c6f0c602e/inputs/technology_data_for_el_and_dh.xlsx; PyPSA `costs_2025.csv`; EIA AEO2025 capital cost study https://www.eia.gov/analysis/studies/powerplants/capitalcost/pdf/capital_cost_AEO2025.pdf (accessed 7–8 Nov 2026).
 
 ### 9. Gas engines (`tech.gasRecip.*`)
 
-- **No published value found.** PyPSA's dataset has no gas engine row (only the agency's diesel engine farm: €11.5/kW/yr, €8.0/MWh, 35 %); EIA's study has no engine case. The agency's catalogue chapter on gas engines was not read. Proposal: keep today's values as **judgement** until that chapter is read.
+Read on 8 November 2026 from the agency's sheet 06 (spark ignition engine, natural gas, 1–10 MWe), 2020 column, 2015 €:
+
+| Record | Today | Agency (range) | Proposal |
+|---|---|---|---|
+| Fixed O&M | €15/kW/yr | €9.75 (7–20), at 4,000 h a year | €9.75, labelled 2015 € |
+| Variable O&M | €8/MWh | €5.4 (4–12) | €5.4, labelled 2015 € |
+| Efficiency (LHV) | 0.44 | 0.45 annual average, 0.47 nominal (0.38–0.48) | 0.45 |
+| Minimum stable load | 0.3 | 0.5 (0.3–0.5) | question for the owner |
+| Life | 20 years | 25 (25 to more than 25) | 25 |
+| Build time | 6 months | 1 year (0.5–1.5) | 12 months |
+| Capex | €900/kW (sourced in batch 2) | €0.95 m/MW (0.9–1.1), 2015 € | no change |
+
+The catalogue is from 2016 (amended 2020) and in 2015 money; the figures are not escalated. Space: the agency gives 40 m²/MW for the engine plant itself; today's 200 m²/MW includes more of the site and is not compared.
 
 ### 10. Licences
 
@@ -110,7 +124,7 @@ Owner's decision of 7 November 2026 (OPEN-QUESTIONS 201): nothing goes into the 
 
 ### Still not reached
 
-Grid connection date and capacity defaults by country (no published table; judgement), escalation sources, NOAA cleaning, deliverability penalties (judgement), run speed; the gas engine chapter of the agency's catalogue; country gas spreads.
+Grid connection date and capacity defaults by country (no published table; judgement), escalation sources, NOAA cleaning, deliverability penalties (judgement), run speed; country gas spreads.
 
 ## Questions for the owner (copied to the progress file)
 
@@ -119,6 +133,8 @@ Grid connection date and capacity defaults by country (no published table; judge
 3. Gas connection pipe: keep €0.8 m/km as judgement with the ACER flag, or move to the ACER median €2.08 m/km?
 4. Gas price: accept the Dutch TTF hub price, as reported by the press with its date, as the "latest dated price" shown beside the 2025 average? (The walkthrough says an exchange source needs the owner's approval.)
 5. ASHRAE climatic design data: buy the developer licence before the first release, or replace the source?
+6. Gas engines' minimum stable load: the agency's 50 % (today 30 %), or keep 30 % for modern 10 MW engines as judgement?
+7. Values from the agency's catalogue are in 2015 money: use them as published, or escalate them to today's money (needs an escalation source)?
 
 ## Sources
 

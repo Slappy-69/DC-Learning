@@ -140,6 +140,8 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km?
 - F4. Gas price: accept the Dutch TTF hub price (press-reported, dated) as the "latest dated price" beside the 2025 average (€42.9)? TTF closed at €85.6 on 6 Nov 2026.
 - F5. ASHRAE climatic design data: buy the developer licence before the first release, or replace the source?
+- F6. Gas engines' minimum stable load: the Danish Energy Agency's 50 % (today 30 %), or keep 30 % as judgement?
+- F7. Agency catalogue values are in 2015 money: use as published, or escalate (needs an escalation source)?
 
 - H1. Set the adder to network + levies and taxes for DE, NL, PT, FI, SE, DK, CH, IE now, or after the rest are researched? **Answered 2026-11-07 by the owner: "Wait for all the research is done before implementing" (OPEN-QUESTIONS 201).**
 - H2. Show data centre tax rules (FR reduced rate, FI change on 1 Jul 2026, GB CCA discount, NO unclear) as flags on the options?
