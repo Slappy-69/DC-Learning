@@ -14,7 +14,9 @@ A new chat that picks this up: read this file, then carry on from the first part
 | A | Yearly grid charge per MW, 31 countries (OQ 160–165) | `grid-capacity-charges-2026-11.md` and `.csv` | Done (5 random entries checked) | 2026-11-07 |
 | E | Renewable plant data sources (OQ 194–197) | `renewable-plant-sources-2026-11.md` | Done | 2026-11-07 |
 | G | Open map data for main utilities (OQ 200) | `utility-maps-2026-11.md` | Done | 2026-11-07 |
-| F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | Done for this run (26 proposals, then 8 more after the run: gas price, gas transport, gas turbine O&M and efficiency, gas engines, two licences; still-not-reached list in the file) | 2026-11-07 |
+| F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | Done (26 proposals in the run, 16 more on 7–8 Nov: gas price and transport, gas turbines and engines, licences, escalation, weather; still-not-reached list in the file) | 2026-11-07 to 08 |
+| H | Levies and taxes per MWh, 31 countries (owner's choice after the run) | `levies-and-taxes-2026-11.md` and `.csv` | Done (28 countries with at least part found; second and third passes; 5 random entries checked) | 2026-11-07 to 08 |
+| A (2nd pass) | Gaps in the grid charge per MW | end of `grid-capacity-charges-2026-11.md` | Done | 2026-11-08 |
 
 ## Part A: countries
 
@@ -123,7 +125,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - D4. Bundle the latest T-4 de-rating table (2030/31, August 2026) and update it at each release?
 - B1. Norway's takeover flag: "likely unavailable" (reserved capacity cannot change purpose) rather than "not confirmed"?
 - B2. Should the general takeover flag say, for every country, that a plant's export connection is not an import connection?
-- A1. Countries that charge on measured peak (DE today, PT peak hours, NL monthly maximum, GB Triads): charge the per-MW line on the option's contracted grid MW anyway (as decided in OQ 162), or on its peak import?
+- A1. **(Answered before the run: OPEN-QUESTIONS 162, contracted MW.)** Countries that charge on measured peak (DE today, PT peak hours, NL monthly maximum, GB Triads): charge the per-MW line on the option's contracted grid MW anyway (as decided in OQ 162), or on its peak import?
 - A2. Discounts for large flat loads (DE bandload, ES/PT electro-intensive): leave out, offer as a tick, or apply by default?
 - A3. GB's residual is fixed per site, not per MW: enter it as a yearly lump sum, or divide by the contracted MW?
 - A4. Where the network bill has both a contracted line and a peak line (NL, BE, PT), should the tick carry only the contracted line (the rest stays in the per-MWh adder), or both? **Answered 2026-11-07 (OPEN-QUESTIONS 203): the adder holds everything; the per-MW part, both lines, moves to the per-MW charge when ticked.**
@@ -139,11 +141,11 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - F2. Keep the network adders unchanged until levies are researched (proposed), or lower them now? **Answered 2026-11-07 by the owner (with H1): wait until all the research is done (OPEN-QUESTIONS 201).**
 - F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km?
 - F4. Gas price: accept the Dutch TTF hub price (press-reported, dated) as the "latest dated price" beside the 2025 average (€42.9)? TTF closed at €85.6 on 6 Nov 2026.
-- F5. ASHRAE climatic design data: buy the developer licence before the first release, or replace the source?
+- F5. (Withdrawn 8 Nov 2026: ASHRAE was already decided in OPEN-QUESTIONS 64, not bundled.)
 - F6. Gas engines' minimum stable load: the Danish Energy Agency's 50 % (today 30 %), or keep 30 % as judgement?
 - F7. Agency catalogue values are in 2015 money: use as published, or escalate (needs an escalation source)?
 - F8. Escalation: World Bank (April 2026) for 2026–27, then the TYNDP 2026 path for gas and carbon?
-- F9. Weather: NOAA's ISD is retired (no update after 24 Aug 2025); switch to GHCNh, and how to fill gaps into a full year?
+- F9. (Withdrawn 8 Nov 2026: the tool already uses GHCNh; the ISD retirement does not affect it.)
 
 - H1. Set the adder to network + levies and taxes for DE, NL, PT, FI, SE, DK, CH, IE now, or after the rest are researched? **Answered 2026-11-07 by the owner: "Wait for all the research is done before implementing" (OPEN-QUESTIONS 201).**
 - H2. Show data centre tax rules (FR reduced rate, FI change on 1 Jul 2026, GB CCA discount, NO unclear) as flags on the options?
@@ -153,7 +155,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 **Owner, 7 Nov 2026, 21:41 local (OPEN-QUESTIONS 202):** the research counts as done, except Italy's general system charges tables and Ireland's 2026/27 demand tariffs, which the owner will try to attach. Next: the open questions one at a time, starting with OPEN-QUESTIONS 203 (per-MW charges and the adder).
 
-**8 Nov 2026 (after the usage limit reset):** done: the Danish Energy Agency's gas engine and 5–40 MW turbine sheets (turbine proposals revised to "keep as judgement"); France's excise confirmed; Hungary cross-check; escalation sources (World Bank April 2026, TYNDP 2026); NOAA's ISD found retired (GHCNh proposed); five random new entries checked, all match as recorded (see the levies note). **Gaps that remain need documents this session cannot read or the owner's input:** ARERA's general system charges tables (Italy), Svenska kraftnät's 2026 price list, EirGrid's 2026/27 demand tariffs, PSE's rate table (Poland), Iceland's law (althingi.is refuses), Greece at high voltage, Hungary's KÁT rate for large users, Luxembourg's electricity tax, Estonia's 2026 renewables fee, Lithuania and Malta; and judgement items (grid connection date defaults, country gas spreads, an electricity price forecast by country).
+**8 Nov 2026 (after the usage limit reset):** done: the Danish Energy Agency's gas engine and 5–40 MW turbine sheets (turbine proposals revised to "keep as judgement"); France's excise confirmed; Hungary cross-check; escalation sources (World Bank April 2026, TYNDP 2026); NOAA's ISD found retired (the tool already uses its replacement, GHCNh; no change); five random new entries checked, all match as recorded (see the levies note). **Gaps that remain need documents this session cannot read or the owner's input:** ARERA's general system charges tables (Italy), Svenska kraftnät's 2026 price list, EirGrid's 2026/27 demand tariffs, PSE's rate table (Poland), Iceland's law (althingi.is refuses), Greece at high voltage, Hungary's KÁT rate for large users, Luxembourg's electricity tax, Estonia's 2026 renewables fee, Lithuania and Malta; and judgement items (grid connection date defaults, country gas spreads, an electricity price forecast by country).
 
 **After the run (7 Nov 2026, evening):** the owner asked to carry on until all the research is done (OPEN-QUESTIONS 201). Done since: levies for all 31 countries (second pass included), Part A second pass, defaults batch 3 second set. The session hit the 5-hour usage limit at about 21:00 UTC while opening the Danish Energy Agency's catalogue (gas engine chapter, https://ens.dk/media/3283/download). Next, in order: that chapter; Hungary's KÁT for large users; Italy's general system charges (ARERA tables 227/2026 A and 588/2025 B); Greece at high voltage; Luxembourg's electricity tax; country gas spreads; escalation sources; NOAA cleaning; then the summaries and a check of the new figures against their sources.
 

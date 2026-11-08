@@ -352,3 +352,11 @@ OPEN-QUESTIONS 98–104 answered with Claude's recommendations, accepted in adva
 1. §13.3 / OPEN-QUESTIONS 93: the breakeven competitors are the best option of each other strategy among the first **six** cards (so that five are reached after the leader's own card), not the top-five cards. Answered by the owner on 2026-10-26; the code was right and the record was amended.
 2. §13.1 / OPEN-QUESTIONS 99: the battery and grid connection capex factors correlate with each other at about 0.64 (each is joined to the all-lines factor at 0.8). Clarified and kept by the owner on 2026-10-26; the brief's wording now says so.
 3. §13.3 / OPEN-QUESTIONS 105: the "grid connection capex" driver scales the grid connection charge and the cable route only, not the substation (the substation moves with the "capex" driver). Answered by the owner on 2026-10-26; the code was right and the records now say so. On T1 the driver scales €15,000 of €77.2 million (the charge defaults to 0).
+
+## Revision 5, notes (2026-11-07): research run of November 2026
+
+Research and proposals only; nothing in the app or the defaults register changed. The research is in `../docs/research/` (start with `research-run-2026-11-progress.md`).
+
+1. §18 (network charges and levies row) / OPEN-QUESTIONS 201: the country defaults stay as they are until the research is complete. Answered by the owner on 2026-11-07 ("Wait for all the research is done before implementing").
+2. OPEN-QUESTIONS 202: the research counts as done, except Italy's general system charges tables and Ireland's 2026/27 demand tariffs, which the owner will try to attach. Answered by the owner on 2026-11-07.
+3. §18 (same row) / OPEN-QUESTIONS 203: when built, the per-MWh adder holds every grid charge; the per-MW part is shown separately per country and moves to the per-MW charge on the option's contracted MW when the engineer ticks it (rows 160 and 162), so nothing is counted twice. Answered by the owner on 2026-11-07 (Claude's recommendation).

@@ -119,8 +119,8 @@ The catalogue is from 2016 (amended 2020) and in 2015 money; the figures are not
 
 ### 10. Licences
 
-- **ASHRAE climatic design data:** a **paid licence** (one-time fee, ASHRAE Bookstore) is offered to developers who include the data in their own software; the terms sit in the product preview, which was not read. **Needs checking before release.**
-- **Protomaps basemap:** an **ODbL Produced Work**, OpenStreetMap attribution required; the planet file is about **120 GB** to zoom 15, and each extra zoom level roughly doubles it (use `pmtiles extract --maxzoom`). Offline redistribution follows the ODbL (Part G, question G3).
+- **ASHRAE climatic design data:** a **paid licence** (one-time fee, ASHRAE Bookstore) is offered to developers who include the data in their own software. This matches the decision already taken (OPEN-QUESTIONS 64, 23 Oct 2026: not bundled; every option carries the flag "design temperatures from the synthetic country profile"). No new proposal.
+- **Protomaps basemap:** matches the user guide's chapter 50: an **ODbL Produced Work**, OpenStreetMap attribution required; the planet file is about **120 GB** to zoom 15, and each extra zoom level roughly doubles it (use `pmtiles extract --maxzoom`). Offline redistribution follows the ODbL (Part G, question G3).
 
 ### 11. Escalation sources (walkthrough: "published forecast per commodity, overridable")
 
@@ -131,11 +131,10 @@ The catalogue is from 2016 (amended 2020) and in 2015 money; the figures are not
 
 ### 12. NOAA hourly weather: source and cleaning
 
-- **The source the tool plans to use has been retired.** NOAA's Integrated Surface Data (Global Hourly) is **superseded, with no update beyond 24 August 2025**; NCEI's direct download and FTP stopped on **31 July 2026**; the NOAA Open Data cloud buckets remain (NESDIS notice, 23 June 2026).
-- **Replacement:** **GHCNh** (Global Historical Climatology Network hourly), which NCEI says "replaces the Integrated Surface Dataset": hourly land-station data, bulk files in PSV or parquet, automated quality checks on part of the variables and the source quality flags kept. No licence terms are stated on its page.
-- **Cleaning reference:** NOAA's ISD-Lite takes one value per hour from a 10-minute window ending at the top of the hour and marks gaps as −9999; that is a fair model for the first cleaning step. How to fill gaps into a full 8,760-hour year is a method choice for the owner.
-- **Proposal:** prepare weather from GHCNh at each release (the program stays offline).
-- **Sources:** https://www.nesdis.noaa.gov/news/service-location-change-integrated-surface-data-global-hourly; https://ncei.noaa.gov/products/global-historical-climatology-network-hourly; https://www.ncei.noaa.gov/pub/data/noaa/isd-lite/isd-lite-technical-document.pdf (accessed 8 Nov 2026).
+- **Already in place (corrected 8 Nov 2026):** the tool's weather build (`weather-data/build-stations.mjs`, OPEN-QUESTIONS 106–107, 114–115) already uses **GHCNh**, NOAA's replacement for the Integrated Surface Data, with its quality codes and the typical-year method. A first draft of this section wrongly said the tool used the retired source.
+- **What the new notice changes:** nothing for the tool. NOAA retired the old ISD download paths (`/pub/data/noaa/`, `/data/global-hourly/`) on 31 July 2026 and says ISD has had no update since 24 August 2025. The build reads GHCNh from `/oa/global-historical-climatology-network/hourly/`, which the notice does not touch. The GHCNh page reports "intermittent degraded order fulfillment" during a cloud move, which could slow a release build.
+- **The walkthrough's research item "NOAA hourly data cleaning into a usable year"** is covered by that build; no new proposal.
+- **Sources:** https://www.nesdis.noaa.gov/news/service-location-change-integrated-surface-data-global-hourly; https://ncei.noaa.gov/products/global-historical-climatology-network-hourly (accessed 8 Nov 2026).
 
 ### Still not reached
 
@@ -147,11 +146,9 @@ Grid connection date and capacity defaults by country (no published table; judge
 2. Keep the network adders unchanged until levies are researched (proposed), or lower them now to the network part plus a placeholder for levies?
 3. Gas connection pipe: keep €0.8 m/km as judgement with the ACER flag, or move to the ACER median €2.08 m/km?
 4. Gas price: accept the Dutch TTF hub price, as reported by the press with its date, as the "latest dated price" shown beside the 2025 average? (The walkthrough says an exchange source needs the owner's approval.)
-5. ASHRAE climatic design data: buy the developer licence before the first release, or replace the source?
-6. Gas engines' minimum stable load: the agency's 50 % (today 30 %), or keep 30 % for modern 10 MW engines as judgement?
-7. Values from the agency's catalogue are in 2015 money: use them as published, or escalate them to today's money (needs an escalation source)?
-8. Escalation: World Bank (April 2026) for the first two years, then the TYNDP 2026 path for gas and carbon?
-9. Weather: switch the NOAA source from the retired ISD to GHCNh, and how should gaps be filled into a full year?
+5. Gas engines' minimum stable load: the agency's 50 % (today 30 %), or keep 30 % for modern 10 MW engines as judgement?
+6. Values from the agency's catalogue are in 2015 money: use them as published, or escalate them to today's money (needs an escalation source)?
+7. Escalation: World Bank (April 2026) for the first two years, then the TYNDP 2026 path for gas and carbon?
 
 ## Sources
 
