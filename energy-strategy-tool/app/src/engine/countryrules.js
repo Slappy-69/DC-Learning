@@ -120,3 +120,64 @@ export function carbonPathFactor(year, todayPrice) {
   void p0;
   return interp(path, year) / 88.3;
 }
+
+// Taking over a closing plant's grid connection, by country (owner 2026-11-07, OPEN-QUESTIONS 155, 214, 215; research
+// `docs/research/plant-connection-takeover-2026-11.md` and `-part2-2026-11.md`). Wording only: no number and no
+// ranking changes. The general line goes on every takeover flag (215).
+export const TAKEOVER_GENERAL = "A plant's grid connection is an export (feed-in) right and a data centre needs an import (offtake) right, so a connection does not simply transfer (OPEN-QUESTIONS 215).";
+export const TAKEOVER_RULE = {
+  ES: 'Looks unavailable: the capacity freed by a closing plant is tendered for new renewables and storage (Spain).',
+  PT: 'Looks unavailable: the capacity freed by a closing plant is tendered for new renewables and storage (Portugal).',
+  GB: 'Looks unavailable: under the new connection rules a data centre needs its own demand connection (Great Britain).',
+  IE: 'Looks unavailable: under the new rules a data centre needs its own demand connection (Ireland).',
+  NO: 'Likely not available: reserved capacity cannot change purpose under the queue practice (industry guide to NEM § 3-4, Fornybar Norge, June 2025); a data centre needs its own maturity-assessed request (OPEN-QUESTIONS 214).',
+  NL: "Not confirmed: an assumed right. A plant's feed-in capacity is not offtake capacity; in congested areas unused capacity returns to the queue (Netcode art. 7.13), and TenneT may keep a data centre waiting until capacity exists (court ruling of 29 April 2026).",
+  FR: 'Not confirmed: an assumed right. No rule found; unused connection power is cut back each year to 125 % of past demand. Fast-track capacity for large consumers is allocated by the State on chosen 400 kV sites.',
+  IT: "Not confirmed: an assumed right. No rule found; Italy's last coal plants are being kept as a reserve.",
+  BE: "Not confirmed: an assumed right. No rule found; new 'use it or lose it' rules return unused capacity to the queue.",
+  DK: "Not confirmed: an assumed right. Large consumers are queued by maturity since 1 February 2026; no rule passes a plant's connection to a new user.",
+  FI: 'Not confirmed: an assumed right. No rule found; priority rules for scarce capacity are being prepared.',
+  SE: 'Not confirmed: an assumed right. No rule found; Svenska kraftnät allocates on complete applications and is reviewing large connections.',
+  IS: 'Not confirmed: an assumed right.',
+  DE: 'Not confirmed: an assumed right. No rule found; transmission connections are allocated by a maturity procedure from 2026, and a closing plant may be held in the grid reserve.',
+};
+export const takeoverRule = (cc) => TAKEOVER_RULE[cc] || 'Not confirmed: an assumed right. Not researched for this country.';
+
+// Ireland's large energy user policy (owner 2026-11-07, OPEN-QUESTIONS 198, 210–213): a minor flag on every Irish run.
+// De-rating factors from the latest T-4 capacity auction information pack (SEMO, IAIP3031T-4 v1.0, 2030/31, 4 August
+// 2026), bundled and refreshed at each release; the engineer can override any factor (inputs.ireland.derating).
+export const IE_POLICY = {
+  text: 'Ireland: data centres of 10 MVA or more must bring new dispatchable plant or storage, on site or on the same local network, whose capacity after the capacity market\'s de-rating is at least the maximum import capacity; demand cannot step up beyond the de-rated plant actually built; at least 80 % of yearly demand must come from new Irish renewables within six years of energisation. Source: CRU decision CRU/2025236 (12 December 2025) and EirGrid\'s process paper V3 (20 May 2026), cru.ie and eirgrid.ie. The decision is under judicial review (leave granted 28 April 2026).',
+  powerFactor: 0.975, // owner's judgement (OPEN-QUESTIONS 212)
+  thresholdMVA: 10,
+  table: {
+    source: 'SEMO, Capacity Market T-4 auction information pack 2030/31 (IAIP3031T-4 v1.0, 4 August 2026), Tables 1, 3, 5 and 6',
+    date: '2026-08-04',
+    gasBySize: [[10, 0.868], [20, 0.857], [30, 0.848], [50, 0.833], [100, 0.819], [200, 0.797], [400, 0.733]],
+    storageByHours: [[1, 0.043], [2, 0.077], [4, 0.143], [8, 0.534]],
+    wind: 0.059, solar: 0.041,
+    note: 'Gas turbine factors by unit size are used for every dispatchable thermal unit (engines, CHP, fuel cells): judgement. The 8-hour storage factor reads the same as the 2029/30 pack: to check against the PDF.',
+  },
+};
+export function ieGasFactor(unitMW, over) {
+  if (over && Number.isFinite(over.gas)) return over.gas;
+  for (const [mw, f] of IE_POLICY.table.gasBySize) if (unitMW <= mw) return f;
+  return IE_POLICY.table.gasBySize[IE_POLICY.table.gasBySize.length - 1][1];
+}
+export function ieStorageFactor(hours, over) {
+  if (over && Number.isFinite(over.storage)) return over.storage;
+  const t = IE_POLICY.table.storageByHours;
+  let f = 0;
+  for (const [h, x] of t) if (hours >= h - 1e-9) f = x;
+  return f;
+}
+
+// Great Britain's proposed Data Centre Commitment Fee (owner 2026-11-07, OPEN-QUESTIONS 199, 206–209): an optional tick;
+// the fee field starts blank with Ofgem's range beside it; a cash deposit paid on day 1 of the analysis, no bank fee,
+// its only cost the money tied up at the discount rate; returned stage by stage as the grid capacity it was paid for
+// becomes available. Applies in Great Britain to connections of 40 MW or more (Claude's reading, OPEN-QUESTIONS 238).
+export const GB_FEE = {
+  rangeGBP: [237500, 712500],
+  thresholdMW: 40,
+  source: 'Ofgem, consultation on a Data Centre Commitment Fee (29 July 2026): £237,500 to £712,500 per MW for connections of 40 MW or more; proposed, not decided (no decision found up to 7 November 2026)',
+};

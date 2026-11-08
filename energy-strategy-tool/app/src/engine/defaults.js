@@ -1078,6 +1078,9 @@ export function buildDefaultInputs(opts = {}) {
       lumpSumPerYear: rec('grid.lumpSumPerYear', 'by country', '€ a year per site (Great Britain: TNUoS residual)', { basis: 'source', derived: true, ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 217): Great Britain\'s residual transmission charge as a yearly lump sum, the same for every option that uses the grid; charged only with the per-MW tick. NESO 2026/27, band T-Demand4.' }),
       flatLoadDiscount: rec('grid.flatLoadDiscount', false, 'toggle', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 216): off by default. Germany only (StromNEV § 19(2)): at 7,000 / 7,500 / 8,000 use hours a year the network part falls to 20 / 15 / 10 %. Other countries: further research list, item 1.' }),
       dcReducedRate: rec('grid.dcReducedRate', false, 'toggle', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 233): the normal tax rate is used until the engineer ticks that the conditions for the data centre rate are met (France: reduced excise; Great Britain: Climate Change Agreement).' }),
+      // Work package 26 (owner 2026-11-07, OPEN-QUESTIONS 199, 206–209): Great Britain's proposed commitment fee.
+      gbFeeInclude: rec('grid.gbFeeInclude', false, 'toggle', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 199): an optional tick, unticked by default; Great Britain only, connections of 40 MW or more (OPEN-QUESTIONS 238).' }),
+      gbFeePerMW: rec('grid.gbFeePerMW', null, '€ per MW of contracted capacity (blank = not entered)', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 206): starts blank, with Ofgem\'s proposed range (£237,500 to £712,500 per MW, 29 July 2026) beside it. A cash deposit paid on day 1, returned stage by stage as the grid capacity comes (207–209).' }),
       connectionCharge: rec('grid.connectionCharge', 0, '€ (lump sum, the same for every grid-connected option)', { basis: 'judgement', ref: '§5.4, §9.5', note: 'Walkthrough 2026-10-21: default 0, the same for every option; OPEN-QUESTIONS 20: a lump sum, not paid by islanded options (0 MW contracted); OPEN-QUESTIONS 50: the expected cost (standard rate per MW × contracted MW) is shown next to the field. Every option relying on the default 0 is flagged "assumed".' }),
       dateUncertainty: rec('grid.dateUncertainty', [-6, 24], 'months', { basis: 'judgement', note: 'Range of the grid-date driver in the tornado, the breakevens and the Monte Carlo (work packages 9, 17, 18).', ref: '§5.4' }),
     },
@@ -1217,6 +1220,9 @@ export function buildDefaultInputs(opts = {}) {
     takeoverCostPerMW: rec('existing.takeoverCostPerMW', null, '€/MW', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.takeoverCostFrac × the extra-high-voltage connection rate.' }),
     takeoverLagMonths: rec('existing.takeoverLagMonths', null, 'months', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.takeoverLagMonths.' }),
   };
+  // Ireland's de-rating factors (work package 26, OPEN-QUESTIONS 213): the bundled T-4 table unless the engineer
+  // overrides a factor (gas, storage, wind, solar).
+  inputs.ireland = { derating: rec('ireland.derating', {}, 'factor overrides { gas, storage, wind, solar }', { basis: 'source', ref: '§5.4', note: 'Empty = the latest T-4 capacity auction table bundled with the release (SEMO 2030/31, 4 August 2026).' }) };
   // Existing gas plants from the bundled list (work package 19, OPEN-QUESTIONS 116–123): found automatically; the
   // engineer's corrections are kept per list entry (edits[<id>] = { include, name, type, mw, units, unitMW, firstYear,
   // closeYear, eff, msl, vomPerMWh, leasePerKWMonth, buyPerKW, refurbPerKW, fomPerKW, linkCapex, takeoverMW,
@@ -1261,7 +1267,8 @@ export function normalizeInputs(inputs) {
   // Inputs saved before work package 19 have no plant list settings: the list is read (OPEN-QUESTIONS 118).
   out.plants = { auto: true, edits: {}, ...(out.plants || {}) };
   // Inputs saved before work package 24 have no per-MW charge settings: unticked.
-  out.grid = { perMWInclude: false, perMWCharge: 'by country', lumpSumPerYear: 'by country', flatLoadDiscount: false, dcReducedRate: false, ...out.grid };
+  out.grid = { perMWInclude: false, perMWCharge: 'by country', lumpSumPerYear: 'by country', flatLoadDiscount: false, dcReducedRate: false, gbFeeInclude: false, gbFeePerMW: null, ...out.grid };
+  out.ireland = { derating: {}, ...(out.ireland || {}) };
   // Inputs saved before the weather work have none: the synthetic profile.
   if (!out.weather || typeof out.weather !== 'object') out.weather = { source: 'none' };
   out.choices = out.choices || {};

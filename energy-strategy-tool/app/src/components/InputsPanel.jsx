@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTag } from './Field.jsx';
-import { gridChargeData, CONDITIONAL_RATE, DC_TAX, GB_RESIDUAL } from '../engine/countryrules.js';
+import { gridChargeData, CONDITIONAL_RATE, DC_TAX, GB_RESIDUAL, GB_FEE, IE_POLICY } from '../engine/countryrules.js';
 import { PLANT_DEFAULTS, COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
 import MapPicker from './MapPicker.jsx';
 import WeatherField from './WeatherField.jsx';
@@ -514,6 +514,34 @@ function GridChargesGroup({ inputs, set, countryNow }) {
       {CONDITIONAL_RATE[countryNow] ? <ToggleField label={`Use ${CONDITIONAL_RATE[countryNow]}`} checked={!!g.dcReducedRate} onCommit={set('grid.dcReducedRate')} path="grid.dcReducedRate" inputs={inputs}
         hint={`Off by default: the normal rate is used until the conditions are met (OPEN-QUESTIONS 233). ${DC_TAX[countryNow].site}.`} /> : null}
       {DC_TAX[countryNow] && !CONDITIONAL_RATE[countryNow] ? <p className="note">{DC_TAX[countryNow].normal} Local website: {DC_TAX[countryNow].site}.</p> : null}
+      {countryNow === 'GB' ? <>
+        <ToggleField label="Data Centre Commitment Fee (proposed)" checked={!!g.gbFeeInclude} onCommit={set('grid.gbFeeInclude')} path="grid.gbFeeInclude" inputs={inputs}
+          hint={`Off by default (OPEN-QUESTIONS 199). On: a cash deposit per MW of contracted capacity, paid on day 1 and returned stage by stage as the grid capacity comes; its cost is the money tied up. Connections of ${GB_FEE.thresholdMW} MW or more. ${GB_FEE.source}.`} />
+        {g.gbFeeInclude ? <NumberField label="Commitment fee" unit="€/MW" value={num(g.gbFeePerMW)} onCommit={set('grid.gbFeePerMW')} path="grid.gbFeePerMW" inputs={inputs} nullable min={0} step={10000} placeholder="Enter the fee"
+          hint={`Starts blank (OPEN-QUESTIONS 206). Ofgem's proposed range: £${GB_FEE.rangeGBP[0].toLocaleString('en-GB')} to £${GB_FEE.rangeGBP[1].toLocaleString('en-GB')} per MW (about €${Math.round(GB_FEE.rangeGBP[0] / 0.8377).toLocaleString('en-GB')} to €${Math.round(GB_FEE.rangeGBP[1] / 0.8377).toLocaleString('en-GB')} at 0.8377 £/€).`} /> : null}
+      </> : null}
+      {countryNow === 'IE' ? <IrelandFactors inputs={inputs} set={set} /> : null}
+    </fieldset>
+  );
+}
+
+// Ireland's de-rating factors (work package 26, OPEN-QUESTIONS 213): the bundled T-4 table; any factor can be overridden.
+function IrelandFactors({ inputs, set }) {
+  const over = (inputs.ireland && inputs.ireland.derating) || {};
+  const put = (k) => (x) => set('ireland.derating')({ ...over, [k]: x == null ? undefined : x });
+  const t = IE_POLICY.table;
+  return (
+    <fieldset className="subgroup" id="ireland-factors">
+      <legend>Ireland: de-rating factors <span className="legend-note">(blank = the bundled table)</span></legend>
+      <p className="note">Every Irish run carries a minor flag with the large energy user policy and whether each option's de-rated plant covers its import (OPEN-QUESTIONS 198, 210–213). Table: {t.source}.</p>
+      <div className="row2">
+        <NumberField label="Dispatchable plant" unit="factor" value={Number.isFinite(over.gas) ? over.gas : null} onCommit={put('gas')} path="ireland.derating" inputs={inputs} nullable min={0} max={1} step={0.001} placeholder="by unit size" />
+        <NumberField label="Battery" unit="factor" value={Number.isFinite(over.storage) ? over.storage : null} onCommit={put('storage')} path="ireland.derating" inputs={inputs} nullable min={0} max={1} step={0.001} placeholder="by hours" />
+      </div>
+      <div className="row2">
+        <NumberField label="Wind" unit="factor" value={Number.isFinite(over.wind) ? over.wind : null} onCommit={put('wind')} path="ireland.derating" inputs={inputs} nullable min={0} max={1} step={0.001} placeholder={String(t.wind)} />
+        <NumberField label="Solar" unit="factor" value={Number.isFinite(over.solar) ? over.solar : null} onCommit={put('solar')} path="ireland.derating" inputs={inputs} nullable min={0} max={1} step={0.001} placeholder={String(t.solar)} />
+      </div>
     </fieldset>
   );
 }

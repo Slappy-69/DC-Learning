@@ -11,7 +11,7 @@ import { NA } from './generator.js';
 import { adequacyOf, adequacyText } from './adequacy.js';
 import { addMonths } from './dates.js';
 import { PLANT_SOURCE } from './plants.js';
-import { DC_TAX, CONDITIONAL_RATE, DE_DISCOUNT, deDiscountFactor, GB_RESIDUAL, gasPathFactor, carbonPathFactor } from './countryrules.js';
+import { DC_TAX, CONDITIONAL_RATE, DE_DISCOUNT, deDiscountFactor, GB_RESIDUAL, gasPathFactor, carbonPathFactor, takeoverRule, TAKEOVER_GENERAL, IE_POLICY, ieGasFactor, ieStorageFactor, GB_FEE } from './countryrules.js';
 import { plantCandidates, PLANT_DEFAULTS } from './defaults.js';
 
 const PERMIT_NOTE = 'Screening flag, not a permitting determination.';
@@ -103,7 +103,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   const cont = E.contingency;
   const capexLines = []; // { item, year, amount }
   const ledger = [];
-  for (let y = 0; y <= N; y++) ledger.push({ year: y, capex: 0, contingency: 0, replacement: 0, residual: 0, fom: 0, vom: 0, fuel: 0, grid: 0, gridFixed: 0, ppa: 0, carbon: 0, rental: 0, testRun: 0, flex: 0, revenue: 0, deliveredMWh: 0, scope1T: 0, scope2LocT: 0, scope2MktT: 0, cfeMWh: 0, netDemandMWh: 0, unmetMWh: 0 });
+  for (let y = 0; y <= N; y++) ledger.push({ year: y, capex: 0, contingency: 0, replacement: 0, residual: 0, fom: 0, vom: 0, fuel: 0, grid: 0, gridFixed: 0, deposit: 0, ppa: 0, carbon: 0, rental: 0, testRun: 0, flex: 0, revenue: 0, deliveredMWh: 0, scope1T: 0, scope2LocT: 0, scope2MktT: 0, cfeMWh: 0, netDemandMWh: 0, unmetMWh: 0 });
 
   const assets = []; // for replacement and residual value
   // Sensitivity multipliers (work package 9; 1 = as entered).
@@ -389,11 +389,34 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     }
   }
 
+  // Great Britain's proposed Data Centre Commitment Fee (OPEN-QUESTIONS 199, 206–209): a deposit paid on day 1 and
+  // returned as the contracted grid capacity it was paid for becomes available; booked in its own ledger column, at the
+  // start of each year like capex, so its only cost is the money tied up.
+  let gbFee = null;
+  if (ctx.country === 'GB' && inputs.grid.gbFeeInclude) {
+    const perMW = Number(inputs.grid.gbFeePerMW);
+    const ccap = v.C1 === 'islanded' ? [0] : contractedCap(ctx, v.C1);
+    let mw = 0; for (const x of ccap) if (x > mw) mw = x;
+    if (!(perMW > 0)) gbFee = { applies: false, reason: `Data Centre Commitment Fee ticked but no fee entered: nothing is charged (the field starts blank; Ofgem proposed £${GB_FEE.rangeGBP[0].toLocaleString('en-GB')} to £${GB_FEE.rangeGBP[1].toLocaleString('en-GB')} per MW, OPEN-QUESTIONS 206)` };
+    else if (mw < GB_FEE.thresholdMW) gbFee = { applies: false, reason: `Data Centre Commitment Fee ticked: not charged, because this option contracts ${Math.round(mw)} MW, below Ofgem's proposed threshold of ${GB_FEE.thresholdMW} MW (OPEN-QUESTIONS 238)` };
+    else {
+      const deposit = perMW * mw;
+      ledger[0].deposit += deposit;
+      let prev = 0;
+      for (let m = 0; m < ccap.length; m++) {
+        const step = Math.max(0, Math.min(ccap[m], mw) - prev);
+        if (step > 1e-9) { const y = Math.min(N, yearOfMonth(m)); ledger[y].deposit -= perMW * step; prev += step; }
+      }
+      let pv = 0; for (let y = 0; y <= N; y++) pv += ledger[y].deposit * Math.pow(1 + r, -y);
+      gbFee = { applies: true, perMW, mw, deposit, pvCost: pv };
+    }
+  }
+
   // Totals and discounting
   let pvCost = 0, pvEnergy = 0, pvCapex = 0, pvOpex = 0, capexTotal = 0, contTotal = 0;
   for (let y = 0; y <= N; y++) {
     const L = ledger[y];
-    L.capexTotal = L.capex + L.contingency + L.replacement + L.residual;
+    L.capexTotal = L.capex + L.contingency + L.replacement + L.residual + L.deposit;
     L.opex = L.fom + L.vom + L.fuel + L.grid + L.gridFixed + L.ppa + L.carbon + L.rental + L.testRun + L.flex - L.revenue;
     const dfC = Math.pow(1 + r, -y);
     const dfO = Math.pow(1 + r, -(y + 1));
@@ -423,6 +446,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     capexShare: pvCost !== 0 ? pvCapex / pvCost : 0,
     reconciliation: { lcoeTimesEnergy: lcoe * pvEnergy, npv: pvCost, pvEnergy },
     ppaHedge: hedge, // outside the ledger (see above); null without a PPA
+    gbFee, // work package 26: Great Britain's commitment fee (null when not ticked or outside Great Britain)
   };
 }
 
@@ -751,11 +775,51 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
     flags.push(flag('plant-takeover-mode', 'info', 'Existing plant', k.add
       ? `The taken-over connection comes as well as the campus's new ${Math.round(inputs.grid.fullMW)} MW connection, which is paid for in full (OPEN-QUESTIONS 126)`
       : `The taken-over connection replaces ${Math.round(Math.min(k.mw, inputs.grid.fullMW))} MW of the campus's new connection from month ${k.month}: the new connection is ${Math.round(k.newMW)} MW, with its substation, charge and cable route reduced to match; the contracted capacity caps the new connection only (OPEN-QUESTIONS 126)`, { plant: k.plant.id }));
-    flags.push(flag('plant-takeover', 'major', 'Existing plant', `${k.plant.defaultPassed ? `${k.plant.name} has no closure date and its ${PLANT_DEFAULTS.lifeYears}-year default has passed: the date its connection comes free is a guess (OPEN-QUESTIONS 125). ` : ''}Grid connection taken over from ${k.plant.name}: ${Math.round(k.mw)} MW${k.mw + 1e-6 < k.offeredMW ? ` (of its ${Math.round(k.offeredMW)} MW, capped at the campus's design load)` : ''} from month ${k.month} (${ym(k.month)}), ${eurM(k.cost)} at €${Math.round(k.costPerMW / 1000)}k/MW. An assumption, not a confirmed right: whether a closing plant's connection can pass to a new user depends on the country's rules and the network operator, not researched yet. Size, date (${k.plant.takeoverLagMonths} months after the plant stops) and cost are judgement defaults (OPEN-QUESTIONS 120).`, { plant: k.plant.id, value: k.mw }));
+    flags.push(flag('plant-takeover', 'major', 'Existing plant', `${k.plant.defaultPassed ? `${k.plant.name} has no closure date and its ${PLANT_DEFAULTS.lifeYears}-year default has passed: the date its connection comes free is a guess (OPEN-QUESTIONS 125). ` : ''}Grid connection taken over from ${k.plant.name}: ${Math.round(k.mw)} MW${k.mw + 1e-6 < k.offeredMW ? ` (of its ${Math.round(k.offeredMW)} MW, capped at the campus's design load)` : ''} from month ${k.month} (${ym(k.month)}), ${eurM(k.cost)} at €${Math.round(k.costPerMW / 1000)}k/MW. ${takeoverRule(ctx.country)} ${TAKEOVER_GENERAL} Size, date (${k.plant.takeoverLagMonths} months after the plant stops) and cost are judgement defaults (OPEN-QUESTIONS 120).`, { plant: k.plant.id, value: k.mw }));
   }
 
+  // Ireland's large energy user policy (OPEN-QUESTIONS 198, 210–213): a minor flag on every Irish option, with the
+  // de-rated plant test. Never hides, demotes or resizes an option.
+  if (ctx.country === 'IE') flags.push(irelandFlag(ctx, v, sz));
+  // Great Britain's proposed commitment fee (OPEN-QUESTIONS 199, 206–209).
+  const fee = eco && eco.gbFee;
+  if (fee) flags.push(flag('grid-gb-fee', 'minor', 'Grid', fee.applies
+    ? `Data Centre Commitment Fee: €${Math.round(fee.perMW).toLocaleString('en-GB')} per MW × ${Math.round(fee.mw)} MW = €${(fee.deposit / 1e6).toFixed(1)} m paid on day 1, returned stage by stage as the grid capacity comes (cost: the money tied up, €${(fee.pvCost / 1e6).toFixed(1)} m at the discount rate). ${GB_FEE.source}. Ofgem's text returns the deposit at energisation in one sum; stage-by-stage return is not confirmed (OPEN-QUESTIONS 208)`
+    : fee.reason, { value: fee.pvCost || 0 }));
   // Site fit flags come from the layout (sitefit.js) and are added in the flags stage of the run.
   return flags;
+}
+
+// The de-rated plant test of Ireland's policy (OPEN-QUESTIONS 198, 210–213). Import: the option's largest contracted
+// grid MW over the study, in MVA at power factor 0.975 (212). Counted: plant the option runs as market plant (prime and
+// retained bridging plant), its economic battery and its on-site solar and wind; standby gensets do not count (211).
+function irelandFlag(ctx, v, sz) {
+  const over = (ctx.inputs.ireland && ctx.inputs.ireland.derating) || {};
+  const cc = v.C1 === 'islanded' ? [0] : contractedCap(ctx, v.C1);
+  let impMW = 0; for (const x of cc) if (x > impMW) impMW = x;
+  const imp = impMW / IE_POLICY.powerFactor;
+  const parts = [];
+  let derated = 0;
+  const thermal = (p, label) => {
+    if (!p || !(p.mw > 0)) return;
+    const t = TECH[p.tech];
+    if (!t || t.role === 'backup') return;
+    const unit = p.unitMW || (t.p && t.p.unitMW) || p.mw;
+    const f = ieGasFactor(unit, over);
+    derated += p.mw * f; parts.push(`${label} ${Math.round(p.mw)} MW × ${f}`);
+  };
+  thermal(sz.prime, 'firm plant');
+  if (sz.bridge && ['prime', 'split', 'gridServices'].includes(v.C3)) thermal(sz.bridge, 'retained bridging plant');
+  if (sz.storage && sz.storage.mw > 0) { const h = sz.storage.mwh / sz.storage.mw; const f = ieStorageFactor(h, over); derated += sz.storage.mw * f; parts.push(`battery ${Math.round(sz.storage.mw)} MW (${h.toFixed(0)} h) × ${f}`); }
+  const pv = (sz.solarRoofMWp || 0) + (sz.solarGroundMWp || 0);
+  const fs = Number.isFinite(over.solar) ? over.solar : IE_POLICY.table.solar, fw = Number.isFinite(over.wind) ? over.wind : IE_POLICY.table.wind;
+  if (pv > 0) { derated += pv * fs; parts.push(`solar ${pv.toFixed(1)} MWp × ${fs}`); }
+  if (sz.windMW > 0) { derated += sz.windMW * fw; parts.push(`wind ${Math.round(sz.windMW)} MW × ${fw}`); }
+  const applies = imp >= IE_POLICY.thresholdMVA;
+  const ok = !applies || derated >= imp - 1e-6;
+  const test = !applies ? `This option imports ${imp.toFixed(1)} MVA, below the 10 MVA threshold.`
+    : `This option: import ${Math.round(impMW)} MW = ${imp.toFixed(1)} MVA at power factor ${IE_POLICY.powerFactor} (judgement, OPEN-QUESTIONS 212); de-rated plant ${derated.toFixed(1)} MW${parts.length ? ` (${parts.join('; ')})` : ' (none)'}: ${ok ? 'covers the import' : `short by ${(imp - derated).toFixed(1)} MW`}. Standby gensets do not count (OPEN-QUESTIONS 211). Factors: ${IE_POLICY.table.source}${Object.keys(over).length ? ', with the engineer\'s overrides' : ''}; ${IE_POLICY.table.note} Checked at full build, not year by year.`;
+  return flag('ireland-leu', 'minor', 'Grid', `${IE_POLICY.text} ${test}`, { value: ok ? 0 : imp - derated, pass: ok });
 }
 
 // Every flag of an option as the run assembles it (run.js flags stage): the §15 flags above, the site-fit flags

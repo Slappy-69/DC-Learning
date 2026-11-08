@@ -4,6 +4,8 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { referenceT1, normalizeInputs, getRegistry } from '../src/engine/defaults.js';
+import { eemSmall } from './plants-tests.mjs';
+import { TAKEOVER_GENERAL, IE_POLICY } from '../src/engine/countryrules.js';
 import { buildContext } from '../src/engine/context.js';
 import { runModel } from '../src/engine/run.js';
 import { contractedCap } from '../src/engine/context.js';
@@ -121,6 +123,46 @@ export async function agreedTests(test, ctxRuns) {
     const j = JSON.parse(JSON.stringify(i)); j.economics.gasEscalation = 0; j.economics.carbonEscalation = 0.02;
     const run2 = runModel(j);
     assert.ok(run2.options.every((o) => !o.flags.some((f) => f.id === 'fuel-gas-path')), 'an entered rate: no path flag');
+    return out.join('; ');
+  });
+
+  await test('58. Work package 26: takeover flag by country with "export is not import"; Ireland\'s minor flag with the de-rated plant test on every Irish option; Great Britain\'s commitment fee as a deposit paid on day 1 and returned stage by stage, only when ticked, entered and at 40 MW or more', () => {
+    const out = [];
+    // Takeover wording: Eemshaven (Netherlands) and the same campus read as Norway.
+    const nl = runModel(eemSmall({ cap: 300 }));
+    const tk = nl.options.find((o) => o.flags.some((f) => f.id === 'plant-takeover'));
+    assert.ok(tk, 'a takeover option');
+    const msg = tk.flags.find((f) => f.id === 'plant-takeover').message;
+    assert.ok(msg.includes('Netcode art. 7.13') && msg.includes(TAKEOVER_GENERAL) && !/not researched yet/.test(msg), 'NL wording and the general line');
+    const noI = eemSmall({ cap: 300 }); noI.project.country = 'NO';
+    const no = runModel(noI).options.find((o) => o.flags.some((f) => f.id === 'plant-takeover'));
+    assert.ok(no && /Likely not available/.test(no.flags.find((f) => f.id === 'plant-takeover').message), 'Norway: likely not available');
+    out.push('takeover: NL and NO wording, export-not-import line');
+
+    // Ireland: every option carries the minor flag; the test result follows the de-rated plant.
+    const ie = smallRun(START, 'IE', {}, 40);
+    assert.ok(ie.options.every((o) => o.flags.some((f) => f.id === 'ireland-leu' && f.severity === 'minor')), 'flag on every Irish option');
+    const fl = ie.options.map((o) => o.flags.find((f) => f.id === 'ireland-leu'));
+    assert.ok(fl.some((f) => f.pass === false) && fl.every((f) => /CRU\/2025236/.test(f.message)), 'some options short; the decision named');
+    assert.ok(fl.some((f) => /power factor 0\.975/.test(f.message)) && fl.every((f) => !/standby gensets? \d/.test(f.message)), 'MVA at 0.975; standby not counted');
+    const nonIE = smallRun(START, 'PT', {}, 20);
+    assert.ok(nonIE.options.every((o) => !o.flags.some((f) => f.id === 'ireland-leu')), 'only in Ireland');
+    out.push(`Ireland: ${fl.filter((f) => f.pass).length} of ${fl.length} options covered (T1 options, 120 MW import ≈ ${(120 / IE_POLICY.powerFactor).toFixed(1)} MVA)`);
+
+    // Great Britain's commitment fee.
+    const fee = 400000;
+    const gb = smallRun(START, 'GB', { gbFeeInclude: true, gbFeePerMW: fee }, 30);
+    const o = gb.options.find((x) => x.v.C1 !== 'islanded' && x.eco.gbFee && x.eco.gbFee.applies);
+    assert.ok(o, 'a grid option pays the fee');
+    const L = o.eco.ledger;
+    const net = L.reduce((a, y) => a + y.deposit, 0);
+    assert.ok(Math.abs(net) < 1 && L[0].deposit > 0 && o.eco.gbFee.pvCost > 0, `deposit out and back, cost > 0 (net ${net})`);
+    assert.ok(o.flags.some((f) => f.id === 'grid-gb-fee' && /not confirmed/.test(f.message)), 'flag');
+    const blank = smallRun(START, 'GB', { gbFeeInclude: true }, 20);
+    assert.ok(blank.options.every((x) => x.eco.ledger.every((y) => y.deposit === 0)) && blank.options.some((x) => x.flags.some((f) => f.id === 'grid-gb-fee' && /no fee entered/.test(f.message))), 'blank: nothing charged');
+    const fr = smallRun(START, 'FR', { gbFeeInclude: true, gbFeePerMW: fee }, 20);
+    assert.ok(fr.options.every((x) => !x.eco.gbFee), 'Great Britain only');
+    out.push(`GB fee: €${(o.eco.gbFee.deposit / 1e6).toFixed(1)} m on day 1, cost €${(o.eco.gbFee.pvCost / 1e6).toFixed(1)} m`);
     return out.join('; ');
   });
 }
