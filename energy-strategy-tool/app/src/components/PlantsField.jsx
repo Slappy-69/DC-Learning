@@ -12,7 +12,11 @@ export default function PlantsField({ inputs, norm, update }) {
   const P = inputs.plants || { auto: true, edits: {} };
   const edits = P.edits || {};
   const c = plantCandidates(norm);
-  const list = c.all.filter((p) => !p.manual);
+  const all = c.all.filter((p) => !p.manual);
+  // Work package 28 (OPEN-QUESTIONS 179, 193): only the plants ticked from the results are shown here, with their inputs.
+  const ticked = Array.isArray(P.ticked) ? P.ticked : null;
+  const list = ticked ? all.filter((p) => ticked.includes(p.id)) : all;
+  const untick = (id) => { update('plants.ticked', (ticked || all.map((p) => p.id)).filter((x) => x !== id)); resetChoices(); };
   const resetChoices = () => { update('choices.C2', null); update('choices.C4', null); update('choices.C21', null); };
   const edit = (id, key, val) => {
     const e = { ...(edits[id] || {}) };
@@ -25,12 +29,14 @@ export default function PlantsField({ inputs, norm, update }) {
   const val = (id, key) => (edits[id] && edits[id][key] !== undefined ? edits[id][key] : null);
   const start = norm.project.analysisStart;
   return (
-    <div className="plants-field">
+    <div className="plants-field" id="plants-field">
       <ToggleField label="Existing gas plants near the site (from the bundled list)" checked={P.auto !== false}
         onCommit={(v) => { update('plants.auto', v); resetChoices(); }} path="plants.auto" inputs={inputs}
         hint={`Every gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the site enters the analysis: its power leased or bought, as bridging or firm plant, and its grid connection taken over when it closes. Values come from the list and labelled defaults; check them with the plant's owner. ${PLANT_SOURCE.credit}: ${PLANT_SOURCE.url}.`} />
       <p className="note">Changing, leaving out or splitting a plant resets choices C2, C4 and C21 to their defaults, so every plant's values are offered again.</p>
-      {P.auto !== false ? (
+      {P.auto !== false && ticked && list.length === 0 ? (
+        <p className="note">{all.length ? `${all.length} gas plant${all.length === 1 ? '' : 's'} of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km. None is in the analysis: pick one from "Nearby plants" on the results to add it with every use, and its inputs appear here (OPEN-QUESTIONS 156, 179, 193).` : `No gas plant of ${PLANT_DEFAULTS.minMW} MW or more within ${PLANT_DEFAULTS.radiusKm} km of the pin in the bundled list.`}</p>
+      ) : P.auto !== false ? (
         list.length === 0 ? <p className="note">No gas plant of {PLANT_DEFAULTS.minMW} MW or more within {PLANT_DEFAULTS.radiusKm} km of the pin in the bundled list ({PLANT_SOURCE.count} plants, {PLANT_SOURCE.builtAt}).</p> : <>
           <div className="table-wrap">
             <table className="plain small">
@@ -39,7 +45,7 @@ export default function PlantsField({ inputs, norm, update }) {
               <tbody>
                 {list.map((p) => (
                   <tr key={p.id}>
-                    <td><input type="checkbox" aria-label={`Include ${p.name}`} checked={p.include} onChange={(e) => edit(p.id, 'include', p.dataCentre ? (e.target.checked ? true : null) : (e.target.checked ? null : false))} /></td>
+                    <td>{ticked ? <button type="button" className="chip-btn" aria-label={`Take ${p.name} out of the analysis`} onClick={() => untick(p.id)}>Remove</button> : <input type="checkbox" aria-label={`Include ${p.name}`} checked={p.include} onChange={(e) => edit(p.id, 'include', p.dataCentre ? (e.target.checked ? true : null) : (e.target.checked ? null : false))} />}</td>
                     <th scope="row">{p.name}{p.mergedFrom.length ? <span className="field-hint"> merged with {p.mergedFrom.map((m) => `${m.name} (${Math.round(m.mw)} MW)`).join(', ')}</span> : null}</th>
                     <td className="num">{p.km.toFixed(1)}</td>
                     <td className="num">{Math.round(p.mw)} <span className="field-hint">({BASIS[p.basis.mw]})</span></td>

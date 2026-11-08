@@ -19,6 +19,7 @@ import { useCompute } from './useCompute.js';
 import { withDetail } from './engine/detail.js';
 import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount, studyFile, studyFileName, readStudyFile, compareWithSaved, hashInputs, applyFlagNotes } from './engine/index.js';
 import { FlagNotesContext } from './components/FlagNotes.jsx';
+import NearbyPlantsBox from './components/NearbyPlantsBox.jsx';
 import { viewSetting, withoutSiteFilters } from './engine/view.js';
 import { UnverifiedTag } from './components/Field.jsx';
 import { scoreOptions, effectiveWeights, applyView } from './engine/scoring.js';
@@ -422,6 +423,7 @@ export default function App() {
             <div className="hs-item"><span className="hs-k">Weights</span><span className="hs-v">Cost {(w.cost * 100).toFixed(0)} · Carbon {(w.carbon * 100).toFixed(0)} · TTP {(w.ttp * 100).toFixed(0)} · {penaltyOn ? 'Deliverability (incl. site fit)' : 'Deliv.'} {(w.deliverability * 100).toFixed(0)} %</span></div>
             <div className="hs-item"><span className="hs-k">Unverified defaults</span><span className="hs-v">{unverifiedCount} of {recordCount} default records are <span className="tag tag-unverified">{LABEL}</span>{recordCount - unverifiedCount > 0 ? <> · {recordCount - unverifiedCount} <span className="tag tag-sourced">sourced — not independently checked</span></> : null}</span><span className="hs-sub">The count affecting the leader needs a per-option record map (not in this slice)</span></div>
           </div>
+          <NearbyPlantsBox inputs={inputs} update={update} />
 
           {studyMsg ? <p className="study-msg" role="status" aria-live="polite">{studyMsg}</p> : null}
           <div className="status" role="status" aria-live="polite">

@@ -507,7 +507,9 @@ function candidateFrom(p, edit, inputs, opts) {
   const takeoverM = defaultPassed ? tkLag : closeM === Infinity ? Infinity : Math.max(0, closeM) + tkLag;
   // A data centre's own plant (OPEN-QUESTIONS 127): left out unless the engineer ticks it in.
   const dataCentre = !opts.manual && new RegExp(PLANT_DEFAULTS.dataCentreNames, 'i').test(p.name || '');
-  const include = edit && edit.include !== undefined && edit.include !== null ? edit.include !== false : !dataCentre;
+  // Work package 28: with a ticked list, a list plant is in only when ticked (a data centre's own plant included, once
+  // ticked); without one (a study saved before), the rule of work package 19.
+  const include = opts.ticked && !opts.manual ? opts.ticked.includes(p.id) : edit && edit.include !== undefined && edit.include !== null ? edit.include !== false : !dataCentre;
   return {
     id: p.id, name: (edit && edit.name) || p.name, listName: p.name, type, typeLabel: ty.label, tech: p.tech || '', cc: p.cc, km, lat: p.lat, lon: p.lon,
     dataCentre, sources: p.sources || [], eic: p.eic || [], mergedFrom: p.mergedFrom || [], dateRetrofit: p.dateRetrofit ?? null, manual: !!opts.manual,
@@ -528,7 +530,7 @@ const CAND = new WeakMap();
 export function plantCandidates(inputs) {
   if (!inputs || !inputs.project) return { plants: [], all: [], nearby: 0 };
   const P = inputs.plants || {};
-  const sig = JSON.stringify([inputs.project.lat, inputs.project.lon, inputs.project.analysisStart, inputs.economics && inputs.economics.periodYears, P.auto, P.edits, inputs.existing]);
+  const sig = JSON.stringify([inputs.project.lat, inputs.project.lon, inputs.project.analysisStart, inputs.economics && inputs.economics.periodYears, P.auto, P.edits, P.ticked, inputs.existing]);
   const hit = CAND.get(inputs);
   if (hit && hit.sig === sig) return hit.out;
   const edits = (P.edits && typeof P.edits === 'object') ? P.edits : {};
@@ -536,7 +538,8 @@ export function plantCandidates(inputs) {
   const near = auto ? nearbyPlants(Number(inputs.project.lat), Number(inputs.project.lon), { radiusKm: PLANT_DEFAULTS.radiusKm, minMW: PLANT_DEFAULTS.minMW }) : [];
   const split = new Set(Object.entries(edits).filter(([, e]) => e && e.split).map(([id]) => id));
   const merged = mergeDuplicates(near, { mergeKm: PLANT_DEFAULTS.mergeKm, sizeFrac: PLANT_DEFAULTS.mergeSizeFrac, split });
-  const all = merged.map((p) => candidateFrom(p, edits[p.id], inputs, {}));
+  const ticked = Array.isArray(P.ticked) ? P.ticked : null;
+  const all = merged.map((p) => candidateFrom(p, edits[p.id], inputs, { ticked }));
   if (existingEntered(inputs)) {
     const x = inputs.existing;
     const m = { id: 'manual', name: x.name || 'Existing plant', type: x.type, mw: Number(x.units) * Number(x.unitMW), dateIn: null, dateOut: finite(x.closeYear) ? Number(x.closeYear) : null, km: 0, sources: [] };
@@ -1231,6 +1234,10 @@ export function buildDefaultInputs(opts = {}) {
   // takeoverCostPerMW, split }).
   inputs.plants = {
     auto: rec('plants.auto', true, 'toggle', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-10-31 (OPEN-QUESTIONS 118): every gas plant of 50 MW or more within 10 km enters the analysis. Off = the bundled list is not read.' }),
+    // Work package 28 (owner 2026-11-07, OPEN-QUESTIONS 156, 158, 179): no plant enters the first run; the results offer
+    // the plants found near the site in a drop box, and a plant picked there joins the next run with every use. A study
+    // saved before work package 28 has no list (undefined): every nearby plant stays in, as it was saved.
+    ticked: rec('plants.ticked', [], 'ids of the nearby plants ticked into the analysis', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 156, 158): the first run leaves existing plants out; the engineer picks a plant from the drop box on the results.' }),
     edits: rec('plants.edits', {}, 'corrections per plant', { basis: 'judgement', ref: '§5.4', derived: true, note: 'Empty = the values of the bundled list and the defaults, each flagged with its source.' }),
   };
   // Measured hourly weather (owner 2026-10-30, OPEN-QUESTIONS 106–107): an uploaded EPW file or a NOAA station year.

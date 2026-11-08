@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { referenceT1, normalizeInputs, getRegistry } from '../src/engine/defaults.js';
+import { referenceT1, normalizeInputs, getRegistry, buildDefaultInputs, plantCandidates, defaultChoiceState } from '../src/engine/defaults.js';
 import { eemSmall } from './plants-tests.mjs';
 import { TAKEOVER_GENERAL, IE_POLICY } from '../src/engine/countryrules.js';
 import { applyFlagNotes, annotateFlags, optionNoteKey, noteText } from '../src/engine/flagnotes.js';
@@ -207,5 +207,26 @@ export async function agreedTests(test, ctxRuns) {
     const sc = scoreOptions(all, run.inputs);
     assert.ok(sc && Array.isArray(sc.ranked || sc.order || all), 'rescored');
     return `${f.id}: deliverability ${before.toFixed(1)} → ${o2.deliv.score.toFixed(1)}; by type on ${hit.length} options`;
+  });
+
+  await test('60. Work package 28: the first run leaves nearby plants out; a plant ticked from the results joins the run with every use (leased, bought, its connection taken over); a study saved before keeps every nearby plant', () => {
+    const base = eemSmall({ cap: 200 });
+    const fresh = buildDefaultInputs({ analysisStart: '2027-01' });
+    assert.deepEqual(fresh.plants.ticked, [], 'new studies: none ticked');
+    const none = JSON.parse(JSON.stringify(base)); none.plants = { auto: true, edits: {}, ticked: [] };
+    const nN = normalizeInputs(none);
+    const cN = plantCandidates(nN);
+    assert.ok(cN.all.length >= 3 && cN.plants.length === 0, 'found, none in');
+    assert.ok(!defaultChoiceState('C2', nN).values.some((x) => /^x[lbw]:/.test(x)) && defaultChoiceState('C21', nN).values.length === 1, 'no plant values');
+    const id = cN.all.find((p) => !p.manual && p.offersTakeover !== undefined).id;
+    const one = JSON.parse(JSON.stringify(none)); one.plants.ticked = [id];
+    const n1 = normalizeInputs(one);
+    const c1 = plantCandidates(n1);
+    assert.deepEqual(c1.plants.map((p) => p.id), [id], 'only the ticked plant');
+    const r = runModel(one);
+    assert.ok(r.options.some((o) => [o.v.C2, o.v.C4, o.v.C21].some((x) => String(x).includes(id))), 'options use the plant');
+    const legacy = normalizeInputs(base); // eemSmall sets plants without a ticked list, as a study saved before
+    assert.ok(plantCandidates(legacy).plants.length >= 3, 'saved before: every nearby plant in');
+    return `${cN.all.length} found near Eemshaven, none in the first run; ticking ${id}: ${r.options.filter((o) => [o.v.C2, o.v.C4, o.v.C21].some((x) => String(x).includes(id))).length} of ${r.options.length} options use it`;
   });
 }

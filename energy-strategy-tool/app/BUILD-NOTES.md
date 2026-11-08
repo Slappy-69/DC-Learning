@@ -2244,3 +2244,10 @@ Owner, 2026-11-08: "Update the app with everything we've discussed and agreed th
 - Screen: each flag in the option panel has "Add comment" (comment, mitigated, severity no higher than raised, "apply to every option with this flag"); the severity shows "(was major)" when lowered.
 - Report: the comment prints beside the flag in sections 3 and 6 (through `flagHeadline`) and in Appendix F, with the original and lowered severity (176).
 - Test 59.
+
+### Work package 28: nearby plants picked from the results
+
+- `inputs.plants.ticked` (default `[]`): a list plant is in the analysis only when ticked (OPEN-QUESTIONS 156, 158). A study saved before has no list, and keeps every nearby plant in (as saved). The manual plant (work package 12) is unchanged: entering it is ticking it.
+- Results: `components/NearbyPlantsBox.jsx` under the results header lists the plants found (name, MW, type, distance) in a drop box; "Add and run again" ticks one and the run starts (every use: leased, bought, bought whole, its connection taken over). Takeover options then rank on merit with their major flag (157).
+- Section 4: the plant table and correction panels show only the ticked plants, each with "Remove" (179, 193); with none ticked, one line says how many were found and where to pick them.
+- Test 60.
