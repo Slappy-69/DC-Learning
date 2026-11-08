@@ -163,7 +163,7 @@ Grid connection date and capacity defaults by country (no published table; judge
 4. Gas price: accept the Dutch TTF hub price, as reported by the press with its date, as the "latest dated price" shown beside the 2025 average? (The walkthrough says an exchange source needs the owner's approval.) **Replaced after the owner asked for better sources (section 6b): answered 2026-11-07, yes to the World Bank's monthly series (OPEN-QUESTIONS 228); the default is the latest month (OPEN-QUESTIONS 229).**
 5. Gas engines' minimum stable load: the agency's 50 % (today 30 %), or keep 30 % for modern 10 MW engines as judgement? **Answered 2026-11-07 by the owner: keep 30 % as judgement (OPEN-QUESTIONS 230).**
 6. Values from the agency's catalogue are in 2015 money: use them as published, or escalate them to today's money (needs an escalation source)? **Answered 2026-11-07 by the owner: as published (OPEN-QUESTIONS 231); an index is on the further research list.**
-7. Escalation: World Bank (April 2026) for the first two years, then the TYNDP 2026 path for gas and carbon?
+7. Escalation: World Bank (April 2026) for the first two years, then the TYNDP 2026 path for gas and carbon? **Answered 2026-11-07 by the owner: yes (OPEN-QUESTIONS 232).**
 
 ## Sources
 

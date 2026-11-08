@@ -147,7 +147,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - F5. (Withdrawn 8 Nov 2026: ASHRAE was already decided in OPEN-QUESTIONS 64, not bundled.)
 - F6. Gas engines' minimum stable load: the Danish Energy Agency's 50 % (today 30 %), or keep 30 % as judgement? **Answered 2026-11-07 by the owner: "30", kept as judgement (OPEN-QUESTIONS 230).**
 - F7. Agency catalogue values are in 2015 money: use as published, or escalate (needs an escalation source)? **Answered 2026-11-07 by the owner: "As published" (OPEN-QUESTIONS 231); an index is on the further research list (item 4).**
-- F8. Escalation: World Bank (April 2026) for 2026–27, then the TYNDP 2026 path for gas and carbon?
+- F8. Escalation: World Bank (April 2026) for 2026–27, then the TYNDP 2026 path for gas and carbon? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 232).**
 - F9. (Withdrawn 8 Nov 2026: the tool already uses GHCNh; the ISD retirement does not affect it.)
 
 - H1. Set the adder to network + levies and taxes for DE, NL, PT, FI, SE, DK, CH, IE now, or after the rest are researched? **Answered 2026-11-07 by the owner: "Wait for all the research is done before implementing" (OPEN-QUESTIONS 201).**
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:47 local (OPEN-QUESTIONS 231):** the agency's 2015-euro values are used as published, flagged. Next question: F8.
+**Owner, 7 Nov 2026, 23:48 local (OPEN-QUESTIONS 232):** gas and carbon escalation uses the World Bank outlook, then the TYNDP 2026 path. Next question (the last one): H2b.
+
+**Owner, 7 Nov 2026, 23:47 local (OPEN-QUESTIONS 231):** the agency's 2015-euro values are used as published, flagged.
 
 **Owner, 7 Nov 2026, 23:46 local (OPEN-QUESTIONS 230):** the gas engine minimum stable load stays at 30 % (judgement).
 
