@@ -86,6 +86,19 @@ Owner's decision of 7 November 2026 (OPEN-QUESTIONS 201): nothing goes into the 
 - **Latest dated price:** the Dutch TTF hub closed at **€85.6/MWh on 6 November 2026** (SoldiOnline; Investing.com reports €87.40 traded the same day, after a week down 15 % on hopes of an end to the US–Iran conflict). On 23 June 2026 it was €41.6 (Trading Economics). The market has doubled since mid-year.
 - **Proposal:** keep the defaults as the labelled 2025 average, show the latest dated TTF price beside them, and offer the high-price case. Under the walkthrough's rule an exchange price needs the owner's approval as a source. Country spreads to TTF were not researched.
 
+### 6b. Better sources for the gas price (owner's question, 7 Nov 2026, 23:41 local)
+
+The owner asked for better sources than a news site's daily close. What was found:
+
+| Source | What it gives | Fits the walkthrough rule ("latest published price, with date, from a free monthly source")? | Read? |
+|---|---|---|---|
+| **World Bank, Commodity Price Data ("Pink Sheet")**, monthly file `CMO-Historical-Data-Monthly.xlsx` (series "Natural gas, Europe", the TTF price) | A monthly average, official, published every month; the document page lists monthly reports through October 2026 | **Yes**: official, monthly, free to download. It is also the source the PyPSA technology data used for its 2025 average | The page was read; the **file could not be**: the web reader cannot open spreadsheets and the session's shell was refused (HTTP 403). So the latest monthly value was not read. The page states no licence: **to confirm** |
+| **Eurostat**, natural gas prices for non-household consumers (half-yearly, by country and consumption band) | Retail price paid by businesses, by country. Latest release 8 May 2026 (second half of 2025): EU average €6.05 per 100 kWh in the 10,000–100,000 GJ band; Bulgaria €4.14 lowest, Sweden €10.65 highest | **No** for the commodity price (it includes network charges and some levies, the tax basis of the headline figure was not stated, and it is half-yearly). **Useful for country spreads**, which were not researched | The news item was read; the large-user bands (a campus burning gas would sit above 4 million GJ a year) are in the database and were not read |
+| **ACER** (EU energy regulators' agency), hub price data (AEGIS "CHEST" application) | Hub prices | Not checked | Surfaced by search, not read |
+| Daily TTF close (SoldiOnline, Investing.com) | One day's price (€85.6/MWh on 6 Nov 2026) | No (news site, one day) | Read |
+
+**Proposal (replaces the one in section 6):** use the World Bank's monthly "Natural gas, Europe" series as the source of the latest published price, read at each release and bundled with its month; keep the daily TTF close only as a cross-check; use Eurostat's large-user bands for country spreads later. A monthly average smooths a one-day spike. The World Bank's value converts from US dollars per million BTU to €/MWh with the tool's exchange rate (1 MWh = 3.412 million BTU).
+
 ### 7. Gas transport adder (`fuel.gasTransportAdder`)
 
 - **Today:** €4/MWh_th (range 2–8), indicative.
