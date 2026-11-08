@@ -59,7 +59,7 @@ Recorded as an assumption: a standby genset fleet that never trades is not "disp
 1. The flag's severity: major (it can block a connection) or minor (information)? **Answered 2026-11-07 by the owner: minor (OPEN-QUESTIONS 210).**
 2. Do standby gensets count towards the de-rated test? The cautious reading is no, since the policy asks for plant that trades in the market without run-hour limits. **Answered 2026-11-07 by the owner: no (OPEN-QUESTIONS 211).**
 3. MVA against MW for the test: equal (as in EirGrid's example), or the option's power factor? **Answered 2026-11-07 by the owner: power factor 0.975, labelled judgement (OPEN-QUESTIONS 212).**
-4. Which de-rating table to bundle: the latest T-4 pack (2030/31, August 2026), updated at each release?
+4. Which de-rating table to bundle: the latest T-4 pack (2030/31, August 2026), updated at each release? **Answered 2026-11-07 by the owner: yes (OPEN-QUESTIONS 213).**
 
 ## Sources
 
