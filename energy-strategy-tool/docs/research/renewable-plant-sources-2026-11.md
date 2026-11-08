@@ -90,7 +90,7 @@ Use **powerplantmatching** for renewable plants, extending today's gas pipeline,
 
 1. Source: powerplantmatching (recommended), OpenStreetMap, or both? **Answered 2026-11-07 by the owner: powerplantmatching (OPEN-QUESTIONS 219).**
 2. Accept the build-time grouping of German wind turbines into farms (a judgement distance), or show German wind turbine by turbine? **Answered 2026-11-07 by the owner: group (OPEN-QUESTIONS 220).**
-3. powerplantmatching's own licence mix (it draws on OpenStreetMap for about 2 % of renewable rows): accept its CC BY 4.0 statement, or ask a licensing adviser?
+3. powerplantmatching's own licence mix (it draws on OpenStreetMap for about 2 % of renewable rows): accept its CC BY 4.0 statement, or ask a licensing adviser? **Answered 2026-11-07 by the owner: accepted (OPEN-QUESTIONS 221).**
 
 ## Sources
 

@@ -135,7 +135,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - A5. Latvia charges on transformer capacity, usually above the contracted MW: accept the understatement, or add a transformer factor? **Answered 2026-11-07 by the owner: "Accept" (OPEN-QUESTIONS 218).**
 - E1. Renewable plant source: powerplantmatching (recommended), OpenStreetMap, or both? **Answered 2026-11-07 by the owner: "Powerplant matching" (OPEN-QUESTIONS 219).**
 - E2. Group German wind turbines into farms at build time (a judgement distance), or show them turbine by turbine? **Answered 2026-11-07 by the owner: "Group" (OPEN-QUESTIONS 220).**
-- E3. powerplantmatching's licence mix (about 2 % of renewable rows draw on OpenStreetMap): accept its CC BY 4.0 statement, or ask a licensing adviser?
+- E3. powerplantmatching's licence mix (about 2 % of renewable rows draw on OpenStreetMap): accept its CC BY 4.0 statement, or ask a licensing adviser? **Answered 2026-11-07 by the owner: "Yes accepted" (OPEN-QUESTIONS 221).**
 - G1. Which utilities first (proposed: electricity 220 kV+, gas, water, heat, telecoms)?
 - G2. Each utility as a default distance that drives a cost (electricity, gas) or only as a flag (water, telecoms, heat)?
 - G3. ODbL data (OpenStreetMap, PyPSA-Eur network) bundled as separate files in the public repository and the Windows program: acceptable?
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:32 local (OPEN-QUESTIONS 220):** German wind turbines are grouped into farms at build time. Next question: E3.
+**Owner, 7 Nov 2026, 23:33 local (OPEN-QUESTIONS 221):** powerplantmatching's licence statement is accepted. Part E is done. Next question: G1.
+
+**Owner, 7 Nov 2026, 23:32 local (OPEN-QUESTIONS 220):** German wind turbines are grouped into farms at build time.
 
 **Owner, 7 Nov 2026, 23:31 local (OPEN-QUESTIONS 219):** the renewable plant source is powerplantmatching.
 
