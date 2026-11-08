@@ -96,7 +96,7 @@ Each layer should carry its own data date and licence line in the app and the PD
 1. Which utilities first (the ranking above, or another order)? **Answered 2026-11-07 by the owner: the ranking above, with fibre routes named in telecoms and district cooling added as a sixth utility (OPEN-QUESTIONS 222). Fibre routes and district cooling are on `further-research-list-2026-11.md`.**
 2. How each enters: as a default distance that drives a cost (electricity, gas), or only as a flag (water, telecoms, heat)? **Answered 2026-11-07 by the owner: all six utilities (electricity, gas, water, district heating, fibre, district cooling) are warnings only; no mapped distance changes a cost (OPEN-QUESTIONS 223).**
 3. ODbL data (OpenStreetMap, PyPSA-Eur network) in the public repository and the Windows program, kept as separate files: acceptable? **Answered 2026-11-07 by the owner: yes (OPEN-QUESTIONS 224).**
-4. Should a release script for OpenStreetMap extracts be built (it needs a machine that can reach Geofabrik; this session cannot)?
+4. Should a release script for OpenStreetMap extracts be built (it needs a machine that can reach Geofabrik; this session cannot)? **Answered 2026-11-07 by the owner: not yet (OPEN-QUESTIONS 225).**
 
 ## Sources
 
