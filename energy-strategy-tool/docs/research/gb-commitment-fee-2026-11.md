@@ -59,7 +59,7 @@ Confidence labels: "published and clear"; "published, but unclear which tariff a
 
 1. Fee default: blank (engineer must enter) or the published midpoint as a labelled example? **Answered 2026-11-07 by the owner: blank, with Ofgem's range shown beside the field (OPEN-QUESTIONS 206).**
 2. Cost of the money tied up: cash at the discount rate, or a letter-of-credit fee rate entered by the engineer? **Answered 2026-11-07 by the owner: no extra cost other than the money on the deposit, read as cash at the discount rate (OPEN-QUESTIONS 207).**
-3. The offer acceptance date: a new input, or a default number of years before the grid date?
+3. The offer acceptance date: a new input, or a default number of years before the grid date? **Answered in part 2026-11-07 by the owner: the deposit comes back when the grid capacity it was paid for becomes available, stage by stage (OPEN-QUESTIONS 208). When it goes out is still open.**
 
 ## Sources
 

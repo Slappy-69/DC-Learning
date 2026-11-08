@@ -121,7 +121,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 - C1. GB fee default: blank (engineer enters) or the published midpoint £475,000/MW as a labelled example? **Answered 2026-11-07 by the owner: "Yes blank" (OPEN-QUESTIONS 206).**
 - C2. Cost of the money tied up: cash at the discount rate (Ofgem's worst case), or a letter-of-credit fee rate entered by the engineer? **Answered 2026-11-07 by the owner: "No extra cost other than the money on the deposit", read as cash at the discount rate, no bank fee (OPEN-QUESTIONS 207).**
-- C3. Offer acceptance date: a new input, or a default number of years before the grid date?
+- C3. Offer acceptance date: a new input, or a default number of years before the grid date? **Answered in part 2026-11-07 by the owner (OPEN-QUESTIONS 208): the deposit comes back when the grid capacity it was paid for becomes available, stage by stage. When it goes out is still open (question C3b).**
 - D1. Ireland flag severity: major or minor?
 - D2. Do standby gensets count towards Ireland's de-rated test (cautious reading: no)?
 - D3. MVA against MW for Ireland's test: equal (EirGrid's example) or the option's power factor?
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:17 local (OPEN-QUESTIONS 207):** the Great Britain commitment fee is a cash deposit with no bank fee; the cost is the money tied up. Next question: C3.
+**Owner, 7 Nov 2026, 23:18 local (OPEN-QUESTIONS 208):** the Great Britain deposit comes back stage by stage as the grid capacity it was paid for becomes available. Next question: C3b, when the deposit goes out.
+
+**Owner, 7 Nov 2026, 23:17 local (OPEN-QUESTIONS 207):** the Great Britain commitment fee is a cash deposit with no bank fee; the cost is the money tied up.
 
 **Owner, 7 Nov 2026, 23:15 local (OPEN-QUESTIONS 206):** the Great Britain commitment fee field starts blank, with Ofgem's range beside it.
 
