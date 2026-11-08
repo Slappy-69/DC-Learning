@@ -129,7 +129,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - B1. Norway's takeover flag: "likely unavailable" (reserved capacity cannot change purpose) rather than "not confirmed"? **Answered 2026-11-07 by the owner: "Likely not available" (OPEN-QUESTIONS 214).**
 - B2. Should the general takeover flag say, for every country, that a plant's export connection is not an import connection? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 215).**
 - A1. **(Answered before the run: OPEN-QUESTIONS 162, contracted MW.)** Countries that charge on measured peak (DE today, PT peak hours, NL monthly maximum, GB Triads): charge the per-MW line on the option's contracted grid MW anyway (as decided in OQ 162), or on its peak import?
-- A2. Discounts for large flat loads (DE bandload, ES/PT electro-intensive): leave out, offer as a tick, or apply by default?
+- A2. Discounts for large flat loads (DE bandload, ES/PT electro-intensive): leave out, offer as a tick, or apply by default? **Answered 2026-11-07 by the owner: "Tick" and "Add it to a further research list" (OPEN-QUESTIONS 216; list: `further-research-list-2026-11.md`).**
 - A3. GB's residual is fixed per site, not per MW: enter it as a yearly lump sum, or divide by the contracted MW?
 - A4. Where the network bill has both a contracted line and a peak line (NL, BE, PT), should the tick carry only the contracted line (the rest stays in the per-MWh adder), or both? **Answered 2026-11-07 (OPEN-QUESTIONS 203): the adder holds everything; the per-MW part, both lines, moves to the per-MW charge when ticked.**
 - A5. Latvia charges on transformer capacity, usually above the contracted MW: accept the understatement, or add a transformer factor?
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:26 local (OPEN-QUESTIONS 215):** the general takeover flag says an export connection is not an import connection. Part B is done. Next question: A2.
+**Owner, 7 Nov 2026, 23:28 local (OPEN-QUESTIONS 216):** large flat load discounts are an optional tick, off by default; the eligibility research is on the new further research list. Next question: A3.
+
+**Owner, 7 Nov 2026, 23:26 local (OPEN-QUESTIONS 215):** the general takeover flag says an export connection is not an import connection. Part B is done.
 
 **Owner, 7 Nov 2026, 23:25 local (OPEN-QUESTIONS 214):** Norway's takeover flag reads "likely not available".
 
