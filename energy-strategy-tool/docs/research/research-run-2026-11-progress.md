@@ -132,7 +132,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - A2. Discounts for large flat loads (DE bandload, ES/PT electro-intensive): leave out, offer as a tick, or apply by default? **Answered 2026-11-07 by the owner: "Tick" and "Add it to a further research list" (OPEN-QUESTIONS 216; list: `further-research-list-2026-11.md`).**
 - A3. GB's residual is fixed per site, not per MW: enter it as a yearly lump sum, or divide by the contracted MW? **Answered 2026-11-07 by the owner: "Lump sum" (OPEN-QUESTIONS 217).**
 - A4. Where the network bill has both a contracted line and a peak line (NL, BE, PT), should the tick carry only the contracted line (the rest stays in the per-MWh adder), or both? **Answered 2026-11-07 (OPEN-QUESTIONS 203): the adder holds everything; the per-MW part, both lines, moves to the per-MW charge when ticked.**
-- A5. Latvia charges on transformer capacity, usually above the contracted MW: accept the understatement, or add a transformer factor?
+- A5. Latvia charges on transformer capacity, usually above the contracted MW: accept the understatement, or add a transformer factor? **Answered 2026-11-07 by the owner: "Accept" (OPEN-QUESTIONS 218).**
 - E1. Renewable plant source: powerplantmatching (recommended), OpenStreetMap, or both?
 - E2. Group German wind turbines into farms at build time (a judgement distance), or show them turbine by turbine?
 - E3. powerplantmatching's licence mix (about 2 % of renewable rows draw on OpenStreetMap): accept its CC BY 4.0 statement, or ask a licensing adviser?
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:29 local (OPEN-QUESTIONS 217):** Great Britain's fixed residual is a yearly lump sum. Next question: A5.
+**Owner, 7 Nov 2026, 23:30 local (OPEN-QUESTIONS 218):** Latvia's capacity fee: accept the understatement, flagged. Part A is done. Next question: E1.
+
+**Owner, 7 Nov 2026, 23:29 local (OPEN-QUESTIONS 217):** Great Britain's fixed residual is a yearly lump sum.
 
 **Owner, 7 Nov 2026, 23:28 local (OPEN-QUESTIONS 216):** large flat load discounts are an optional tick, off by default; the eligibility research is on the new further research list.
 

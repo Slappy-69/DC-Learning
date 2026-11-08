@@ -313,7 +313,7 @@ Per-MW figures are yearly, worked out from the published unit where needed (show
 - **Capacity part:** **330 kV busbars €6.759 per kW a year (€6,759 per MW)**; 110 kV lines €11.376; 110 kV busbars €12.959 per kW a year. Charged on the **nominal capacity (kVA) of the customer's transformers** from their technical documentation. Basis: contracted (installed capacity, fixed whatever is drawn).
 - **Energy part:** €1.39/MWh (330 kV), €1.45 (110 kV lines), €1.98 (110 kV busbars).
 - **Worked example, 100 MVA of transformers at 330 kV, 745 GWh (worked out):** capacity €0.68 m; energy €1.04 m.
-- **For the tool:** the basis is transformer capacity, which is usually larger than the contracted grid capacity (N+1 transformers): charging on the option's contracted MW would understate it.
+- **For the tool:** the basis is transformer capacity, which is usually larger than the contracted grid capacity (N+1 transformers): charging on the option's contracted MW would understate it. **Answered 2026-11-07 by the owner: accept the understatement and flag it (OPEN-QUESTIONS 218).**
 - **Confidence:** published and clear.
 - **Sources:** AST, "Transmission tariff", https://ast.lv/en/content/transmission-tariff (operator, tariffs 2026–2028, accessed 7 Nov 2026).
 
