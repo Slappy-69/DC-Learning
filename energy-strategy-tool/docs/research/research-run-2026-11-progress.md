@@ -119,7 +119,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 (Anything the owner must decide, gathered as the run goes.)
 
-- C1. GB fee default: blank (engineer enters) or the published midpoint £475,000/MW as a labelled example?
+- C1. GB fee default: blank (engineer enters) or the published midpoint £475,000/MW as a labelled example? **Answered 2026-11-07 by the owner: "Yes blank" (OPEN-QUESTIONS 206).**
 - C2. Cost of the money tied up: cash at the discount rate (Ofgem's worst case), or a letter-of-credit fee rate entered by the engineer?
 - C3. Offer acceptance date: a new input, or a default number of years before the grid date?
 - D1. Ireland flag severity: major or minor?
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:14 local (OPEN-QUESTIONS 205):** Great Britain's levies are used from the guide, labelled. Next question: C1.
+**Owner, 7 Nov 2026, 23:15 local (OPEN-QUESTIONS 206):** the Great Britain commitment fee field starts blank, with Ofgem's range beside it. Next question: C2.
+
+**Owner, 7 Nov 2026, 23:14 local (OPEN-QUESTIONS 205):** Great Britain's levies are used from the guide, labelled.
 
 **Owner, 7 Nov 2026, 22:15 local (OPEN-QUESTIONS 204):** data centre tax rules are shown as flags ("Yes"), and the notes must name the local website for each tax: done in `data-centre-tax-rules-2026-11.md` (impots.gouv.fr and BOFiP, Vero.fi, Skatteverket, Skatteetaten and Stortinget, GOV.UK). Next question to ask, one at a time: H3 (Great Britain levies: secondary guide or issuing bodies), then H2b, then the rest of the open list.
 
