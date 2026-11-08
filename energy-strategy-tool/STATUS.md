@@ -7,12 +7,12 @@ Checkpoint, updated after every completed step so any session can resume from he
 ## Where things stand
 
 - **`main` holds everything built:** work packages 0 to 22 and 3b, the hourly weather work, the phone version, the Eemshaven study, the local search trial and the takeover research. Each was merged with the owner's yes (dates under "Work packages"). Nothing is built and waiting on another branch.
-- **Built, not merged:** `feature/map-markers` (2026-11-08): known issue 36, the map's markers and pin drew large white rings when zoomed in (now drawn in screen pixels, markers larger; drawing only); known issue 37, a reopened study dropped renewable plant edits, flag comments and Ireland derating (now kept as saved; Node test 66). GitHub's checks passed on b935214 (CI run 42481981183). Waiting for the owner's yes to merge. Work packages 24 to 33 merged on 2026-11-08 (owner: "Yes"). Work package 23 merged on 2026-11-06 (owner: "Merge"). The planning round (OPEN-QUESTIONS 155–200) and the research run of November 2026 (OPEN-QUESTIONS 201–235, `docs/research/`) are records only, merged on 2026-11-08 (owner: "Merge"); every decision in them is "not built yet".
+- **Built, not merged:** nothing. `feature/map-markers` (known issues 36 and 37: the map's markers and pin drew large white rings when zoomed in; a reopened study dropped renewable plant edits, flag comments and Ireland derating) merged on 2026-11-08 (owner: "Merge to main"), a fast-forward after GitHub's checks passed on b935214 (CI run 42481981183). Work packages 24 to 33 merged on 2026-11-08 (owner: "Yes"). Work package 23 merged on 2026-11-06 (owner: "Merge"). The planning round (OPEN-QUESTIONS 155–200) and the research run of November 2026 (OPEN-QUESTIONS 201–235, `docs/research/`) are records only, merged on 2026-11-08 (owner: "Merge"); every decision in them is "not built yet".
 - **GitHub checks (CI):** passed on `main` at 39442fb (run 41474468291, 2026-11-02: Node tests, build, installable web app tests and browser tests). The earlier runs on the merge (3b607e8) and the next note (991e85e) were cancelled, each by the next push.
-- **Windows program:** not rebuilt since work packages 20 and 21 (on hold, owner, 2026-11-02). "Desktop builds" run 41474031494 (from `main` 991e85e, 2026-11-02) passed on Windows and Linux, with 2,926 NOAA stations bundled from "Weather data" run 41470033736. Download: GitHub → Actions → Desktop builds → that run → Artifacts → `desktop-win32-x64` (219 MB, kept until 2027-01-31). A duplicate run, 41474599019 (from 39442fb, which changed only records), also passed.
+- **Windows program:** rebuilt from bff54b7 (work packages 24 to 33) on 2026-11-08: "Desktop builds" run 42477621814 passed on Windows and Linux. Download: GitHub → Actions → Desktop builds → that run → Artifacts → `desktop-win32-x64`. It does not yet have the fixes for known issues 36 and 37 (merged later the same day).
 - **Phone page:** version 8 (2026-10-30). It does not have the weather work, package 19 or packages 20–21. Republishing is on hold (owner, 2026-11-02).
 - **Eemshaven study:** made before the plant list, so its figures leave out existing plants. The re-run is dropped for now (owner, 2026-11-02).
-- **Known issues:** 1 to 34 resolved; 35 open; 36 and 37 fixed on `feature/map-markers`, not merged (`docs/KNOWN-ISSUES.md`).
+- **Known issues:** 1 to 34 resolved; 35 open; 36 and 37 fixed and merged (`docs/KNOWN-ISSUES.md`).
 - **Waiting for the owner:** the next step (candidates under "Next"), the fix for known issue 35, and the rest of the notes on the user guide ("Open items").
 
 ## Where to look
@@ -20,7 +20,7 @@ Checkpoint, updated after every completed step so any session can resume from he
 - **Brief (authoritative):** `brief-v2/BRIEF.md` (revision 5), with `CHANGELOG.md`, `ASSUMPTIONS.md` and `OPEN-QUESTIONS.md` (1–130).
 - **Decision log of the walkthrough:** `docs/walkthrough-decisions-2026-10-21.md`. Where this file or the brief disagrees with it, the log is newer.
 - **Build plan:** `docs/BUILD-PLAN.md`: each work package with its questions, acceptance tests and guide chapters, and the "Not scheduled" list.
-- **Known issues:** `docs/KNOWN-ISSUES.md` (35 items: 1–34 resolved, 35 open).
+- **Known issues:** `docs/KNOWN-ISSUES.md` (37 items: 35 open, the rest resolved).
 - **Build notes:** `app/BUILD-NOTES.md`: architecture, every default with its label, decisions and test runs.
 - **Verification:** `verification/HISTORY.md`, with one folder of reports per slice.
 - **User guide:** `docs/user-guide/` (text, figures, mock-ups of the agreed screens, and the tools that build the EPUB and PDF).
