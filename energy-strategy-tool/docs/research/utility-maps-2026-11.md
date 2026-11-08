@@ -118,7 +118,7 @@ Each layer should carry its own data date and licence line in the app and the PD
 2. How each enters: as a default distance that drives a cost (electricity, gas), or only as a flag (water, telecoms, heat)? **Answered 2026-11-07 by the owner: all six utilities (electricity, gas, water, district heating, fibre, district cooling) are warnings only; no mapped distance changes a cost (OPEN-QUESTIONS 223).**
 3. ODbL data (OpenStreetMap, PyPSA-Eur network) in the public repository and the Windows program, kept as separate files: acceptable? **Answered 2026-11-07 by the owner: yes (OPEN-QUESTIONS 224).**
 4. Should a release script for OpenStreetMap extracts be built (it needs a machine that can reach Geofabrik; this session cannot)? **Answered 2026-11-07 by the owner: not yet (OPEN-QUESTIONS 225).**
-5. (Added 7 November 2026, after the owner asked for hydrogen, OPEN-QUESTIONS 234.) Should the hydrogen warning show planned pipelines as well as built ones? Claude recommends yes, with planned ones marked "planned" and the year, because most hydrogen pipelines are not built yet. *To ask the owner.*
+5. (Added 7 November 2026, after the owner asked for hydrogen, OPEN-QUESTIONS 234.) Should the hydrogen warning show planned pipelines as well as built ones? Claude recommends yes, with planned ones marked "planned" and the year, because most hydrogen pipelines are not built yet. **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 235).**
 
 ## Sources
 

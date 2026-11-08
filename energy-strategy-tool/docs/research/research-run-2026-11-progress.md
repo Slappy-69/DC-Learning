@@ -140,7 +140,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - G2. Each utility as a default distance that drives a cost (electricity, gas) or only as a flag (water, telecoms, heat)? **Answered 2026-11-07 by the owner: all six utilities are warnings only; no mapped distance changes a cost (OPEN-QUESTIONS 223).**
 - G3. ODbL data (OpenStreetMap, PyPSA-Eur network) bundled as separate files in the public repository and the Windows program: acceptable? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 224).**
 - G4. Build a release script for OpenStreetMap extracts (needs a machine that can reach Geofabrik)? **Answered 2026-11-07 by the owner: "Not yet" (OPEN-QUESTIONS 225).**
-- G5. (Added 2026-11-07 after the owner asked for hydrogen, OPEN-QUESTIONS 234.) Show planned hydrogen pipelines as well as built ones? Recommendation: yes, marked "planned" with the year. **Not yet answered.**
+- G5. (Added 2026-11-07 after the owner asked for hydrogen, OPEN-QUESTIONS 234.) Show planned hydrogen pipelines as well as built ones? Recommendation: yes, marked "planned" with the year. **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 235).**
 - F1. Approve ACER 2026 as the source for cable route costs, split by voltage band? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 226).**
 - F2. Keep the network adders unchanged until levies are researched (proposed), or lower them now? **Answered 2026-11-07 by the owner (with H1): wait until all the research is done (OPEN-QUESTIONS 201).**
 - F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km? **Answered 2026-11-07 by the owner: "Switch" to ACER's €2.08 m/km (OPEN-QUESTIONS 227).**
@@ -158,7 +158,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:55 local (OPEN-QUESTIONS 234):** "Add hydrogen to the utilities": hydrogen is a seventh mapped utility, a warning only like the others (decision 223). Researched in `utility-maps-2026-11.md` section 6: the official Hydrogen Infrastructure Map states no licence and offers no download; OpenStreetMap coverage unknown; most pipelines are planned (Germany 537 km in operation of about 9,040 km planned). Added to `further-research-list-2026-11.md` item 5. **One new question is open: G5 (planned pipelines shown as well as built ones).**
+**Owner, 7 Nov 2026, 23:57 local (OPEN-QUESTIONS 235):** the hydrogen warning shows planned pipelines as well as built ones, planned ones marked "planned" with the year ("Yes"). **Every question in the research run is answered (OPEN-QUESTIONS 204 to 235). Next: only if the owner attaches Italy's ARERA tables or EirGrid's 2026/27 demand tariffs (OPEN-QUESTIONS 202), fill those first; otherwise wait for the owner to ask for a build (a new work package).**
+
+**Owner, 7 Nov 2026, 23:55 local (OPEN-QUESTIONS 234):** "Add hydrogen to the utilities": hydrogen is a seventh mapped utility, a warning only like the others (decision 223). Researched in `utility-maps-2026-11.md` section 6: the official Hydrogen Infrastructure Map states no licence and offers no download; OpenStreetMap coverage unknown; most pipelines are planned (Germany 537 km in operation of about 9,040 km planned). Added to `further-research-list-2026-11.md` item 5. **One new question was open: G5 (planned pipelines shown as well as built ones); answered the same evening, see the next entry.**
 
 **Owner, 7 Nov 2026, 23:49 local (OPEN-QUESTIONS 233):** where a tax rate depends on conditions (FR, GB), the normal rate is the default and the reduced rate applies on a tick. **Every question in the research run is now answered (OPEN-QUESTIONS 204 to 233). Next: only if the owner attaches Italy's ARERA tables or EirGrid's 2026/27 demand tariffs (OPEN-QUESTIONS 202), fill those first; otherwise wait for the owner to ask for a build (a new work package).**
 
