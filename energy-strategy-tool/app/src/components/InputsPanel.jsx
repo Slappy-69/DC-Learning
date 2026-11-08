@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTag } from './Field.jsx';
 import { gridChargeData, CONDITIONAL_RATE, DC_TAX, GB_RESIDUAL, GB_FEE, IE_POLICY } from '../engine/countryrules.js';
 import { nearbyRenewables } from '../engine/renewables.js';
-import { plantCandidates } from '../engine/defaults.js';
+import { plantCandidates, TECH_TICKS, techTicked } from '../engine/defaults.js';
 import { PLANT_DEFAULTS, COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
 import MapPicker from './MapPicker.jsx';
 import WeatherField from './WeatherField.jsx';
@@ -21,6 +21,7 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
 
   return (
     <div className="inputs">
+      <FirstRun inputs={inputs} norm={norm} set={set} update={update} />
       <Section title="1 · Project and location" defaultOpen>
         <TextField label="Project name" value={inputs.project.name} onCommit={set('project.name')} path="project.name" inputs={inputs} />
         {onReport ? (
@@ -324,6 +325,7 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
       </Section>
 
       <Section title="7 · Choices (C1–C20)" defaultOpen badge={<ProjectedCount norm={norm} />}>
+        <TechTicks inputs={inputs} update={update} />
         <ChoicesPanel inputs={inputs} norm={norm} update={update} />
       </Section>
 
@@ -559,4 +561,50 @@ function mapMarkers(inputs, norm) {
     for (const r of (rn || []).slice(0, 300)) out.push({ id: `r${r.id}`, lat: r.lat, lon: r.lon, kind: r.type.startsWith('wind') ? 'wind' : r.type === 'solar' ? 'solar' : 'hydro', title: `${r.name}, ${r.mw} MW ${r.typeLabel.toLowerCase()}, ${r.km.toFixed(1)} km` });
   } catch { /* a map without markers */ }
   return out;
+}
+
+// Technologies ticked into existence (work package 31, OPEN-QUESTIONS 181, 182): only what is ticked is searched; one click
+// to untick. A choice the engineer has set explicitly below keeps its own values.
+function TechTicks({ inputs, update }) {
+  const cur = inputs.techs || Object.fromEntries(TECH_TICKS.map(([k, , on]) => [k, on]));
+  return (
+    <fieldset className="subgroup tech-ticks" id="tech-ticks">
+      <legend>Technologies in the search <span className="legend-note">(a starter set is ticked; tick more to explore)</span></legend>
+      <div className="tick-grid">
+        {TECH_TICKS.map(([k, label]) => (
+          <label key={k} className="tick"><input type="checkbox" checked={techTicked({ techs: cur }, k) !== false} onChange={(e) => update('techs', { ...cur, [k]: e.target.checked })} /> {label}</label>
+        ))}
+      </div>
+      <p className="note">The offsite PPA (section 4) and nearby plants (the results) have their own ticks. Unticking a technology leaves it out of every choice's default values (OPEN-QUESTIONS 181, 182).</p>
+    </fieldset>
+  );
+}
+
+// The simple first run (work package 31; owner 2026-11-07, OPEN-QUESTIONS 181, 185–187): the few inputs to enter before
+// the first run; everything else runs on defaults, each flagged as assumed on the options that use it.
+function FirstRun({ inputs, norm, set, update }) {
+  const L = inputs.load, G = inputs.grid;
+  const byMW = L.maxDemandBasis === 'mw';
+  const it = norm.load.itMW;
+  return (
+    <section className="first-run" aria-label="First run">
+      <h2 className="first-run-title">First run: enter these, then run</h2>
+      <p className="note">The location (the map pin in section 1), the IT load, the PUE, the maximum demand, and the grid date and capacity. Everything else starts on defaults, each flagged as assumed; only the technologies ticked in section 7 are searched. Run, then come back to the settings to explore (OPEN-QUESTIONS 181, 185).</p>
+      <p className="note">Location: {Number(inputs.project.lat).toFixed(3)}°, {Number(inputs.project.lon).toFixed(3)}° (<a href="#map-picker">move the pin</a>).</p>
+      <div className="row2">
+        <NumberField label="IT load, full build" unit="MW" value={L.itMW} onCommit={set('load.itMW')} path="load.itMW" inputs={inputs} nullable min={0} placeholder={`${it} (estimated)`} />
+        <NumberField label="PUE, annual" value={L.pueAnnual} onCommit={set('load.pueAnnual')} path="load.pueAnnual" inputs={inputs} min={1} max={3} step={0.01} />
+      </div>
+      <div className="row2">
+        <SelectField label="Maximum demand entered as" value={byMW ? 'mw' : 'pue'} options={[['pue', 'Maximum PUE (design day)'], ['mw', 'Maximum facility demand (MW)']]} onCommit={(v) => update('load.maxDemandBasis', v)} path="load.maxDemandBasis" inputs={inputs} />
+        {byMW
+          ? <NumberField label="Maximum facility demand" unit="MW" value={L.maxDemandMW ?? null} onCommit={set('load.maxDemandMW')} path="load.maxDemandMW" inputs={inputs} nullable min={0} placeholder="Enter" hint={L.maxDemandMW > 0 && it > 0 ? `Maximum PUE worked out: ${(L.maxDemandMW / it).toFixed(3)}.` : 'The maximum PUE is worked out as this ÷ the IT load.'} />
+          : <NumberField label="Maximum PUE, design day" value={L.pueMax} onCommit={set('load.pueMax')} path="load.pueMax" inputs={inputs} min={1} max={3} step={0.01} hint={it > 0 ? `Maximum demand worked out: ${(it * L.pueMax).toFixed(1)} MW.` : undefined} />}
+      </div>
+      <div className="row2">
+        <TextField label="Grid date, full connection (YYYY-MM)" value={G.fullDate ?? ''} onCommit={set('grid.fullDate')} pattern={YM} path="grid.fullDate" inputs={inputs} nullable placeholder={`${norm.grid.fullDate} (not known)`} />
+        <NumberField label="Grid capacity, full connection" unit="MW" value={G.fullMW ?? null} onCommit={set('grid.fullMW')} path="grid.fullMW" inputs={inputs} nullable min={0} placeholder={`${norm.grid.fullMW} (not known)`} />
+      </div>
+    </section>
+  );
 }

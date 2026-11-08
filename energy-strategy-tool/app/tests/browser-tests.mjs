@@ -1451,28 +1451,32 @@ await check('B42. Hourly weather (owner 2026-10-30): "Upload EPW file…" in sec
   return `loaded: "${txt.slice(0, 160)}…"; re-run, header changed; removed again`;
 });
 
-await check('B43. Existing gas plants (work package 19): with the pin at Eemshaven, section 4 lists the plants within 10 km from the bundled list with their sources and the credit; leaving one out re-runs; axe finds no serious or critical violation; no outside request, no console error', async () => {
+await check('B43. Existing gas plants (work packages 19 and 28): with the pin at Eemshaven the first run leaves the plants out; "Nearby plants" on the results offers them with the credit; adding Magnum Centrale re-runs and its inputs appear in section 4; removing it re-runs; axe finds no serious or critical issue; no outside request', async () => {
   const { ctx, page, errors } = await openPage();
   const outside = [];
   page.on('request', (r) => { if (/^https?:/.test(r.url())) outside.push(r.url()); });
   const ran = () => page.waitForFunction(() => { const t = document.querySelector('.status').textContent; return /Run failed/.test(t) || (/Last run/.test(t) && !/Screening options/.test(t)); }, null, { timeout: 240000, polling: 250 });
   for (const [label, v] of [[/^Latitude/, '53.425'], [/^Longitude/, '6.875']]) { const f = page.getByLabel(label); await f.fill(v); await f.press('Tab'); }
-  await page.waitForFunction(() => /Magnum Centrale/.test((document.querySelector('.plants-field') || {}).textContent || ''), null, { timeout: 30000 });
+  await page.waitForFunction(() => /Magnum Centrale/.test((document.querySelector('.nearby-plants') || {}).textContent || ''), null, { timeout: 30000 });
   await ran();
-  const txt = (await page.locator('.plants-field').innerText()).replace(/\s+/g, ' ');
-  ok(/powerplantmatching, PyPSA \(CC BY 4\.0\)/.test(txt), 'credit missing');
-  ok(/Eem/.test(txt) && /closure dated|closed/.test(txt) && /\(list\)/.test(txt), txt.slice(0, 300));
-  ok((await page.locator('.plants-field tbody tr').count()) === 4, 'four plants within 10 km');
-  const box = page.getByLabel('Include Magnum Centrale');
-  await box.uncheck();
+  const box = (await page.locator('.nearby-plants').innerText()).replace(/\s+/g, ' ');
+  ok(/powerplantmatching, PyPSA \(CC BY 4\.0\)/.test(box), 'credit missing');
+  ok(/4 plants of/.test(box) && /leaves them out/.test(box), box.slice(0, 300));
+  ok((await page.locator('.plants-field tbody tr').count()) === 0, 'no plant in the first run');
+  const val = await page.locator('#nearby-plant-select option', { hasText: 'Magnum Centrale' }).getAttribute('value');
+  await page.locator('#nearby-plant-select').selectOption(val);
+  await page.getByRole('button', { name: 'Add and run again' }).click();
   await ran();
-  ok(!(await box.isChecked()), 'the plant was not left out');
-  const ax = await runAxe(page, 'section 4 with the plant table');
+  ok((await page.locator('.plants-field tbody tr').count()) === 1 && /Magnum/.test(await page.locator('.plants-field').innerText()), 'Magnum in section 4');
+  const ax = await runAxe(page, 'section 4 with the plant table and nearby plants');
   ok(!serious(ax).length, axeLine(ax));
+  await page.getByRole('button', { name: /^Take Magnum/ }).click();
+  await ran();
+  ok((await page.locator('.plants-field tbody tr').count()) === 0, 'Magnum taken out');
   ok(!outside.length, `outside requests: ${outside.slice(0, 3).join(', ')}`);
   ok(!errors.length, errors.join(' | '));
   await ctx.close();
-  return `plants listed: ${txt.slice(0, 200)}…; Magnum left out and re-run; ${axeLine(ax)}`;
+  return `nearby plants: ${box.slice(0, 160)}…; Magnum added, re-run, removed; ${axeLine(ax)}`;
 });
 
 await check('B41. Phone version (owner 2026-10-30): the hosted page inside a host-like document with the host\'s downloads capability, on a 390 × 844 touch screen: runs T1; no sideways page scroll with the run details open; "Save PDF report", "Save study" and the run log save through the host (a declined save says so and saves nothing); the saved study reopens through the file field and matches; fields at 16 px or more; the inputs drawer closes from its own "Done" button (focus back on "Inputs") and from a tap beside it; no browser download, no outside request, no console error', async () => {

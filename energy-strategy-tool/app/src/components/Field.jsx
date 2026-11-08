@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useState } from 'react';
+import { HelpButton } from './Help.jsx';
 import { getRegistry, registryValue, isAtDefault, LABEL, isSourced } from '../engine/defaults.js';
 
 // The §18 record of a path; input records are created by buildDefaultInputs, so fill the registry on first use.
@@ -83,6 +84,7 @@ export function NumberField({ label, unit, value, onCommit, path, inputs, requir
         placeholder={placeholder ?? (nullable ? 'none' : undefined)}
         onChange={(e) => setDraft(e.target.value)} onBlur={commit}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); } }} />
+      <HelpButton path={path} label={label} />
     </div>
   );
 }
@@ -102,6 +104,7 @@ export function TextField({ label, value, onCommit, path, inputs, required, patt
       <Label id={id} label={label} path={path} atDefault={atDefault} required={required} hint={hint} />
       <input id={id} type="text" value={draft} placeholder={placeholder} aria-describedby={atDefault ? basisId(id) : undefined} onChange={(e) => setDraft(e.target.value)} onBlur={commit}
         onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} />
+      <HelpButton path={path} label={label} />
     </div>
   );
 }
@@ -115,6 +118,7 @@ export function SelectField({ label, value, options, onCommit, path, inputs, hin
       <select id={id} value={value ?? ''} onChange={(e) => onCommit(e.target.value)} aria-describedby={atDefault ? basisId(id) : undefined}>
         {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
+      <HelpButton path={path} label={label} />
     </div>
   );
 }
@@ -127,6 +131,7 @@ export function ToggleField({ label, checked, onCommit, path, inputs, hint }) {
       <input id={id} type="checkbox" checked={!!checked} onChange={(e) => onCommit(e.target.checked)} aria-describedby={atDefault ? basisId(id) : undefined} />
       <label htmlFor={id}>{label}</label>
       {atDefault ? <UnverifiedTag path={path} compact descId={basisId(id)} /> : null}
+      <HelpButton path={path} label={label} />
       {hint ? <span className="field-hint">{hint}</span> : null}
     </div>
   );

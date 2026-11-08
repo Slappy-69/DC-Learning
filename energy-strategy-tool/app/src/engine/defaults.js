@@ -245,8 +245,47 @@ export function choiceLabel(id, value) {
   return plantLabel(value) || value;
 }
 
+// Technologies ticked into existence (work package 31; owner 2026-11-07, OPEN-QUESTIONS 181, 182): only what is ticked is
+// searched. The starter set is ticked: grid, backup gensets, on-site gas engines, solar, battery; wind, PPA, fuel cells,
+// hydrogen, small nuclear, heat reuse, flexibility and nearby plants start unticked. Technologies the decision did not
+// name (gas turbines, HVO-diesel prime and rented bridging plant, gas CHP) keep today's default (OPEN-QUESTIONS 241).
+export const TECH_TICKS = [
+  ['grid', 'Grid connection', true], ['gensets', 'Backup gensets', true], ['gasEngines', 'On-site gas engines', true], ['solar', 'Solar', true], ['battery', 'Battery storage', true],
+  ['gasTurbines', 'Gas turbines (bridging)', true], ['dieselPrime', 'HVO-diesel prime (bridging)', true], ['rented', 'Rented temporary generation', true], ['chp', 'Gas CHP-trigen', true],
+  ['wind', 'Wind', false], ['fuelCells', 'Fuel cells', false], ['hydrogen', 'Hydrogen', false], ['smr', 'Small nuclear (SMR)', false], ['heatReuse', 'Heat reuse', false], ['flexibility', 'Demand flexibility', false],
+];
+export function techTicked(inputs, k) {
+  const t = inputs && inputs.techs;
+  if (!t || typeof t !== 'object' || !(k in t)) return LEGACY_ADDERS ? null : (TECH_TICKS.find((x) => x[0] === k) || [0, 0, true])[2];
+  return !!t[k];
+}
+// Values a ticked-off technology removes from a choice's default values.
+const TICK_VALUES = { gasEngines: ['gasRecip'], gasTurbines: ['gasTurbine'], dieselPrime: ['dieselPrime'], rented: ['rented'], chp: ['chp'], fuelCells: ['fuelCell'], hydrogen: ['hydrogen'], smr: ['smr'] };
+function applyTicks(id, st, inputs) {
+  if (!inputs || !st || !Array.isArray(st.values)) return st;
+  const off = (k) => techTicked(inputs, k) === false;
+  let vals = st.values.slice();
+  if (['C2', 'C4'].includes(id)) for (const [k, list] of Object.entries(TICK_VALUES)) if (off(k)) vals = vals.filter((x) => !list.includes(x));
+  if (id === 'C4' && techTicked(inputs, 'smr') === true && !vals.includes('smr')) vals.push('smr');
+  if (id === 'C4' && techTicked(inputs, 'hydrogen') === true && !vals.includes('hydrogen')) vals.push('hydrogen');
+  if (id === 'C4' && techTicked(inputs, 'fuelCells') === true && !vals.includes('fuelCell')) vals.push('fuelCell');
+  if (id === 'C2' && techTicked(inputs, 'fuelCells') === true && !vals.includes('fuelCell')) vals.push('fuelCell');
+  if (id === 'C1' && off('grid')) vals = ['islanded'];
+  if (id === 'C5' && off('gensets')) vals = vals.filter((x) => !['hvo', 'diesel', 'gas'].includes(x)).concat(vals.some((x) => !['hvo', 'diesel', 'gas'].includes(x)) ? [] : ['none']);
+  if (id === 'C10' && off('solar')) vals = ['none'];
+  if (id === 'C11' && off('wind')) vals = ['none'];
+  if (id === 'C12' && off('battery')) vals = ['none'];
+  if (id === 'C15' && off('heatReuse')) vals = ['none'];
+  if (id === 'C16' && techTicked(inputs, 'flexibility') === true) return { state: 'open', values: ['off', 'on'] };
+  if (!vals.length) vals = [st.values[0]];
+  return { ...st, values: vals };
+}
+
 // Choice default states (§8 table). Some depend on other inputs (C6, C7, C11, C15).
 export function defaultChoiceState(id, inputs) {
+  return applyTicks(id, defaultChoiceState0(id, inputs), inputs);
+}
+function defaultChoiceState0(id, inputs) {
   switch (id) {
     case 'C1': return { state: 'open', values: ['wait', 'bridge', 'islanded'] };
     // OPEN-QUESTIONS 43 (2026-10-22): every technology is considered for bridging, gas turbines included; turbines and
@@ -1068,6 +1107,8 @@ export function buildDefaultInputs(opts = {}) {
       aiInfWeekend: rec('load.aiInfWeekend', 0.9, 'weekend level as a fraction of weekdays', { low: 0.5, high: 1.1, basis: 'judgement', ref: '§5.3', note: 'No source; to research.' }),
       // PUE entered directly (work package 20, owner 2026-11-02, OPEN-QUESTIONS 131-139), in place of the cooling types.
       pueAnnual: rec('load.pueAnnual', 1.3, 'annual PUE (facility energy ÷ IT energy over the year)', { low: 1.1, high: 1.6, basis: 'judgement', ref: '§5.3, §9.3', note: 'Owner 2026-11-02 (OPEN-QUESTIONS 131, 132): entered by the engineer; default 1.3 is judgement, no source. Covers every facility load: cooling, electrical losses and offices.' }),
+      maxDemandBasis: rec('load.maxDemandBasis', 'pue', "how the maximum demand is entered: 'pue' (maximum PUE) or 'mw' (maximum facility demand)", { basis: 'judgement', ref: '§5.3', note: 'Owner 2026-11-07 (OPEN-QUESTIONS 187): either, whichever is known; the tool works out the other (demand = IT load × maximum PUE).' }),
+      maxDemandMW: rec('load.maxDemandMW', null, 'MW, maximum facility demand on the design day (used when entered as MW)', { basis: 'judgement', ref: '§5.3', note: 'Owner 2026-11-07 (OPEN-QUESTIONS 186, 187).' }),
       pueMax: rec('load.pueMax', 1.5, 'maximum PUE (design day, 100 % IT)', { low: 1.2, high: 2.0, basis: 'judgement', ref: '§5.3, §9.3', note: 'Owner 2026-11-02 (OPEN-QUESTIONS 131, 132): entered by the engineer; default 1.5 is judgement, no source. Sets the design facility load, the critical load for backup and the heat rejected.' }),
       densityKWm2: rec('load.densityKWm2', 1.5, 'kW of IT per m² of white space', { low: 1.0, high: 6.0, basis: 'judgement', ref: '§5.3', note: "Owner 2026-11-02 (OPEN-QUESTIONS 135): one density in place of the cooling types' own; 1.5 was the air-cooled value. Used for the IT estimate from the site area and for each building's white space." }),
       wue: rec('load.wue', null, 'litres of water per kWh of IT (blank = water not reported)', { low: 0, high: 2.5, basis: 'judgement', ref: '§5.3', note: 'Owner 2026-11-02 (OPEN-QUESTIONS 134): optional; blank leaves water use out of the results.' }),
@@ -1262,6 +1303,8 @@ export function buildDefaultInputs(opts = {}) {
     takeoverCostPerMW: rec('existing.takeoverCostPerMW', null, '€/MW', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.takeoverCostFrac × the extra-high-voltage connection rate.' }),
     takeoverLagMonths: rec('existing.takeoverLagMonths', null, 'months', { basis: 'judgement', ref: '§5.4', note: 'Empty = plants.takeoverLagMonths.' }),
   };
+  // Technologies ticked into existence (work package 31, OPEN-QUESTIONS 181, 182).
+  inputs.techs = rec('techs', LEGACY_ADDERS ? null : Object.fromEntries(TECH_TICKS.map(([k, , on]) => [k, on])), 'technologies ticked into the search', { basis: 'judgement', ref: '§8', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 181, 182): a starter set ticked (grid, backup gensets, on-site gas engines, solar, battery); every other technology one click away.' });
   // The engineer's comments on flags (work package 27, OPEN-QUESTIONS 170–176): applied after the run, no re-run.
   inputs.flagNotes = rec('flagNotes', { byOption: {}, byType: {} }, 'comments on flags { byOption, byType }', { basis: 'judgement', ref: '§15', note: 'None by default. A comment can mark a flag mitigated and lower its severity; a lowered permitting flag changes the deliverability score (OPEN-QUESTIONS 172–174).' });
   // Ireland's de-rating factors (work package 26, OPEN-QUESTIONS 213): the bundled T-4 table unless the engineer
@@ -1350,6 +1393,13 @@ export function resolveUnknowns(out) {
       L.itMW = Math.round(mw * 10) / 10;
       A['load.itMW'] = `estimated from the site area: ${round1(areaHa)} ha × ${Math.round(cov * 100)} % coverage × ${storeys} storey${storeys === 1 ? '' : 's'} ÷ gross-up ${gu} × ${dens} kW/m² = ${L.itMW} MW`;
     }
+  }
+  // Maximum demand entered in MW (work package 31; owner 2026-11-07, OPEN-QUESTIONS 186, 187): the maximum PUE is worked
+  // out as demand ÷ IT load. The engineer chooses which of the two is entered, so the two cannot disagree (OPEN-QUESTIONS
+  // 241).
+  if (L.maxDemandBasis === 'mw' && Number(L.maxDemandMW) > 0 && L.itMW > 0) {
+    L.pueMax = Math.round((Number(L.maxDemandMW) / L.itMW) * 1000) / 1000;
+    A['load.pueMax'] = `worked out from the maximum demand entered: ${round1(Number(L.maxDemandMW))} MW ÷ IT load ${round1(L.itMW)} MW = ${L.pueMax}`;
   }
   const start = out.project.analysisStart;
   if (blank(G.fullDate)) { G.fullDate = addMonths(start, G.unknownFullMonths ?? 48); A['grid.fullDate'] = `not known: analysis start + ${G.unknownFullMonths ?? 48} months = ${G.fullDate}`; }

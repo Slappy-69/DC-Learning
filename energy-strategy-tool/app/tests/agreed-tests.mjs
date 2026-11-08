@@ -8,6 +8,8 @@ import { eemSmall } from './plants-tests.mjs';
 import { TAKEOVER_GENERAL, IE_POLICY } from '../src/engine/countryrules.js';
 import { applyFlagNotes, annotateFlags, optionNoteKey, noteText } from '../src/engine/flagnotes.js';
 import { flagHeadline } from '../src/report/plain.js';
+import { helpFor } from '../src/engine/help.js';
+import { HELP_T1 } from '../src/data/help-t1.js';
 import { nearbyRenewables, RENEWABLE_SOURCE } from '../src/engine/renewables.js';
 import { RENEWABLE_PLANTS } from '../src/data/renewable-plants.js';
 import { scoreOptions } from '../src/engine/scoring.js';
@@ -267,5 +269,34 @@ export async function agreedTests(test, ctxRuns) {
     const de = nearbyRenewables(52.5, 13.4, 20, 60);
     assert.ok(de.some((r) => r.turbines > 1), 'a German farm of several turbines near Berlin');
     return `${RENEWABLE_PLANTS.count} plants bundled (${RENEWABLE_PLANTS.germanTurbines} German turbines in ${RENEWABLE_PLANTS.germanFarms} farms); Eemshaven 10 MW / 25 km: ${near.length}, nearest ${near[0].name} ${near[0].mw} MW at ${near[0].km.toFixed(1)} km`;
+  });
+
+  await test('63. Work package 31: technologies ticked into the search (starter set ticked, others off, one click each); the maximum demand entered as a PUE or in MW; the "?" text for every parameter with T1\'s numbers', () => {
+    const url = new URL('../src/engine/defaults.js', import.meta.url).href;
+    const env = { ...process.env }; delete env.ESTOOL_LEGACY_ADDERS;
+    const code = `import { buildDefaultInputs, normalizeInputs, defaultChoiceState } from '${url}';
+      const i = buildDefaultInputs({ analysisStart: '2027-01' }); const n = normalizeInputs(i);
+      const v = (id, inp = n) => defaultChoiceState(id, inp).values;
+      const on = JSON.parse(JSON.stringify(i)); Object.assign(on.techs, { wind: true, smr: true, hydrogen: true, fuelCells: true, flexibility: true });
+      const off = JSON.parse(JSON.stringify(i)); Object.assign(off.techs, { solar: false, battery: false, gensets: false, grid: false });
+      const no = normalizeInputs(on), nf = normalizeInputs(off);
+      const mw = JSON.parse(JSON.stringify(i)); mw.load.itMW = 100; mw.load.maxDemandBasis = 'mw'; mw.load.maxDemandMW = 140;
+      console.log(JSON.stringify({ techs: i.techs, C2: v('C2'), C4: v('C4'), C16: v('C16'), C4on: v('C4', no), C2on: v('C2', no), C16on: v('C16', no), C10off: v('C10', nf), C12off: v('C12', nf), C1off: v('C1', nf), C5off: v('C5', nf), pueMax: normalizeInputs(mw).load.pueMax }));`;
+    const r = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', code], { env }).toString());
+    for (const k of ['grid', 'gensets', 'gasEngines', 'solar', 'battery']) assert.equal(r.techs[k], true, k);
+    for (const k of ['wind', 'fuelCells', 'hydrogen', 'smr', 'heatReuse', 'flexibility']) assert.equal(r.techs[k], false, k);
+    assert.ok(!r.C2.includes('fuelCell') && !r.C4.includes('fuelCell') && r.C2.includes('gasRecip'), 'fuel cells off, gas engines on');
+    assert.deepEqual(r.C16, ['off']);
+    assert.ok(r.C4on.includes('smr') && r.C4on.includes('hydrogen') && r.C4on.includes('fuelCell') && r.C2on.includes('fuelCell') && r.C16on.includes('on'), 'ticked in');
+    assert.deepEqual(r.C10off, ['none']); assert.deepEqual(r.C12off, ['none']); assert.deepEqual(r.C1off, ['islanded']); assert.ok(!r.C5off.some((x) => ['hvo', 'diesel'].includes(x)), 'unticked out');
+    assert.equal(r.pueMax, 1.4, '140 MW ÷ 100 MW');
+    // The "?" text.
+    const h = helpFor('economics.wacc');
+    assert.ok(h.what && h.basis && /at 0\.04 the LCOE is €[\d.]+\/MWh/.test(h.example), h.example);
+    const w = Object.keys(HELP_T1.params).find((p) => HELP_T1.params[p][6]);
+    assert.ok(w && /no effect in this example, since that option does not use/.test(helpFor(w).example), 'unused technology');
+    assert.ok(/was not worked out/.test(helpFor('project.analysisStart').example), 'no range');
+    assert.ok(Object.keys(HELP_T1.params).length > 200, 'parameters covered');
+    return `starter set ticked; PUE 1.4 from 140 MW; "?" for ${Object.keys(HELP_T1.params).length} parameters with T1 numbers (best option LCOE €${HELP_T1.base.lcoe}/MWh)`;
   });
 }
