@@ -142,7 +142,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - G4. Build a release script for OpenStreetMap extracts (needs a machine that can reach Geofabrik)? **Answered 2026-11-07 by the owner: "Not yet" (OPEN-QUESTIONS 225).**
 - F1. Approve ACER 2026 as the source for cable route costs, split by voltage band? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 226).**
 - F2. Keep the network adders unchanged until levies are researched (proposed), or lower them now? **Answered 2026-11-07 by the owner (with H1): wait until all the research is done (OPEN-QUESTIONS 201).**
-- F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km?
+- F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km? **Answered 2026-11-07 by the owner: "Switch" to ACER's €2.08 m/km (OPEN-QUESTIONS 227).**
 - F4. Gas price: accept the Dutch TTF hub price (press-reported, dated) as the "latest dated price" beside the 2025 average (€42.9)? TTF closed at €85.6 on 6 Nov 2026.
 - F5. (Withdrawn 8 Nov 2026: ASHRAE was already decided in OPEN-QUESTIONS 64, not bundled.)
 - F6. Gas engines' minimum stable load: the Danish Energy Agency's 50 % (today 30 %), or keep 30 % as judgement?
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:41 local (OPEN-QUESTIONS 226):** the grid cable cost comes from ACER by voltage band. Next question: F3.
+**Owner, 7 Nov 2026, 23:42 local (OPEN-QUESTIONS 227):** the gas connection pipe default switches to ACER's €2.08 m/km. Next question: F4.
+
+**Owner, 7 Nov 2026, 23:41 local (OPEN-QUESTIONS 226):** the grid cable cost comes from ACER by voltage band.
 
 **Owner, 7 Nov 2026, 23:40 local (OPEN-QUESTIONS 225):** no OpenStreetMap release script for now. Part G is done.
 
