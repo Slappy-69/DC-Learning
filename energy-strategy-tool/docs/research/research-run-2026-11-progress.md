@@ -140,6 +140,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - G2. Each utility as a default distance that drives a cost (electricity, gas) or only as a flag (water, telecoms, heat)? **Answered 2026-11-07 by the owner: all six utilities are warnings only; no mapped distance changes a cost (OPEN-QUESTIONS 223).**
 - G3. ODbL data (OpenStreetMap, PyPSA-Eur network) bundled as separate files in the public repository and the Windows program: acceptable? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 224).**
 - G4. Build a release script for OpenStreetMap extracts (needs a machine that can reach Geofabrik)? **Answered 2026-11-07 by the owner: "Not yet" (OPEN-QUESTIONS 225).**
+- G5. (Added 2026-11-07 after the owner asked for hydrogen, OPEN-QUESTIONS 234.) Show planned hydrogen pipelines as well as built ones? Recommendation: yes, marked "planned" with the year. **Not yet answered.**
 - F1. Approve ACER 2026 as the source for cable route costs, split by voltage band? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 226).**
 - F2. Keep the network adders unchanged until levies are researched (proposed), or lower them now? **Answered 2026-11-07 by the owner (with H1): wait until all the research is done (OPEN-QUESTIONS 201).**
 - F3. Gas connection pipe: keep 0.8 M EUR/km as judgement with the ACER flag, or move to the ACER median 2.08 M EUR/km? **Answered 2026-11-07 by the owner: "Switch" to ACER's €2.08 m/km (OPEN-QUESTIONS 227).**
@@ -156,6 +157,8 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - H3. GB: use levies from a secondary guide (about £78/MWh), or wait until each is read from its issuing body? **Answered 2026-11-07 by the owner: "Yes", use the guide's figures labelled "sourced — not independently checked" (OPEN-QUESTIONS 205).**
 
 ## Where the next run starts
+
+**Owner, 7 Nov 2026, 23:55 local (OPEN-QUESTIONS 234):** "Add hydrogen to the utilities": hydrogen is a seventh mapped utility, a warning only like the others (decision 223). Researched in `utility-maps-2026-11.md` section 6: the official Hydrogen Infrastructure Map states no licence and offers no download; OpenStreetMap coverage unknown; most pipelines are planned (Germany 537 km in operation of about 9,040 km planned). Added to `further-research-list-2026-11.md` item 5. **One new question is open: G5 (planned pipelines shown as well as built ones).**
 
 **Owner, 7 Nov 2026, 23:49 local (OPEN-QUESTIONS 233):** where a tax rate depends on conditions (FR, GB), the normal rate is the default and the reduced rate applies on a tick. **Every question in the research run is now answered (OPEN-QUESTIONS 204 to 233). Next: only if the owner attaches Italy's ARERA tables or EirGrid's 2026/27 demand tariffs (OPEN-QUESTIONS 202), fill those first; otherwise wait for the owner to ask for a build (a new work package).**
 
@@ -237,4 +240,5 @@ Part F, the list "Not reached in this batch" in `defaults-batch-3-proposals-2026
 - A: several regulators' pages refused or did not extract tables (ft.dk, vert.lt, cru.ie publications, EirGrid statement of charges, CRE and PSE tariff tables, Ofgem from the shell). Sources used instead are named in each country section.
 - Data centre rules: Légifrance (art. L. 312-64 and L. 312-70 of the Code des impositions sur les biens et services) was not surfaced by search, so the French rate is not confirmed at the source; one Skatteetaten statement address was too long for the reader.
 - Gas price sources: the World Bank's monthly price file (thedocs.worldbank.org, `CMO-Historical-Data-Monthly.xlsx`): the shell was refused (HTTP 403) and the web reader cannot open spreadsheets, so the latest monthly TTF value was not read; ACER's AEGIS CHEST page was surfaced and not read.
+- G, hydrogen: the h2inframap.eu map itself was not opened (the pages read only link to it), so its download options and terms are unconfirmed; the Clean Hydrogen Observatory geomap licence was not read.
 - E: overpass-api.de, taginfo.openstreetmap.org, download.geofabrik.de and openinframap.org refused from the shell; OpenInfraMap's statistics pages were read with the web reader. openstreetmap.org/copyright needed a permission that was not granted; the OSM Foundation FAQ was used.

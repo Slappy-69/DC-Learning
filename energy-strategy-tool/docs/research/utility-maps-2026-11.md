@@ -74,12 +74,31 @@ From `app/src/engine/defaults.js` (all "indicative — unverified" or "judgement
 
 **How it could enter the app (proposal):** a flag on the heat-reuse option: "existing district heating area within X km" or "heat demand density around the site", replacing "district heating: No" as a default only when a mapped network is nearby, flagged as an assumption about connection.
 
+## 6. Hydrogen: pipelines (added at the owner's request, 7 November 2026)
+
+The owner asked for hydrogen to be added to the utilities (OPEN-QUESTIONS 234). Most hydrogen pipelines in Europe are **planned, not built**, so a map would mostly show routes that do not exist yet.
+
+| Source | Coverage | Licence | Note |
+|---|---|---|---|
+| **Hydrogen Infrastructure Map, h2inframap.eu** (ENTSOG, GIE, CEDEC, Eurogas, GEODE, GD4S, with the European Hydrogen Backbone) | Europe: transmission and distribution pipelines, storage, terminals, demand and production projects (counts on the Clean Hydrogen Observatory page, undated: transmission over 180, distribution over 60, storage over 80, terminals over 30, demand over 20, production over 220) | **None stated.** The December 2025 press release says the data is "published for informative and indicative purposes only" and the map is not true to scale. No download found. Questions go to info@H2inframap.eu | Updated December 2025 (promoters' submissions to 17 October 2025); next update planned for Q4 2026 with the TYNDP 2026 projects. Not usable without permission |
+| **European Hydrogen Backbone** (32 network operators) | Vision of a pipeline network to 2040, routes tied to 2030 and 2040 | None stated on the page; "the data behind the website ... will be updated over time" | A vision, not built pipelines |
+| **Clean Hydrogen Observatory, geomap** (EU) | Hydrogen infrastructure projects | Not read in this run (the page did not describe the licence or download) | Points to h2inframap.eu for the latest map |
+| **OpenStreetMap** (`substance=hydrogen`) | Unknown | ODbL | The OSM wiki lists `hydrogen` as a common value of `substance=*`; it shows no usage count. Coverage could not be measured (taginfo and Overpass are refused from the shell) |
+
+**What exists today (secondary sources, not checked at the operators):**
+
+- **Germany:** the hydrogen core network has 537 km in operation and about 9,040 km planned; the figures come from FNB Gas, the association of the transmission operators, as reported by PGJ Online on 29 October 2026.
+- **Netherlands:** Hynetwork (a Gasunie subsidiary) built a 32 km line through the Rotterdam port area from the Maasvlakte to Pernis. PGJ Online (undated, January 2026 in its address) says the last weld is done and the next step is connecting producers and consumers.
+- **Older industrial hydrogen pipelines** (for example in the Netherlands, Belgium and France) were not checked in this run.
+
+**How it could enter the app (proposal):** a warning only, like the other six utilities (OPEN-QUESTIONS 223): "nearest mapped hydrogen pipeline: X km, in operation or planned for YYYY". It would be marked "planned" where the pipeline is not built. It matters mainly for hydrogen-ready gas engines or turbines and for any hydrogen supply option. No mapped distance changes a cost. The best data (the official map) needs permission first; OpenStreetMap is open but its coverage is unknown.
+
 ## Licences together
 
 - **CC BY sources** (SciGRID_gas, EEA): credit only; can be bundled in the public repository and the Windows program.
 - **ODbL sources** (OpenStreetMap and data made from it, including PyPSA-Eur's network): credit "© OpenStreetMap contributors", and any bundled extract stays under ODbL. Keep each in its own file so the rest of the tool is not affected.
 - **Copernicus**: credit and a "funded by the European Union" note.
-- **Not open**: PeeringDB, TeleGeography (geocoded), ENTSO-E map: need permission.
+- **Not open**: PeeringDB, TeleGeography (geocoded), ENTSO-E map, the Hydrogen Infrastructure Map (no licence stated): need permission.
 
 ## Ranked proposal (for the owner to choose; nothing decided)
 
@@ -89,6 +108,8 @@ From `app/src/engine/defaults.js` (all "indicative — unverified" or "judgement
 4. **District heating, from Heat Roadmap Europe layers**, once the licence is confirmed: a flag on the heat-reuse option.
 5. **Telecoms:** only after permission from PeeringDB (or using OpenStreetMap's patchy points): a flag.
 
+6. **Hydrogen** (added 7 November 2026): a warning only. The official map has no stated licence, so ask its publishers for permission, or check OpenStreetMap's coverage first. Planned pipelines marked "planned".
+
 Each layer should carry its own data date and licence line in the app and the PDF, and every distance should be flagged "mapped, straight line", never presented as a surveyed route.
 
 ## Questions for the owner (copied to the progress file)
@@ -97,6 +118,7 @@ Each layer should carry its own data date and licence line in the app and the PD
 2. How each enters: as a default distance that drives a cost (electricity, gas), or only as a flag (water, telecoms, heat)? **Answered 2026-11-07 by the owner: all six utilities (electricity, gas, water, district heating, fibre, district cooling) are warnings only; no mapped distance changes a cost (OPEN-QUESTIONS 223).**
 3. ODbL data (OpenStreetMap, PyPSA-Eur network) in the public repository and the Windows program, kept as separate files: acceptable? **Answered 2026-11-07 by the owner: yes (OPEN-QUESTIONS 224).**
 4. Should a release script for OpenStreetMap extracts be built (it needs a machine that can reach Geofabrik; this session cannot)? **Answered 2026-11-07 by the owner: not yet (OPEN-QUESTIONS 225).**
+5. (Added 7 November 2026, after the owner asked for hydrogen, OPEN-QUESTIONS 234.) Should the hydrogen warning show planned pipelines as well as built ones? Claude recommends yes, with planned ones marked "planned" and the year, because most hydrogen pipelines are not built yet. *To ask the owner.*
 
 ## Sources
 
@@ -111,5 +133,11 @@ Each layer should carry its own data date and licence line in the app and the PD
 | "Finding datasets to map the undersea cable network" (blog) | Community | Undated | 7 Nov 2026 | https://falliblevagrant.codeberg.page/finding-datasets-to-map-the-undersea-cable-network.html |
 | NVE, draft guide to kbf. § 6-2 (power-sensitive information) | Regulator | 2024 (draft) | 7 Nov 2026 | https://nve.no/media/17578/midlertidig-veileder-for-kbf-5-2.pdf |
 | OSM Foundation, "Licence and Legal FAQ" | Community (licensor) | Undated | 7 Nov 2026 | https://osmfoundation.org/wiki/Licence_and_Legal_FAQ |
+| ENTSOG, press release PR359, "Updated Hydrogen Infrastructure Map shows adjustment of timeline for hydrogen projects commissioning" | Industry association | 17 Dec 2025 | 7 Nov 2026 | https://www.entsog.eu/sites/default/files/2025-12/PR0359_251217_Press%20Release%20Updated%20Hydrogen%20Infrastructure%20Map%20shows%20adjustment%20of%20timeline%20for%20hydrogen%20projects%20commissioning.pdf |
+| European Hydrogen Backbone, "European Hydrogen Infrastructure Map" | Industry initiative | Undated (© 2026) | 7 Nov 2026 | https://ehb.eu/page/h2-infrastructure-map |
+| Clean Hydrogen Observatory, "Infrastructure projects" | EU body | Undated | 7 Nov 2026 | https://observatory.clean-hydrogen.europa.eu/index.php/hydrogen-landscape/projects-and-valleys/infrastructure-projects |
+| OpenStreetMap wiki, "Key:substance" | Community | Undated | 7 Nov 2026 | https://wiki.openstreetmap.org/wiki/Key:substance |
+| PGJ Online, "Germany's hydrogen core network reaches 334 miles in operation two years after approval" (FNB Gas figures) | Trade press | 29 Oct 2026 | 7 Nov 2026 | https://pgjonline.com/news/2026/october/germanys-hydrogen-core-network-reaches-334-miles-in-operation-two-years-after-approval |
+| PGJ Online, "First Rotterdam hydrogen pipeline segment nears completion" | Trade press | Undated (January 2026 in the address) | 7 Nov 2026 | https://pgjonline.com/news/2026/january/first-rotterdam-hydrogen-pipeline-segment-nears-completion |
 
-Not reachable: overpass-api.de, download.geofabrik.de, taginfo (shell, refused); the EEA data page (refused; the catalogue record was used); the Duke Nicholas Institute page on Peta and the sEEnergies PDF (unreadable). ENTSOG and Global Energy Monitor terms were not checked in this run.
+Not reachable: overpass-api.de, download.geofabrik.de, taginfo (shell, refused); the EEA data page (refused; the catalogue record was used); the Duke Nicholas Institute page on Peta and the sEEnergies PDF (unreadable). ENTSOG and Global Energy Monitor terms were not checked in this run. Hydrogen: the h2inframap.eu map itself was not opened (the pages read only link to it), so its download options and terms are not confirmed; the Clean Hydrogen Observatory geomap licence was not read.

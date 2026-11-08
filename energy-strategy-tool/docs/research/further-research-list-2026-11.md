@@ -44,3 +44,12 @@ Items the owner asked to research later. They do not block the questions being a
 
 **What is needed:** an official, free, dated index from 2015 to the latest month: for example a euro-area construction cost or capital goods price index (Eurostat), or a producer price index for machinery and electrical equipment; which index fits plant capex and which fits operating costs; the licence and update frequency; and how big the difference is against a general consumer price index. The result should come back as a proposal for the owner to approve, with the source named.
 
+## 5. Hydrogen pipelines: permission to use the official map, or OpenStreetMap coverage
+
+**Asked by the owner on 2026-11-07** (OPEN-QUESTIONS 234, "Add hydrogen to the utilities").
+
+**Why:** hydrogen is now the seventh utility on the map (a warning only). `utility-maps-2026-11.md` (section 6) found that the best data, the Hydrogen Infrastructure Map at h2inframap.eu, states **no licence and offers no download**; its press release calls the data "informative and indicative" and not to scale. OpenStreetMap has a `substance=hydrogen` tag, but its coverage has not been measured.
+
+**What is needed:** whether the publishers (ENTSOG, GIE and partners; contact info@H2inframap.eu) allow a bundled, dated extract of the pipeline routes, and under what credit; how many hydrogen pipelines OpenStreetMap actually holds in each country (needs a machine that can reach taginfo or Overpass); which pipelines are built and which are planned; the Clean Hydrogen Observatory geomap's licence; and the operators' own figures for built networks (for example FNB Gas for Germany, Gasunie's Hynetwork for the Netherlands) to check the press reports.
+
+**Until then:** the hydrogen warning shows no distance and says "no open hydrogen pipeline data bundled".
