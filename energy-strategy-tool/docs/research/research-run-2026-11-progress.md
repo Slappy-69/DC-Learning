@@ -17,6 +17,7 @@ A new chat that picks this up: read this file, then carry on from the first part
 | F | Defaults research, batch 3 (work package 0) | `defaults-batch-3-proposals-2026-11.md` and `.csv` | Done (26 proposals in the run, 16 more on 7–8 Nov: gas price and transport, gas turbines and engines, licences, escalation, weather; still-not-reached list in the file) | 2026-11-07 to 08 |
 | H | Levies and taxes per MWh, 31 countries (owner's choice after the run) | `levies-and-taxes-2026-11.md` and `.csv` | Done (28 countries with at least part found; second and third passes; 5 random entries checked) | 2026-11-07 to 08 |
 | A (2nd pass) | Gaps in the grid charge per MW | end of `grid-capacity-charges-2026-11.md` | Done | 2026-11-08 |
+| H (data centre rules) | Local website that states each data centre tax rule (owner's request, 7 Nov 2026, after OQ 204) | `data-centre-tax-rules-2026-11.md` and `.csv` | Done for FR, FI, SE, NO, GB (SE read in the first pass only; FR rate and conditions still from a broker page; GB sector agreement from techUK) | 2026-11-07 |
 
 ## Part A: countries
 
@@ -148,10 +149,13 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - F9. (Withdrawn 8 Nov 2026: the tool already uses GHCNh; the ISD retirement does not affect it.)
 
 - H1. Set the adder to network + levies and taxes for DE, NL, PT, FI, SE, DK, CH, IE now, or after the rest are researched? **Answered 2026-11-07 by the owner: "Wait for all the research is done before implementing" (OPEN-QUESTIONS 201).**
-- H2. Show data centre tax rules (FR reduced rate, FI change on 1 Jul 2026, GB CCA discount, NO unclear) as flags on the options?
+- H2. Show data centre tax rules (FR reduced rate, FI change on 1 Jul 2026, SE removal, GB CCA discount, NO ended rate) as flags on the options? **Answered 2026-11-07 by the owner: "Yes" (OPEN-QUESTIONS 204).** The owner also asked for the local website that mentions each tax: done in `data-centre-tax-rules-2026-11.md`.
+- H2b. (New, to ask later.) Where the rate depends on conditions (FR, GB), which is the default: the reduced rate, or the normal rate until the engineer ticks that the conditions are met? Recommendation: normal rate by default.
 - H3. GB: use levies from a secondary guide (about £78/MWh), or wait until each is read from its issuing body?
 
 ## Where the next run starts
+
+**Owner, 7 Nov 2026, 22:15 local (OPEN-QUESTIONS 204):** data centre tax rules are shown as flags ("Yes"), and the notes must name the local website for each tax: done in `data-centre-tax-rules-2026-11.md` (impots.gouv.fr and BOFiP, Vero.fi, Skatteverket, Skatteetaten and Stortinget, GOV.UK). Next question to ask, one at a time: H3 (Great Britain levies: secondary guide or issuing bodies), then H2b, then the rest of the open list.
 
 **Owner, 7 Nov 2026, 21:41 local (OPEN-QUESTIONS 202):** the research counts as done, except Italy's general system charges tables and Ireland's 2026/27 demand tariffs, which the owner will try to attach. Next: the open questions one at a time, starting with OPEN-QUESTIONS 203 (per-MW charges and the adder).
 
@@ -171,4 +175,5 @@ Part F, the list "Not reached in this batch" in `defaults-batch-3-proposals-2026
 - sinnfein.ie (refused) and stackpath.ie (does not allow automated reading): same content found elsewhere.
 - B: lovdata.no (refused), anwalt.de (refused), gridreadiness.com (does not allow automated reading).
 - A: several regulators' pages refused or did not extract tables (ft.dk, vert.lt, cru.ie publications, EirGrid statement of charges, CRE and PSE tariff tables, Ofgem from the shell). Sources used instead are named in each country section.
+- Data centre rules: Légifrance (art. L. 312-64 and L. 312-70 of the Code des impositions sur les biens et services) was not surfaced by search, so the French rate is not confirmed at the source; one Skatteetaten statement address was too long for the reader.
 - E: overpass-api.de, taginfo.openstreetmap.org, download.geofabrik.de and openinframap.org refused from the shell; OpenInfraMap's statistics pages were read with the web reader. openstreetmap.org/copyright needed a permission that was not granted; the OSM Foundation FAQ was used.
