@@ -12,15 +12,16 @@ Checkpoint, updated after every completed step so any session can resume from he
 - **Windows program:** rebuilt from bff54b7 (work packages 24 to 33) on 2026-11-08: "Desktop builds" run 42477621814 passed on Windows and Linux. Download: GitHub → Actions → Desktop builds → that run → Artifacts → `desktop-win32-x64`. It does not yet have the fixes for known issues 36 and 37 (merged later the same day).
 - **Phone page:** version 8 (2026-10-30). It does not have the weather work, package 19 or packages 20–21. Republishing is on hold (owner, 2026-11-02).
 - **Eemshaven study:** made before the plant list, so its figures leave out existing plants. The re-run is dropped for now (owner, 2026-11-02).
-- **Known issues:** 1 to 34 resolved; 35 open; 36 and 37 fixed and merged (`docs/KNOWN-ISSUES.md`).
-- **Waiting for the owner:** the next step (candidates under "Next"), the fix for known issue 35, and the rest of the notes on the user guide ("Open items").
+- **Known issues:** 1 to 34, 36 and 37 resolved; 35 and 38 open (`docs/KNOWN-ISSUES.md`). Known issue 38 (a saved study can lose its result record after a flag comment or a weight change) was logged on 2026-11-08 at the owner's request; its fix is not decided.
+- **Video walkthroughs (2026-11-08):** two narrated videos of a Pego study (750 MW IT; 5 min 10 s with the grid rising to 1,200 MW in 2031, and 7 min 45 s with 300 MW of grid for life) were made and sent to the owner in the chat; the files are not in the repository. The tools that made them are in `video-walkthrough/` (README there).
+- **Waiting for the owner:** the next step (candidates under "Next"), the fixes for known issues 35 and 38, a Windows rebuild with the fixes for known issues 36 and 37, and the rest of the notes on the user guide ("Open items").
 
 ## Where to look
 
 - **Brief (authoritative):** `brief-v2/BRIEF.md` (revision 5), with `CHANGELOG.md`, `ASSUMPTIONS.md` and `OPEN-QUESTIONS.md` (1–130).
 - **Decision log of the walkthrough:** `docs/walkthrough-decisions-2026-10-21.md`. Where this file or the brief disagrees with it, the log is newer.
 - **Build plan:** `docs/BUILD-PLAN.md`: each work package with its questions, acceptance tests and guide chapters, and the "Not scheduled" list.
-- **Known issues:** `docs/KNOWN-ISSUES.md` (37 items: 35 open, the rest resolved).
+- **Known issues:** `docs/KNOWN-ISSUES.md` (38 items: 35 and 38 open, the rest resolved).
 - **Build notes:** `app/BUILD-NOTES.md`: architecture, every default with its label, decisions and test runs.
 - **Verification:** `verification/HISTORY.md`, with one folder of reports per slice.
 - **User guide:** `docs/user-guide/` (text, figures, mock-ups of the agreed screens, and the tools that build the EPUB and PDF).
