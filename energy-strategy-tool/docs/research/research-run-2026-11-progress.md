@@ -158,6 +158,8 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
+**Owner, 7 Nov 2026, 23:59 local (OPEN-QUESTIONS 202, closed):** "No I don't. Skip this one": neither Italy's ARERA tables nor EirGrid's 2026/27 demand tariffs will be attached. Italy's general system charges stay "no published value found"; Ireland keeps the 2025/26 rates, flagged. **The research run is closed: no gap is left to fill. Next: nothing, until the owner asks for a build (a new work package in `docs/BUILD-PLAN.md`) or another task.**
+
 **Owner, 7 Nov 2026, 23:57 local (OPEN-QUESTIONS 235):** the hydrogen warning shows planned pipelines as well as built ones, planned ones marked "planned" with the year ("Yes"). **Every question in the research run is answered (OPEN-QUESTIONS 204 to 235). Next: only if the owner attaches Italy's ARERA tables or EirGrid's 2026/27 demand tariffs (OPEN-QUESTIONS 202), fill those first; otherwise wait for the owner to ask for a build (a new work package).**
 
 **Owner, 7 Nov 2026, 23:55 local (OPEN-QUESTIONS 234):** "Add hydrogen to the utilities": hydrogen is a seventh mapped utility, a warning only like the others (decision 223). Researched in `utility-maps-2026-11.md` section 6: the official Hydrogen Infrastructure Map states no licence and offers no download; OpenStreetMap coverage unknown; most pipelines are planned (Germany 537 km in operation of about 9,040 km planned). Added to `further-research-list-2026-11.md` item 5. **One new question was open: G5 (planned pipelines shown as well as built ones); answered the same evening, see the next entry.**
