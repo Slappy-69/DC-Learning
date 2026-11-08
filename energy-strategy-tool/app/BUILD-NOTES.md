@@ -2294,3 +2294,7 @@ Owner, 2026-11-08: "Update the app with everything we've discussed and agreed th
 - Ledger: contract price on what is taken (`contract`), rent (`rental`), purchase in year 0 (capex) and fixed O&M (`fom`); the grid adder on what is taken through the grid (`grid`); the kept share of the surplus sales (`revenue`). Minor flag `renew-plant`: not the plant's own output; how it is priced; route; GWh a year.
 - The "Nearby plants and utilities" box moved into the Options tab (below the tab bar) after browser check B19 failed by 20 px on the second run.
 - Test 65: 50 MW of wind on T1 (Great Britain's profile): 149 GWh a year (34 %), the campus takes 134 GWh under a €60/MWh contract.
+
+## Known issue 36: map markers and pin when zoomed in (2026-11-08, branch feature/map-markers)
+
+Found while filming the Pego walkthrough. The marker stroke (0.5) and the pin stroke (0.06) were in map units, so each zoom step made them wider until they drew white rings far larger than the markers. Both strokes are now in screen pixels (`vector-effect: non-scaling-stroke`; 1 px for markers, 1.5 px for the pin) and the markers are two-thirds of the pin's radius (was two-fifths). Drawing only; no figure changes. Browser checks B36 and B43 pass (axe: no serious or critical issue).
