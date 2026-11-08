@@ -911,7 +911,7 @@ export function costBuildUp(o) {
     const df = y.opex > 0 ? y.pvOpex / y.opex : 0;
     pv.capex += y.pvCapex || 0;
     pv.om += ((y.fom || 0) + (y.vom || 0)) * df;
-    pv.grid += (y.grid || 0) * df; pv.ppa += (y.ppa || 0) * df; pv.fuel += (y.fuel || 0) * df; pv.rental += (y.rental || 0) * df; pv.carbon += (y.carbon || 0) * df;
+    pv.grid += ((y.grid || 0) + (y.gridFixed || 0)) * df; pv.ppa += (y.ppa || 0) * df; pv.fuel += (y.fuel || 0) * df; pv.rental += (y.rental || 0) * df; pv.carbon += (y.carbon || 0) * df;
     pv.other += ((y.testRun || 0) + (y.flex || 0)) * df;
     pv.revenue -= (y.revenue || 0) * df;
     pvE += (y.deliveredMWh || 0) * df;

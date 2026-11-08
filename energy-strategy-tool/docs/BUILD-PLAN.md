@@ -239,6 +239,25 @@ The specification is `../brief-v2/BRIEF.md` (revision 5). Each package below lis
 - **Memory** (owner 2026-11-06, "Keep detail for the top 2,000", OPEN-QUESTIONS 154): with T1 screened in full the page held about 1 GB and a re-run crashed it. The best 2,000 options keep their full detail; the others keep the figures the ranking and the views read, and are rebuilt when shown (`engine/detail.js`, Node test 55). T1: 1,033 MB to 287 MB.
 - **Progress:** built 2026-11-06 on `feature/screen-all`; Node 97/97, browser 43/43, GitHub's checks passed; merged into `main` the same day with the owner's yes ("Merge").
 
+### 24 to 32. Everything agreed in OPEN-QUESTIONS 155–235 (added 2026-11-08)
+
+The owner, 2026-11-08, 00:04 local: "Update the app with everything we've discussed and agreed that wasn't implemented yet. Go uninterrupted. Update the windows app too." So no questions between packages; where a decision left a small point open, Claude takes the cautious reading, flags it on screen and logs it in `OPEN-QUESTIONS.md` (rows 236 onwards) for the owner to confirm. Built in this order on `feature/agreed-decisions`, pushed after each package; not merged into `main` without the owner's yes. The Windows program is built from the work branch by the "Desktop builds" workflow.
+
+| # | Package | Decisions |
+|---|---|---|
+| 24 | Grid charges, levies and data centre tax rules: country adder = network + levies where both are published and clear; per-MW grid charge tick (unticked) on contracted MW, taken out of the adder when ticked; GB residual as a lump sum; Germany's flat-load discount tick; data centre tax flags, normal rate by default with a reduced-rate tick (FR, GB); Latvia flag; Ireland double-count and price-calibration flags | 160–165, 201–205, 216–218, 233 |
+| 25 | Defaults batch 3: grid cable cost by voltage band (ACER 2026); gas pipe €2.08 m/km; gas price from the World Bank monthly series; gas and carbon escalation from the World Bank outlook then TYNDP 2026; engine minimum load 30 % kept as judgement; agency values "2015 €" | 226–232 |
+| 26 | Country rules: takeover flag by country and "export is not import"; Ireland's large energy user flag and de-rated test; Great Britain's commitment fee tick | 155, 198, 199, 206–215 |
+| 27 | Engineer's comment on a flag: one option or the flag type; mitigated; lowered severity changes the score; printed beside the flag | 170–176 |
+| 28 | Nearby plants from the results: first run without plants; drop box on the results; re-run with the plant; "Nearby plants" settings section shown only once a plant is ticked | 156–158, 179, 193 |
+| 29 | New plant uses: A private wire, B supply contract, C plant keeps selling, D standby and flexibility income; committed-output flag | 159, 161, 166–169, 177–178, 180, 188–192 |
+| 30 | Renewable plants near the site from powerplantmatching, German turbines grouped into farms, engineer sets size and distance | 194–196, 219–221 |
+| 31 | Simple first run and a "?" on every parameter (starter set of technologies, first-run inputs, T1 example numbers) | 181–187 |
+| 32 | Utility map warnings: seven utilities, warnings only; "no open data bundled" where nothing is bundled | 200, 222–225, 234–235 |
+
+- **Acceptance tests:** each package adds Node tests in `app/tests/` and keeps the existing suites passing; `STATUS.md` records each package as it lands.
+- **Progress:** see `STATUS.md`.
+
 ### Next, chosen by the owner (2026-11-02)
 
 From Claude's list of 20 next steps the owner chose: the report review (package 22, above); a search around the leaders ("local search", a cheap trial first); research of each country's rules for taking over a closing plant's grid connection; the user guide pictures (re-export the T1 worked examples, a new inputs screenshot and a new picture of the PDF contents, after the report and the search). Modelling ideas put on the list (owner, 2026-11-02, from "make them more relatable to actual data centre development"): **energy centre as a service** (bridging or prime power from a third party on a per-MWh or per-MW-month contract, against owning the plant) and **earning from the standby fleet** (Capacity Market and frequency response from standby gensets and a grid-interactive UPS, within the permits' run-hour limits). Not chosen then: lost rent and delay penalties, an interim or flexible grid offer. Paused: the Haiku check, the OpenStreetMap substations, known issue 35, the defaults research. On hold: rebuilding the Windows program and the phone page.

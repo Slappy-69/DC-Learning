@@ -13,6 +13,8 @@ import { defaultAnalysisStart, addMonths } from './dates.js';
 import { makeProjection, meanLatLon, validateRing } from './geometry.js';
 import { monthsBetween } from './dates.js';
 import { nearbyPlants, mergeDuplicates, plantValue, parsePlantValue, PLANT_SOURCE } from './plants.js';
+import { GRID_CHARGE_DATA } from './gridcharges-data.js';
+import { RESEARCH_NOTE } from './countryrules.js';
 
 export const LABEL = 'indicative — unverified';
 export const LABEL_SOURCED = 'sourced — not independently checked';
@@ -131,6 +133,22 @@ export const COUNTRIES = {
   CH: C('Switzerland', 'CHF', 46.8, 8.2, 9.0, 9.0, 1150, 0.20, 95, 50, 39, 45, 85, false, 0.5),
   IS: C('Iceland', 'ISK', 64.9, -19.0, 4.5, 6.0, 700, 0.38, 40, 25, 28, 80, EU_ETS, false, 0.8),
 };
+// The Node test suite keeps the indicative adders its pinned figures were set with (tests/test-env.mjs); the app and the
+// Windows program always use the researched ones.
+export const LEGACY_ADDERS = (() => { try { return typeof process !== 'undefined' && process.env && process.env.ESTOOL_LEGACY_ADDERS === '1'; } catch { return false; } })();
+// Grid adder by country (work package 24, owner 2026-11-08; OPEN-QUESTIONS 201–205, 233): network + levies and taxes where
+// both are published and clear (research run of November 2026), at the normal rate where a data centre rate depends on
+// conditions. Other countries keep the indicative value (OPEN-QUESTIONS 202). One record per country.
+for (const [cc, c] of Object.entries(COUNTRIES)) {
+  const d = GRID_CHARGE_DATA[cc];
+  const researched = d && Number.isFinite(d.adder) && !LEGACY_ADDERS;
+  if (researched) c.adder = d.adder;
+  const r = rec(`country.adder.${cc}`, c.adder, '€/MWh (network + levies and taxes, flat load, VAT out)', { dist: 'fixed', ref: '§5.4',
+    note: researched ? `${c.name}: ${d.adderHow}.${Number.isFinite(d.adderReduced) ? ` Reduced rate on the engineer's tick: €${d.adderReduced}/MWh.` : ''}` : `${c.name}: indicative; the research of November 2026 did not find both parts published and clear (OPEN-QUESTIONS 202).`,
+    verify: 'National regulators (network charges, levies)' });
+  void r;
+  if (researched) Object.assign(REGISTRY[`country.adder.${cc}`], { source: `Research run of November 2026, ${RESEARCH_NOTE}: ${d.adderHow}`, year: '2026', url: d.perMWUrl, accessed: d.accessed, approved: '2026-11-07', confidence: 'B', label: LABEL_SOURCED });
+}
 REGISTRY['profiles.countries'] = {
   path: 'profiles.countries', value: 'built-in synthetic country set (31)', unit: '', low: null, high: null,
   distribution: 'fixed', basis: 'source', source: '', year: '', url: '', accessed: '', confidence: 'C', verified: false,
@@ -1017,6 +1035,12 @@ export function buildDefaultInputs(opts = {}) {
       contractWaitMW: rec('grid.contractWaitMW', null, 'MW contracted (blank = the full offer in each period)', { basis: 'judgement', ref: '§5.4, §9.2', note: 'OPEN-QUESTIONS 19: the contracted grid capacity of every C1 = "Wait for grid" option; the import limit is the lower of this and the offer in each period. Blank = the full offer (as built before).' }),
       contractBridgeMW: rec('grid.contractBridgeMW', null, 'MW contracted (blank = the full offer in each period)', { basis: 'judgement', ref: '§5.4, §9.2', note: 'OPEN-QUESTIONS 19: the contracted grid capacity of every C1 = "Bridge until grid" option, for example 80 MW of a 120 MW offer. Blank = the full offer.' }),
       contractExportMW: rec('grid.contractExportMW', null, 'MW contracted import (blank = the full offer in each period)', { basis: 'judgement', ref: '§5.4, §9.2', note: 'OPEN-QUESTIONS 19: the contracted import capacity of C1 = "Grid + export" options. Blank = the full offer.' }),
+      // Work package 24 (owner 2026-11-07, OPEN-QUESTIONS 160–165, 203, 216, 217, 233): optional yearly grid charge per MW.
+      perMWInclude: rec('grid.perMWInclude', false, 'toggle', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 160): unticked by default. Ticked: the per-MW part comes out of the adder (at the flat load it was worked out for) and is charged on each option\'s own contracted grid MW, month by month (OPEN-QUESTIONS 162, 203).' }),
+      perMWCharge: rec('grid.perMWCharge', 'by country', '€ per MW of contracted capacity a year', { basis: 'source', derived: true, ref: '§5.4', note: 'Research of November 2026 per country, transmission level (OPEN-QUESTIONS 163, 164). Where no usable value was found the field is blank and flagged "no published value found"; nothing is charged until the engineer enters a figure (OPEN-QUESTIONS 165).' }),
+      lumpSumPerYear: rec('grid.lumpSumPerYear', 'by country', '€ a year per site (Great Britain: TNUoS residual)', { basis: 'source', derived: true, ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 217): Great Britain\'s residual transmission charge as a yearly lump sum, the same for every option that uses the grid; charged only with the per-MW tick. NESO 2026/27, band T-Demand4.' }),
+      flatLoadDiscount: rec('grid.flatLoadDiscount', false, 'toggle', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 216): off by default. Germany only (StromNEV § 19(2)): at 7,000 / 7,500 / 8,000 use hours a year the network part falls to 20 / 15 / 10 %. Other countries: further research list, item 1.' }),
+      dcReducedRate: rec('grid.dcReducedRate', false, 'toggle', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 233): the normal tax rate is used until the engineer ticks that the conditions for the data centre rate are met (France: reduced excise; Great Britain: Climate Change Agreement).' }),
       connectionCharge: rec('grid.connectionCharge', 0, '€ (lump sum, the same for every grid-connected option)', { basis: 'judgement', ref: '§5.4, §9.5', note: 'Walkthrough 2026-10-21: default 0, the same for every option; OPEN-QUESTIONS 20: a lump sum, not paid by islanded options (0 MW contracted); OPEN-QUESTIONS 50: the expected cost (standard rate per MW × contracted MW) is shown next to the field. Every option relying on the default 0 is flagged "assumed".' }),
       dateUncertainty: rec('grid.dateUncertainty', [-6, 24], 'months', { basis: 'judgement', note: 'Range of the grid-date driver in the tornado, the breakevens and the Monte Carlo (work packages 9, 17, 18).', ref: '§5.4' }),
     },
@@ -1199,6 +1223,8 @@ export function normalizeInputs(inputs) {
   out.existing = { include: false, name: 'Existing plant', type: 'ccgt', units: null, unitMW: null, availableDate: null, eff: null, msl: null, vomPerMWh: null, leasePerKWMonth: 6, linkCapex: 0, closeYear: null, buyPerKW: null, refurbPerKW: null, fomPerKW: null, buyExtraYears: null, takeoverMW: null, takeoverCostPerMW: null, takeoverLagMonths: null, ...(out.existing || {}) };
   // Inputs saved before work package 19 have no plant list settings: the list is read (OPEN-QUESTIONS 118).
   out.plants = { auto: true, edits: {}, ...(out.plants || {}) };
+  // Inputs saved before work package 24 have no per-MW charge settings: unticked.
+  out.grid = { perMWInclude: false, perMWCharge: 'by country', lumpSumPerYear: 'by country', flatLoadDiscount: false, dcReducedRate: false, ...out.grid };
   // Inputs saved before the weather work have none: the synthetic profile.
   if (!out.weather || typeof out.weather !== 'object') out.weather = { source: 'none' };
   out.choices = out.choices || {};

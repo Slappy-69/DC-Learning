@@ -11,6 +11,7 @@ import { NA } from './generator.js';
 import { adequacyOf, adequacyText } from './adequacy.js';
 import { addMonths } from './dates.js';
 import { PLANT_SOURCE } from './plants.js';
+import { DC_TAX, CONDITIONAL_RATE, DE_DISCOUNT, deDiscountFactor, GB_RESIDUAL } from './countryrules.js';
 import { plantCandidates, PLANT_DEFAULTS } from './defaults.js';
 
 const PERMIT_NOTE = 'Screening flag, not a permitting determination.';
@@ -102,7 +103,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
   const cont = E.contingency;
   const capexLines = []; // { item, year, amount }
   const ledger = [];
-  for (let y = 0; y <= N; y++) ledger.push({ year: y, capex: 0, contingency: 0, replacement: 0, residual: 0, fom: 0, vom: 0, fuel: 0, grid: 0, ppa: 0, carbon: 0, rental: 0, testRun: 0, flex: 0, revenue: 0, deliveredMWh: 0, scope1T: 0, scope2LocT: 0, scope2MktT: 0, cfeMWh: 0, netDemandMWh: 0, unmetMWh: 0 });
+  for (let y = 0; y <= N; y++) ledger.push({ year: y, capex: 0, contingency: 0, replacement: 0, residual: 0, fom: 0, vom: 0, fuel: 0, grid: 0, gridFixed: 0, ppa: 0, carbon: 0, rental: 0, testRun: 0, flex: 0, revenue: 0, deliveredMWh: 0, scope1T: 0, scope2LocT: 0, scope2MktT: 0, cfeMWh: 0, netDemandMWh: 0, unmetMWh: 0 });
 
   const assets = []; // for replacement and residual value
   // Sensitivity multipliers (work package 9; 1 = as entered).
@@ -366,12 +367,33 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     L.cfeMWh += d.cfeMWh;
   }
 
+  // Yearly grid charges per MW and per site, and Germany's flat-load discount (work package 24, OPEN-QUESTIONS 160–165,
+  // 203, 216, 217): charged on the option's own contracted grid MW, month by month, while it has a connection;
+  // escalated like the grid price. The discount is a credit on Germany's network part only.
+  const gf = ctx.gridFixed || (ctx.baseCtx && ctx.baseCtx.gridFixed);
+  if (gf && (gf.on || gf.discount) && v.C1 !== 'islanded' && contractLimit(inputs, v.C1) > 0) {
+    const ccap = contractedCap(ctx, v.C1);
+    for (let y = 0; y < N; y++) {
+      let mwMonths = 0, connMonths = 0;
+      for (let m = y * 12; m < y * 12 + 12 && m < ccap.length; m++) if (ccap[m] > 0) { mwMonths += ccap[m]; connMonths++; }
+      let amt = 0;
+      const perMWYear = gf.on ? (gf.perMW || 0) * mwMonths / 12 : 0;
+      if (gf.on) amt += perMWYear + (gf.lumpSum || 0) * connMonths / 12;
+      if (gf.discount && !ctx.adderEntered) {
+        const d = disp.years[Math.min(y, nExp - 1)];
+        const f = deDiscountFactor(d.gridPeakMW > 0 ? d.gridMWh / d.gridPeakMW : 0, d.gridMWh);
+        if (f < 1) amt -= (1 - f) * (gf.on ? d.gridMWh * DE_DISCOUNT.networkEnergyPerMWh + perMWYear : d.gridMWh * DE_DISCOUNT.networkPerMWhFlat);
+      }
+      ledger[y].gridFixed += amt * Math.pow(1 + E.elecEscalation, y);
+    }
+  }
+
   // Totals and discounting
   let pvCost = 0, pvEnergy = 0, pvCapex = 0, pvOpex = 0, capexTotal = 0, contTotal = 0;
   for (let y = 0; y <= N; y++) {
     const L = ledger[y];
     L.capexTotal = L.capex + L.contingency + L.replacement + L.residual;
-    L.opex = L.fom + L.vom + L.fuel + L.grid + L.ppa + L.carbon + L.rental + L.testRun + L.flex - L.revenue;
+    L.opex = L.fom + L.vom + L.fuel + L.grid + L.gridFixed + L.ppa + L.carbon + L.rental + L.testRun + L.flex - L.revenue;
     const dfC = Math.pow(1 + r, -y);
     const dfO = Math.pow(1 + r, -(y + 1));
     L.pvCapex = L.capexTotal * dfC;
@@ -635,6 +657,7 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
     const ex = expectedConnectionCharge(inputs, v.C1);
     flags.push(flag('grid-charge-assumed', 'info', 'Grid', `Grid connection charge assumed €0 (the default, indicative — unverified); at the standard rate of €${Math.round(ex.rate / 1000)}k per MW (${ex.band.toUpperCase()}) the ${Math.round(ex.mw)} MW contracted would cost about €${(ex.amount / 1e6).toFixed(1)} m`, { value: ex.amount }));
   }
+  if (v.C1 !== 'islanded') flags.push(...gridChargeFlags(ctx, v, eco));
   for (const s of sz.grid.shortfalls) flags.push(flag('grid-shortfall', 'info', 'Grid', `Grid shortfall at design load: up to ${s.mw.toFixed(1)} MW in months ${s.from}–${s.to}`));
   if (v.C1 === 'export' && inputs.grid.exportMW > 0) {
     const exp = disp.years.reduce((s, y) => s + y.curtailMWh, 0);
@@ -805,4 +828,35 @@ export function deliverability(ctx, v, sz, disp, flags, siteFit = null) {
   }
   const score = Math.max(0, Math.min(100, 100 + items.reduce((s, i) => s + i.points, 0)));
   return { score, items, emergingShare: emerging, nascentShare: nascent, includesSiteFit: penaltyOn };
+}
+
+// Grid charge and tax flags (work package 24, OPEN-QUESTIONS 160–165, 202–205, 216–218, 233). Info unless a figure is
+// missing or a saving depends on conditions. None of them is a permitting flag, so none moves the score.
+function gridChargeFlags(ctx, v, eco) {
+  const out = [];
+  const cc = ctx.country;
+  const gf = ctx.gridFixed || (ctx.baseCtx && ctx.baseCtx.gridFixed);
+  const inputs = ctx.inputs;
+  const eur = (x) => `€${x >= 1e6 ? `${(x / 1e6).toFixed(1)} m` : Math.round(x).toLocaleString('en-GB')}`;
+  const fixedTotal = eco && eco.ledger ? eco.ledger.reduce((a, r) => a + (r.gridFixed || 0), 0) : 0;
+  if (gf && gf.on) {
+    if (gf.perMWBasis === 'none') out.push(flag('grid-permw-none', 'minor', 'Grid', `Grid charge per MW: no published value found for ${cc}${gf.data ? ` (${gf.data.perMWHow})` : ''}. Nothing is charged per MW until a figure is entered in section 4 (OPEN-QUESTIONS 165)`));
+    else out.push(flag('grid-permw', 'info', 'Grid', `Grid charge per MW: ${eur(gf.perMW)} per MW of contracted capacity a year (${gf.perMWBasis === 'entered' ? 'entered' : `${gf.data.perMWHow}; ${gf.data.perMWSource}, ${gf.data.perMWUrl}, accessed ${gf.data.accessed}, sourced — not independently checked`}), charged on this option's contracted grid MW${gf.adderRemoved > 0 ? `; €${gf.adderRemoved.toFixed(1)}/MWh taken out of the per-MWh adder so it is not counted twice` : ''}. Over the evaluation period: ${eur(fixedTotal)}`));
+    if (gf.lumpSum > 0) out.push(flag('grid-lumpsum', 'info', 'Grid', `Grid charge per site: ${eur(gf.lumpSum)} a year (${gf.lumpEntered ? 'entered' : `${GB_RESIDUAL.source}, ${GB_RESIDUAL.url}`}), the same for every option that uses the grid (OPEN-QUESTIONS 217)`));
+    if (ctx.adderEntered) out.push(flag('grid-permw-adder-entered', 'info', 'Grid', 'Grid charge per MW with an entered per-MWh adder: the entered adder is used as entered; check that it leaves out the per-MW charges, or they are counted twice (OPEN-QUESTIONS 236)'));
+    if (cc === 'LV') out.push(flag('grid-lv-transformer', 'minor', 'Grid', 'Latvia charges its capacity fee on transformer capacity, usually larger than the contracted MW; the tool charges the contracted MW, so the charge is understated (for example 150 MVA of transformers against 100 MW contracted: about €1.01 m against €0.68 m a year at 330 kV) (OPEN-QUESTIONS 218)'));
+  }
+  if (inputs.grid.flatLoadDiscount) {
+    if (gf && gf.discount && !ctx.adderEntered) out.push(flag('grid-de-discount', 'minor', 'Grid', `Discount for a large flat load ticked (Germany, ${DE_DISCOUNT.source}): the network part falls to 20 / 15 / 10 % at 7,000 / 7,500 / 8,000 use hours a year, from this option's own grid use. Needs the regulator's approval; uncertain for a new campus (OPEN-QUESTIONS 216)`));
+    else if (gf && gf.discount) out.push(flag('grid-de-discount', 'info', 'Grid', 'Discount for a large flat load ticked, but the per-MWh adder is entered: the tool cannot tell its network part, so no discount is applied'));
+    else out.push(flag('grid-discount-none', 'info', 'Grid', `Discount for a large flat load ticked: no rule researched for ${cc} yet (only Germany; the others are on the further research list), so nothing is applied`));
+  }
+  const tax = DC_TAX[cc];
+  if (tax && !ctx.adderEntered) {
+    const reduced = !!inputs.grid.dcReducedRate && !!CONDITIONAL_RATE[cc];
+    out.push(flag('grid-dc-tax', reduced ? 'minor' : 'info', 'Grid', `${reduced && tax.reduced ? tax.reduced : tax.normal} Local website: ${tax.site} (OPEN-QUESTIONS 204)`));
+  }
+  if (cc === 'IE' && !ctx.adderEntered) out.push(flag('grid-ie-check', 'info', 'Grid', "Ireland's adder counts EirGrid's system services charge (about €27/MWh, network part) and SEMO's imperfections charge (€18.81/MWh, market charges) as two separate bills; the two documents have not been read side by side. Network charges are the 2025/26 rates (EirGrid, approved by CRU; the 2026/27 rates were not read)"));
+  if ((cc === 'GB' || cc === 'IE') && v.C1 !== 'islanded') out.push(flag('grid-price-calibration', 'info', 'Grid', `The hourly wholesale price for ${cc} is a synthetic profile calibrated to an indicative yearly average (${cc === 'GB' ? '€95' : '€110'}/MWh, indicative — unverified); its calibration to published wholesale prices is not confirmed`));
+  return out;
 }

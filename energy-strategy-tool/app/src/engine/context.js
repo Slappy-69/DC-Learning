@@ -1,6 +1,8 @@
 // Run context: everything shared by all options in one run (BRIEF §4 incremental recompute:
 // these arrays depend only on inputs, not on the option's choices).
 
+import { LEGACY_ADDERS } from './defaults.js';
+import { CONDITIONAL_RATE, researchedAdder, gridChargeData, GB_RESIDUAL, FLAT_LOAD_MWH_PER_MW, DE_DISCOUNT } from './countryrules.js';
 import { applyWeather } from './weather.js';
 import { COUNTRIES, COOLING_ID, PUE_SHAPE, TECH, FUEL, FX, applyExistingPlant, applyPlants, plantOf, PLANT_DEFAULTS } from './defaults.js';
 import { parsePlantValue, isTakeover } from './plants.js';
@@ -207,7 +209,15 @@ export function buildContext(inputs, opts = {}) {
   // Grid non-commodity adder (network charges and levies, €/MWh): a number entered for grid.priceAdder replaces the
   // country default (the record's value is "by country"). Before work package 11 the entered value was ignored (found in
   // the Pego study, revision 3, 2026-10-24).
-  const priceAdder = Number.isFinite(inputs.grid.priceAdder) ? inputs.grid.priceAdder : cdata.adder;
+  // Work package 24 (OPEN-QUESTIONS 203, 233): the country default holds every grid charge at the normal tax rate; the
+  // reduced data centre rate (France, Great Britain) applies only when the engineer ticks it; with the per-MW tick the
+  // per-MW part comes out of the country default at the flat load it was worked out for. An entered adder is used as
+  // entered (Claude's reading, logged as OPEN-QUESTIONS 236: the engineer's figure is not changed by the tool).
+  const adderEntered = Number.isFinite(inputs.grid.priceAdder);
+  const reducedOn = !!inputs.grid.dcReducedRate && !!CONDITIONAL_RATE[country];
+  let priceAdder = adderEntered ? inputs.grid.priceAdder : ((LEGACY_ADDERS ? null : researchedAdder(country, reducedOn)) ?? cdata.adder);
+  const gridFixed = gridFixedSetup(inputs, country, adderEntered);
+  if (gridFixed.on && !adderEntered) priceAdder = Math.max(0, priceAdder - gridFixed.adderRemoved);
   const carbonMult = inputs.grid.carbonMultiplier;
   const carbonPrice = Number.isFinite(inputs.economics.carbonPrice) ? inputs.economics.carbonPrice : cdata.carbonPrice;
 
@@ -220,7 +230,7 @@ export function buildContext(inputs, opts = {}) {
 
   const ctx = {
     inputs, country, cdata, prof, seed, nMonths, nMonthsTimeline, existing, plants, gridCap, itInst, shape, baseYear, startMonth,
-    cooling, gasCommodity, gasPrice, priceMult, priceAdder, carbonMult, carbonPrice, phases, firstPhaseM, lastPhaseM, fullGridM, gasM,
+    cooling, gasCommodity, gasPrice, priceMult, priceAdder, adderEntered, gridFixed, carbonMult, carbonPrice, phases, firstPhaseM, lastPhaseM, fullGridM, gasM,
     demandCache: new Map(),
     demandStats: { hits: 0, misses: 0 }, // run-log counters for the hourly demand cache
     site: opts.site || buildSiteModel(inputs), // site model and buildable-envelope raster (§10.1), shared by every option
@@ -339,3 +349,28 @@ export function designDemandByMonth(ctx, coolingId) {
 }
 
 export { TECH };
+
+// The yearly grid charges per MW and per site (work package 24, OPEN-QUESTIONS 160–165, 203, 216, 217). Off unless the
+// engineer ticks grid.perMWInclude. perMW: € per MW of contracted capacity a year (entered, or the country's researched
+// value; null = none found, nothing charged, flagged); lumpSum: € a year per site (Great Britain's residual);
+// adderRemoved: €/MWh taken out of the country adder (the per-MW part at the flat load, and Great Britain's whole
+// TNUoS part, which holds the residual).
+export function gridFixedSetup(inputs, country, adderEntered) {
+  const g = inputs.grid || {};
+  const d = gridChargeData(country);
+  const num = (x) => x !== null && x !== undefined && x !== '' && Number.isFinite(Number(x));
+  const perMWEntered = num(g.perMWCharge);
+  const perMW = perMWEntered ? Number(g.perMWCharge) : d && Number.isFinite(d.perMW) ? d.perMW : null;
+  const isGB = country === 'GB';
+  const lumpEntered = num(g.lumpSumPerYear);
+  const lumpSum = lumpEntered ? Number(g.lumpSumPerYear) : isGB ? GB_RESIDUAL.eurPerYear : 0;
+  const countryPerMW = d && Number.isFinite(d.perMW) ? d.perMW : 0;
+  // What the country default holds for these charges (at the flat load): GB its TNUoS part (£10.8/MWh), else the
+  // researched per-MW charge spread over the flat load's MWh.
+  const adderRemoved = isGB ? GB_RESIDUAL.networkPartGbpPerMWh / 0.8377 : countryPerMW / FLAT_LOAD_MWH_PER_MW;
+  return {
+    on: !!g.perMWInclude, perMW, perMWEntered, perMWBasis: perMWEntered ? 'entered' : perMW == null ? 'none' : 'country',
+    lumpSum, lumpEntered, adderRemoved: adderEntered ? 0 : adderRemoved, data: d,
+    discount: !!g.flatLoadDiscount && country === 'DE', discountData: DE_DISCOUNT,
+  };
+}

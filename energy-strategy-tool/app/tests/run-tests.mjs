@@ -99,6 +99,7 @@ import { reportDesignTests } from './report-design-tests.mjs';
 import { reportReviewTests } from './report-review-tests.mjs';
 import { screenAllTests } from './screen-all-tests.mjs';
 import { detailTests } from './detail-tests.mjs';
+import { agreedTests } from './agreed-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1333,6 +1334,8 @@ await reportReviewTests(test, siteRuns);
 await screenAllTests(test, siteRuns);
 // 55. Work package 23: detail kept for the best options only (OPEN-QUESTIONS 154).
 await detailTests(test, siteRuns);
+// 56 onwards. Work packages 24 to 32: everything agreed in OPEN-QUESTIONS 155–235 (tests/agreed-tests.mjs).
+await agreedTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);
