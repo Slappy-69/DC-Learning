@@ -122,7 +122,7 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 - C1. GB fee default: blank (engineer enters) or the published midpoint £475,000/MW as a labelled example? **Answered 2026-11-07 by the owner: "Yes blank" (OPEN-QUESTIONS 206).**
 - C2. Cost of the money tied up: cash at the discount rate (Ofgem's worst case), or a letter-of-credit fee rate entered by the engineer? **Answered 2026-11-07 by the owner: "No extra cost other than the money on the deposit", read as cash at the discount rate, no bank fee (OPEN-QUESTIONS 207).**
 - C3. Offer acceptance date: a new input, or a default number of years before the grid date? **Answered in part 2026-11-07 by the owner (OPEN-QUESTIONS 208): the deposit comes back when the grid capacity it was paid for becomes available, stage by stage. When it goes out: **day 1 of the analysis** (OPEN-QUESTIONS 209, question C3b).**
-- D1. Ireland flag severity: major or minor?
+- D1. Ireland flag severity: major or minor? **Answered 2026-11-07 by the owner: "Minor" (OPEN-QUESTIONS 210).**
 - D2. Do standby gensets count towards Ireland's de-rated test (cautious reading: no)?
 - D3. MVA against MW for Ireland's test: equal (EirGrid's example) or the option's power factor?
 - D4. Bundle the latest T-4 de-rating table (2030/31, August 2026) and update it at each release?
@@ -157,7 +157,9 @@ Part H: 23 countries researched (GR, LU and EE only in part). No usable value: L
 
 ## Where the next run starts
 
-**Owner, 7 Nov 2026, 23:19 local (OPEN-QUESTIONS 209):** the Great Britain deposit goes out on day 1. Next question: D1.
+**Owner, 7 Nov 2026, 23:20 local (OPEN-QUESTIONS 210):** the Ireland flag is minor. Next question: D2.
+
+**Owner, 7 Nov 2026, 23:19 local (OPEN-QUESTIONS 209):** the Great Britain deposit goes out on day 1.
 
 **Owner, 7 Nov 2026, 23:18 local (OPEN-QUESTIONS 208):** the Great Britain deposit comes back stage by stage as the grid capacity it was paid for becomes available.
 
