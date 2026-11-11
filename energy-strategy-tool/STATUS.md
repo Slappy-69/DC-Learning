@@ -7,7 +7,9 @@ Checkpoint, updated after every completed step so any session can resume from he
 ## Where things stand
 
 - **`main` holds everything built:** work packages 0 to 22 and 3b, the hourly weather work, the phone version, the Eemshaven study, the local search trial and the takeover research. Each was merged with the owner's yes (dates under "Work packages"). Nothing is built and waiting on another branch.
-- **Built, not merged:** nothing. `feature/map-markers` (known issues 36 and 37: the map's markers and pin drew large white rings when zoomed in; a reopened study dropped renewable plant edits, flag comments and Ireland derating) merged on 2026-11-08 (owner: "Merge to main"), a fast-forward after GitHub's checks passed on b935214 (CI run 42481981183). Work packages 24 to 33 merged on 2026-11-08 (owner: "Yes"). Work package 23 merged on 2026-11-06 (owner: "Merge"). The planning round (OPEN-QUESTIONS 155–200) and the research run of November 2026 (OPEN-QUESTIONS 201–235, `docs/research/`) are records only, merged on 2026-11-08 (owner: "Merge"); every decision in them is "not built yet".
+- **Merged on 2026-11-11 (owner: "Yes, merge into main"):** the permit-outlook penalty (`feature/permit-outlook-penalty`, commit 73b6244, merged as ec731cf): a held plant whose permit outlook is "unlikely" costs 8 deliverability points (OPEN-QUESTIONS 245).
+- **Not merged, owner has not decided:** `feature/handover-2026-11-08` (4987989: known issue 38 record and the video walkthrough scripts). `feature/resilience-gate` (f3248f0) holds only the record of decision 244; its code is not built.
+- **Built, not merged (earlier note):** nothing. `feature/map-markers` (known issues 36 and 37: the map's markers and pin drew large white rings when zoomed in; a reopened study dropped renewable plant edits, flag comments and Ireland derating) merged on 2026-11-08 (owner: "Merge to main"), a fast-forward after GitHub's checks passed on b935214 (CI run 42481981183). Work packages 24 to 33 merged on 2026-11-08 (owner: "Yes"). Work package 23 merged on 2026-11-06 (owner: "Merge"). The planning round (OPEN-QUESTIONS 155–200) and the research run of November 2026 (OPEN-QUESTIONS 201–235, `docs/research/`) are records only, merged on 2026-11-08 (owner: "Merge"); every decision in them is "not built yet".
 - **GitHub checks (CI):** passed on `main` at 39442fb (run 41474468291, 2026-11-02: Node tests, build, installable web app tests and browser tests). The earlier runs on the merge (3b607e8) and the next note (991e85e) were cancelled, each by the next push.
 - **Windows program:** rebuilt from bff54b7 (work packages 24 to 33) on 2026-11-08: "Desktop builds" run 42477621814 passed on Windows and Linux. Download: GitHub → Actions → Desktop builds → that run → Artifacts → `desktop-win32-x64`. It does not yet have the fixes for known issues 36 and 37 (merged later the same day).
 - **Phone page:** version 8 (2026-10-30). It does not have the weather work, package 19 or packages 20–21. Republishing is on hold (owner, 2026-11-02).
@@ -141,6 +143,15 @@ Not scheduled (ask the owner first): `docs/BUILD-PLAN.md`, "Not scheduled".
 - **Left from the Haiku checks:** no Grid + export contract input; two tornado observations (`app/BUILD-NOTES.md`, "Verification fixes").
 - **Site (Beta) gaps:** roads allowance from access points, image underlay, footprint override, heat-reuse blocks. The gas-pipe rate (€0.8 m/km) is a judgement value.
 - **From package 19, suggested and not asked for:** a link from the plant list's "Eemshaven" 1976 entry to Eemscentrale (the list may hold it twice).
+
+## Pego review and decisions (8 to 11 November 2026)
+
+- **Decision 244 (8 Nov):** gate resilience like power; scope: only "Does not meet" ranks below (`feature/resilience-gate`, not built; brief principles 5 and 9 to amend when built).
+- **Decision 245 (8 Nov, merged 11 Nov):** unlikely permit outlook costs 8 points. Effect on Pego at 900 MW: the HVO-diesel prime option fell from 1st to 127th.
+- **Test run on the permit branch:** 96 of 108 pass. The 12 failures are environment issues, not engine failures: test 7 and 14 need `npm run build` first (dist/ not built here); tests 8d to 8h, 9f, 9g, 9i, 12e, 13c and 15 need the `esbuild` package in the test folder. Not yet re-run after a full install (`npm ci`). Open.
+- **Pego results (not saved to the study file):** see `studies/pego-rev3/REVIEW-2026-11-11.md`.
+- **Open for the owner:** (a) whether an "uncertain" permit outlook (the rented gas option that now leads at 900 MW) should cost points; (b) why a fresh run screens 9,592 Pego options against the study's 2,000, and why the leader (€140.7/MWh) differs from the published €144.2/MWh; (c) whether to fix known issue 39 (the leased plant counted as firm backup).
+- **Not yet done:** the single-file build (`app/dist/energy-tool-single-file.html`) has not been rebuilt and copied after the penalty change; the phone page is not republished.
 
 ## Decisions
 

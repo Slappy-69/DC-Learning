@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const ROOT = '/home/claude/dc-learning/energy-strategy-tool/';
+const { readStudyFile, runModel } = await import(ROOT + 'app/src/engine/index.js');
+const IT = Number(process.env.IT);
+const inputs = readStudyFile(fs.readFileSync(ROOT + 'studies/pego-rev3/pego-product.study.json', 'utf8')).inputs;
+const n = inputs.load.phases.length;
+inputs.load.itMW = IT;
+inputs.load.phases = inputs.load.phases.map((p) => ({ ...p, itMW: IT / n }));
+const run = runModel(inputs);
+const opts = run.options.map((o) => ({ id: o.id, name: o.name, rank: o.rank, score: o.score, adequate: o.adequacy.adequate, res: o.resilience.status, lcoe: o.eco.lcoe, capex: o.eco.capex, carbon: o.carbon.locationG, ttp: o.ttp.metric, deliv: o.deliv.score, unlikely: (o.sizing.permitOutlook || []).filter((x) => x.outlook === 'unlikely').map((x) => x.name), bridge: o.sizing.bridge ? o.sizing.bridge.tech : null, prime: o.sizing.prime ? o.sizing.prime.tech : null, designMW: o.sizing.designMW, choices: o.v }));
+fs.writeFileSync(process.env.OUT, JSON.stringify({ IT, n: opts.length, options: opts }));
+console.log('IT', IT, 'options', opts.length, 'adequate', opts.filter((o) => o.adequate).length);
