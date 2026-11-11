@@ -1248,6 +1248,8 @@ export function buildDefaultInputs(opts = {}) {
       nascentPenalty: rec('deliverability.nascentPenalty', 40, 'points per 100 % share', { basis: 'judgement', ref: '§9.9' }),
       majorFlagPenalty: rec('deliverability.majorFlagPenalty', 8, 'points per major permitting flag', { basis: 'judgement', ref: '§9.9' }),
       minorFlagPenalty: rec('deliverability.minorFlagPenalty', 3, 'points per minor permitting flag', { basis: 'judgement', ref: '§9.9' }),
+      // Owner's decision, 2026-11-08 (OPEN-QUESTIONS 244): a held plant whose permit outlook is "unlikely" costs the same as a major flag.
+      unlikelyPermitPenalty: rec('deliverability.unlikelyPermitPenalty', 8, 'points per held plant whose permit outlook is unlikely', { basis: 'judgement', ref: '§9.9' }),
       gasUnknownPenalty: rec('deliverability.gasUnknownPenalty', 10, 'points', { basis: 'judgement', ref: '§9.9' }),
       hydrogenPenalty: rec('deliverability.hydrogenPenalty', 10, 'points', { basis: 'judgement', ref: '§9.9' }),
       leadTimePenalty: rec('deliverability.leadTimePenalty', 5, 'points per technology', { basis: 'judgement', ref: '§9.9' }),
