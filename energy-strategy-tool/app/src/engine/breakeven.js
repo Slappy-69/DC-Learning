@@ -19,7 +19,7 @@ import { buildContext } from './context.js';
 import { normalizeInputs, registryValue } from './defaults.js';
 import { buildSiteModel, siteKey } from './site.js';
 import { evaluateOption } from './option.js';
-import { axisMetrics, axisScore, SCORE_KEYS } from './scoring.js';
+import { axisMetrics, axisScore, SCORE_KEYS, groupRank } from './scoring.js';
 import { TORNADO_DRIVERS, scoreAgainstRun } from './sensitivity.js';
 import { topCards, sameFigures } from './cards.js';
 import { addMonths } from './dates.js';
@@ -63,10 +63,10 @@ export function breakevenCompetitors(run, n = breakevenCompetitorCount()) {
 }
 
 // The order key of a re-run option: adequacy, compliance (when the setting is on), score.
-const key = (s, compliantFirst) => [s.adequate ? 1 : 0, compliantFirst ? (s.compliant ? 1 : 0) : 0, s.line];
+const key = (s) => [s.adequate ? 1 : 0, s.group, s.line];
 // > 0 when the leader stays ahead, < 0 when the competitor is ahead (ties go to the lower option code, as in the ranking).
 function lead(sL, sC, idL, idC, compliantFirst) {
-  const a = key(sL, compliantFirst), b = key(sC, compliantFirst);
+  const a = key(sL), b = key(sC);
   for (let i = 0; i < 2; i++) if (a[i] !== b[i]) return a[i] - b[i];
   const d = a[2] - b[2];
   if (Math.abs(d) > 1e-12) return d;
@@ -96,13 +96,13 @@ export function* breakevenSteps(run, { site = null } = {}) {
   const scoreOf = (ctx, o) => {
     const e = evaluateOption(ctx, o.v, { skipLayout });
     const metrics = axisMetrics({ eco: e.eco, carbon: e.carb, ttp: e.ttp, deliv: e.deliv }, settings);
-    return { score: scoreAgainstRun(metrics, ranges, weights).score, line: lineScore(metrics), adequate: e.adequacy ? e.adequacy.adequate !== false : true, compliant: !(e.res && e.res.status === 'Does not meet'), lcoe: e.eco.lcoe };
+    return { score: scoreAgainstRun(metrics, ranges, weights).score, line: lineScore(metrics), adequate: e.adequacy ? e.adequacy.adequate !== false : true, compliant: !(e.res && e.res.status === 'Does not meet'), group: groupRank(e, inputs), lcoe: e.eco.lcoe };
   };
   // The weighted score on the run's axis scales without the clipping to 0–100 the tornado uses: two options whose
   // figures both move past the end of the run's range (for example every LCOE below the run's lowest at a low grid
   // price) still compare by how far apart they are.
   const lineScore = (m) => SCORE_KEYS.reduce((a, k) => a + weights[k] * (ranges[k] ? axisScore(k, m[k], ranges[k].lo, ranges[k].hi) : 0), 0);
-  const baseScore = (o) => ({ score: o.score, line: lineScore(o.metrics), adequate: !(o.adequacy && o.adequacy.adequate === false), compliant: !(o.resilience && o.resilience.status === 'Does not meet'), lcoe: o.eco.lcoe });
+  const baseScore = (o) => ({ score: o.score, line: lineScore(o.metrics), adequate: !(o.adequacy && o.adequacy.adequate === false), compliant: !(o.resilience && o.resilience.status === 'Does not meet'), group: groupRank(o, inputs), lcoe: o.eco.lcoe });
   let done = 0;
   // With the representative-day screening tier on, only the best `verifyTop` options carry full-year figures in the run;
   // the others carry screening figures. Every point of the table is a full-year re-run, so the base (today's value) is

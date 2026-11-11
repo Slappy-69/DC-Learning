@@ -24,6 +24,7 @@ import { CHOICES, choiceLabel, getRegistry, LABEL } from './defaults.js';
 import { NA } from './generator.js';
 import { sameFigures } from './cards.js';
 import { SCORE_KEYS, isRequirementCompliant } from './scoring.js';
+import { lateInfo, lateLine, isRealismOption } from './labels.js';
 import { visibleFlags } from './view.js';
 import { sortRows, measureById } from './sensitivity.js';
 import { nearestFlips } from './breakeven.js';
@@ -37,7 +38,10 @@ export const DIRECTIVE_WORDS = /\b(we recommend|recommend|recommended|recommenda
 // Words: the tokens with a letter or a digit ("·", "→", "%" and "—" are not words).
 export const wordCount = (s) => String(s || '').trim().split(/\s+/).filter((t) => /[A-Za-z0-9]/.test(t)).length;
 
-const AXIS_NAME = { cost: 'cost', carbon: 'carbon', ttp: 'time-to-power', deliverability: 'deliverability' };
+const AXIS_BASE = { cost: 'cost', carbon: 'carbon', ttp: 'time-to-power', deliverability: 'deliverability' };
+// Realism rebuild (OPEN-QUESTIONS 251): the third axis is the delay against the plan, the fourth buildability.
+const AXIS_REAL = { ...AXIS_BASE, ttp: 'delay against plan', deliverability: 'buildability' };
+let AXIS_NAME = AXIS_BASE;
 const adequate = (o) => !(o.adequacy && o.adequacy.adequate === false);
 const pct0 = (x) => `${Math.round(x * 100)} %`;
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
@@ -75,6 +79,8 @@ function compactPair(a, b) {
 // The options the leader is ranked with: the same power adequacy and, with "rank requirement-compliant options
 // first" on, the same compliance (scoring.js rankOptions). Only these can take its place by a weight change.
 function rankGroup(options, leader, compliantFirst) {
+  // Realism rebuild: the options with the leader's rank keys (scoring.js rankKeys), set by the last scoring.
+  if (leader.groupRank !== undefined) return options.filter((o) => o.groupRank === leader.groupRank);
   const same = (o) => adequate(o) === adequate(leader) && (!compliantFirst || isRequirementCompliant(o) === isRequirementCompliant(leader));
   return options.filter(same);
 }
@@ -171,6 +177,7 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
   // Monte Carlo (work package 18) finished for this leader: ranges, rank probability and the robust pick.
   const mc = monteCarlo && monteCarlo.complete && monteCarlo.leaderId === L.id && Array.isArray(monteCarlo.rows) ? monteCarlo : null;
   const mcL = mc ? mc.rows.find((r) => r.id === L.id) : null;
+  AXIS_NAME = run.scoring && run.scoring.realism ? AXIS_REAL : AXIS_BASE;
   const parts = [];
   const notBuilt = [];
   const notRun = [];
@@ -189,12 +196,37 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     return `${tag}${x} against ${y}`;
   };
 
+  // 0. Against the plan (realism rebuild, OPEN-QUESTIONS 248; owner, 2026-11-11: "Building starts late, this will need
+  // to be highlighted though"): the summary opens with the IT the leading option powers, any late start with its
+  // building, months, new date and cause, and the option's tier. Never trimmed.
+  const li = isRealismOption(L) ? lateInfo(L, run.inputs.project.analysisStart) : null;
+  if (li) {
+    const en = li.en;
+    const it = en.powered === en.buildings ? `all ${en.buildings} building${en.buildings === 1 ? '' : 's'} (${sig(en.poweredIT, 3)} MW IT)` : `${en.powered} of ${en.buildings} buildings (${sig(en.poweredIT, 3)} of ${sig(en.plannedIT, 3)} MW IT)`;
+    const lateS = li.onPlan ? `The leading option powers ${it} on the planned dates.`
+      : li.late.length ? `The leading option powers ${it}, with a late start: ${lateLine(li.worst).replace(/^Building/, 'building')}${li.late.length > 1 ? `; ${li.late.length - 1} more building${li.late.length - 1 === 1 ? ' is' : 's are'} late` : ''}.`
+      : `The leading option powers ${it}: ${li.notBuilt.why}.`;
+    const d = L.deliv;
+    const tierS = d.tier === 'A' ? 'It is tier A: buildable, with no conditions beyond the standard consents.'
+      : d.tier === 'B' ? `It is tier B: buildable with ${plural(d.conditions.length, 'condition')} (${d.conditions[0].text.split(':')[0].split(' (')[0]}${d.conditions.length > 1 ? `, and ${d.conditions.length - 1} more` : ''}).`
+      : `It is tier C: unlikely to be built as it stands (${d.unlikely[0].text.split(':')[0]}).`;
+    const more = [...li.late.map((x) => `${lateLine(x)}.`), ...d.unlikely.map((x) => `Unlikely: ${x.text}.`), ...d.conditions.map((x) => `Condition: ${x.text}.`)];
+    // The fork: the best-ranked option that keeps every planned date, when the leader does not.
+    let fork = null;
+    if (!li.onPlan) {
+      let alt = null;
+      for (const o of run.options) { const e = o.sizing && o.sizing.energise; if (e && e.powered === e.buildings && e.maxLate === 0 && o.groupRank !== undefined && (!alt || o.rank < alt.rank)) alt = o; }
+      fork = alt ? opt(`The best-ranked option that keeps every planned date is #${alt.rank}, ${alt.name}: LCOE ${perMWh(alt.eco.lcoe)} against ${perMWh(L.eco.lcoe)}.`, 2.5) : opt('No option keeps every planned date (see the plan check).', 2.5);
+    }
+    add('plan', 'Against the plan', [keep(lateS), keep(tierS), fork], more);
+  }
+
   // 1. Leading option.
   {
     const wText = SCORE_KEYS.map((k) => `${AXIS_NAME[k]} ${pct0(w[k])}`).join(', ');
-    const ttp = L.ttp.metric < 0.05 ? 'power on time' : `time-to-power ${sig(L.ttp.metric, 3)} months late`;
+    const ttp = li ? (li.onPlan ? 'no delay against the plan' : `average delay ${sig(L.ttp.metric, 3)} months`) : L.ttp.metric < 0.05 ? 'power on time' : `time-to-power ${sig(L.ttp.metric, 3)} months late`;
     const more = [`Score ${L.score.toFixed(2)}; axis scores: ${SCORE_KEYS.map((k) => `${AXIS_NAME[k]} ${L.axisScores[k].toFixed(1)}`).join(', ')}.`,
-      `NPV of net cost ${money(L.eco.npvCost)}; hourly carbon-free energy ${Math.round(L.carbon.cfePct * 100)} %; deliverability ${sig(L.deliv.score)} points.`];
+      `NPV of net cost ${money(L.eco.npvCost)}; hourly carbon-free energy ${Math.round(L.carbon.cfePct * 100)} %; ${AXIS_NAME.deliverability} ${sig(L.deliv.score)} points.`];
     let range = null;
     if (mcL) {
       const [a, b] = compactPair(perMWh(mcL.lcoe.p10), perMWh(mcL.lcoe.p90));

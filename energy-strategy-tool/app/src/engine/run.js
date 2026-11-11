@@ -5,7 +5,7 @@
 // runLayout, runExport. They receive the RunResult returned by runModel().
 
 import { buildContext } from './context.js';
-import { normalizeInputs } from './defaults.js';
+import { normalizeInputs , LEGACY_ENGINE } from './defaults.js';
 import { generateOptions, optionName, RULES, RULE_D } from './generator.js';
 import { sizeOption } from './sizing.js';
 import { dispatchConfig, dispatchKey, dispatchAll, dispatchYearsNeeded, MERIT_ORDER, representativeHours } from './dispatch.js';
@@ -24,10 +24,12 @@ import { layoutManySteps } from './layout.js';
 import { layoutFacts, siteFitOf, notLaidOut } from './sitefit.js';
 import { layoutForOption } from './siteapi.js';
 import { adequacyOf, shortfallAnalysis } from './adequacy.js';
+import { planCheck, countryRulesFor } from './plancheck.js';
 import { triggerAnalysis } from './triggers.js';
 
 // Raised when results change (Opus review N-11): 0.3.0 for the fixes of 2026-10-30 (capex factor, delivered energy).
-export const ENGINE_VERSION = '0.3.0';
+// 0.4.0 for the realism rebuild of 2026-11-11 (the test suite pins the engine before it and keeps 0.3.0).
+export const ENGINE_VERSION = LEGACY_ENGINE ? '0.3.0' : '0.4.0';
 
 // Items between "progress" events for the per-option stages other than dispatch (dispatch reports
 // every option). Count-based, so the log content does not depend on machine speed.
@@ -340,6 +342,10 @@ export function* runModelSteps(rawInputs, opts = {}) {
     runFlags.push(flag('dispatch-truncated', 'minor', 'Model', `Dispatch covers only the first ${ex} model years (the run setting "Most dispatch years") for ${truncated.length.toLocaleString('en-GB')} configuration${truncated.length === 1 ? '' : 's'} that need up to ${maxNeed} before nothing changes: the later years repeat a year that is not yet steady (load, grid or plant still changing). Raise the setting to ${maxNeed}`));
   }
   runFlags.push(adequacyRunFlag(options));
+  // Realism rebuild (OPEN-QUESTIONS 248, 250): the plan check and the country's rules, shown above the options.
+  const plan = opts.skipScore ? null : planCheck(options, inputs);
+  const rulesOfCountry = countryRulesFor(inputs, ctx.country);
+  runFlags.push(...realismRunFlags(plan, rulesOfCountry));
   if (rep) runFlags.push(screeningRunFlag(inputs, rep));
   runFlags.push(flag('load-util', 'info', 'Load', `IT utilisation assumption ${(inputs.load.utilisation * 100).toFixed(0)} % of installed IT (energy); sizing uses 100 %`));
 
@@ -355,6 +361,8 @@ export function* runModelSteps(rawInputs, opts = {}) {
     scoring,
     verification,
     runFlags,
+    planCheck: plan,
+    countryRules: rulesOfCountry,
     shortfall: shortfallAnalysis(ctx, [COOLING_ID]),
     flexAnalysis: triggerAnalysis(ctx),
     meritOrder: MERIT_ORDER,
@@ -368,6 +376,20 @@ export function* runModelSteps(rawInputs, opts = {}) {
     dispatchKeys: [...dispCache.keys()],
     timing: { totalMs: t4 - t0, evaluateMs: t3 - t0, scoreMs: t4 - t3, dispatchRuns: misses, dispatchCacheHits: hits, dispatchYearsTotal: yearsSimulated },
   };
+}
+
+// Realism rebuild: one run flag for the plan check and one for the country's rules (replaced after a pooled merge).
+function realismRunFlags(plan, rules) {
+  const out = [];
+  if (plan) {
+    const worst = plan.items.some((i) => i.severity === 'major') ? 'major' : plan.items.some((i) => i.severity === 'minor') ? 'minor' : 'info';
+    out.push(flag('plan-check', worst, 'Programme', `Plan check: ${plan.items.filter((i) => i.severity !== 'info' || i.id === 'counts').map((i) => i.text).join(' ')}`));
+  }
+  if (rules && rules.rules.length) {
+    const caught = rules.rules.filter((r) => r.caught);
+    out.push(flag('country-rules', caught.length ? 'major' : 'info', 'Country rules', `${rules.rules.length} rule${rules.rules.length === 1 ? '' : 's'} for data centres to check in ${rules.country} (in force, adopted, in draft or announced on ${rules.accessed}; ${rules.label})${caught.length ? `: ${caught.map((r) => r.applies).join(' ')}` : ''}. They are listed with the results.`));
+  }
+  return out;
 }
 
 // Power adequacy first (OPEN-QUESTIONS 38): how many options serve every hour; options that do not are ranked last.
@@ -448,6 +470,12 @@ export function mergeRuns(parts, inputs, opts = {}) {
   }
   // Adequacy count and shortfall analysis over the whole set (each worker saw only its slice's cooling types).
   merged.runFlags = base.runFlags.map((f) => (f.category === 'Adequacy' ? adequacyRunFlag(options) : f));
+  // The plan check over the whole set (each worker saw only its slice).
+  merged.planCheck = planCheck(options, normalizeInputs(inputs));
+  {
+    const fresh = realismRunFlags(merged.planCheck, merged.countryRules);
+    merged.runFlags = [...merged.runFlags.filter((f) => f.id !== 'plan-check' && f.id !== 'country-rules'), ...fresh];
+  }
   if (parts.every((p) => p.shortfall)) {
     const byId = new Map();
     for (const p of parts) for (const c of p.shortfall.byCooling) if (!byId.has(c.cooling)) byId.set(c.cooling, c);

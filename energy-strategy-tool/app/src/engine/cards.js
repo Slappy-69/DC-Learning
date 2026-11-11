@@ -8,7 +8,19 @@
 import { perMWh, money } from '../format.js';
 
 export const STRATEGY_KEYS = ['C1', 'C2', 'C4', 'C5'];
-export const strategyKey = (o) => STRATEGY_KEYS.map((k) => o.v[k]).join('|');
+// Realism rebuild (2026-11-11, OPEN-QUESTIONS 251): a strategy is the campus's permanent supply: islanded or on the grid,
+// the firm plant and how it is sized, the bridging plant that keeps running after the grid arrives, and a grid
+// connection taken over. How the first buildings are bridged, the standby fuel, solar, batteries and PPAs are variants
+// of one strategy: the card shows the best-ranked one. Before, the key held the bridging plant, so five cards could
+// show one permanent supply five times.
+export function supplyKey(o) {
+  const v = o.v;
+  const kept = v.C1 === 'islanded' ? v.C2 : v.C1 === 'bridge' && (v.C3 === 'prime' || v.C3 === 'split') ? v.C2 : '-';
+  // A nearby plant is one strategy whether it is leased, bought or contracted: the plant, not the deal.
+  const plantId = (x) => { const m = /^x[lbw]:(.+)$/.exec(String(x)); return m ? `plant:${m[1]}` : x === 'existing' ? 'plant:manual' : x; };
+  return [v.C1 === 'islanded' ? 'islanded' : 'grid', plantId(v.C4), v.C4 === 'none' ? '-' : v.C4s, plantId(kept), v.C21 && v.C21 !== 'n/a' ? v.C21 : '-'].join('|');
+}
+export const strategyKey = (o) => (o.deliv && o.deliv.buildability ? supplyKey(o) : STRATEGY_KEYS.map((k) => o.v[k]).join('|'));
 
 const near = (a, b) => (a === b) || (Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)));
 const FIGS = [(o) => o.eco.lcoe, (o) => o.eco.npvCost, (o) => o.eco.capex, (o) => o.carbon.locationG, (o) => o.carbon.marketG, (o) => o.carbon.cfePct, (o) => o.ttp.metric, (o) => o.deliv.score, (o) => o.unmet.mwh];
@@ -118,6 +130,49 @@ export function cardOptions(options, n = 5) {
   const same = identicalResults(options);
   const seen = new Set();
   const out = [];
+  // Realism rebuild (OPEN-QUESTIONS 251): the cards as a ladder. Options that power more IT rank first, so five cards
+  // of the leading strategies could hide a sound strategy that powers one building fewer. The first cards are the
+  // leading strategies; the last cards (up to two) are the best-ranked option of each lower level of IT, so the price
+  // of the last buildings can be read off the cards.
+  const ranked = byRank(options);
+  const itOf = (o) => (o.sizing && o.sizing.energise ? Math.round(o.sizing.energise.poweredIT * 100) / 100 : null);
+  if (ranked.length && ranked[0].deliv && ranked[0].deliv.buildability && itOf(ranked[0]) != null) {
+    const topIT = itOf(ranked[0]);
+    const steps = [];
+    const seenIT = new Set([topIT]);
+    for (const o of ranked) {
+      const it = itOf(o);
+      if (it == null || it >= topIT || it <= 0 || seenIT.has(it) || same.has(o.id)) continue;
+      // Only a step a developer could build: adequate, tier A or B, resilience met.
+      if (!(o.rankKeys && o.rankKeys.adequate && o.rankKeys.likely && o.rankKeys.resilient)) continue;
+      seenIT.add(it); steps.push(o);
+    }
+    // A step down is worth a card only when it is cheaper than every step above it (less IT at a higher cost is
+    // no one's choice).
+    steps.sort((a, b) => itOf(b) - itOf(a));
+    let floor = ranked[0].metrics ? ranked[0].metrics.cost : Infinity;
+    for (let i = 0; i < steps.length;) { const c = steps[i].metrics ? steps[i].metrics.cost : Infinity; if (c < floor) { floor = c; i++; } else steps.splice(i, 1); }
+    const nSteps = Math.min(2, steps.length);
+    for (const o of ranked) {
+      if (out.length >= n - nSteps) break;
+      if (same.has(o.id) || itOf(o) !== topIT) continue;
+      const k = strategyKey(o);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push({ o, strategy: k });
+    }
+    for (const o of steps.slice(0, n - out.length)) out.push({ o, strategy: strategyKey(o), step: true, stepIT: itOf(o), topIT });
+    // Fewer leading strategies than cards: further options in rank order fill the rest.
+    if (out.length < n) for (const o of ranked) {
+      if (out.length >= n) break;
+      if (same.has(o.id) || out.some((x) => x.o === o)) continue;
+      const k = `${strategyKey(o)}|${itOf(o)}`;
+      if (seen.has(k) || seen.has(strategyKey(o))) continue;
+      seen.add(k);
+      out.push({ o, strategy: strategyKey(o) });
+    }
+    return out;
+  }
   for (const o of byRank(options)) {
     if (same.has(o.id)) continue;
     const k = strategyKey(o);
@@ -132,7 +187,7 @@ export function cardOptions(options, n = 5) {
 // The top-five cards. `sortedCache`: the run's figures sorted for the pros and cons; they do not change with the weights, so the app keeps
 // one per run (work package 23: six sorts of 17,344 figures on every weight change otherwise).
 export function topCards(options, n = 5, sortedCache = new Map()) {
-  const out = cardOptions(options, n).map(({ o, strategy }) => ({ o, strategy, ...prosCons(o, options, sortedCache), majorFlags: o.flags.filter((f) => f.severity === 'major') }));
+  const out = cardOptions(options, n).map(({ o, strategy, step = false, stepIT = null, topIT = null }) => ({ o, strategy, step, stepIT, topIT, ...prosCons(o, options, sortedCache), majorFlags: o.flags.filter((f) => f.severity === 'major') }));
   return { cards: out, comparison: `against the ${options.length.toLocaleString('en-GB')} options in this run`, identical: identicalResults(options) };
 }
 

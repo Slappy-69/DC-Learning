@@ -243,7 +243,58 @@ export function buildContext(inputs, opts = {}) {
 // load; the grid "full-connection month" (when bridging plant hands over) becomes the first month the grid offered is
 // at least the full grid capacity entered (or the design load, if less), if that is earlier. Everything else is shared with the run's context (the
 // demand cache included). Without a takeover it is the run's context itself.
-export function ctxFor(ctx, v) {
+export function ctxFor(ctx, v, sz = null) {
+  // Realism rebuild (OPEN-QUESTIONS 248): with the option's sizing, the context also carries the option's own building
+  // dates (energise.js), when they differ from the plan.
+  const c = takeoverCtx(ctx, v);
+  return sz && sz.energise && sz.energise.shifted && !c.energise ? energisedCtx(c, sz.energise) : c;
+}
+
+// Installed IT per month from phases given as months (the ramp rule of itInstalledByMonth).
+export function itInstFromPhases(phases, load, nMonths) {
+  const arr = new Float64Array(nMonths);
+  const { rampStart, rampMonths } = load;
+  for (let m = 0; m < nMonths; m++) {
+    let it = 0;
+    for (const p of phases) {
+      if (m < p.m) continue;
+      it += p.it * (rampMonths > 0 ? Math.min(1, rampStart + (1 - rampStart) * ((m - p.m) / rampMonths)) : 1);
+    }
+    arr[m] = it;
+  }
+  return arr;
+}
+
+// The context of an option whose buildings start on its own dates (energise.js): the phases it powers, on the months
+// they start; the installed IT and the hourly demand follow. Everything else is shared with the context it comes
+// from. Cached per schedule, so options with the same building dates share one hourly demand.
+const ENERGISE_KEEP = 48; // schedules whose hourly demand is kept (each holds about 3 MB a dispatched year)
+export function energisedCtx(ctx, en) {
+  if (!en || !en.shifted || ctx.energise) return ctx;
+  if (!ctx.energiseCache) ctx.energiseCache = new Map();
+  let d = ctx.energiseCache.get(en.key);
+  if (d) return d;
+  const phases = [];
+  let lost = 0;
+  ctx.phases.forEach((p, k) => { if (en.starts[k] != null) phases.push({ m: en.starts[k], it: p.it, plannedM: p.m, k }); else lost += p.it; });
+  d = {
+    ...ctx, phases, itInst: itInstFromPhases(phases, ctx.inputs.load, ctx.nMonths),
+    firstPhaseM: phases.length ? phases[0].m : 0, lastPhaseM: phases.length ? phases[phases.length - 1].m : 0,
+    itPowered: lost > 0 ? Math.max(0, Number(ctx.inputs.load.itMW) - lost) : undefined,
+    demandCache: new Map(), energise: en, plannedCtx: ctx, energiseCache: null,
+  };
+  ctx.energiseCache.set(en.key, d);
+  if (ctx.energiseCache.size > ENERGISE_KEEP) {
+    // Drop the hourly demand of the oldest schedule (it is rebuilt if an option asks for it again).
+    const oldest = ctx.energiseCache.keys().next().value;
+    ctx.energiseCache.get(oldest).demandCache.clear();
+    const keep = ctx.energiseCache.get(oldest);
+    ctx.energiseCache.delete(oldest); ctx.energiseCache.set(oldest, keep);
+  }
+  return d;
+}
+
+function takeoverCtx(ctx, v) {
   if (!v || !isTakeover(v.C21) || ctx.takeover) return ctx;
   // Cached first (Opus review finding 19): the key holds everything the derived context depends on in this run.
   const own0 = [v.C2, v.C4].map(parsePlantValue).find((p) => p && p.id === parsePlantValue(v.C21).id && p.mode !== 'takeover');

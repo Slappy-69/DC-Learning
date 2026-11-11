@@ -99,6 +99,11 @@ export const INPUT_NAMES = {
   'economics.periodYears': 'Evaluation period', 'economics.wacc': 'Discount rate (WACC, real)', 'economics.contingency': 'Contingency', 'economics.capexLow': 'Capex range: low', 'economics.capexHigh': 'Capex range: high', 'economics.carbonPrice': 'Carbon price', 'economics.carbonEscalation': 'Carbon price escalation', 'economics.capexFactor': 'Capex factor (sensitivity)', 'economics.bessCapexFactor': 'Battery capex factor (sensitivity)', 'economics.gridCapexFactor': 'Grid capex factor (sensitivity)', 'economics.elecEscalation': 'Electricity price escalation', 'economics.gasEscalation': 'Gas price escalation', 'economics.salvageFraction': 'Residual value at the end', 'economics.revenueExport': 'Count export revenue', 'economics.displayPeriods': 'Further periods shown',
   'weights.cost': 'Weight: cost', 'weights.carbon': 'Weight: carbon', 'weights.ttp': 'Weight: time-to-power', 'weights.deliverability': 'Weight: deliverability',
   'deliverability.emergingPenalty': 'Penalty: emerging technology', 'deliverability.nascentPenalty': 'Penalty: nascent technology', 'deliverability.majorFlagPenalty': 'Penalty: each major permitting flag', 'deliverability.minorFlagPenalty': 'Penalty: each minor permitting flag', 'deliverability.gasUnknownPenalty': 'Penalty: gas supply not known', 'deliverability.hydrogenPenalty': 'Penalty: hydrogen', 'deliverability.leadTimePenalty': 'Penalty: long lead time', 'deliverability.leadTimeThresholdM': 'Long lead time from', 'deliverability.pooledBackupRisk': 'Penalty: pooled backup',
+  // Realism rebuild (2026-11-11).
+  'site.natureSiteKm': 'Nearest protected nature site', 'utilities.gasCapacityMWth': 'Gas the network can supply', 'plants.agreed': 'Nearby plants whose owner has agreed in principle',
+  'requirements.eiaMWth': 'Environmental assessment from (running plant, heat)', 'requirements.eiaAllowanceM': 'Consent allowance: environmental assessment', 'requirements.dcoMWe': 'Development consent order above (England)', 'requirements.dcoAllowanceM': 'Consent allowance: development consent order',
+  'requirements.limitedRunHours': 'Run hours a year before emission limits apply', 'requirements.lateAllowanceM': 'Latest acceptable start (months after the planned date)', 'requirements.rentalConditionM': 'Rented generation: a condition after', 'requirements.rentalUnlikelyM': 'Rented generation: unlikely after', 'requirements.unitCountCondition': 'Running units on site: a condition above',
+  'deliverability.conditionPenalty': 'Penalty: each named condition', 'deliverability.unlikelyPenalty': 'Penalty: each "unlikely" finding', 'deliverability.unlikelyPermitPenalty': 'Penalty: each permit rated unlikely', 'settings.realism': 'Realism rebuild (11 November 2026)',
   'settings.screenAllBelow': 'Screen every combination below', 'settings.generationCap': 'Options screened (cap)', 'settings.gridHandling': 'Grid handling', 'settings.runHourHandling': 'Run-hour handling', 'settings.costMetric': 'Cost measure', 'settings.carbonMetric': 'Carbon measure', 'settings.rankCompliantFirst': 'Rank compliant options first', 'settings.screeningModel': 'Screening model', 'settings.rentalLeadMonths': 'Lease or hire starts before need', 'settings.timelineMonths': 'Timeline length',
   weather: 'Hourly weather',
 };
@@ -111,8 +116,15 @@ export function inputName(path) {
 
 // Inputs that do not apply to a run, left out of the report's appendices (the study file keeps every one).
 const RUN_INTERNAL = new Set(['settings.sampleAboveCap', 'settings.absoluteScaling', 'settings.hideDominated', 'settings.windSiteThresholdHa', 'settings.bridgeBessHours', 'settings.maxDispatchYears', 'settings.repDaysPerMonth', 'settings.verifyTop', 'settings.autonomyBasis', 'settings.layoutCellM', 'settings.layoutCellLargeM', 'settings.siteLayoutScope', 'settings.siteLayoutWorkLimit', 'settings.layoutLargeSiteHa', 'plants.edits', 'project.seed', 'economics.displayPeriods']);
+// Inputs read only with the realism rebuild on (2026-11-11), and those it no longer reads.
+const REALISM_ONLY = new Set(['site.natureSiteKm', 'utilities.gasCapacityMWth', 'plants.agreed', 'requirements.eiaMWth', 'requirements.eiaAllowanceM', 'requirements.dcoMWe', 'requirements.dcoAllowanceM', 'requirements.limitedRunHours',
+  'requirements.lateAllowanceM', 'requirements.rentalConditionM', 'requirements.rentalUnlikelyM', 'requirements.unitCountCondition', 'deliverability.conditionPenalty', 'deliverability.unlikelyPenalty']);
+const LEGACY_ONLY = new Set(['deliverability.majorFlagPenalty', 'deliverability.minorFlagPenalty', 'deliverability.unlikelyPermitPenalty', 'settings.rankCompliantFirst']);
 export function inputApplies(path, I) {
   if (RUN_INTERNAL.has(path)) return false;
+  const realism = !!(I.settings && I.settings.realism);
+  if (REALISM_ONLY.has(path)) return realism;
+  if (LEGACY_ONLY.has(path)) return !realism;
   const shape = String(I.load && I.load.shape || '');
   if (/^load\.aiTrain/.test(path)) return shape === 'aiTraining';
   if (/^load\.aiInf/.test(path)) return shape === 'aiInference';
