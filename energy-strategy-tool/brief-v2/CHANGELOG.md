@@ -411,3 +411,7 @@ The owner, 2026-11-08: "Update the app with everything we've discussed and agree
 ## Revision 5, decision (2026-11-08): permit outlook "unlikely" costs deliverability
 
 The owner, 2026-11-08 (OPEN-QUESTIONS 245): a held plant whose permit outlook is "unlikely" costs 8 points of deliverability, the same as a major permit flag. New default `deliverability.unlikelyPermitPenalty` (judgement, §9.9). Built on `feature/permit-outlook-penalty`; not merged. "Uncertain" permit outlooks are not penalised, which is an open point for the owner.
+
+## Revision 5, records (2026-11-11): Pego review and open points
+
+Records of the 8 to 11 November review: decisions 244 and 245 (245 merged), known issue 39 (leased plant counted as firm backup in its prime role; open), OPEN-QUESTIONS 246 (open points: uncertain permits, the 9,592 vs 2,000 screening gap, issue 39, the 500 MW case). Pego results: `studies/pego-rev3/REVIEW-2026-11-11.md`. No code changed on this branch.
