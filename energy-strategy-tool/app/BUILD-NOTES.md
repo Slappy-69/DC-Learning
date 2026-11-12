@@ -2360,7 +2360,7 @@ Thresholds inside the tests (constants in `buildability.js`, each a judgement): 
 
 ## Detailed map (2026-11-12, branch feature/map-detail; merged the same day, owner: "Merge once ready" and "Don't wait. Just merge" (2026-11-12, 14:58 and 15:10 local))
 
-The owner, "Also improve the visual look of the map tool. I want to be able to see way more detail etc" (2026-11-12, 13:10 local). OPEN-QUESTIONS 258.
+The owner, "Also improve the visual look of the map tool. I want to be able to see way more detail etc" (2026-11-12, 13:10 local). OPEN-QUESTIONS 260 (numbered 258 on its branch; 258 and 259 went to work package 35, merged first).
 
 **Data, bundled** (`src/data/europe-detail.js`, 3.3 MB, made by `tools/make-map-detail.mjs <folder>` at each release from these downloads, accessed 2026-11-12):
 
@@ -2377,4 +2377,4 @@ Lines and rings are simplified (Douglas–Peucker, 100 to 300 m; coasts about 10
 
 **Redraws:** the inputs panel re-renders at every step of a run and every Monte Carlo slice; GitHub's run of b897d95 failed B40 (a timer waited 288 ms, bound 250) with the map drawn each time. The map is now memoised on the pin and its markers (the pick goes through App's stable `update`), and B40 passes locally (longest wait 131 ms).
 
-**Tests:** Node test 80 (layers decode inside the window, sources and licences, towns, nearest town and substation for T1's pin and Eemshaven, thinning, nothing drawn far away, size under 4 MB); test 34 also checks that the new map code reaches no network and that web addresses appear only in the source records. Browser check B45 (roads, towns and grid drawn at the site; drag; scroll hint and Ctrl + scroll; a click places the pin; full screen covers the page; layers; Escape; axe light and dark). B36 unchanged and passing. Under test, Chromium keeps a real Ctrl + scroll for its own page zoom, so B45 sends that event to the map directly.
+**Tests:** Node test 82 (numbered 80 on its branch; work package 35 took 80 and 81) (layers decode inside the window, sources and licences, towns, nearest town and substation for T1's pin and Eemshaven, thinning, nothing drawn far away, size under 4 MB); test 34 also checks that the new map code reaches no network and that web addresses appear only in the source records. Browser check B45 (roads, towns and grid drawn at the site; drag; scroll hint and Ctrl + scroll; a click places the pin; full screen covers the page; layers; Escape; axe light and dark). B36 unchanged and passing. Under test, Chromium keeps a real Ctrl + scroll for its own page zoom, so B45 sends that event to the map directly.

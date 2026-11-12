@@ -63,7 +63,7 @@ export async function locationTests(test, ctxRuns) {
     return out.join('; ') + '.';
   });
 
-  await test('80. Map detail (owner, 2026-11-12: "I want to be able to see way more detail"): the bundled detail layers decode inside the map window; every layer has its source and licence; towns, the grid and substations are where they should be; the paths are thinned to the screen, and a view far from a feature draws none of it', () => {
+  await test('82. Map detail (owner, 2026-11-12: "I want to be able to see way more detail"): the bundled detail layers decode inside the map window; every layer has its source and licence; towns, the grid and substations are where they should be; the paths are thinned to the screen, and a view far from a feature draws none of it', () => {
     const out = [];
     const want = { land: 60, borders: 1000, regions: 5000, rivers: 1000, lakes: 500, urban: 3000, roads: 8000, rail: 5000, grid: 8000 };
     for (const [name, min] of Object.entries(want)) {

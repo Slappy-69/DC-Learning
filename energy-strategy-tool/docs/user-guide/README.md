@@ -51,7 +51,7 @@ The realism rebuild is in `main` since 2026-11-12. The guide still describes the
 
 ## Not in the guide yet: the detailed map (2026-11-12)
 
-In `main` since 2026-11-12 (OPEN-QUESTIONS 258). The guide's chapter on the location needs new pictures and text: the layers and their sources (Natural Earth, GeoNames, the 2022 ENTSO-E map extract with schematic positions), moving and zooming, the full-screen map, the distance rings and the nearest town and substation.
+In `main` since 2026-11-12 (OPEN-QUESTIONS 260). The guide's chapter on the location needs new pictures and text: the layers and their sources (Natural Earth, GeoNames, the 2022 ENTSO-E map extract with schematic positions), moving and zooming, the full-screen map, the distance rings and the nearest town and substation.
 
 ## Fonts and data
 

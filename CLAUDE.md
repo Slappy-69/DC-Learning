@@ -14,7 +14,7 @@ Read these before doing anything, in this order:
 6. `energy-strategy-tool/app/BUILD-NOTES.md`: architecture, every default with its label, decisions and test runs.
 7. The user guide, `energy-strategy-tool/docs/user-guide/`: how every number is worked out (Part IV), the defaults checked against published sources (chapter 50), and drawings of the agreed screens (`mock/*.html`).
 
-9. The detailed map (2026-11-12, OPEN-QUESTIONS 258): `app/tools/make-map-detail.mjs` makes `app/src/data/europe-detail.js` from downloads listed in the tool; `app/BUILD-NOTES.md`, "Detailed map".
+9. The detailed map (2026-11-12, OPEN-QUESTIONS 260): `app/tools/make-map-detail.mjs` makes `app/src/data/europe-detail.js` from downloads listed in the tool; `app/BUILD-NOTES.md`, "Detailed map".
 
 8. `energy-strategy-tool/docs/REALISM-REBUILD-2026-11-11.md`: the realism rebuild of 2026-11-11 (buildings start when powered, buildability tiers, the ranking in groups, the plan check, country rules). Merged into `main` on 2026-11-12 with the owner's yes. Its decisions are Claude's under the owner's carte blanche (OPEN-QUESTIONS 247 to 255), each reversible; one run setting turns it off, and the earlier tests run with it off (`tests/test-env.mjs`).
 
