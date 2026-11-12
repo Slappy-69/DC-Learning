@@ -964,7 +964,7 @@ export function allOptionFlags(ctx, v, sz, disp, ttp, eco, carb, res, siteFit) {
   // Realism rebuild (OPEN-QUESTIONS 248; owner: "Building starts late, this will need to be highlighted though"): the
   // option's own building dates against the plan.
   if (sz.energise) {
-    const en = sz.energise, allow = ctx.inputs.requirements.lateAllowanceM ?? 12;
+    const en = sz.energise, allow = ctx.inputs.requirements.lateAllowanceM ?? 24;
     const ym = (m) => addMonths(ctx.inputs.project.analysisStart, m);
     if (en.powered < en.buildings) flags.push(flag('not-built', 'major', 'Programme', `Powers ${en.powered} of ${en.buildings} buildings (${Math.round(en.poweredIT)} of ${Math.round(en.plannedIT)} MW IT): ${notBuiltText(en)}`, { value: en.poweredIT, threshold: en.plannedIT }));
     if (en.maxLate > 0) flags.push(flag('late-start', en.maxLate > allow ? 'major' : 'minor', 'Programme', `Late against the plan: ${lateBits(en, ym).join('; ')}${en.maxLate > allow ? `. Later than the latest acceptable start (${allow} months)` : ''}`, { value: en.maxLate, threshold: allow }));

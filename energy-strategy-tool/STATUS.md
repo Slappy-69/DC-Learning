@@ -2,7 +2,9 @@
 
 Checkpoint, updated after every completed step so any session can resume from here. New sessions: read `../CLAUDE.md` first.
 
-**Last updated: 2026-11-12**: the **realism rebuild** is **merged into `main`** with the owner's yes, "Merge into main when everything is passing and ready" (2026-11-12, 09:39 local), after GitHub's checks passed on `feature/realism-rebuild`. The owner also said "Drop the phone build I don't care" (2026-11-12, 09:48 local): the phone page is no longer republished.
+**Last updated: 2026-11-12 (later)**: the latest acceptable start is now 24 months (owner: "Make it 24 months" (2026-11-12, 11:44 local); OPEN-QUESTIONS 257), on `feature/late-allowance-24`.
+
+**2026-11-12**: the **realism rebuild** is **merged into `main`** with the owner's yes, "Merge into main when everything is passing and ready" (2026-11-12, 09:39 local), after GitHub's checks passed on `feature/realism-rebuild`. The owner also said "Drop the phone build I don't care" (2026-11-12, 09:48 local): the phone page is no longer republished.
 
 **2026-11-11 (night)**: the realism rebuild was built on `feature/realism-rebuild`. The owner, 2026-11-11: "I want you to fix all of that above and add anything else you think it's worth it… I give you carte blanch in decision. Just make it more realistic. Also look up country new rules for DC that just came in or are planned for the future". Buildings now start when their power and standby are ready, late starts are highlighted, options carry a buildability tier, the ranking puts likely-to-be-built options that power the most IT first, and each run opens with a plan check and the country's rules for data centres. Every decision Claude took is in OPEN-QUESTIONS 247 to 255, each reversible; the whole rebuild sits behind one run setting. What it is and what it found: `docs/REALISM-REBUILD-2026-11-11.md`. Checks: Node 121 of 121 (the 108 earlier tests run the engine as merged, 13 new); browser 44 of 44 locally in four parts, also with the font of GitHub's runner; GitHub's checks on the branch. The Haiku and Opus rounds were not run.
 
@@ -121,7 +123,7 @@ Earlier full local test runs (2026-11-02): Node 90/91 and browser 41/43, the fai
 
 ## Next
 
-**Open for the owner (2026-11-12), after the merge of the realism rebuild:** the latest acceptable start (12 months is Claude's default, row 251); whether to rebuild the Windows program; the 500 MW Pego case as a study (row 254 d); a Haiku and Opus round on the rebuild.
+**Open for the owner (2026-11-12), after the merge of the realism rebuild:** whether to rebuild the Windows program; the 500 MW Pego case as a study (row 254 d); a Haiku and Opus round on the rebuild.
 
 The owner chooses. Earlier candidates (2026-11-02):
 
@@ -158,7 +160,7 @@ Not scheduled (ask the owner first): `docs/BUILD-PLAN.md`, "Not scheduled".
 ## Realism rebuild (11 November 2026)
 
 - **What changed:** OPEN-QUESTIONS 247 to 255; the description, the study results and the limits are in `docs/REALISM-REBUILD-2026-11-11.md`; the country rules in `docs/research/data-centre-rules-2026-11.md`.
-- **Leaders now** (rebuild on, default weights). Pego 261 MW IT: grid with a rented bridge that leaves, €94.6/MWh, tier B. Pego 500 MW: the same with a gas-engine top-up, €120.2/MWh, tier B. Pego 900 MW: grid, the Elecgás plant bought whole as top-up and gas engines for the shortfall left, €137.3/MWh, tier B with five conditions; the best option that needs no other owner is €157.5/MWh; stepping down to 800 MW costs €132.9/MWh and to 200 MW (grid alone, tier A) €93.1/MWh. Eemshaven 750 MW: grid by taking over the Eemshaven plant's connection, €114.4/MWh, tier B with two conditions (the owner's agreement and the grid operator's import right); the best option that stands on its own is €146.3/MWh. Building 1 starts three months late in all of them: the standby gensets cannot be ready by 2029-01.
+- **Leaders now** (rebuild on, default weights). Pego 261 MW IT: grid with a rented bridge that leaves, €94.6/MWh, tier B (with 24 months, from 2026-11-12: the grid alone, waiting 12 months for building 1, €92.9/MWh, tier A). Pego 500 MW: the same with a gas-engine top-up, €120.2/MWh, tier B. Pego 900 MW: grid, the Elecgás plant bought whole as top-up and gas engines for the shortfall left, €137.3/MWh, tier B with five conditions; the best option that needs no other owner is €157.5/MWh; stepping down to 800 MW costs €132.9/MWh and to 200 MW (grid alone, tier A) €93.1/MWh. Eemshaven 750 MW: grid by taking over the Eemshaven plant's connection, €114.4/MWh, tier B with two conditions (the owner's agreement and the grid operator's import right); the best option that stands on its own is €146.3/MWh. Building 1 starts three months late in all of them: the standby gensets cannot be ready by 2029-01.
 - **Known issues:** 39 fixed with the rebuild on; 40 found and fixed (takeover options dispatched on the wrong grid); 41 to 44 are the rebuild's limits (open).
 - **Not done:** see OPEN-QUESTIONS 255.
 

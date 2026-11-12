@@ -21,7 +21,7 @@ export function planCheck(options, inputs) {
   const en0 = withEn[0].sizing.energise;
   const ym = (m) => addMonths(inputs.project.analysisStart, m);
   const req = inputs.requirements;
-  const allow = req.lateAllowanceM ?? 12;
+  const allow = req.lateAllowanceM ?? 24;
   const n = en0.buildings;
   const items = [];
 

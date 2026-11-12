@@ -2336,7 +2336,7 @@ Changed: `sizing.js` (`sizeOption` sizes on the option's own dates, at most four
 | `requirements.dcoMWe` | 50 MW | Sourced: Planning Act 2008, sections 14 and 15 (England; the tool applies it to Great Britain and says so) |
 | `requirements.eiaAllowanceM` | 18 months | Judgement: scoping, a year of surveys, the statement, the decision. Not researched by country |
 | `requirements.dcoAllowanceM` | 30 months | Judgement: 16 to 18 months from application to decision (sourced) after about a year of pre-application work |
-| `requirements.lateAllowanceM` | 12 months | Judgement, **the owner sets it** (his "Yes" to a latest acceptable start, 2026-11-11) |
+| `requirements.lateAllowanceM` | 24 months (12 until 2026-11-12) | The owner's value: "Make it 24 months" (2026-11-12, 11:44 local) (OPEN-QUESTIONS 257) |
 | `requirements.rentalConditionM`, `.rentalUnlikelyM` | 24 and 60 months | Judgement: rented sets are temporary plant; two years needs its own permit and contract, five is no longer temporary |
 | `requirements.unitCountCondition` | 60 units | Judgement: engine plants of more than about 60 units are rare; counted on owned engines and turbines |
 | `deliverability.conditionPenalty`, `.unlikelyPenalty` | 6 and 30 points | Judgement: one condition weighs about €4 to €7/MWh of LCOE at the default weights in the four study runs; "unlikely" is decided by the tier, not the points |

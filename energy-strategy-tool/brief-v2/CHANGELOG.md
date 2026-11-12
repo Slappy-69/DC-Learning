@@ -431,3 +431,5 @@ The owner, 2026-11-11: "I want you to fix all of that above and add anything els
 Limits: OPEN-QUESTIONS 255; known issues 41 to 44. Checks: Node tests 67 to 79, browser check B44; no Haiku or Opus round.
 
 Phone version (2026-11-12, OPEN-QUESTIONS 256): the owner, "Drop the phone build I don't care" (2026-11-12, 09:48 local). No longer republished.
+
+Latest acceptable start (2026-11-12, OPEN-QUESTIONS 257): the owner, "Make it 24 months" (2026-11-12, 11:44 local). Default 24 months (was 12); the delay axis scale runs from 0 to 24 months.
