@@ -2307,7 +2307,7 @@ The study reader (`study.js`, `fillFromDefaults`) matched each saved key against
 
 The owner, 2026-11-11: "fix all of that above and add anything else you think it's worth it… I give you carte blanch in decision. Just make it more realistic. Also look up country new rules for DC that just came in or are planned for the future". Decisions: OPEN-QUESTIONS 247 to 255 (Claude's, each reversible). What it does and what it found on the studies: `docs/REALISM-REBUILD-2026-11-11.md`.
 
-**The switch.** `settings.realism` (run setting, "Realism rebuild", on by default). `realismOn(inputs)` in `defaults.js`. The test suite sets `ESTOOL_LEGACY_ENGINE=1` (`tests/test-env.mjs`), which turns the default off and keeps the lead times of the merged engine, so tests 1 to 66 pin the engine as merged on 2026-11-11; tests 67 to 79 turn the rebuild on. `ENGINE_VERSION` is 0.4.0 with the rebuild, 0.3.0 without.
+**The switch.** `settings.realism` (run setting, "Realism rebuild", on by default). `realismOn(inputs)` in `defaults.js`. The test suite sets `ESTOOL_LEGACY_ENGINE=1` (`tests/test-env.mjs`), which turns the default off and keeps the lead times of the merged engine, so tests 1 to 66 pin the engine as merged on 2026-11-11; tests 67 to 79 turn the rebuild on. `ENGINE_VERSION` is 0.4.0, one plain string: the packaging reads it from the bundle (`packaging/lib/common.mjs`), and a version that depended on the test switch broke the installable web app build on GitHub (run 43127910951, fixed the same day).
 
 **New engine files** (`src/engine/`):
 

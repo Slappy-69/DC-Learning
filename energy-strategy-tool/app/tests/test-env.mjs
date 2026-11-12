@@ -6,5 +6,5 @@ process.env.ESTOOL_SCREEN_ALL_BELOW = process.env.ESTOOL_SCREEN_ALL_BELOW ?? '0'
 process.env.ESTOOL_LEGACY_ADDERS = process.env.ESTOOL_LEGACY_ADDERS ?? '1';
 // Realism rebuild (2026-11-11, OPEN-QUESTIONS 247 onward): the suite's pinned figures are those of the engine as merged on
 // 2026-11-11, so the rebuild is switched off for it (settings.realism defaults to off, the lead times keep their earlier
-// values, the engine version stays 0.3.0). tests/realism-tests.mjs checks the rebuild on its own, with the switch on.
+// values). The engine version is 0.4.0 either way. tests/realism-tests.mjs checks the rebuild on its own, with the switch on.
 process.env.ESTOOL_LEGACY_ENGINE = process.env.ESTOOL_LEGACY_ENGINE ?? '1';
