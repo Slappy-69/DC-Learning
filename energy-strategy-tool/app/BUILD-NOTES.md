@@ -2357,3 +2357,24 @@ Thresholds inside the tests (constants in `buildability.js`, each a judgement): 
 - Check B38 (the summary follows a weight change within 300 ms) took 236 to 364 ms here (it passed on GitHub). Profiled: number formatting had doubled with the rebuild's extra text, and `sig()` and the run log's `n0()` built a new `Intl.NumberFormat` on every call. They now reuse one formatter each (the same text; checked on sample values): 140 to 146 ms.
 - A card's pros and cons use the rebuild's axis names ("delay against the plan", "buildability"), and the delay figure says it is an average over the planned IT.
 - The country rules heading names the country ("Rules for data centres in Great Britain", not "GB").
+
+## Detailed map (2026-11-12, branch feature/map-detail; merged the same day, owner: "Merge once ready" and "Don't wait. Just merge" (2026-11-12, 14:58 and 15:10 local))
+
+The owner, "Also improve the visual look of the map tool. I want to be able to see way more detail etc" (2026-11-12, 13:10 local). OPEN-QUESTIONS 258.
+
+**Data, bundled** (`src/data/europe-detail.js`, 3.3 MB, made by `tools/make-map-detail.mjs <folder>` at each release from these downloads, accessed 2026-11-12):
+
+| Layer | Source | Licence |
+|---|---|---|
+| Land fills | Natural Earth 1:10m admin-0 countries, via world-atlas 2.0.2 (node_modules) | Public domain (world-atlas ISC) |
+| Borders, regions, rivers, lakes, built-up areas, roads, railways, country names, capitals | Natural Earth 1:10m, version 5.2 (github.com/nvkelso/natural-earth-vector, folder geojson) | Public domain |
+| Towns of 3,000 people or more (29,432) | GeoNames, dump of November 2025, as cities500.json of github.com/lmfmaier/cities-json | CC BY 4.0 |
+| Grid lines of 132 kV and above, HVDC links, substations | PyPSA-Eur's unofficial extract of the ENTSO-E grid map (March 2022), processed by GridKit (github.com/PyPSA/pypsa-eur, data/entsoegridkit) | CC BY 4.0 (PyPSA-Eur data files); not approved or endorsed by ENTSO-E; positions schematic |
+
+Lines and rings are simplified (Douglas–Peucker, 100 to 300 m; coasts about 100 m), cut to the map window and stored as polyline strings at 0.001°. The country lookup (`engine/geocountry.js`) still uses the 1:50m outlines of `europe-map.js`, so no figure changes. Not available in the session: OpenStreetMap map tiles (and a whole-Europe tile file would be gigabytes) and the OpenStreetMap grid of PyPSA-Eur (Zenodo, data.pypsa.org).
+
+**Drawing** (`src/components/MapPicker.jsx`, `mapdetail.js`): SVG; the view is x = longitude × cos(centre latitude), y = −latitude; path strings are built for three times the view and rebuilt when the view leaves that area or the zoom band changes, thinned to 0.7 of a screen pixel; one path per style (roads by class, grid by voltage). Names placed without overlaps. Full screen through a portal to the page body, so nothing of the page sits on top. Ctrl + scroll zooms the map in the inputs panel (scroll alone keeps scrolling the panel, with a hint); scroll alone zooms in full screen. Layers and key (owner, "I want legend and being able to turn off layers" (2026-11-12, 14:02 local)): a panel on the map with a switch and a symbol for each of 19 layers, drawn with the map's own styles so it follows the theme; open by default in full screen. Layer switches are kept in the browser's storage.
+
+**Redraws:** the inputs panel re-renders at every step of a run and every Monte Carlo slice; GitHub's run of b897d95 failed B40 (a timer waited 288 ms, bound 250) with the map drawn each time. The map is now memoised on the pin and its markers (the pick goes through App's stable `update`), and B40 passes locally (longest wait 131 ms).
+
+**Tests:** Node test 80 (layers decode inside the window, sources and licences, towns, nearest town and substation for T1's pin and Eemshaven, thinning, nothing drawn far away, size under 4 MB); test 34 also checks that the new map code reaches no network and that web addresses appear only in the source records. Browser check B45 (roads, towns and grid drawn at the site; drag; scroll hint and Ctrl + scroll; a click places the pin; full screen covers the page; layers; Escape; axe light and dark). B36 unchanged and passing. Under test, Chromium keeps a real Ctrl + scroll for its own page zoom, so B45 sends that event to the map directly.

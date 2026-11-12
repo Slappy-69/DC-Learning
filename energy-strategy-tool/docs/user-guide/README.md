@@ -49,6 +49,10 @@ Each script says at the top what it reads and writes. On 2026-10-22 every script
 
 The realism rebuild is in `main` since 2026-11-12. The guide still describes the tool without it. What it changes for an engineer is in `../REALISM-REBUILD-2026-11-11.md`. These parts of the guide need new text and pictures: how an option's buildings get their dates; the late-start highlight; the consent step and the lead times of 2026; the buildability tiers and their tests; the ranking in groups; the cards (strategies, "Step down", "Stands on its own"); the plan check; the country rules for data centres; the new inputs (latest acceptable start, gas network capacity, distance to a protected nature site, the two ticks per nearby plant); and the run setting "Realism rebuild". Appendices: export the registry again (step 4), since 16 defaults were added and 5 lead times changed.
 
+## Not in the guide yet: the detailed map (2026-11-12)
+
+In `main` since 2026-11-12 (OPEN-QUESTIONS 258). The guide's chapter on the location needs new pictures and text: the layers and their sources (Natural Earth, GeoNames, the 2022 ENTSO-E map extract with schematic positions), moving and zooming, the full-screen map, the distance rings and the nearest town and substation.
+
 ## Fonts and data
 
 The PDF uses Source Serif 4, Inter and JetBrains Mono, all under the SIL Open Font Licence, fetched from npm into `build/fonts`. The data files are outputs of the tool's own engine; the country data in them are the program's synthetic calibration targets, labelled indicative and unverified.

@@ -433,3 +433,5 @@ Limits: OPEN-QUESTIONS 255; known issues 41 to 44. Checks: Node tests 67 to 79, 
 Phone version (2026-11-12, OPEN-QUESTIONS 256): the owner, "Drop the phone build I don't care" (2026-11-12, 09:48 local). No longer republished.
 
 Latest acceptable start (2026-11-12, OPEN-QUESTIONS 257): the owner, "Make it 24 months" (2026-11-12, 11:44 local). Default 24 months (was 12); the delay axis scale runs from 0 to 24 months.
+
+Detailed map (2026-11-12, OPEN-QUESTIONS 258, merged the same day): the owner, "Also improve the visual look of the map tool. I want to be able to see way more detail etc" (2026-11-12, 13:10 local). §5.1 carries the as-built note.
