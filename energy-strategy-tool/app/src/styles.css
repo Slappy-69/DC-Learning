@@ -763,7 +763,16 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .help-line { display: block; margin-bottom: 0.3em; }
 
 /* Realism rebuild (2026-11-11): late badge, tier, conditions, plan check. */
-.badge-late { background: var(--bad); color: #fff; font-weight: 600; }
+.badge-late { background: var(--bad); color: var(--bg); font-weight: 600; }
+/* The header's late line: the full sentence on a wide page, the building and its months on a phone (the summary and the cards below carry the sentence). */
+.hs-late-short, .hs-plan-short { display: none; }
+@media (max-width: 767px) {
+  .hs-late-long, .hs-plan-long, .hs-plan .hs-k { display: none; }
+  .hs-late-short, .hs-plan-short { display: inline; }
+  .hs-plan { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+  /* Room for the plan line on a phone: the tab bar and the first content stay in the first 1,000 px (browser check B19). */
+  .header-strip { gap: 6px; padding: 8px; }
+}
 .badge-tier { font-weight: 600; }
 .badge-step { background: var(--surface-2); color: var(--ink); border: 1px solid var(--control-border); font-weight: 600; }
 .tc-kind { margin: 0 0 0.35rem; }

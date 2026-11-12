@@ -1325,8 +1325,8 @@ export function buildDefaultInputs(opts = {}) {
       // Owner's decision, 2026-11-08 (OPEN-QUESTIONS 244): a held plant whose permit outlook is "unlikely" costs the same as a major flag.
       unlikelyPermitPenalty: rec('deliverability.unlikelyPermitPenalty', 8, 'points per held plant whose permit outlook is unlikely', { basis: 'judgement', ref: '§9.9' }),
       // Realism rebuild (2026-11-11, OPEN-QUESTIONS 250): points taken off the buildability score.
-      conditionPenalty: rec('deliverability.conditionPenalty', 6, 'points per named condition', { basis: 'judgement', ref: '§9.9' }),
-      unlikelyPenalty: rec('deliverability.unlikelyPenalty', 30, 'points per test that says "unlikely"', { basis: 'judgement', ref: '§9.9' }),
+      conditionPenalty: rec('deliverability.conditionPenalty', 6, 'points per named condition', { basis: 'judgement', ref: '§9.9', note: 'Judgement (OPEN-QUESTIONS 250): a condition is something another party must still agree. Six points each: at the default weights one condition weighs about as much as €4 to €7/MWh of LCOE in the four study runs of 2026-11-11 (the cost scale is relative to each run), so a much cheaper option with conditions still leads, and says what it rests on.' }),
+      unlikelyPenalty: rec('deliverability.unlikelyPenalty', 30, 'points per test that says "unlikely"', { basis: 'judgement', ref: '§9.9', note: 'Judgement (OPEN-QUESTIONS 250). The points matter little: an option with an "unlikely" finding is tier C and ranks below every option of tier A or B whatever its score.' }),
       gasUnknownPenalty: rec('deliverability.gasUnknownPenalty', 10, 'points', { basis: 'judgement', ref: '§9.9' }),
       hydrogenPenalty: rec('deliverability.hydrogenPenalty', 10, 'points', { basis: 'judgement', ref: '§9.9' }),
       leadTimePenalty: rec('deliverability.leadTimePenalty', 5, 'points per technology', { basis: 'judgement', ref: '§9.9' }),

@@ -197,10 +197,12 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     return `${tag}${x} against ${y}`;
   };
 
-  // 0. Against the plan (realism rebuild, OPEN-QUESTIONS 248; owner, 2026-11-11: "Building starts late, this will need
-  // to be highlighted though"): the summary opens with the IT the leading option powers, any late start with its
-  // building, months, new date and cause, and the option's tier. Never trimmed.
+  // Against the plan (realism rebuild, OPEN-QUESTIONS 248; owner, 2026-11-11: "Building starts late, this will need
+  // to be highlighted though"): the first part ("Leading option", BRIEF §14 keeps its seven parts) says, straight after
+  // the option's name, the IT it powers, any late start with its building, months, new date and cause, and its tier.
+  // Never trimmed.
   const li = isRealismOption(L) ? lateInfo(L, run.inputs.project.analysisStart) : null;
+  let planPart = null;
   if (li) {
     const en = li.en;
     const it = en.powered === en.buildings ? `all ${en.buildings} building${en.buildings === 1 ? '' : 's'} (${sig(en.poweredIT, 3)} MW IT)` : `${en.powered} of ${en.buildings} buildings (${sig(en.poweredIT, 3)} of ${sig(en.plannedIT, 3)} MW IT)`;
@@ -239,7 +241,7 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
         more.push(`The other way to start, with the same permanent supply: #${alt.rank} ${alt.name}.`);
       }
     }
-    add('plan', 'Against the plan', [keep(lateS), keep(tierS), start2, fork], more);
+    planPart = { sentences: [keep(lateS.replace(/^The leading option powers/, 'It powers')), keep(tierS.replace(/^It is tier/, 'Tier')), start2, fork], more };
   }
 
   // 1. Leading option.
@@ -264,9 +266,10 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     add('leader', 'Leading option', [
       req(`The option that leads under the current weights (${wText}${run.scoring.equalWeightsUsed ? ', equal because every weight was 0' : ''}) is #1, ${L.name}, with a score of ${L.score.toFixed(1)}.`),
       req(`LCOE ${perMWh(L.eco.lcoe)}${settings.costMetric === 'npv' ? ` (NPV of net cost ${money(L.eco.npvCost)})` : ''}, capex ${money(L.eco.capex)}, carbon ${sig(L.carbon.locationG)} g/kWh (location-based${settings.carbonMetric === 'market' ? `; market-based ${sig(L.carbon.marketG)} g/kWh` : settings.carbonMetric === 'cfe' ? `; hourly CFE ${Math.round(L.carbon.cfePct * 100)} %` : ''}), ${ttp}.`),
+      ...(planPart ? planPart.sentences : []),
       adequate(L) ? null : req('No option serves the load in every hour; it is the best-scoring of those that do not.'),
       range,
-    ], more);
+    ], [...(planPart ? planPart.more : []), ...more]);
   }
 
   // 2. Why it leads, and 3. what it gives up.

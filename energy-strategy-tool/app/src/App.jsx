@@ -416,9 +416,9 @@ export default function App() {
             {run && run.scoring && run.scoring.realism && leader && leader.sizing.energise ? (() => {
               const x = lateInfo(leader, run.inputs.project.analysisStart), en = leader.sizing.energise;
               return (
-                <div className="hs-item"><span className="hs-k">Leader against the plan</span>
-                  <span className="hs-v">{en.powered} of {en.buildings} buildings · {Math.round(en.poweredIT).toLocaleString('en-GB')} MW IT · tier {leader.deliv.tier}{x.onPlan ? ' · on plan' : ''}</span>
-                  {x.onPlan ? null : <span className="hs-sub flag-text"><span className="badge badge-late">Late</span> {x.worst ? lateLine(x.worst) : `Building ${x.notBuilt.from} not built: ${x.notBuilt.why}`}{x.late.length > 1 ? `; ${x.late.length - 1} more late` : ''}</span>}
+                <div className="hs-item hs-plan"><span className="hs-k">Leader against the plan</span>
+                  <span className="hs-v"><span className="hs-plan-long">{en.powered} of {en.buildings} buildings · {Math.round(en.poweredIT).toLocaleString('en-GB')} MW IT · tier {leader.deliv.tier}{x.onPlan ? ' · on plan' : ''}</span><span className="hs-plan-short">Plan: {en.powered}/{en.buildings} buildings · tier {leader.deliv.tier}{x.onPlan ? ' · on plan' : ''}</span></span>
+                  {x.onPlan ? null : <span className="hs-sub flag-text"><span className="badge badge-late">Late</span> <span className="hs-late-long">{x.worst ? lateLine(x.worst) : `Building ${x.notBuilt.from} not built: ${x.notBuilt.why}`}{x.late.length > 1 ? `; ${x.late.length - 1} more late` : ''}</span><span className="hs-late-short">{x.worst ? `building ${x.worst.building}: ${x.worst.months} month${x.worst.months === 1 ? '' : 's'}` : `building ${x.notBuilt.from} not built`}{x.late.length > 1 ? `; ${x.late.length - 1} more` : ''}</span></span>}
                 </div>
               );
             })() : null}

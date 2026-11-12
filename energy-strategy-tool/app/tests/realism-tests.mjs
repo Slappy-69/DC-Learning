@@ -126,16 +126,17 @@ export async function realismTests(test, ctxRuns) {
     assert.deepEqual(planCheck(r.options, r.inputs).counts, c, 'the plan check is a function of the options (recomputed after a pooled merge)');
     // The summary opens with the plan: the IT the leader powers, any late start in the same words, and its tier.
     const s = plainSummary(r, {});
-    assert.equal(s.parts[0].id, 'plan');
+    assert.equal(s.parts.length, 7, 'the seven parts of BRIEF §14');
+    assert.equal(s.parts[0].id, 'leader');
     const leader = r.options.find((o) => o.rank === 1), li = lateInfo(leader, START);
-    assert.match(s.parts[0].text, /^The leading option powers (all 4 buildings|\d of 4 buildings)/);
+    assert.match(s.parts[0].text, / It powers (all 4 buildings|\d of 4 buildings)/);
     if (li.worst) assert.ok(s.parts[0].text.includes(lateLine(li.worst).replace(/^Building/, 'building')), s.parts[0].text);
-    assert.match(s.parts[0].text, /It is tier [ABC]:/);
+    assert.match(s.parts[0].text, / Tier [ABC]: /);
     assert.ok(s.words <= s.wordLimit, `${s.words} words`);
     // An allowance of 0: every late option is beyond it.
     const r0 = runModel(t1(START, (i) => { i.requirements.lateAllowanceM = 0; }, 120));
     for (const o of r0.options) { const lf = o.flags.find((f) => f.id === 'late-start'); if (lf) assert.equal(lf.severity, 'major'); assert.equal(o.rankKeys.onTime, o.sizing.energise.maxLate === 0); }
-    return `${nLate} options late (${nMajor} beyond ${allow} months), ${nNot} partly built; plan check: ${sb.text.slice(0, 90)}…; summary opens "${s.parts[0].text.slice(0, 80)}…"`;
+    return `${nLate} options late (${nMajor} beyond ${allow} months), ${nNot} partly built; plan check: ${sb.text.slice(0, 90)}…; summary, first part: "…${s.parts[0].text.slice(s.parts[0].text.indexOf(' It powers') + 1).slice(0, 110)}…"`;
   });
 
   await test('69. Realism rebuild: the consent step: an environmental assessment for 300 MW of heat or more in running plant (18 months), a development consent order in Great Britain above 50 MW (30 months), the permitting allowance otherwise; standby gensets keep the permitting allowance; the plant is ordered when its consent is in hand', () => {
