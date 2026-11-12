@@ -68,7 +68,13 @@ function Swatch({ kind }) {
   }
 }
 
-export default function MapPicker({ lat, lon, onPick, markers = [] }) {
+// The page re-renders the inputs panel often (every step of a run, every Monte Carlo slice): the map is drawn again
+// only when the pin or its markers change. onPick goes through App's stable update function, so an older copy of it
+// still does the same thing.
+const sameMarkers = (a = [], b = []) => a.length === b.length && a.every((m, i) => m.id === b[i].id && m.kind === b[i].kind && m.title === b[i].title);
+export default React.memo(MapPicker, (a, b) => a.lat === b.lat && a.lon === b.lon && sameMarkers(a.markers, b.markers));
+
+function MapPicker({ lat, lon, onPick, markers = [] }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const svgRef = useRef(null);
   const [zoom, setZoom] = useState(1);
