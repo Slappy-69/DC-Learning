@@ -10,13 +10,13 @@ Read these before doing anything, in this order:
 2. `energy-strategy-tool/docs/BUILD-PLAN.md`: the agreed changes as work packages, in order, each with the brief sections, the questions to ask the owner first, the acceptance tests and the user-guide chapters and mock-ups that show the agreed design.
 3. `energy-strategy-tool/brief-v2/BRIEF.md` (revision 5): the specification. Everything the owner's walkthrough of 2026-10-21 changed is marked "(walkthrough, 2026-10-21)", with "as built" notes where the code still follows an earlier rule. Read it with `OPEN-QUESTIONS.md`, `ASSUMPTIONS.md` and `CHANGELOG.md` in the same folder.
 4. `energy-strategy-tool/docs/walkthrough-decisions-2026-10-21.md`: the owner's decision log. Where anything disagrees with it, the log is newer; ask the owner.
-5. `energy-strategy-tool/docs/KNOWN-ISSUES.md`: defects found in the built engine. Known issues 1 to 34, 36 and 37 are resolved and 35 is open; 39 and 40 are fixed on `feature/realism-rebuild`; 41 to 44 are open. Add new ones there, each with the owner's decision.
+5. `energy-strategy-tool/docs/KNOWN-ISSUES.md`: defects found in the built engine. Known issues 1 to 34, 36 and 37 are resolved and 35 is open; 39 and 40 are fixed (realism rebuild); 41 to 44 are open. Add new ones there, each with the owner's decision.
 6. `energy-strategy-tool/app/BUILD-NOTES.md`: architecture, every default with its label, decisions and test runs.
 7. The user guide, `energy-strategy-tool/docs/user-guide/`: how every number is worked out (Part IV), the defaults checked against published sources (chapter 50), and drawings of the agreed screens (`mock/*.html`).
 
-8. `energy-strategy-tool/docs/REALISM-REBUILD-2026-11-11.md`: the realism rebuild of 2026-11-11 (buildings start when powered, buildability tiers, the ranking in groups, the plan check, country rules). Built on `feature/realism-rebuild`. Its decisions are Claude's under the owner's carte blanche (OPEN-QUESTIONS 247 to 255), each reversible; one run setting turns it off, and the earlier tests run with it off (`tests/test-env.mjs`).
+8. `energy-strategy-tool/docs/REALISM-REBUILD-2026-11-11.md`: the realism rebuild of 2026-11-11 (buildings start when powered, buildability tiers, the ranking in groups, the plan check, country rules). Merged into `main` on 2026-11-12 with the owner's yes. Its decisions are Claude's under the owner's carte blanche (OPEN-QUESTIONS 247 to 255), each reversible; one run setting turns it off, and the earlier tests run with it off (`tests/test-env.mjs`).
 
-**Development restarted on 2026-10-22.** Every package in the build plan (0 to 23, and 3b) is built and merged into `main` with the owner's yes (0 to 15 on 2026-10-24, 16 to 18 on 2026-10-25, 19 to 21 on 2026-11-02, 22 and 23 on 2026-11-06); `STATUS.md` has the state, the open decisions and what is waiting for the owner. Build further only when the owner asks, and follow the build plan and `STATUS.md` unless the owner says otherwise.
+**Development restarted on 2026-10-22.** Every package in the build plan (0 to 34, and 3b) is built and merged into `main` with the owner's yes (0 to 15 on 2026-10-24, 16 to 18 on 2026-10-25, 19 to 21 on 2026-11-02, 22 and 23 on 2026-11-06, 24 to 33 on 2026-11-08, 34 (the realism rebuild) on 2026-11-12); `STATUS.md` has the state, the open decisions and what is waiting for the owner. Build further only when the owner asks, and follow the build plan and `STATUS.md` unless the owner says otherwise.
 
 ## Working with the owner
 
@@ -28,7 +28,7 @@ Read these before doing anything, in this order:
 ## Rules for the work
 
 - **Branches.** Work on a `feature/<short-name>` branch and push it as the work goes. Never merge into `main` or change repository settings without the owner's yes.
-- **Verification.** Builder and reviewer: Claude Opus. Verifier: Claude Haiku. After every three Haiku checks, one Opus review. Reports go in `energy-strategy-tool/verification/<slice>/`, with a line in `verification/HISTORY.md`.
+- **Verification.** Builder and reviewer: Claude Opus. Verifier: Claude Haiku. (The realism rebuild had no Haiku or Opus round: `verification/realism-rebuild/`.) After every three Haiku checks, one Opus review. Reports go in `energy-strategy-tool/verification/<slice>/`, with a line in `verification/HISTORY.md`.
 - **Defaults.** Every default has a source record (brief §18). Until it is researched it stays labelled "indicative — unverified" (on 2026-11-11, with the realism rebuild on, 589 of 644 records are; 55 carry a source and the label "sourced — not independently checked"); once researched it carries its source, year, link and access date, or the label "judgement" with a reason. Never present an indicative value as verified. Every value the engineer did not enter is flagged on each option that uses it, with its source.
 - **Flag, never enforce** (brief §2, principle 5): a breached constraint raises a flag. It never hides, demotes or resizes an option.
 - **One ledger.** LCOE, NPV and every cost breakdown come from the same yearly cash-flow ledger.
@@ -36,7 +36,7 @@ Read these before doing anything, in this order:
 - **Site tab.** Keep it working as a Beta feature: hidden by default, labelled Beta, kept out of the ranking and the PDF.
 - **Records.** Update `STATUS.md` after every completed step; `app/BUILD-NOTES.md` for defaults, decisions and test runs; the user guide when a feature is built (`docs/user-guide/README.md` says how).
 - After changing the app, copy `app/dist/energy-tool-single-file.html` over `energy-strategy-tool/energy-tool-single-file.html`.
-- **Phone version** (owner, 2026-10-30): the hosted page (`app/dist/energy-tool-hosted.html`) published to the private Claude link in `STATUS.md`, with the `downloads` capability. Republish it after the app changes and the checks pass (a session with the Artifact tool; read the link first, then publish to the same link).
+- **Phone version: dropped** (owner, "Drop the phone build I don't care" (2026-11-12, 09:48 local); OPEN-QUESTIONS 256). The page at the private Claude link in `STATUS.md` (version 8, 2026-10-30) stays as it is. Do not republish it unless the owner asks. The hosted build (`app/dist/energy-tool-hosted.html`) and its browser checks stay.
 
 ## Commands
 
@@ -47,7 +47,7 @@ cd energy-strategy-tool/app
 npm ci
 npm run build          # dist/, including energy-tool-single-file.html (build first: test 14 reads dist/)
 npm test               # Node suite
-npm run test:browser   # Playwright + axe (needs Chromium)
+npm run test:browser   # Playwright + axe (needs Chromium). GitHub's runner draws with DejaVu Sans, which is wider: check phone-width layouts with it
 ```
 
 Packaging (installable web app and the Windows program) is in `energy-strategy-tool/packaging/README.md`. The user guide's own tools are in `energy-strategy-tool/docs/user-guide/README.md`.

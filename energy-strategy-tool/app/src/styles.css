@@ -769,9 +769,16 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 @media (max-width: 767px) {
   .hs-late-long, .hs-plan-long, .hs-plan .hs-k { display: none; }
   .hs-late-short, .hs-plan-short { display: inline; }
-  .hs-plan { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
-  /* Room for the plan line on a phone: the tab bar and the first content stay in the first 1,000 px (browser check B19). */
+  /* One line: the late start first, then what the leader powers and its tier (cut with "…" if the line is too long). */
+  .hs-plan { flex-direction: row; flex-wrap: nowrap; align-items: baseline; column-gap: 8px; white-space: nowrap; overflow: hidden; }
+  .hs-plan .hs-sub { order: -1; flex: 0 0 auto; }
+  .hs-plan .hs-v { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  /* Room for the plan line on a phone: the tab bar and the first content stay in the first 1,000 px (browser check B19,
+     which GitHub runs with a wider font than most machines). Each item's label sits on the line of its value. */
   .header-strip { gap: 6px; padding: 8px; }
+  .hs-item:not(.hs-plan) { display: block; }
+  .hs-item:not(.hs-plan) .hs-k { margin-right: 6px; }
+  .hs-item:not(.hs-plan) .hs-sub { display: block; }
 }
 .badge-tier { font-weight: 600; }
 .badge-step { background: var(--surface-2); color: var(--ink); border: 1px solid var(--control-border); font-weight: 600; }

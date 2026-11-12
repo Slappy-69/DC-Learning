@@ -136,7 +136,7 @@ Fixed on `feature/weather-fixes` with the owner's decision OPEN-QUESTIONS 115 (k
 | Opus review (`existing-plant/OPUS-review.md`) | Opus | 3 high, 9 medium, 10 low. Fixed: 1–11, 13, 14, 16, 17, 19, 22 (known issue 33); accepted: 18, 20; to the owner: OPEN-QUESTIONS 124–130 |
 
 
-## Realism rebuild (2026-11-11, branch feature/realism-rebuild, not merged)
+## Realism rebuild (2026-11-11, branch feature/realism-rebuild; merged 2026-11-12)
 
 | Check | Model | Result |
 |---|---|---|

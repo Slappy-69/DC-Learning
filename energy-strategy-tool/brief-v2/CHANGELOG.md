@@ -416,7 +416,7 @@ The owner, 2026-11-08 (OPEN-QUESTIONS 245): a held plant whose permit outlook is
 
 Records of the 8 to 11 November review: decisions 244 and 245 (245 merged), known issue 39 (leased plant counted as firm backup in its prime role; open), OPEN-QUESTIONS 246 (open points: uncertain permits, the 9,592 vs 2,000 screening gap, issue 39, the 500 MW case). Pego results: `studies/pego-rev3/REVIEW-2026-11-11.md`. No code changed on this branch.
 
-## Revision 5, as-built notes (2026-11-11): the realism rebuild (on `feature/realism-rebuild`, not merged)
+## Revision 5, as-built notes (2026-11-11): the realism rebuild (merged into `main` 2026-11-12; owner: "Merge into main when everything is passing and ready" (2026-11-12, 09:39 local))
 
 The owner, 2026-11-11: "I want you to fix all of that above and add anything else you think it's worth it… I give you carte blanch in decision. Just make it more realistic. Also look up country new rules for DC that just came in or are planned for the future" (OPEN-QUESTIONS 247). Every decision below is Claude's, recorded in OPEN-QUESTIONS 247 to 255, and reversible. One run setting, "Realism rebuild", turns all of it off; off, the engine is the one merged on 2026-11-11 (test 77).
 
@@ -429,3 +429,5 @@ The owner, 2026-11-11: "I want you to fix all of that above and add anything els
 7. Principles 5 and 9 (§2) and §11 carry notes for the changes above, and for the owner's decision 244 (the resilience gate), which the rebuild builds.
 
 Limits: OPEN-QUESTIONS 255; known issues 41 to 44. Checks: Node tests 67 to 79, browser check B44; no Haiku or Opus round.
+
+Phone version (2026-11-12, OPEN-QUESTIONS 256): the owner, "Drop the phone build I don't care" (2026-11-12, 09:48 local). No longer republished.

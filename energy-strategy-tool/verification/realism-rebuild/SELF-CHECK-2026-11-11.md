@@ -26,6 +26,9 @@ Branch `feature/realism-rebuild`. Builder: Claude (this session's model, Claude 
 7. Standby wait taken from gensets that were not bought.
 8. Browser: the "Late" badge below the contrast minimum in the dark theme; eight summary parts (BRIEF §14 says seven); the phone header past 1,000 px.
 
+9. (2026-11-12, before the merge) GitHub's runner failed B19: its font (DejaVu Sans) is wider, and the phone header pushed the first content to 1,012 px. Fixed; the browser groups were re-run here with DejaVu Sans swapped in, 44 of 44.
+10. (2026-11-12) B38 took up to 364 ms against its 300 ms bound here: two number helpers built a new formatter on every call. Fixed: 140 to 146 ms.
+
 ## What a Haiku or Opus round should look at first
 
 - The arithmetic of one option by hand: building dates, stepped capex, delay metric, buildability points (T1, rebuild on).

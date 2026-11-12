@@ -2303,7 +2303,7 @@ Found while filming the Pego walkthrough. The marker stroke (0.5) and the pin st
 
 The study reader (`study.js`, `fillFromDefaults`) matched each saved key against the defaults and dropped what it did not know. Maps whose default is empty have no default keys, so a reopened study lost its renewable plant edits (`plants.renewEdits`), flag comments (`flagNotes.byOption`, `flagNotes.byType`) and Ireland derating overrides (`ireland.derating`), with a "not known to this version" warning. Every map whose default is empty is now kept as saved, as `plants.edits` already was. Node test 66.
 
-## Realism rebuild (2026-11-11, branch feature/realism-rebuild, not merged)
+## Realism rebuild (2026-11-11, branch feature/realism-rebuild; merged 2026-11-12)
 
 The owner, 2026-11-11: "fix all of that above and add anything else you think it's worth it… I give you carte blanch in decision. Just make it more realistic. Also look up country new rules for DC that just came in or are planned for the future". Decisions: OPEN-QUESTIONS 247 to 255 (Claude's, each reversible). What it does and what it found on the studies: `docs/REALISM-REBUILD-2026-11-11.md`.
 
@@ -2351,3 +2351,9 @@ Thresholds inside the tests (constants in `buildability.js`, each a judgement): 
 **Study runs with the rebuild on** (default weights; figures in `docs/REALISM-REBUILD-2026-11-11.md`): Pego at 261, 500 and 900 MW IT (5,625, 11,469 and 11,469 options, 26 to 45 s each) and Eemshaven 750 MW (10,000 sampled of 275,430, 56 s). The study files themselves are not changed.
 
 **Not verified by Haiku or Opus.** The working rule needs helper sessions; the owner did not ask for them in this session. To do before a release.
+
+**Fixes on 2026-11-12, before the merge.**
+- GitHub's browser run failed check B19 (the first content of the active tab at 1,012 px, bound 1,000): GitHub's runner draws with DejaVu Sans, wider than this machine's font. At phone width the header's plan item is one line and each header label sits on the line of its value: 899 px here, 926 px with DejaVu Sans. Browser runs here are now also made with DejaVu Sans swapped in (`--font`), to match GitHub.
+- Check B38 (the summary follows a weight change within 300 ms) took 236 to 364 ms here (it passed on GitHub). Profiled: number formatting had doubled with the rebuild's extra text, and `sig()` and the run log's `n0()` built a new `Intl.NumberFormat` on every call. They now reuse one formatter each (the same text; checked on sample values): 140 to 146 ms.
+- A card's pros and cons use the rebuild's axis names ("delay against the plan", "buildability"), and the delay figure says it is an average over the planned IT.
+- The country rules heading names the country ("Rules for data centres in Great Britain", not "GB").

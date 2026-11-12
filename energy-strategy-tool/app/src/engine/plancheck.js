@@ -6,7 +6,7 @@
 // acceptable start. It is worked out over the whole screened set, so in a pooled run it is recomputed after the merge.
 // Pure: no UI, no browser APIs.
 
-import { TECH, realismOn, plantTwin } from './defaults.js';
+import { TECH, COUNTRIES, realismOn, plantTwin } from './defaults.js';
 import { addMonths, monthsBetween } from './dates.js';
 import { campusRules, ruleSource, DC_RULES_ACCESSED, DC_RULES_LABEL } from './dcrules.js';
 
@@ -101,5 +101,5 @@ export function countryRulesFor(inputs, country) {
     }
     return out;
   });
-  return { country, accessed: DC_RULES_ACCESSED, label: DC_RULES_LABEL, rules, note: 'Screening only: a reading of published texts and law-firm summaries, not legal advice. Each rule needs checking for a real project.' };
+  return { country, countryName: (COUNTRIES[country] && COUNTRIES[country].name) || country, accessed: DC_RULES_ACCESSED, label: DC_RULES_LABEL, rules, note: 'Screening only: a reading of published texts and law-firm summaries, not legal advice. Each rule needs checking for a real project.' };
 }

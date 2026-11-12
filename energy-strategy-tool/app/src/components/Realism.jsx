@@ -125,7 +125,7 @@ export function PlanCheck({ run }) {
       ) : null}
       {cr && cr.rules.length ? (
         <details className="country-rules">
-          <summary>Rules for data centres in {cr.country}: {cr.rules.length} to check{cr.rules.some((r) => r.caught) ? ' (one applies to this campus)' : ''}</summary>
+          <summary>Rules for data centres in {cr.countryName || cr.country}: {cr.rules.length} to check{cr.rules.some((r) => r.caught) ? ' (one applies to this campus)' : ''}</summary>
           <p className="note">{cr.note} Found on {cr.accessed}; {cr.label}.</p>
           <ul className="plain small">
             {cr.rules.map((r) => <li key={r.id}><span className={`badge badge-${r.status === 'in force' ? 'warn' : 'arch'}`}>{r.status}</span> {r.text}{r.applies ? <strong> {r.applies}</strong> : null}<span className="sub"> Source: {r.source}.</span></li>)}

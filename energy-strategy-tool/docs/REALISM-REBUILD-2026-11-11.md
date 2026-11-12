@@ -1,8 +1,6 @@
 # The realism rebuild (11 November 2026)
 
-**Status: built on the branch `feature/realism-rebuild`. Not merged into `main`: it waits for the owner's written yes.**
-
-A branch is a separate copy of the work. `main` is the copy the Windows program and the phone page are built from. Nothing in `main` has changed.
+**Status: merged into `main` on 2026-11-12**, with the owner's yes: "Merge into main when everything is passing and ready" (2026-11-12, 09:39 local). It was built on the branch `feature/realism-rebuild` on 2026-11-11.
 
 ## What the owner asked for
 
@@ -96,18 +94,18 @@ Known issue 40. Options that take over a grid connection were sometimes worked o
 - One firm plant per option.
 - The user guide has no chapters for the rebuild yet.
 - The Haiku and Opus verification rounds were not run. They need helper sessions, and the owner did not ask for them.
-- The phone page and the Windows program are not rebuilt. They follow `main`.
+- The Windows program is not rebuilt yet. The phone page is no longer kept up to date (the owner, "Drop the phone build I don't care" (2026-11-12, 09:48 local)).
 
 The full list: OPEN-QUESTIONS 255 and known issues 41 to 44.
 
 ## How to look at it
 
-Open `energy-tool-single-file.html` from this folder on the branch (GitHub → the branch `feature/realism-rebuild` → the file → download). It runs in any browser with no setup. The Options tab opens with the plan check, then the cards.
+Open `energy-tool-single-file.html` from the `energy-strategy-tool` folder (GitHub → the file → download). It runs in any browser with no setup. The Options tab opens with the plan check, then the cards.
 
 To compare with the tool as it was: in the inputs panel open "Run and dispatch settings", turn "Realism rebuild (11 November 2026)" off, and run again. The latest acceptable start is in section 6, "Requirements and priorities".
 
 ## Checks
 
 - Node tests: 121 of 121. The 108 earlier tests run the engine as merged (rebuild off). Tests 67 to 79 are new.
-- Browser checks: 44 of 44, run in four parts. Check B44 is new.
-- GitHub's checks run on every push to the branch.
+- Browser checks: 44 of 44, run in four parts, also with the font of GitHub's runner. Check B44 is new.
+- GitHub's checks passed on the branch before the merge.

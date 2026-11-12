@@ -200,7 +200,8 @@ export function logFileName(inputHash, date, ext, partial = false) {
 }
 
 // ---- Human-readable one-line summary of an event (UI log panel) ----
-const n0 = (x) => (typeof x === 'number' ? x.toLocaleString('en-GB') : String(x));
+const N0 = new Intl.NumberFormat('en-GB'); // made once: the same text as toLocaleString('en-GB')
+const n0 = (x) => (typeof x === 'number' ? N0.format(x) : String(x));
 
 export function describeEvent(e) {
   const d = e.detail || {};

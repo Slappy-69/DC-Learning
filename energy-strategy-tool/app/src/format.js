@@ -8,7 +8,15 @@ export function sig(x, n = 3) {
   if (x === 0) return '0';
   const d = Math.max(0, n - 1 - Math.floor(Math.log10(Math.abs(x))));
   const r = Number(x.toPrecision(n));
-  return r.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: Math.min(d, 6) });
+  return sigFormat(Math.min(d, 6)).format(r);
+}
+// One formatter per number of decimals, made once: the same text as toLocaleString('en-GB', options), which builds a
+// new formatter on every call (a weight change formats thousands of numbers; browser check B38 times it).
+const SIG_FORMATS = new Map();
+function sigFormat(maxFrac) {
+  let f = SIG_FORMATS.get(maxFrac);
+  if (!f) { f = new Intl.NumberFormat('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: maxFrac }); SIG_FORMATS.set(maxFrac, f); }
+  return f;
 }
 
 // Display currency (work package 1; BRIEF §5.1): results can be shown in the site's currency at the fixed release

@@ -456,7 +456,7 @@ export function buildReport(run0, view = {}) {
       if (lines.length) doc.list(lines, { size: 9 }); else P('No conditions and no standard consents were found by the tests.', { size: 9.5 });
       doc.caption('Buildability tests are a screening view: not a planning, permitting or legal determination.', { gap: 6 });
       if (run.countryRules && run.countryRules.rules.length) {
-        doc.heading(`Rules for data centres to check in ${run.countryRules.country}`, 2);
+        doc.heading(`Rules for data centres to check in ${run.countryRules.countryName || run.countryRules.country}`, 2);
         P(`${run.countryRules.note} Found on ${run.countryRules.accessed}; ${run.countryRules.label}.`, { size: 9 });
         doc.list(run.countryRules.rules.map((x) => `**${x.status[0].toUpperCase()}${x.status.slice(1)}.** ${x.text}${x.applies ? ` ${x.applies}` : ''} Source: ${x.source}.`), { size: 8.5 });
       }

@@ -126,9 +126,15 @@ export function prosCons(o, options, sortedCache = new Map()) {
     const pct = Math.round(share * 100);
     // A pro must set the option apart: the share as good or better (ties included) is within the best 10 %. Without
     // this, a value most options share (for example no delay at all) was a pro for every one of them.
-    if (share <= PRO_SHARE && asGoodShare(s, x, m.higher) <= PRO_SHARE) pros.push({ id: m.id, share, text: share === 0 ? `Best ${m.label} in the run (${m.fmt(x)})` : `${m.label[0].toUpperCase() + m.label.slice(1)} in the best ${Math.max(1, pct)} % (${m.fmt(x)})` });
+    // Realism rebuild: the third and fourth axes have their new names, and the delay is an average over the planned IT
+    // (a card also shows the months of its latest building, which is a different number).
+    const R = !!(o.deliv && o.deliv.buildability);
+    const label = R && m.id === 'ttp' ? 'delay against the plan' : R && m.id === 'deliverability' ? 'buildability' : m.label;
+    const val = R && m.id === 'ttp' ? `${Number(x.toPrecision(3))} months on average over the planned IT` : m.fmt(x);
+    const cap = label[0].toUpperCase() + label.slice(1);
+    if (share <= PRO_SHARE && asGoodShare(s, x, m.higher) <= PRO_SHARE) pros.push({ id: m.id, share, text: share === 0 ? `${R && m.id === 'ttp' ? 'Least' : 'Best'} ${label} in the run (${val})` : `${cap} in the best ${Math.max(1, pct)} % (${val})` });
     // Rounded down and capped at 99 %, so the worst option never reads "worse than 100 %" (Haiku check H3, L1).
-    else if (share >= CON_SHARE) cons.push({ id: m.id, share, text: `${m.label[0].toUpperCase() + m.label.slice(1)} worse than ${Math.min(99, Math.floor(share * 100))} % of the run (${m.fmt(x)})` });
+    else if (share >= CON_SHARE) cons.push({ id: m.id, share, text: `${cap} worse than ${Math.min(99, Math.floor(share * 100))} % of the run (${val})` });
   }
   pros.sort((a, b) => a.share - b.share);
   cons.sort((a, b) => b.share - a.share);
