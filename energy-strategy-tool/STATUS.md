@@ -2,6 +2,8 @@
 
 Checkpoint, updated after every completed step so any session can resume from here. New sessions: read `../CLAUDE.md` first.
 
+**2026-11-12 (afternoon): work package 35, the condition resolver**, built on `feature/condition-resolver` and **not merged** (owner's yes needed). Owner decisions: a ticked tier B condition re-runs the option (OPEN-QUESTIONS 258); only conditions with a tick already in the inputs can be resolved (259): owner of a plant agreed, grid import confirmed, gas availability "Yes" when "Unknown". Built: `app/src/engine/resolve.js`, the buttons in the option detail (`components/Realism.jsx`), the context in `App.jsx`. Tests 80 and 81 (`app/tests/resolve-tests.mjs`): the full suite passes, 123 of 123, and one tick takes the owner conditions from 3,036 to 0 in the test set-up. Not yet: browser checks, the user guide chapter for it, and the Windows program. Next on the list of suggestions: the latest-acceptable-start slider.
+
 **Last updated: 2026-11-12 (later)**: the latest acceptable start is now 24 months (owner: "Make it 24 months" (2026-11-12, 11:44 local); OPEN-QUESTIONS 257), merged. The hand-over branch of 2026-11-08 (known issue 38, video scripts) is merged too (owner: "Yes merge", 2026-11-12, 13:05 local).
 
 **2026-11-12**: the **realism rebuild** is **merged into `main`** with the owner's yes, "Merge into main when everything is passing and ready" (2026-11-12, 09:39 local), after GitHub's checks passed on `feature/realism-rebuild`. The owner also said "Drop the phone build I don't care" (2026-11-12, 09:48 local): the phone page is no longer republished.

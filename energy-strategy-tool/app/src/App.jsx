@@ -21,6 +21,7 @@ import { useCompute } from './useCompute.js';
 import { withDetail } from './engine/detail.js';
 import { referenceT1, buildDefaultInputs, normalizeInputs, getRegistry, LABEL, COUNTRIES, weightedPick, defaultView, activeFilterCount, studyFile, studyFileName, readStudyFile, compareWithSaved, hashInputs, applyFlagNotes } from './engine/index.js';
 import { FlagNotesContext } from './components/FlagNotes.jsx';
+import { ResolveContext } from './components/Realism.jsx';
 import NearbyPlantsBox from './components/NearbyPlantsBox.jsx';
 import { viewSetting, withoutSiteFilters } from './engine/view.js';
 import { UnverifiedTag } from './components/Field.jsx';
@@ -342,6 +343,7 @@ export default function App() {
     </>
   ) : null;
   // The engineer's comments on flags (work package 27): read and set from any option panel.
+  const resolveCtx = useMemo(() => ({ inputs, update }), [inputs, update]);
   const flagNotesCtx = useMemo(() => ({
     notes: inputs.flagNotes || { byOption: {}, byType: {} },
     setNote: (key, flagId, note, toType) => setInputs((cur) => {
@@ -365,6 +367,7 @@ export default function App() {
 
   return (
     <FlagNotesContext.Provider value={flagNotesCtx}>
+    <ResolveContext.Provider value={resolveCtx}>
     <div className="app">
       <a className="skip" href="#results">Skip to results</a>
       {run ? <a className="skip" href={`#tradeoffs-chart`} onClick={skipToChart}>Skip to trade-offs chart</a> : null}
@@ -503,6 +506,7 @@ export default function App() {
         <p className="sub">Not built yet: parallel coordinates, choice-impact and radar charts, the rest of the tornado drivers, scenarios, manual layout editing, 2.5D massing, map tiles and underlays, exports, a range for every numeric input in the Monte Carlo, an automatic Monte Carlo. Site layouts and noise figures are concept-stage proxies. PPA settlement counts only on PPA energy delivered over the grid connection. Profiles are synthetic and seeded; every default is indicative — unverified.</p>
       </footer>
     </div>
+    </ResolveContext.Provider>
     </FlagNotesContext.Provider>
   );
 }

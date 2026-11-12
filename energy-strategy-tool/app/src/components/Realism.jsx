@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { createContext, useContext } from 'react';
+import { resolutionFor } from '../engine/resolve.js';
 import { lateInfo, lateLine, TIER_SHORT, isRealismOption } from '../engine/labels.js';
 import { TIER_TEXT } from '../engine/buildability.js';
 import { sig } from '../format.js';
@@ -42,6 +43,9 @@ export function LateBlock({ o, start, allowance = null, full = false }) {
   );
 }
 
+// The resolver (work package 35): the inputs and the update function, so a condition can be ticked as resolved.
+export const ResolveContext = createContext(null);
+
 // Conditions and "unlikely" findings of an option. max: how many to list before "+n more".
 export function ConditionList({ o, max = 99 }) {
   if (!isRealismOption(o)) return null;
@@ -50,10 +54,19 @@ export function ConditionList({ o, max = 99 }) {
   const all = [...u.map((x) => ({ ...x, kind: 'Unlikely' })), ...c.map((x) => ({ ...x, kind: 'Condition' }))];
   return (
     <ul className="plain small cond-list">
-      {all.slice(0, max).map((x, i) => <li key={i} className={x.kind === 'Unlikely' ? 'flag-text' : ''}><strong>{x.kind}:</strong> {x.text}.{x.source ? <span className="sub"> Source: {x.source}.</span> : null}</li>)}
+      {all.slice(0, max).map((x, i) => <li key={i} className={x.kind === 'Unlikely' ? 'flag-text' : ''}><strong>{x.kind}:</strong> {x.text}.{x.source ? <span className="sub"> Source: {x.source}.</span> : null}<ResolveButton cond={x} /></li>)}
       {all.length > max ? <li>+{all.length - max} more (option detail).</li> : null}
     </ul>
   );
+}
+
+// A tier B condition that a tick in the inputs resolves. Ticking it re-runs the option (decision of 2026-11-12).
+export function ResolveButton({ cond }) {
+  const ctx = useContext(ResolveContext);
+  if (!ctx || cond.kind !== 'Condition') return null;
+  const r = resolutionFor(cond, ctx.inputs);
+  if (!r) return null;
+  return <> <button type="button" className="link-btn" onClick={() => ctx.update(r.path, r.value)}>{r.label} (re-runs the option)</button></>;
 }
 
 // Option detail: the building dates, the plant's consent steps, the tier with every finding.

@@ -101,6 +101,7 @@ import { screenAllTests } from './screen-all-tests.mjs';
 import { detailTests } from './detail-tests.mjs';
 import { agreedTests } from './agreed-tests.mjs';
 import { realismTests } from './realism-tests.mjs';
+import { resolveTests } from './resolve-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1339,6 +1340,7 @@ await detailTests(test, siteRuns);
 await agreedTests(test, siteRuns);
 // 67 onwards. The realism rebuild of 2026-11-11 (OPEN-QUESTIONS 247 onward) (tests/realism-tests.mjs).
 await realismTests(test, siteRuns);
+await resolveTests(test);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);
