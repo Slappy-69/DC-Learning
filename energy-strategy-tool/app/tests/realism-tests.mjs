@@ -94,7 +94,7 @@ export async function realismTests(test, ctxRuns) {
   await test('68. Realism rebuild: a late start is highlighted: a flag with the building, the months, the new date and the cause; major beyond the latest acceptable start; a building that is not built is a major flag; the same words for the cards and the summary; the plan check says when the standby gensets can be ready', () => {
     const r = getRun();
     const allow = r.inputs.requirements.lateAllowanceM;
-    assert.equal(allow, 12);
+    assert.equal(allow, 24, 'the owner\'s latest acceptable start (2026-11-12)');
     let nLate = 0, nMajor = 0, nNot = 0;
     for (const o of r.options) {
       const en = o.sizing.energise;
@@ -117,7 +117,7 @@ export async function realismTests(test, ctxRuns) {
     assert.ok(nLate > 0 && nNot > 0);
     // Plan check: standby gensets against building 1; counts add up.
     const pc = r.planCheck;
-    assert.ok(pc && pc.buildings.length === 4 && pc.allowanceM === 12);
+    assert.ok(pc && pc.buildings.length === 4 && pc.allowanceM === 24);
     const c = pc.counts;
     assert.equal(c.onPlan + c.lateWithin + c.lateBeyond + c.partial, r.options.length);
     const sb = pc.items.find((i) => i.id === 'standby');

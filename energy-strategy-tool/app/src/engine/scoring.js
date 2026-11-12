@@ -66,7 +66,7 @@ export function scoreOptions(options, inputs, opts = {}) {
     // The delay and buildability axes are scored on fixed scales, not on the spread of the run (min to max over a
     // narrow spread made three months on one building of nine worth as much as €28/MWh at Pego): no delay = 100 and an
     // average delay equal to the latest acceptable start = 0; the buildability score is used as it is.
-    range.ttp = { lo: 0, hi: Math.max(0, (inputs.requirements && inputs.requirements.lateAllowanceM) ?? 12), fixed: true };
+    range.ttp = { lo: 0, hi: Math.max(0, (inputs.requirements && inputs.requirements.lateAllowanceM) ?? 24), fixed: true };
     range.deliverability = { lo: 0, hi: 100, fixed: true };
   }
   for (const o of options) {
@@ -103,7 +103,7 @@ export function rankKeys(o, inputs) {
   const sz = o.sizing || o.sz || null;
   const en = sz && sz.energise ? sz.energise : null;
   const res = o.resilience || o.res || null;
-  const allow = (inputs.requirements && inputs.requirements.lateAllowanceM) ?? 12;
+  const allow = (inputs.requirements && inputs.requirements.lateAllowanceM) ?? 24;
   return {
     adequate: !(o.adequacy && o.adequacy.adequate === false),
     likely: !(o.deliv && o.deliv.tier === 'C'),
@@ -124,7 +124,7 @@ export function groupRank(o, inputs) {
   return inputs.settings && inputs.settings.rankCompliantFirst ? (res && res.status === 'Does not meet' ? 0 : 1) : 0;
 }
 function rankNote(k, best, inputs) {
-  const allow = (inputs.requirements && inputs.requirements.lateAllowanceM) ?? 12;
+  const allow = (inputs.requirements && inputs.requirements.lateAllowanceM) ?? 24;
   if (k.adequate !== best.adequate) return 'does not serve its load in every hour';
   if (k.likely !== best.likely) return 'unlikely to be built as it stands';
   if (k.resilient !== best.resilient) return 'does not meet the resilience requirement';

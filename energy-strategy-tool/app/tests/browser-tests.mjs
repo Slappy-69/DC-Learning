@@ -1567,7 +1567,7 @@ await check('B44. Realism rebuild (owner 2026-11-11, OPEN-QUESTIONS 247 to 254):
       await optionsTab(page).click();
       await page.waitForSelector('.plan-check');
       const pc = (await page.locator('.plan-check').innerText()).replace(/\s+/g, ' ');
-      ok(/Plan check/.test(pc) && /Latest acceptable start: 12 months/.test(pc), `plan check: ${pc.slice(0, 160)}`);
+      ok(/Plan check/.test(pc) && /Latest acceptable start: 24 months/.test(pc), `plan check: ${pc.slice(0, 160)}`);
       ok(/Standby gensets can be ready in \d{4}-\d{2}/.test(pc), 'the standby item');
       const rows = await page.locator('.plan-check table.mini tbody tr').count();
       ok(rows === 4, `${rows} building rows in the plan check`);

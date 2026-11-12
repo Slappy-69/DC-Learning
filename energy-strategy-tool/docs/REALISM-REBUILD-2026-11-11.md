@@ -21,7 +21,7 @@ The aim: the options at the top are ones a data centre developer could build.
 3. **Plant waits for its consent.** A permit takes 6 months (already in the tool). Running plant of 300 MW of heat or more needs an environmental impact assessment: 18 months. In Great Britain a generating plant above 50 MW needs a development consent order: 30 months. Lead times are the figures of 2026: gas engines 21 months, gas turbines 40, fuel cells 12 plus 5 to install.
 4. **Plant is bought when it is needed.** A top-up plant is bought one step per building. Bridging plant that would arrive after the grid is not bought. A top-up with nothing to top up is not bought. The option's name says what is really there.
 5. **Each option gets a buildability tier.** Tier A: buildable, nothing beyond the standard consents. Tier B: buildable with conditions, each one named (an agreement with a plant's owner, an environmental assessment, a gas supply not confirmed, and so on). Tier C: unlikely to be built as it stands (a permit rated unlikely, a gas supply too small, a site too small, a country rule that closes the route).
-6. **The ranking puts buildable options first.** In order: serves its load in every hour; likely to be built (tier A or B); meets the resilience requirement (the owner's decision 244); powers the most IT; starts every building within the latest acceptable start (12 months unless the owner sets another); then the weighted score, with the same four weights. An option further down says why.
+6. **The ranking puts buildable options first.** In order: serves its load in every hour; likely to be built (tier A or B); meets the resilience requirement (the owner's decision 244); powers the most IT; starts every building within the latest acceptable start (24 months: the owner, "Make it 24 months" (2026-11-12, 11:44 local); it was 12 when the results below were first run); then the weighted score, with the same four weights. An option further down says why.
 7. **The cards show strategies.** A strategy is the permanent supply. How the first buildings are bridged is a variant of it. The last cards are a ladder: "Step down" is the best buildable option that powers fewer buildings, shown when it is cheaper. "Stands on its own" is the best buildable option that needs no other owner's plant or grid connection, shown when every leading card needs one.
 8. **Options no developer would build are not generated.** Rented sets only as a bridge that leaves. No whole bridging plant kept beside a top-up plant. Gas turbines are added as firm plant.
 9. **A plan check opens each run.** Can the plan be met at all? The earliest start of each building over every option, with the cause, before anything is ranked.
@@ -30,6 +30,14 @@ The aim: the options at the top are ones a data centre developer could build.
 ## What the studies show now
 
 Default weights (cost 35 %, carbon 25 %, delay 25 %, buildability 15 %). LCOE is the cost of each MWh over the period. The study files are not changed; these are fresh runs on the branch.
+
+### With the latest acceptable start at 24 months (owner, 2026-11-12)
+
+The tables below were run with 12 months. Run again with 24 months:
+
+- **Pego 261 MW: the leader changes.** It becomes the grid alone, waiting for its connection: building 1 starts 12 months late and building 2 three months late. €92.9/MWh, capex €323 m, 67 g/kWh, tier A (no conditions). A month late now costs half as many points, so waiting beats renting a bridge by €1.7/MWh. The rented bridge (€94.6/MWh, building 1 three months late, tier B) is now #47.
+- **Pego 500 MW, Pego 900 MW and Eemshaven: the same leaders**, with the same figures.
+- More options fall within the allowance. Pego 900 MW: 4,626 options late within it (3,690 before) and 972 beyond it (1,908 before).
 
 ### One finding in every study
 
