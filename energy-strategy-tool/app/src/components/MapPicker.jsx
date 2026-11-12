@@ -17,11 +17,21 @@ const WIDE = 72; // degrees of longitude across the map at zoom 1
 const BOX = { w: -32, e: 46, s: 33, n: 72 };
 const ZMAX = 512;
 const RINGS = [5, 10, 25];
+// Layers, each with its own switch and its symbol (owner, 2026-11-12: "I want legend and being able to turn off
+// layers"). [key, label, on at first, group, swatch].
 const LAYERS = [
-  ['towns', 'Towns and cities', true], ['roads', 'Roads', true], ['rail', 'Railways', false], ['water', 'Rivers and lakes', true],
-  ['urban', 'Built-up areas', true], ['regions', 'Regions', true], ['grid', 'Power grid', true], ['plants', 'Nearby plants', true],
-  ['rings', 'Distance rings (5, 10, 25 km)', true],
+  ['towns', 'Towns and cities', true, 'Places', 'town'], ['countries', 'Country names', true, 'Places', 'country'],
+  ['g380', 'Grid 380–750 kV', true, 'Power grid (2022, schematic)', 'v380'], ['g220', 'Grid 220–330 kV', true, 'Power grid (2022, schematic)', 'v220'],
+  ['g132', 'Grid 110–150 kV (from close in)', true, 'Power grid (2022, schematic)', 'v132'], ['gdc', 'HVDC links', true, 'Power grid (2022, schematic)', 'dc'],
+  ['guc', 'Lines under construction in 2022 (dashed)', true, 'Power grid (2022, schematic)', 'uc'], ['subs', 'Substations (from close in)', true, 'Power grid (2022, schematic)', 'sub'],
+  ['gas', 'Gas plants (filled: in the search)', true, 'Nearby plants', 'gas'], ['wind', 'Wind farms', true, 'Nearby plants', 'wind'],
+  ['solar', 'Solar farms', true, 'Nearby plants', 'solar'], ['hydro', 'Hydro plants', true, 'Nearby plants', 'hydro'],
+  ['roadsMain', 'Motorways and main roads', true, 'Land', 'road0'], ['roadsMinor', 'Other roads', true, 'Land', 'road2'],
+  ['rail', 'Railways', false, 'Land', 'rail'], ['water', 'Rivers and lakes', true, 'Land', 'water'],
+  ['urban', 'Built-up areas', true, 'Land', 'urban'], ['regions', 'Regions', true, 'Land', 'region'],
+  ['rings', 'Distance rings (5, 10, 25 km)', true, 'Site', 'ring'],
 ];
+const GROUPS = [...new Set(LAYERS.map((l) => l[3]))];
 const KEY = 'estool.mapLayers';
 function initialLayers() {
   const on = Object.fromEntries(LAYERS.map(([k, , v]) => [k, v]));
@@ -32,6 +42,31 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const kOf = (lat) => Math.cos((clamp(lat, 30, 72) * Math.PI) / 180);
 const nice = (x) => { const p = 10 ** Math.floor(Math.log10(x)); const m = x / p; return (m >= 5 ? 5 : m >= 2 ? 2 : 1) * p; };
 const fmtPop = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)} million` : n >= 1e3 ? `${Math.round(n / 1e3).toLocaleString('en-GB')},000` : String(n));
+
+// The symbol of a layer, drawn with the map's own styles (so it follows the light and dark themes).
+function Swatch({ kind }) {
+  const line = (cls, extra = null) => <svg className="map-sw" width="28" height="14" aria-hidden="true">{extra}<path d="M2 7 L26 7" className={cls} /></svg>;
+  switch (kind) {
+    case 'v380': return line('map-grid map-grid-v380');
+    case 'v220': return line('map-grid map-grid-v220');
+    case 'v132': return line('map-grid map-grid-v132');
+    case 'dc': return line('map-grid map-grid-dc');
+    case 'uc': return line('map-grid map-grid-v380 map-grid-uc');
+    case 'road0': return <svg className="map-sw" width="28" height="14" aria-hidden="true"><path d="M2 7 L26 7" className="map-road-case map-road-c0" /><path d="M2 7 L26 7" className="map-road map-road-c0" /></svg>;
+    case 'road2': return <svg className="map-sw" width="28" height="14" aria-hidden="true"><path d="M2 7 L26 7" className="map-road-case map-road-c2" /><path d="M2 7 L26 7" className="map-road map-road-c2" /></svg>;
+    case 'rail': return line('map-rail');
+    case 'region': return line('map-region');
+    case 'water': return <svg className="map-sw" width="28" height="14" aria-hidden="true"><rect x="15" y="2" width="11" height="10" rx="3" className="map-lake" /><path d="M2 10 C6 4, 10 12, 15 6" className="map-river map-river-r1" /></svg>;
+    case 'urban': return <svg className="map-sw" width="28" height="14" aria-hidden="true"><rect x="4" y="2" width="20" height="10" rx="2" className="map-urban" /></svg>;
+    case 'ring': return <svg className="map-sw" width="28" height="14" aria-hidden="true"><ellipse cx="14" cy="7" rx="11" ry="5.5" className="map-ring-sw" /></svg>;
+    case 'sub': return <svg className="map-sw" width="28" height="14" aria-hidden="true"><rect x="9" y="2" width="10" height="10" className="map-sub map-grid-v380" /></svg>;
+    case 'town': return <svg className="map-sw" width="28" height="14" aria-hidden="true"><circle cx="14" cy="7" r="3" className="map-town-dot" /></svg>;
+    case 'country': return <svg className="map-sw" width="28" height="14" aria-hidden="true"><text x="14" y="11" textAnchor="middle" className="map-sw-text">AB</text></svg>;
+    case 'pin': return <svg className="map-sw" width="20" height="14" aria-hidden="true"><g className="map-pin"><circle cx="10" cy="7" r="6" /><circle cx="10" cy="7" r="2" className="map-pin-dot" /></g></svg>;
+    case 'gas': return <svg className="map-sw" width="28" height="14" aria-hidden="true"><circle cx="9" cy="7" r="4.5" className="map-marker map-marker-gas-in" /><circle cx="20" cy="7" r="4.5" className="map-marker map-marker-gas" /></svg>;
+    default: return <svg className="map-sw" width="28" height="14" aria-hidden="true"><circle cx="14" cy="7" r="4.5" className={`map-marker map-marker-${kind}`} /></svg>;
+  }
+}
 
 export default function MapPicker({ lat, lon, onPick, markers = [] }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
@@ -89,8 +124,9 @@ export default function MapPicker({ lat, lon, onPick, markers = [] }) {
     g.regions = on.regions && wz >= 3.5 ? paths('regions', area, tol, (f) => f.z <= z + 1) : new Map();
     g.borders = paths('borders', area, tol);
     g.rail = on.rail && wz >= 4 ? paths('rail', area, tol, (f) => f.z <= z + 1) : new Map();
-    g.roads = on.roads ? paths('roads', area, tol, (f) => f.z <= z + (f.cls <= 1 ? 1 : 0) && (f.cls <= 2 || wz >= 6), (f) => `c${f.cls}`) : new Map();
-    g.grid = on.grid ? paths('grid', area, tol, (f) => f.dc || f.kv >= 380 || (f.kv >= 220 && wz >= 3.8) || wz >= 5.5, (f) => `${kvClass(f.kv, f.dc)}${f.uc ? ' uc' : ''}`) : new Map();
+    g.roads = on.roadsMain || on.roadsMinor ? paths('roads', area, tol, (f) => (f.cls <= 1 ? on.roadsMain : on.roadsMinor) && f.z <= z + (f.cls <= 1 ? 1 : 0) && (f.cls <= 2 || wz >= 6), (f) => `c${f.cls}`) : new Map();
+    const gOn = { v380: on.g380, v220: on.g220, v132: on.g132, dc: on.gdc };
+    g.grid = paths('grid', area, tol, (f) => gOn[kvClass(f.kv, f.dc)] && (!f.uc || on.guc) && (f.dc || f.kv >= 380 || (f.kv >= 220 && wz >= 3.8) || wz >= 5.5), (f) => `${kvClass(f.kv, f.dc)}${f.uc ? ' uc' : ''}`);
     cache.current = g;
   }
   const P = (m, k) => m.get(k) || '';
@@ -107,7 +143,7 @@ export default function MapPicker({ lat, lon, onPick, markers = [] }) {
       free(px0 - 12, py0 - 12, 24, 24); // the pin
       for (const k of RINGS) { const ry = k / 111.32 / u; if (ry >= 12) free(px0 - 20, py0 - ry - 14, 40, 14); }
     }
-    if (wz < 6.2) {
+    if (wz < 6.2 && on.countries) {
       for (const c of countryLabels()) {
         if (c[1] > wz) continue;
         const [lo, la] = pointLL(c, 2); if (!inView(lo, la)) continue;
@@ -132,8 +168,9 @@ export default function MapPicker({ lat, lon, onPick, markers = [] }) {
       }
     }
     return out;
-  }, [K, vb.x, vb.y, u, wz, on.towns, on.rings, lat, lon, size.w]); // eslint-disable-line react-hooks/exhaustive-deps
-  const subs = on.grid && wz >= 5.2 ? substations().filter((s) => (s[0] >= 380 || s[2] || wz >= 6.2) && inView(s[3] / 1000, s[4] / 1000, 0.05)) : [];
+  }, [K, vb.x, vb.y, u, wz, on.towns, on.countries, on.rings, lat, lon, size.w]); // eslint-disable-line react-hooks/exhaustive-deps
+  const subOn = { v380: on.g380, v220: on.g220, v132: on.g132, dc: on.gdc };
+  const subs = on.subs && wz >= 5.2 ? substations().filter((s) => subOn[kvClass(s[0], s[2])] && (!s[1] || on.guc) && (s[0] >= 380 || s[2] || wz >= 6.2) && inView(s[3] / 1000, s[4] / 1000, 0.05)) : [];
 
   // Pointer: drag moves the map, a tap places the pin, two fingers zoom.
   const toLL = (cx, cy) => {
@@ -227,6 +264,9 @@ export default function MapPicker({ lat, lon, onPick, markers = [] }) {
   const barKm = nice(kmPx * 90), barPx = barKm / kmPx;
   const ring = (k) => ({ rx: (k / (111.32 * Math.cos((lat * Math.PI) / 180))) * K, ry: k / 111.32 });
   const fs = (px) => px * u;
+  const shownMarkers = markers.filter((m) => on[m.kind === 'gas-in' ? 'gas' : m.kind] !== false);
+  const [panel, setPanel] = useState(null); // null: open in full screen, closed in the panel
+  const panelOpen = panel == null ? full : panel;
 
   const body = (
     <div className={`map-picker${full ? ' map-full' : ''}`} role={full ? 'dialog' : undefined} aria-modal={full ? 'true' : undefined} aria-label={full ? 'Full-screen site location map' : undefined}>
@@ -250,7 +290,7 @@ export default function MapPicker({ lat, lon, onPick, markers = [] }) {
           </g>
           {subs.map((s, i) => { const w = (s[0] >= 380 ? 6 : 4.5) * u; return <rect key={i} x={sx(s[3] / 1000) - w / 2} y={sy(s[4] / 1000) - w / 2} width={w} height={w} className={`map-sub map-grid-${kvClass(s[0], s[2])}${s[1] ? ' map-sub-uc' : ''}`}><title>{`Substation, ${s[2] ? 'HVDC converter' : `${s[0]} kV`}${s[1] ? ', under construction in 2022' : ''} (schematic position)`}</title></rect>; })}
           {on.rings && pinOk ? <g className="map-rings" aria-hidden="true">{RINGS.map((k) => { const r = ring(k); return r.ry / u < 12 ? null : <g key={k}><ellipse cx={sx(lon)} cy={sy(lat)} rx={r.rx} ry={r.ry} /><text x={sx(lon)} y={sy(lat) - r.ry - 2 * u} fontSize={fs(10.5)} strokeWidth={fs(3)} textAnchor="middle">{k} km</text></g>; })}</g> : null}
-          {on.plants && markers.length ? <g className="map-markers" aria-hidden="true">{markers.map((m) => <circle key={m.id} cx={sx(m.lon)} cy={sy(m.lat)} r={(wz >= 6 ? 5.5 : 4) * u} className={`map-marker map-marker-${m.kind}`}><title>{m.title}</title></circle>)}</g> : null}
+          {shownMarkers.length ? <g className="map-markers" aria-hidden="true">{shownMarkers.map((m) => <circle key={m.id} cx={sx(m.lon)} cy={sy(m.lat)} r={(wz >= 6 ? 5.5 : 4) * u} className={`map-marker map-marker-${m.kind}`}><title>{m.title}</title></circle>)}</g> : null}
           <g className="map-labels" aria-hidden="true">
             {labels.map((l, i) => (l.kind === 'country'
               ? <text key={i} x={l.x} y={l.y} fontSize={fs(11)} strokeWidth={fs(3)} textAnchor="middle" className="map-label map-label-country">{l.name}</text>
@@ -265,6 +305,27 @@ export default function MapPicker({ lat, lon, onPick, markers = [] }) {
         </svg>
         <div className="map-scale" aria-hidden="true"><span style={{ width: `${barPx}px` }} />{barKm >= 1 ? `${barKm.toLocaleString('en-GB')} km` : `${barKm * 1000} m`}</div>
         {hint ? <div className="map-hint" role="status">{hint}</div> : null}
+        <div className={`map-panel${panelOpen ? ' open' : ''}`}>
+          <button type="button" className="chip-btn map-panel-toggle" aria-expanded={panelOpen} onClick={() => setPanel(!panelOpen)}>{panelOpen ? 'Hide layers and key' : 'Layers and key'}</button>
+          {panelOpen ? (
+            <div className="map-panel-body">
+              <div className="btn-row map-panel-all">
+                <button type="button" className="chip-btn" onClick={() => setOn(Object.fromEntries(LAYERS.map(([k]) => [k, true])))}>All on</button>
+                <button type="button" className="chip-btn" onClick={() => setOn(Object.fromEntries(LAYERS.map(([k]) => [k, false])))}>All off</button>
+                <button type="button" className="chip-btn" onClick={() => setOn(Object.fromEntries(LAYERS.map(([k, , v]) => [k, v])))}>As first shown</button>
+              </div>
+              {GROUPS.map((gname) => (
+                <fieldset key={gname} className="map-panel-group">
+                  <legend>{gname}</legend>
+                  {LAYERS.filter((l) => l[3] === gname).map(([k, label, , , sw]) => (
+                    <label key={k} className="map-panel-row"><input type="checkbox" checked={!!on[k]} onChange={(e) => setOn((st) => ({ ...st, [k]: e.target.checked }))} /><Swatch kind={sw} /><span>{label}</span></label>
+                  ))}
+                </fieldset>
+              ))}
+              <p className="small map-panel-note">Always shown: land, sea, country borders and the pin <Swatch kind="pin" />.</p>
+            </div>
+          ) : null}
+        </div>
       </div>
       <div className="btn-row map-buttons">
         <button type="button" className="chip-btn" onClick={() => zoomAt(2)} aria-label="Zoom in">+</button>
@@ -280,23 +341,6 @@ export default function MapPicker({ lat, lon, onPick, markers = [] }) {
           {near.sub220 ? <>Nearest substation of 220 kV or more: {near.sub220.dc ? 'HVDC converter' : `${near.sub220.kv} kV`}, {near.sub220.km.toFixed(1)} km{near.sub && near.sub !== near.sub220 && near.sub.km < near.sub220.km ? `; of any voltage: ${near.sub.kv} kV, ${near.sub.km.toFixed(1)} km` : ''} (positions schematic, map of 2022).</> : null}
         </p>
       ) : null}
-      <details className="map-layers">
-        <summary>Layers and key</summary>
-        <div className="map-layer-grid">
-          {LAYERS.map(([k, label]) => (
-            <label key={k} className="tick"><input type="checkbox" checked={!!on[k]} onChange={(e) => setOn((s) => ({ ...s, [k]: e.target.checked }))} /> {label}</label>
-          ))}
-        </div>
-        <ul className="map-key small">
-          <li><span className="sw sw-line map-grid-v380" /> Grid 380–750 kV</li>
-          <li><span className="sw sw-line map-grid-v220" /> Grid 220–330 kV</li>
-          <li><span className="sw sw-line map-grid-v132" /> Grid 110–150 kV (where shown)</li>
-          <li><span className="sw sw-line sw-dash map-grid-dc" /> HVDC link; dashed lines are under construction (2022)</li>
-          <li><span className="sw sw-box" /> Substation (from closer in)</li>
-          <li><span className="sw sw-line map-road-c0" /> Motorway <span className="sw sw-line map-road-c1" /> Main road</li>
-          <li><span className="sw sw-dot map-marker-gas-in" /> Gas plant in the search <span className="sw sw-dot map-marker-gas" /> other gas plant <span className="sw sw-dot map-marker-wind" /> wind <span className="sw sw-dot map-marker-solar" /> solar <span className="sw sw-dot map-marker-hydro" /> hydro</li>
-        </ul>
-      </details>
       <p id={`${uid}-src`} className="note">
         Map bundled with the program, no internet needed. {DETAIL_SOURCES.map((s) => `${s.layers[0].toUpperCase()}${s.layers.slice(1)}: ${s.name} (${s.licence}).`).join(' ')} Grid positions follow the ENTSO-E map, which favours a clear drawing over exact positions, and lines built since 2022 are missing. Detail to about 200 m: type the coordinates for a precise location.
       </p>

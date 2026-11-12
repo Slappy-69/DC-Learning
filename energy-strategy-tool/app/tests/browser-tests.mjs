@@ -1607,7 +1607,7 @@ await check('B44. Realism rebuild (owner 2026-11-11, OPEN-QUESTIONS 247 to 254):
   return lines.join('\n      ');
 });
 
-await check('B45. The detailed map (owner, 2026-11-12: "improve the visual look of the map tool. I want to be able to see way more detail"): roads, towns and the grid are drawn; dragging moves the map, Ctrl + scroll zooms, a click places the pin; the full-screen map covers the page and Escape closes it; the layers can be switched off; no serious or critical axe violation, light and dark', async () => {
+await check('B45. The detailed map (owner, 2026-11-12: "improve the visual look of the map tool. I want to be able to see way more detail"; "I want legend and being able to turn off layers"): roads, towns and the grid are drawn; dragging moves the map, Ctrl + scroll zooms, a click places the pin; the full-screen map covers the page and Escape closes it; a layers-and-key panel on the map, a switch and symbol per layer; no serious or critical axe violation, light and dark', async () => {
   const lines = [];
   for (const colorScheme of ['light', 'dark']) {
     const { ctx, page, errors } = await openPage({ colorScheme });
@@ -1660,15 +1660,28 @@ await check('B45. The detailed map (owner, 2026-11-12: "improve the visual look 
         ok(bad.length === 0, bad.join(' | '));
         lines.push(axeLine(r));
       }
-      // Layers: the grid switched off and on.
-      await full.locator('.map-layers summary').click();
-      const gridBox = full.getByLabel('Power grid');
-      await gridBox.uncheck();
-      ok(await n('path.map-grid') === 0, 'the grid stayed on');
-      await gridBox.check();
-      ok(await n('path.map-grid') >= 1, 'the grid did not come back');
+      // The layers and key (owner, 2026-11-12: "I want legend and being able to turn off layers"): open on the map in
+      // full screen, a switch and a symbol per layer; 380 kV off and on, everything off and back.
+      const panel = full.locator('.map-panel-body');
+      ok(await panel.isVisible(), 'the layers and key are not open in full screen');
+      const rows = await panel.locator('.map-panel-row').count(), sws = await panel.locator('.map-panel-row svg.map-sw').count();
+      ok(rows >= 18 && sws === rows, `${rows} layer rows, ${sws} symbols`);
+      const v380 = full.getByLabel('Grid 380–750 kV');
+      await v380.uncheck();
+      ok(await n('path.map-grid-v380') === 0 && await n('path.map-grid') >= 1, 'the 380 kV switch did not act alone');
+      await v380.check();
+      ok(await n('path.map-grid-v380') >= 1, 'the 380 kV lines did not come back');
+      await panel.getByRole('button', { name: 'All off' }).click();
+      ok(await n('path.map-grid') === 0 && await n('path.map-road') === 0 && await n('.map-label') === 0 && await n('.map-marker') === 0, 'All off left layers on');
+      await panel.getByRole('button', { name: 'As first shown' }).click();
+      ok(await n('path.map-grid') >= 1 && await n('path.map-road') >= 1, 'the layers did not come back');
+      // Inline, the panel starts folded and opens with its button.
       await page.keyboard.press('Escape');
       await page.waitForTimeout(100);
+      ok(await page.locator('.map-panel-body').count() === 0, 'the inline map opened with the panel unfolded');
+      await page.getByRole('button', { name: 'Layers and key' }).click();
+      ok(await page.locator('.map-panel-body').isVisible(), 'the inline panel did not open');
+      await page.getByRole('button', { name: 'Hide layers and key' }).click();
       ok(await page.locator('.map-picker.map-full').count() === 0 && await page.locator('#map-picker').count() === 1, 'Escape did not close the full screen');
       ok(errors.length === 0, errors.join(' | '));
       if (colorScheme === 'light') lines.unshift(`at the site: ${await n('path.map-road')} road paths, ${await n('.map-label-town, .map-label-city')} town names; ${near.slice(0, 140)}; drag, Ctrl + scroll (width ${w2.toFixed(2)} → ${w3.toFixed(2)}), click, full screen, layers and Escape work (first view ${vb0})`);
