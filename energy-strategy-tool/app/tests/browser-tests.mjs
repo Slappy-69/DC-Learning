@@ -1607,6 +1607,76 @@ await check('B44. Realism rebuild (owner 2026-11-11, OPEN-QUESTIONS 247 to 254):
   return lines.join('\n      ');
 });
 
+await check('B45. The detailed map (owner, 2026-11-12: "improve the visual look of the map tool. I want to be able to see way more detail"): roads, towns and the grid are drawn; dragging moves the map, Ctrl + scroll zooms, a click places the pin; the full-screen map covers the page and Escape closes it; the layers can be switched off; no serious or critical axe violation, light and dark', async () => {
+  const lines = [];
+  for (const colorScheme of ['light', 'dark']) {
+    const { ctx, page, errors } = await openPage({ colorScheme });
+    try {
+      const map = page.locator('#map-picker');
+      await map.scrollIntoViewIfNeeded();
+      const vb0 = await map.getAttribute('viewBox');
+      // Zoom to the site: the grid, roads and towns are drawn.
+      await page.getByRole('button', { name: 'Zoom to the site' }).click();
+      await page.waitForTimeout(150);
+      const n = async (sel) => page.locator(`#map-picker ${sel}`).count();
+      ok(await n('path.map-road') >= 1 && await n('path.map-grid') >= 1 && await n('.map-label-town, .map-label-city') >= 5, `roads ${await n('path.map-road')}, grid ${await n('path.map-grid')}, towns ${await n('.map-label-town, .map-label-city')}`);
+      const near = await page.locator('.map-near').innerText();
+      ok(/Nearest town in the map data: .+ km\. Nearest substation of 220 kV or more: .+ km/.test(near), near);
+      // Drag: the view moves, the pin stays.
+      const lat = page.getByLabel(/^Latitude/);
+      const lat0 = await lat.inputValue();
+      const vb1 = await map.getAttribute('viewBox');
+      const b = await map.boundingBox();
+      await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down();
+      for (let i = 1; i <= 8; i++) await page.mouse.move(b.x + b.width / 2 - i * 10, b.y + b.height / 2 - i * 6);
+      await page.mouse.up();
+      const vb2 = await map.getAttribute('viewBox');
+      ok(vb2 !== vb1 && (await lat.inputValue()) === lat0, `drag: ${vb1} → ${vb2}, latitude ${lat0} → ${await lat.inputValue()}`);
+      // Ctrl + scroll zooms; scroll alone does not (a hint says how).
+      await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+      await page.mouse.wheel(0, 200);
+      await page.waitForTimeout(100);
+      ok((await map.getAttribute('viewBox')) === vb2 && /Ctrl and scroll/.test(await page.locator('.map-hint').innerText()), 'scroll alone zoomed the inline map');
+      // Chromium keeps a real Ctrl + scroll for its own page zoom under test, so the event is sent to the map directly.
+      await map.evaluate((m) => { const r = m.getBoundingClientRect(); m.dispatchEvent(new WheelEvent('wheel', { deltaY: -300, ctrlKey: true, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, bubbles: true, cancelable: true })); });
+      await page.waitForTimeout(100);
+      const w2 = Number(vb2.split(' ')[2]), w3 = Number((await map.getAttribute('viewBox')).split(' ')[2]);
+      ok(w3 < w2 * 0.8, `Ctrl + scroll: width ${w2} → ${w3}`);
+      // A click places the pin.
+      await page.mouse.click(b.x + b.width * 0.3, b.y + b.height * 0.3);
+      await page.waitForTimeout(200);
+      ok((await lat.inputValue()) !== lat0, 'the click did not move the pin');
+      // Full screen: over the whole page; Escape closes.
+      await page.getByRole('button', { name: 'Full-screen map' }).click();
+      const full = page.locator('.map-picker.map-full');
+      await full.waitFor();
+      const fb = await full.boundingBox(); const vp = page.viewportSize();
+      ok(fb.width >= vp.width - 1 && fb.height >= vp.height - 1, `full screen ${fb.width}×${fb.height}`);
+      const top = await page.evaluate(() => { const m = document.querySelector('#map-picker').getBoundingClientRect(); const e = document.elementFromPoint(m.left + m.width / 2, m.top + m.height / 2); return !!(e && e.closest('#map-picker')); });
+      ok(top, 'something of the page sits on top of the full-screen map');
+      if (AXE) {
+        const r = await runAxe(page, `Full-screen map (${colorScheme})`);
+        const bad = serious(r).map((v) => `${r.label}: ${v.impact} ${v.id} ×${v.nodes} (${v.target}) ${v.msg}`);
+        ok(bad.length === 0, bad.join(' | '));
+        lines.push(axeLine(r));
+      }
+      // Layers: the grid switched off and on.
+      await full.locator('.map-layers summary').click();
+      const gridBox = full.getByLabel('Power grid');
+      await gridBox.uncheck();
+      ok(await n('path.map-grid') === 0, 'the grid stayed on');
+      await gridBox.check();
+      ok(await n('path.map-grid') >= 1, 'the grid did not come back');
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(100);
+      ok(await page.locator('.map-picker.map-full').count() === 0 && await page.locator('#map-picker').count() === 1, 'Escape did not close the full screen');
+      ok(errors.length === 0, errors.join(' | '));
+      if (colorScheme === 'light') lines.unshift(`at the site: ${await n('path.map-road')} road paths, ${await n('.map-label-town, .map-label-city')} town names; ${near.slice(0, 140)}; drag, Ctrl + scroll (width ${w2.toFixed(2)} → ${w3.toFixed(2)}), click, full screen, layers and Escape work (first view ${vb0})`);
+    } finally { await ctx.close(); }
+  }
+  return lines.join('\n      ');
+});
+
 await browser.close();
 const passed = results.filter((r) => r.status === 'PASS').length;
 const skipped = results.filter((r) => r.status === 'SKIP').length;
