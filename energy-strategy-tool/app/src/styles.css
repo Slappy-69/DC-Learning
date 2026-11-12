@@ -761,3 +761,36 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 .help-btn { margin-left: 0.3em; width: 1.6em; height: 1.6em; min-width: 24px; min-height: 24px; border-radius: 50%; border: 1px solid var(--border, #999); background: var(--bg, #fff); color: inherit; font-weight: 600; cursor: pointer; padding: 0; }
 .help-panel { display: block; margin: 0.3em 0 0.5em; padding: 0.5em 0.7em; border-left: 3px solid var(--accent, #2b7bb9); background: var(--panel, rgba(0,0,0,0.03)); font-size: 0.9em; }
 .help-line { display: block; margin-bottom: 0.3em; }
+
+/* Realism rebuild (2026-11-11): late badge, tier, conditions, plan check. */
+.badge-late { background: var(--bad); color: var(--bg); font-weight: 600; }
+/* The header's late line: the full sentence on a wide page, the building and its months on a phone (the summary and the cards below carry the sentence). */
+.hs-late-short, .hs-plan-short { display: none; }
+@media (max-width: 767px) {
+  .hs-late-long, .hs-plan-long, .hs-plan .hs-k { display: none; }
+  .hs-late-short, .hs-plan-short { display: inline; }
+  /* One line: the late start first, then what the leader powers and its tier (cut with "…" if the line is too long). */
+  .hs-plan { flex-direction: row; flex-wrap: nowrap; align-items: baseline; column-gap: 8px; white-space: nowrap; overflow: hidden; }
+  .hs-plan .hs-sub { order: -1; flex: 0 0 auto; }
+  .hs-plan .hs-v { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  /* Room for the plan line on a phone: the tab bar and the first content stay in the first 1,000 px (browser check B19,
+     which GitHub runs with a wider font than most machines). Each item's label sits on the line of its value. */
+  .header-strip { gap: 6px; padding: 8px; }
+  .hs-item:not(.hs-plan) { display: block; }
+  .hs-item:not(.hs-plan) .hs-k { margin-right: 6px; }
+  .hs-item:not(.hs-plan) .hs-sub { display: block; }
+}
+.badge-tier { font-weight: 600; }
+.badge-step { background: var(--surface-2); color: var(--ink); border: 1px solid var(--control-border); font-weight: 600; }
+.tc-kind { margin: 0 0 0.35rem; }
+.late-block { margin: 4px 0; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.late-block .late-list { flex-basis: 100%; margin: 2px 0 0; }
+.late-list li { color: var(--bad); }
+.cond-list li { margin: 2px 0; }
+.plan-check { border: 1px solid var(--line, #d0d7de); border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
+.plan-check h2 { margin-top: 0; }
+.plan-items li { margin: 4px 0; }
+.country-rules { margin-top: 8px; }
+.country-rules li { margin: 4px 0; }
+.detail-realism { margin: 8px 0; }
+.group-divider th { text-align: left; font-weight: 600; }

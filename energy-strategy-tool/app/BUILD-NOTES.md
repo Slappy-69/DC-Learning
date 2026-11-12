@@ -2302,3 +2302,58 @@ Found while filming the Pego walkthrough. The marker stroke (0.5) and the pin st
 ## Known issue 37: studies kept every keyed entry (2026-11-08, branch feature/map-markers, merged 2026-11-08)
 
 The study reader (`study.js`, `fillFromDefaults`) matched each saved key against the defaults and dropped what it did not know. Maps whose default is empty have no default keys, so a reopened study lost its renewable plant edits (`plants.renewEdits`), flag comments (`flagNotes.byOption`, `flagNotes.byType`) and Ireland derating overrides (`ireland.derating`), with a "not known to this version" warning. Every map whose default is empty is now kept as saved, as `plants.edits` already was. Node test 66.
+
+## Realism rebuild (2026-11-11, branch feature/realism-rebuild; merged 2026-11-12)
+
+The owner, 2026-11-11: "fix all of that above and add anything else you think it's worth it… I give you carte blanch in decision. Just make it more realistic. Also look up country new rules for DC that just came in or are planned for the future". Decisions: OPEN-QUESTIONS 247 to 255 (Claude's, each reversible). What it does and what it found on the studies: `docs/REALISM-REBUILD-2026-11-11.md`.
+
+**The switch.** `settings.realism` (run setting, "Realism rebuild", on by default). `realismOn(inputs)` in `defaults.js`. The test suite sets `ESTOOL_LEGACY_ENGINE=1` (`tests/test-env.mjs`), which turns the default off and keeps the lead times of the merged engine, so tests 1 to 66 pin the engine as merged on 2026-11-11; tests 67 to 79 turn the rebuild on. `ENGINE_VERSION` is 0.4.0, one plain string: the packaging reads it from the bundle (`packaging/lib/common.mjs`), and a version that depended on the test switch broke the installable web app build on GitHub (run 43127910951, fixed the same day).
+
+**New engine files** (`src/engine/`):
+
+| File | What it holds |
+|---|---|
+| `supply.js` | Firm supply by month: contracted grid, firm plant (with its steps), bridging plant, qualifying batteries |
+| `energise.js` | The building dates of an option: `energise(ctx, v, sizing)`, with the cause of each late start |
+| `programme.js` | The consent step: permit, environmental impact assessment, development consent order |
+| `buildability.js` | The tests: findings "unlikely", "condition", "standard"; the tier |
+| `dcrules.js` | The country rules for data centres (30 records, 16 jurisdictions) |
+| `plancheck.js` | The plan check of a run and the rules that apply to the site |
+| `labels.js` | Shared wording for late starts and tiers |
+
+Changed: `sizing.js` (`sizeOption` sizes on the option's own dates, at most four passes, then sizes bridging plant to the duty it can serve; stepped top-up plant; nothing-to-bridge and nothing-to-top-up), `context.js` (`energisedCtx`; a takeover context has its own store, known issue 40), `dispatch.js` (capacity by month; each option dispatched in its own context), `evaluate.js` (stepped capex and fixed costs; delay metric; flags "late-start", "not-built", "tier-unlikely", "tier-conditions"; known issue 39), `scoring.js` (rank keys, fixed scales), `generator.js` (R1 to R3, names), `cards.js` (strategies as sized, the ladder, the card that stands on its own), `run.js`, `summary.js`, `report/report.js`, and the screens (`Realism.jsx`, `TopFive.jsx`, `RankedList.jsx`, `OptionDetail.jsx`, `CompareView.jsx`, `InputsPanel.jsx`, `PlantsField.jsx`, `App.jsx`).
+
+**Defaults added or changed.** With the rebuild on the registry holds 644 records: 55 "sourced — not independently checked" and 589 "indicative — unverified" (with it off: 50 and 594). None is verified. The sources below were found and recorded by Claude on 2026-11-11 under the owner's carte blanche; the `approved` date on each record is that instruction, not a source-by-source approval, **for the owner to confirm** (the rule of work package 0 asks for his approval of each source).
+
+| Record | Value | Basis |
+|---|---|---|
+| `tech.gasRecip.procM` | 21 months (was 9) | Sourced: economy.ac, 28 Aug 2026: Wärtsilä 34SG 18–24 months in Q2 2026, larger engines 22–30 |
+| `tech.chp.procM` | 21 months (was 12) | Sourced: the same engines with heat recovery |
+| `tech.gasTurbine.procM` | 40 months (was 12) | Sourced: Savrn supply-chain tracker 2026, citing Pipeline & Gas Journal (aeroderivatives about 40 months) and Power Engineering (heavy-duty about three years) |
+| `tech.fuelCell.procM`, `.buildM` | 12 and 5 months (were 6 and 3) | Sourced: Avanza Energy 2026, 16 to 18 months to power |
+| `requirements.eiaMWth` | 300 MW heat | Sourced: Directive 2011/92/EU, Annex I, point 2(a) |
+| `requirements.limitedRunHours` | 500 h a year | Sourced: Directive (EU) 2015/2193, Article 6 |
+| `requirements.dcoMWe` | 50 MW | Sourced: Planning Act 2008, sections 14 and 15 (England; the tool applies it to Great Britain and says so) |
+| `requirements.eiaAllowanceM` | 18 months | Judgement: scoping, a year of surveys, the statement, the decision. Not researched by country |
+| `requirements.dcoAllowanceM` | 30 months | Judgement: 16 to 18 months from application to decision (sourced) after about a year of pre-application work |
+| `requirements.lateAllowanceM` | 12 months | Judgement, **the owner sets it** (his "Yes" to a latest acceptable start, 2026-11-11) |
+| `requirements.rentalConditionM`, `.rentalUnlikelyM` | 24 and 60 months | Judgement: rented sets are temporary plant; two years needs its own permit and contract, five is no longer temporary |
+| `requirements.unitCountCondition` | 60 units | Judgement: engine plants of more than about 60 units are rare; counted on owned engines and turbines |
+| `deliverability.conditionPenalty`, `.unlikelyPenalty` | 6 and 30 points | Judgement: one condition weighs about €4 to €7/MWh of LCOE at the default weights in the four study runs; "unlikely" is decided by the tier, not the points |
+| `utilities.gasCapacityMWth`, `site.natureSiteKm` | blank | Inputs: blank means "not confirmed" (a condition), never a pass |
+| `plants.agreed`, `plants.importConfirmed` | empty | Inputs: the two ticks per nearby plant |
+| `settings.realism` | on | Run setting |
+
+Thresholds inside the tests (constants in `buildability.js`, each a judgement): gas supply asked for from 50 MW of heat (a high-pressure connection); land up to 25 % over the net site is a condition and more is unlikely (the footprints are indicative); the Netherlands' nitrogen rule within 25 km of a protected site; a habitats assessment within 5 km elsewhere in the EU; Portugal's announced decree tested at a gas share above 50 %. Country outlook for a connection taken over: unlikely in Spain, Portugal, Great Britain, Ireland and Norway (the research of OPEN-QUESTIONS 155, 214 and 215), a condition elsewhere.
+
+**Test runs (2026-11-11, this machine, Node 22).** Node suite: 121 of 121 (108 as before with the rebuild off, 13 new: 67 building dates, 68 late-start highlight and plan check, 69 consent step, 70 stepped plant, 71 kept share, bridging duty and known issue 39, 72 buildability and tiers, 73 ranking, 74 generation, 75 cards, 76 country rules, 77 rebuild off is the merged engine, 78 rebuild on outside the suite, 79 takeover, names, fallback card and plant twin). Test 79 fails when the fix for known issue 40 is taken out. Browser: 44 of 44 in four parts (one run is longer than a session command may last here); new check B44 (header, plan check, cards, detail; axe light and dark). Changes to earlier checks: B1's loop bound 400 to 600 Tab presses (the inputs panel has about 365 stops now); nothing else. Found by the browser run and fixed: the "Late" badge failed contrast in the dark theme; the summary had eight parts (now seven, as BRIEF §14); the phone header pushed the first content past 1,000 px (now 974 px).
+
+**Study runs with the rebuild on** (default weights; figures in `docs/REALISM-REBUILD-2026-11-11.md`): Pego at 261, 500 and 900 MW IT (5,625, 11,469 and 11,469 options, 26 to 45 s each) and Eemshaven 750 MW (10,000 sampled of 275,430, 56 s). The study files themselves are not changed.
+
+**Not verified by Haiku or Opus.** The working rule needs helper sessions; the owner did not ask for them in this session. To do before a release.
+
+**Fixes on 2026-11-12, before the merge.**
+- GitHub's browser run failed check B19 (the first content of the active tab at 1,012 px, bound 1,000): GitHub's runner draws with DejaVu Sans, wider than this machine's font. At phone width the header's plan item is one line and each header label sits on the line of its value: 899 px here, 926 px with DejaVu Sans. Browser runs here are now also made with DejaVu Sans swapped in (`--font`), to match GitHub.
+- Check B38 (the summary follows a weight change within 300 ms) took 236 to 364 ms here (it passed on GitHub). Profiled: number formatting had doubled with the rebuild's extra text, and `sig()` and the run log's `n0()` built a new `Intl.NumberFormat` on every call. They now reuse one formatter each (the same text; checked on sample values): 140 to 146 ms.
+- A card's pros and cons use the rebuild's axis names ("delay against the plan", "buildability"), and the delay figure says it is an average over the planned IT.
+- The country rules heading names the country ("Rules for data centres in Great Britain", not "GB").

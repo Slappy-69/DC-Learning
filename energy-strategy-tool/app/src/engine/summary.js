@@ -24,6 +24,8 @@ import { CHOICES, choiceLabel, getRegistry, LABEL } from './defaults.js';
 import { NA } from './generator.js';
 import { sameFigures } from './cards.js';
 import { SCORE_KEYS, isRequirementCompliant } from './scoring.js';
+import { lateInfo, lateLine, isRealismOption } from './labels.js';
+import { supplyKey } from './cards.js';
 import { visibleFlags } from './view.js';
 import { sortRows, measureById } from './sensitivity.js';
 import { nearestFlips } from './breakeven.js';
@@ -37,7 +39,10 @@ export const DIRECTIVE_WORDS = /\b(we recommend|recommend|recommended|recommenda
 // Words: the tokens with a letter or a digit ("·", "→", "%" and "—" are not words).
 export const wordCount = (s) => String(s || '').trim().split(/\s+/).filter((t) => /[A-Za-z0-9]/.test(t)).length;
 
-const AXIS_NAME = { cost: 'cost', carbon: 'carbon', ttp: 'time-to-power', deliverability: 'deliverability' };
+const AXIS_BASE = { cost: 'cost', carbon: 'carbon', ttp: 'time-to-power', deliverability: 'deliverability' };
+// Realism rebuild (OPEN-QUESTIONS 251): the third axis is the delay against the plan, the fourth buildability.
+const AXIS_REAL = { ...AXIS_BASE, ttp: 'delay against plan', deliverability: 'buildability' };
+let AXIS_NAME = AXIS_BASE;
 const adequate = (o) => !(o.adequacy && o.adequacy.adequate === false);
 const pct0 = (x) => `${Math.round(x * 100)} %`;
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
@@ -75,6 +80,8 @@ function compactPair(a, b) {
 // The options the leader is ranked with: the same power adequacy and, with "rank requirement-compliant options
 // first" on, the same compliance (scoring.js rankOptions). Only these can take its place by a weight change.
 function rankGroup(options, leader, compliantFirst) {
+  // Realism rebuild: the options with the leader's rank keys (scoring.js rankKeys), set by the last scoring.
+  if (leader.groupRank !== undefined) return options.filter((o) => o.groupRank === leader.groupRank);
   const same = (o) => adequate(o) === adequate(leader) && (!compliantFirst || isRequirementCompliant(o) === isRequirementCompliant(leader));
   return options.filter(same);
 }
@@ -171,6 +178,7 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
   // Monte Carlo (work package 18) finished for this leader: ranges, rank probability and the robust pick.
   const mc = monteCarlo && monteCarlo.complete && monteCarlo.leaderId === L.id && Array.isArray(monteCarlo.rows) ? monteCarlo : null;
   const mcL = mc ? mc.rows.find((r) => r.id === L.id) : null;
+  AXIS_NAME = run.scoring && run.scoring.realism ? AXIS_REAL : AXIS_BASE;
   const parts = [];
   const notBuilt = [];
   const notRun = [];
@@ -189,12 +197,59 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     return `${tag}${x} against ${y}`;
   };
 
+  // Against the plan (realism rebuild, OPEN-QUESTIONS 248; owner, 2026-11-11: "Building starts late, this will need
+  // to be highlighted though"): the first part ("Leading option", BRIEF §14 keeps its seven parts) says, straight after
+  // the option's name, the IT it powers, any late start with its building, months, new date and cause, and its tier.
+  // Never trimmed.
+  const li = isRealismOption(L) ? lateInfo(L, run.inputs.project.analysisStart) : null;
+  let planPart = null;
+  if (li) {
+    const en = li.en;
+    const it = en.powered === en.buildings ? `all ${en.buildings} building${en.buildings === 1 ? '' : 's'} (${sig(en.poweredIT, 3)} MW IT)` : `${en.powered} of ${en.buildings} buildings (${sig(en.poweredIT, 3)} of ${sig(en.plannedIT, 3)} MW IT)`;
+    const lateS = li.onPlan ? `The leading option powers ${it} on the planned dates.`
+      : li.late.length ? `The leading option powers ${it}, with a late start: ${lateLine(li.worst).replace(/^Building/, 'building')}${li.late.length > 1 ? `; ${li.late.length - 1} more building${li.late.length - 1 === 1 ? ' is' : 's are'} late` : ''}.`
+      : `The leading option powers ${it}: ${li.notBuilt.why}.`;
+    const d = L.deliv;
+    const tierS = d.tier === 'A' ? 'It is tier A: buildable, with no conditions beyond the standard consents.'
+      : d.tier === 'B' ? `It is tier B: buildable with ${plural(d.conditions.length, 'condition')} (${d.conditions[0].text.split(':')[0].split(' (')[0]}${d.conditions.length > 1 ? `, and ${d.conditions.length - 1} more` : ''}).`
+      : `It is tier C: unlikely to be built as it stands (${d.unlikely[0].text.split(':')[0]}).`;
+    const more = [...li.late.map((x) => `${lateLine(x)}.`), ...d.unlikely.map((x) => `Unlikely: ${x.text}.`), ...d.conditions.map((x) => `Condition: ${x.text}.`)];
+    // The fork: the best-ranked option that keeps every planned date, when the leader does not.
+    let fork = null;
+    if (!li.onPlan) {
+      let alt = null;
+      for (const o of run.options) { const e = o.sizing && o.sizing.energise; if (e && e.powered === e.buildings && e.maxLate === 0 && o.groupRank !== undefined && (!alt || o.rank < alt.rank)) alt = o; }
+      fork = alt ? opt(`The best-ranked option that keeps every planned date is #${alt.rank}, ${alt.name}: LCOE ${perMWh(alt.eco.lcoe)} against ${perMWh(L.eco.lcoe)}.`, 2.5) : opt('No option keeps every planned date (see the plan check).', 2.5);
+    }
+    // The other way to start: with a bridge the leader is compared with the best-ranked option of the same permanent
+    // supply that waits for the grid, and the other way round.
+    let start2 = null;
+    {
+      const real = (o) => o.v.C1 === 'bridge' && o.sizing.bridge && o.sizing.bridge.shortfallMW > 0 && !o.sizing.bridgeDropped;
+      const key = supplyKey(L), lb = real(L);
+      let alt = null;
+      for (const o of run.options) {
+        if (o === L || o.groupRank === undefined || !o.sizing.energise || supplyKey(o) !== key || Math.abs(o.sizing.energise.poweredIT - en.poweredIT) > 1e-6) continue;
+        if (real(o) === lb || o.v.C1 === 'islanded') continue;
+        if (!alt || o.rank < alt.rank) alt = o;
+      }
+      if (alt) {
+        const a = alt.sizing.energise.late[0] ?? 0, b = en.late[0] ?? 0;
+        start2 = opt(lb
+          ? `Waiting for the grid instead (#${alt.rank}) starts building 1 ${plural(Math.max(0, a - b), 'month')} later and costs ${perMWh(alt.eco.lcoe)} against ${perMWh(L.eco.lcoe)}.`
+          : `Bridging instead (#${alt.rank}, ${alt.name.split(' · ')[0]}) starts building 1 ${plural(Math.max(0, b - a), 'month')} earlier and costs ${perMWh(alt.eco.lcoe)} against ${perMWh(L.eco.lcoe)}.`, 2.6);
+        more.push(`The other way to start, with the same permanent supply: #${alt.rank} ${alt.name}.`);
+      }
+    }
+    planPart = { sentences: [keep(lateS.replace(/^The leading option powers/, 'It powers')), keep(tierS.replace(/^It is tier/, 'Tier')), start2, fork], more };
+  }
+
   // 1. Leading option.
   {
     const wText = SCORE_KEYS.map((k) => `${AXIS_NAME[k]} ${pct0(w[k])}`).join(', ');
-    const ttp = L.ttp.metric < 0.05 ? 'power on time' : `time-to-power ${sig(L.ttp.metric, 3)} months late`;
+    const ttp = li ? (li.onPlan ? 'no delay against the plan' : `average delay ${sig(L.ttp.metric, 3)} months`) : L.ttp.metric < 0.05 ? 'power on time' : `time-to-power ${sig(L.ttp.metric, 3)} months late`;
     const more = [`Score ${L.score.toFixed(2)}; axis scores: ${SCORE_KEYS.map((k) => `${AXIS_NAME[k]} ${L.axisScores[k].toFixed(1)}`).join(', ')}.`,
-      `NPV of net cost ${money(L.eco.npvCost)}; hourly carbon-free energy ${Math.round(L.carbon.cfePct * 100)} %; deliverability ${sig(L.deliv.score)} points.`];
+      `NPV of net cost ${money(L.eco.npvCost)}; hourly carbon-free energy ${Math.round(L.carbon.cfePct * 100)} %; ${AXIS_NAME.deliverability} ${sig(L.deliv.score)} points.`];
     let range = null;
     if (mcL) {
       const [a, b] = compactPair(perMWh(mcL.lcoe.p10), perMWh(mcL.lcoe.p90));
@@ -211,9 +266,10 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     add('leader', 'Leading option', [
       req(`The option that leads under the current weights (${wText}${run.scoring.equalWeightsUsed ? ', equal because every weight was 0' : ''}) is #1, ${L.name}, with a score of ${L.score.toFixed(1)}.`),
       req(`LCOE ${perMWh(L.eco.lcoe)}${settings.costMetric === 'npv' ? ` (NPV of net cost ${money(L.eco.npvCost)})` : ''}, capex ${money(L.eco.capex)}, carbon ${sig(L.carbon.locationG)} g/kWh (location-based${settings.carbonMetric === 'market' ? `; market-based ${sig(L.carbon.marketG)} g/kWh` : settings.carbonMetric === 'cfe' ? `; hourly CFE ${Math.round(L.carbon.cfePct * 100)} %` : ''}), ${ttp}.`),
+      ...(planPart ? planPart.sentences : []),
       adequate(L) ? null : req('No option serves the load in every hour; it is the best-scoring of those that do not.'),
       range,
-    ], more);
+    ], [...(planPart ? planPart.more : []), ...more]);
   }
 
   // 2. Why it leads, and 3. what it gives up.

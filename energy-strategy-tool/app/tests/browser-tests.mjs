@@ -225,7 +225,9 @@ await check('B1. Tab order from the top of the page (no skip link): stops before
   const { ctx, page, errors, loadS } = await openPage();
   let presses = 0, toResults = null, toTabs = null, toChart = null, panelStops = 0, invisible = 0, skipStops = 0;
   const seen = [];
-  while (presses < 400 && toChart == null) {
+  // The bound is a stop for the loop, not a target: the inputs panel has about 365 stops since the realism rebuild
+  // added its inputs (2026-11-11), and two skip links pass it.
+  while (presses < 600 && toChart == null) {
     await page.keyboard.press('Tab');
     presses++;
     const a = await active(page);
@@ -1553,6 +1555,56 @@ await check('B41. Phone version (owner 2026-10-30): the hosted page inside a hos
     await ctx.close();
     try { unlinkSync(hostFile); } catch { /* ignore */ }
   }
+});
+
+await check('B44. Realism rebuild (owner 2026-11-11, OPEN-QUESTIONS 247 to 254): the header says what the leader powers against the plan; the Options tab opens with the plan check (a row per building, the country rules folded); every card has a tier badge and says "On plan" or "Late", a late start with its building, months, new date and cause in words; a step-down card is labelled; the leader\'s detail has its building table and its tier; no serious or critical axe violation, light and dark', async () => {
+  const lines = [];
+  for (const colorScheme of ['light', 'dark']) {
+    const { ctx, page, errors } = await openPage({ colorScheme });
+    try {
+      const head = (await page.locator('.header-strip .hs-plan .hs-plan-long').innerText()).replace(/\s+/g, ' ');
+      ok(/\d+ of \d+ buildings · [\d,]+ MW IT · tier [ABC]/.test(head), `header: ${head}`);
+      await optionsTab(page).click();
+      await page.waitForSelector('.plan-check');
+      const pc = (await page.locator('.plan-check').innerText()).replace(/\s+/g, ' ');
+      ok(/Plan check/.test(pc) && /Latest acceptable start: 12 months/.test(pc), `plan check: ${pc.slice(0, 160)}`);
+      ok(/Standby gensets can be ready in \d{4}-\d{2}/.test(pc), 'the standby item');
+      const rows = await page.locator('.plan-check table.mini tbody tr').count();
+      ok(rows === 4, `${rows} building rows in the plan check`);
+      const cr = page.locator('.plan-check details.country-rules');
+      ok(await cr.count() === 1 && !(await cr.evaluate((d) => d.open)), 'the country rules are folded');
+      await cr.locator('summary').click();
+      const nRules = await cr.locator('li').count();
+      ok(nRules >= 3, `${nRules} country rules`);
+      const cards = page.locator('.top5-card');
+      const n = await cards.count();
+      ok(n >= 3 && n <= 5, `${n} cards`);
+      let late = 0, kinds = 0;
+      for (let k = 0; k < n; k++) {
+        const c = cards.nth(k);
+        ok(await c.locator('.badge-tier').count() >= 1, `card ${k + 1}: no tier badge`);
+        const lb = (await c.locator('.late-block').innerText()).replace(/\s+/g, ' ');
+        ok(/On plan|Late · up to \d+ months?|Not built: building/.test(lb), `card ${k + 1}: ${lb.slice(0, 80)}`);
+        if (/Late · /.test(lb)) { late++; ok(/Building \d+ starts \d+ months? late, in \d{4}-\d{2} \(planned \d{4}-\d{2}\): \S/.test(lb), `card ${k + 1}, late start in words: ${lb.slice(0, 160)}`); }
+        if (await c.locator('.tc-kind').count()) { kinds++; ok(/Step down|Stands on its own/.test(await c.locator('.tc-kind').innerText()), `card ${k + 1}: kind`); }
+      }
+      ok(kinds >= 1, 'T1 has a step-down card (three buildings on the grid alone)');
+      await cards.nth(0).locator('.tc-name').click();
+      await page.waitForSelector('.detail-realism');
+      const det = (await page.locator('.detail-realism').innerText()).replace(/\s+/g, ' ');
+      ok(/Against the plan/.test(det) && /Months late/.test(det) && /A screening view, not a planning, permitting or legal determination/.test(det), `detail: ${det.slice(0, 200)}`);
+      ok(await page.locator('.detail-realism table.mini tbody tr').count() === 4, 'four buildings in the detail');
+      if (AXE) {
+        const r = await runAxe(page, `Options with the plan check and a detail open (${colorScheme})`);
+        const bad = serious(r).map((v) => `${r.label}: ${v.impact} ${v.id} ×${v.nodes} (${v.target}) ${v.msg}`);
+        ok(bad.length === 0, bad.join(' | '));
+        lines.push(axeLine(r));
+      }
+      ok(errors.length === 0, errors.join(' | '));
+      if (colorScheme === 'light') lines.unshift(`header "${head}"; plan check with ${rows} buildings and ${nRules} country rules; ${n} cards, ${late} with a late start in words, ${kinds} labelled step down or stands on its own`);
+    } finally { await ctx.close(); }
+  }
+  return lines.join('\n      ');
 });
 
 await browser.close();

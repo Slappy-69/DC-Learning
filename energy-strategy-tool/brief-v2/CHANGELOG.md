@@ -415,3 +415,19 @@ The owner, 2026-11-08 (OPEN-QUESTIONS 245): a held plant whose permit outlook is
 ## Revision 5, records (2026-11-11): Pego review and open points
 
 Records of the 8 to 11 November review: decisions 244 and 245 (245 merged), known issue 39 (leased plant counted as firm backup in its prime role; open), OPEN-QUESTIONS 246 (open points: uncertain permits, the 9,592 vs 2,000 screening gap, issue 39, the 500 MW case). Pego results: `studies/pego-rev3/REVIEW-2026-11-11.md`. No code changed on this branch.
+
+## Revision 5, as-built notes (2026-11-11): the realism rebuild (merged into `main` 2026-11-12; owner: "Merge into main when everything is passing and ready" (2026-11-12, 09:39 local))
+
+The owner, 2026-11-11: "I want you to fix all of that above and add anything else you think it's worth it… I give you carte blanch in decision. Just make it more realistic. Also look up country new rules for DC that just came in or are planned for the future" (OPEN-QUESTIONS 247). Every decision below is Claude's, recorded in OPEN-QUESTIONS 247 to 255, and reversible. One run setting, "Realism rebuild", turns all of it off; off, the engine is the one merged on 2026-11-11 (test 77).
+
+1. §9.8 / OPEN-QUESTIONS 248: buildings start when their power and standby are ready; a building the supply can never carry is not built; each option is sized, dispatched and costed on its own dates; late starts are highlighted everywhere. Owned top-up plant is bought in step with the buildings. Bridging plant and top-up plant with nothing to do are not bought. Known issues 39 and 40 fixed.
+2. §9.8 / 249: a consent step before plant is ordered (permit, environmental impact assessment, development consent order in Great Britain); lead times of 2026 with sources.
+3. §9.9 / 250: buildability tests in three kinds (unlikely, conditions, standard consents) and tiers A, B and C; new inputs for gas capacity, the distance to a protected nature site and two ticks per nearby plant.
+4. §11, §12 / 251: the ranking in groups; fixed scales for delay and buildability; cards as strategies with a step-down ladder and a card that stands on its own; the summary keeps seven parts.
+5. §7.2, §8 / 252: generation rules R1 to R3; gas turbines as firm plant; narrower default lists.
+6. §12 / 253: the plan check and the country rules for data centres (30 rules, 16 jurisdictions; `docs/research/data-centre-rules-2026-11.md`).
+7. Principles 5 and 9 (§2) and §11 carry notes for the changes above, and for the owner's decision 244 (the resilience gate), which the rebuild builds.
+
+Limits: OPEN-QUESTIONS 255; known issues 41 to 44. Checks: Node tests 67 to 79, browser check B44; no Haiku or Opus round.
+
+Phone version (2026-11-12, OPEN-QUESTIONS 256): the owner, "Drop the phone build I don't care" (2026-11-12, 09:48 local). No longer republished.

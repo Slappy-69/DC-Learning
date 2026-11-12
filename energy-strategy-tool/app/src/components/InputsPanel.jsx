@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTag } from './Field.jsx';
 import { gridChargeData, CONDITIONAL_RATE, DC_TAX, GB_RESIDUAL, GB_FEE, IE_POLICY } from '../engine/countryrules.js';
 import { nearbyRenewables } from '../engine/renewables.js';
-import { plantCandidates, TECH_TICKS, techTicked } from '../engine/defaults.js';
+import { plantCandidates, TECH_TICKS, techTicked , realismOn } from '../engine/defaults.js';
 import { PLANT_DEFAULTS, COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
 import MapPicker from './MapPicker.jsx';
 import WeatherField from './WeatherField.jsx';
@@ -61,6 +61,8 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
         )}
         <div className="row2">
           <NumberField label="Boundary setback" unit="m" value={inputs.site.setbackM} onCommit={set('site.setbackM')} path="site.setbackM" inputs={inputs} min={0} />
+          {realismOn(inputs) ? <NumberField label="Nearest protected nature site" unit="km" value={inputs.site.natureSiteKm} onCommit={set('site.natureSiteKm')} path="site.natureSiteKm" inputs={inputs} nullable min={0}
+            hint="Distance to the nearest Natura 2000 or other protected site. Blank = not known. Used by the buildability tests for plant that runs (the nitrogen rules in the Netherlands; a habitats assessment elsewhere)." /> : null}
           <NumberField label="Height limit" unit="m" value={inputs.site.heightLimitM} onCommit={set('site.heightLimitM')} path="site.heightLimitM" inputs={inputs} min={0} />
         </div>
         <div className="row2">
@@ -203,6 +205,8 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
         <GridChargesGroup inputs={inputs} set={set} countryNow={countryNow} />
         <SelectField label="Gas available" value={inputs.utilities.gasAvailable} onCommit={set('utilities.gasAvailable')} path="utilities.gasAvailable" inputs={inputs}
           options={[['Unknown', 'Unknown'], ['Yes', 'Yes'], ['No', 'No']]} />
+        {realismOn(inputs) ? <NumberField label="Gas the network can supply" unit="MW (thermal)" value={inputs.utilities.gasCapacityMWth} onCommit={set('utilities.gasCapacityMWth')} path="utilities.gasCapacityMWth" inputs={inputs} nullable min={0}
+          hint="Blank = not confirmed: gas plant on site then carries the condition 'gas supply not confirmed'. Entered: an option whose gas plant needs more is treated as unlikely to be built." /> : null}
         <NumberField label="Gas available from" unit="months after start" value={inputs.utilities.gasDateMonths} onCommit={set('utilities.gasDateMonths')} path="utilities.gasDateMonths" inputs={inputs} min={0} />
         <NumberField label="Gas commodity price" unit="€/MWh_th" value={typeof inputs.utilities.gasPrice === 'number' ? inputs.utilities.gasPrice : null} onCommit={set('utilities.gasPrice')} path="utilities.gasPrice" inputs={inputs} nullable min={0}
           placeholder={`${COUNTRIES[countryNow].gas} (country default)`} hint={`Empty = the ${COUNTRIES[countryNow].name} default, ${COUNTRIES[countryNow].gas} €/MWh_th; the gas transport adder is added either way.`} />
@@ -308,6 +312,18 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
         <NumberField label="Backup gensets as primary power" unit="h/yr" value={inputs.requirements.gensetPrimaryHours} onCommit={set('requirements.gensetPrimaryHours')} path="requirements.gensetPrimaryHours" inputs={inputs} min={0} max={8760}
           hint="0 = gensets never run in normal dispatch. Above 0: they run in the most expensive grid-price hours of each year, and their fuel, carbon and run hours are costed." />
         <NumberField label="Max annual run-hours, on-site combustion" unit="h/yr" value={inputs.requirements.maxRunHours} onCommit={set('requirements.maxRunHours')} path="requirements.maxRunHours" inputs={inputs} nullable min={0} />
+        {realismOn(inputs) ? (
+          <>
+            <NumberField label="Latest acceptable start" unit="months after a building's planned date" value={inputs.requirements.lateAllowanceM} onCommit={set('requirements.lateAllowanceM')} path="requirements.lateAllowanceM" inputs={inputs} min={0}
+              hint="Buildings start when their power and standby are ready. An option that starts any building later than this ranks below every option that does not; it stays in the list with a red Late badge. 0 = no late start accepted." />
+            <div className="field-row">
+              <NumberField label="Consent allowance: environmental assessment" unit="months" value={inputs.requirements.eiaAllowanceM} onCommit={set('requirements.eiaAllowanceM')} path="requirements.eiaAllowanceM" inputs={inputs} min={0}
+                hint={`Running plant of ${inputs.requirements.eiaMWth} MW of heat or more waits this long before it is ordered.`} />
+              <NumberField label="Consent allowance: development consent order (England)" unit="months" value={inputs.requirements.dcoAllowanceM} onCommit={set('requirements.dcoAllowanceM')} path="requirements.dcoAllowanceM" inputs={inputs} min={0}
+                hint={`Great Britain only: generating plant above ${inputs.requirements.dcoMWe} MW on site waits this long before it is ordered.`} />
+            </div>
+          </>
+        ) : null}
 
         <fieldset className="weights">
           <legend>Weights <span className="legend-note">(effective weight = raw ÷ Σ raw)</span></legend>
@@ -317,7 +333,7 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
                 aria-pressed={Object.keys(PRESETS[p]).every((k) => PRESETS[p][k] === inputs.weights[k])}>{p}</button>
             ))}
           </div>
-          {[['cost', 'Cost'], ['carbon', 'Carbon'], ['ttp', 'Time-to-power'], ['deliverability', 'Deliverability']].map(([k, l]) => (
+          {[['cost', 'Cost'], ['carbon', 'Carbon'], ['ttp', realismOn(inputs) ? 'Delay against plan' : 'Time-to-power'], ['deliverability', realismOn(inputs) ? 'Buildability' : 'Deliverability']].map(([k, l]) => (
             <WeightSlider key={k} k={k} label={l} raw={inputs.weights[k]} eff={w[k]} inputs={inputs} onChange={(v) => update(`weights.${k}`, v)} />
           ))}
           {equal ? <p className="notice" role="status">All weights are 0, so equal weights (25 % each) are used.</p> : null}
@@ -339,6 +355,8 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
           options={[['lcoe', 'LCOE'], ['npv', 'NPV of net cost']]} />
         <SelectField label="Carbon axis metric" value={inputs.settings.carbonMetric} onCommit={set('settings.carbonMetric')} path="settings.carbonMetric" inputs={inputs}
           options={[['location', 'Location-based'], ['market', 'Market-based'], ['cfe', '1 − hourly CFE %']]} />
+        <ToggleField label="Realism rebuild (11 November 2026)" checked={realismOn(inputs)} onCommit={set('settings.realism')} path="settings.realism" inputs={inputs}
+          hint="On: buildings start when their power and standby are ready (late starts are shown), plant is bought in step with the need, the consent step and the 2026 lead times set the programme, every option gets buildability tests and a tier (A, B or C), and options that are likely to be built rank first. Off: the engine as merged on 11 November 2026." />
         <ToggleField label="Rank requirement-compliant options first" checked={inputs.settings.rankCompliantFirst} onCommit={set('settings.rankCompliantFirst')} path="settings.rankCompliantFirst" inputs={inputs}
           hint={'Off by default. On: options whose resilience is "Does not meet" rank after the others; no score changes. Site fit does not count (Site tab is Beta).'} />
         <SelectField label="Client-perceived risk of pooled backup" value={inputs.deliverability.pooledBackupRisk} onCommit={set('deliverability.pooledBackupRisk')} path="deliverability.pooledBackupRisk" inputs={inputs}

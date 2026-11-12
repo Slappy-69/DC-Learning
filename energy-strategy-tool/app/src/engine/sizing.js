@@ -2,12 +2,18 @@
 // and plain sizing sentences. Every option is sized by the same rules before any check.
 // The grid connection is the offered capacity per period and is never resized.
 
-import { TECH, COOLING_ID, SPATIAL, choiceLabel, renewPlants } from './defaults.js';
+import { TECH, COOLING_ID, SPATIAL, choiceLabel, renewPlants, realismOn, plantTwin } from './defaults.js';
 import { parseRenewValue, renewLabel } from './renewplants.js';
 import { designDemandByMonth, demandYear, designDayPUE, contractedCap, ctxFor } from './context.js';
 import { NA } from './generator.js';
 import { permittingTriggers, permitRegimes, permitOutlookItem } from './permitting.js';
 import { triggerSet } from './triggers.js';
+import { bridgeActive, bridgeMWAt, primeMWAt } from './supply.js';
+import { energise } from './energise.js';
+import { consentFacts, consentFor } from './programme.js';
+import { energisedCtx } from './context.js';
+
+export { bridgeActive, bridgeMWAt, primeMWAt };
 
 const r1 = (x) => (Math.abs(x) >= 100 ? x.toFixed(0) : x.toFixed(1));
 
@@ -43,7 +49,7 @@ export function fuelAvailMonth(ctx, fuel) {
 }
 
 const BRIDGE_TECH = { gasRecip: 'gasRecip', gasTurbine: 'gasTurbine', fuelCell: 'fuelCell', dieselPrime: 'dieselPrime', rented: 'rented', existing: 'existing' };
-const PRIME_TECH = { chp: 'chp', gasRecip: 'gasRecip', fuelCell: 'fuelCell', smr: 'smr', hydrogen: 'hydrogen', existing: 'existing' };
+const PRIME_TECH = { chp: 'chp', gasRecip: 'gasRecip', gasTurbine: 'gasTurbine', fuelCell: 'fuelCell', smr: 'smr', hydrogen: 'hydrogen', existing: 'existing' };
 // Existing plant (work package 12): exactly the units entered, no redundancy added. A plant from the bundled list
 // (work package 19, capUnits): the units the need takes, up to the plant's units, no redundancy added.
 const fixedNote = (t) => (!t.existingPlant ? '' : t.capUnits
@@ -82,16 +88,69 @@ function unitsWithRedundancy(n, topology, blockSize, catcherN) {
   }
 }
 
+// Size an option. With the realism rebuild on (OPEN-QUESTIONS 248) the option is sized on the plan, its buildings are
+// then started when their power and standby are ready (energise.js), and, if any building moves or is not built, the
+// option is sized again on its own dates, so that no plant is bought for load that is not there.
 export function sizeOption(ctx, v) {
-  ctx = ctxFor(ctx, v); // work package 19: a taken-over grid connection
+  const base = ctxFor(ctx, v); // work package 19: a taken-over grid connection
+  let sz = sizeOn(base, v);
+  if (!realismOn(base.inputs) || base.energise) return sz;
+  const first = sz;
+  let dropped = null;
+  let en = energise(base, v, sz, null);
+  for (let pass = 0; en.shifted && pass < 4; pass++) {
+    sz = sizeOn(energisedCtx(base, en), v);
+    // The dates are checked against the plant as now sized; a building can only move later.
+    const chk = energise(base, v, sz, en.starts);
+    if (chk.key === en.key) break;
+    en = chk;
+  }
+  // Bridging duty (OPEN-QUESTIONS 248): bridging plant is sized for the largest gap before the grid, but it may be
+  // ready only after part of that gap has passed, or a firm plant may already carry it. The option is sized once more
+  // with the bridging plant's own ready month; if the building dates still hold, the smaller plant stands.
+  if (v.C1 === 'bridge' && sz.bridge && sz.bridge.units > 0 && sz.bridge.shortfallMW > 0) {
+    const used = en.shifted ? energisedCtx(base, en) : base;
+    const ready = Math.max(sz.bridge.earliestMonth ?? sz.bridge.availMonth, sz.bridge.fuelMonth === Infinity ? 0 : sz.bridge.fuelMonth);
+    const lean = sizeOn(used, v, { bridgeFrom: ready });
+    if ((lean.bridge ? lean.bridge.units : 0) < sz.bridge.units) {
+      const chk = energise(base, v, lean, en.starts);
+      if (chk.key === en.key) {
+        if (!(lean.bridge && lean.bridge.shortfallMW > 0)) dropped = { tech: sz.bridge.tech, units: sz.bridge.units, mw: sz.bridge.mw, readyMonth: ready, gridMonth: sz.T, reason: ready >= sz.T ? 'late' : 'covered' };
+        sz = lean; en = chk;
+      }
+    }
+  }
+  sz.energise = en;
+  // Bridging plant that could not be ready before the grid: on the option's own dates there is nothing left to
+  // bridge, so the bridging share is not bought (the share kept as prime, if any, still is). The option says so.
+  const sized = (x) => (x.bridge ? x.bridge.units : 0) + (x.bridgeBess ? x.bridgeBess.mw : 0);
+  if (!dropped && v.C1 === 'bridge' && first !== sz && first.bridge && first.bridge.shortfallMW > 0 && !(sz.bridge && sz.bridge.shortfallMW > 0) && sized(first) > sized(sz)) {
+    dropped = { tech: first.bridge.tech, units: first.bridge.units, mw: first.bridge.mw, readyMonth: first.bridge.availMonth, gridMonth: first.T, reason: 'late' };
+  }
+  // A bridging choice with nothing to bridge from the first sizing (a grid connection taken over early, or a grid that
+  // already carries the ramp): no bridging plant is sized or bought, and the option's name says so.
+  if (!dropped && v.C1 === 'bridge' && !(sz.bridge && sz.bridge.units > 0) && !(sz.bridgeBess && sz.bridgeBess.mw > 0)) {
+    sz.bridgeDropped = { tech: v.C2, units: 0, mw: 0, readyMonth: null, gridMonth: sz.T, reason: 'none' };
+  }
+  if (dropped) {
+    sz.bridgeDropped = dropped;
+    sz.sentences.push(dropped.reason === 'late'
+      ? `${TECH[dropped.tech].name} as bridging plant (${dropped.units} units, ${r1(dropped.mw)} MW) could be ready in month ${dropped.readyMonth}, not before the grid (month ${dropped.gridMonth}): there is nothing left for it to bridge, so the bridging share is not bought.`
+      : `${TECH[dropped.tech].name} as bridging plant (${dropped.units} units, ${r1(dropped.mw)} MW) has nothing to bridge from the month it is ready (month ${dropped.readyMonth}): the firm plant already carries the load before the grid. The bridging share is not bought.`);
+  }
+  return sz;
+}
+
+function sizeOn(ctx, v, hint = null) {
   const inputs = ctx.inputs;
+  const R = realismOn(inputs);
   const L = inputs.load;
   const req = inputs.requirements;
   const sentences = [];
   const coolingId = COOLING_ID; // one hourly PUE profile since work package 20
   const cp = ctx.cooling[coolingId];
   const { arr: designByMonth, peakPUE } = designDemandByMonth(ctx, coolingId);
-  const itMW = L.itMW;
+  const itMW = ctx.itPowered ?? L.itMW; // the IT the option powers (energise.js), or the whole campus
   const designMW = itMW * (peakPUE + L.ancillaryFrac);
   const basisWord = 'dry-bulb';
   const cfTxt = (L.coolingFactor ?? 1) !== 1 ? `, overhead × ${L.coolingFactor}` : '';
@@ -131,8 +190,12 @@ export function sizeOption(ctx, v) {
   const fullMW = inputs.grid.fullMW;
   const band = voltageBand(ctx, fullMW);
 
+  // The plant entered by hand, when it is also in the bundled list: the list plant's id (for the strategy cards).
+  const tw = R ? plantTwin(inputs) : null;
+  const twin = tw && [v.C2, v.C4].some((x) => x === 'existing' || x === 'xb:manual') ? tw.list.id : null;
   // --- Firm prime (C4) ---
   let prime = null;
+  let topUpDropped = null;
   if (v.C4 !== 'none') {
     const t = primeTech(v.C4);
     const avail = techAvailMonth(ctx, t);
@@ -146,6 +209,12 @@ export function sizeOption(ctx, v) {
         const s = designByMonth[m] - (v.C1 === 'islanded' ? 0 : gridByMonth[m]);
         if (s > S) { S = s; sM = m; }
       }
+      if (R && v.C1 !== 'islanded' && S <= 1e-6) {
+        // Realism rebuild (OPEN-QUESTIONS 248): nothing to top up on this option's grid (a connection taken over can
+        // close the shortfall). Before, one unit and its spare were bought all the same.
+        topUpDropped = { tech: t.id };
+        sentences.push(`${t.name} (firm top-up): no permanent shortfall on this option's grid (it carries the design load from month ${T0}), so no top-up plant is bought.`);
+      } else {
       const fixed = t.existingPlant ? plantUnits(t, Math.ceil(S / t.p.unitMW - 1e-9)) : 0;
       const n = fixed || Math.max(1, Math.ceil(S / t.p.unitMW - 1e-9));
       const extra = fixed ? 0 : Math.ceil(n / req.blockSize);
@@ -154,6 +223,7 @@ export function sizeOption(ctx, v) {
       sentences.push(fixed
         ? `${t.name} (firm top-up): permanent shortfall ${r1(S)} MW${sM >= 0 ? ` in month ${sM}` : ''}; ${units} × ${t.p.unitMW} MW = ${r1(prime.mw)} MW${fixedNote(t)}${prime.mw + 1e-9 < S ? `, ${r1(S - prime.mw)} MW less than the shortfall` : ''}.`
         : `${t.name} (firm top-up): ${v.C1 === 'islanded' ? `design load ${r1(S)} MW (islanded)` : `permanent shortfall (design load − full grid capacity, from month ${T0}) ${r1(S)} MW${sM >= 0 ? ` in month ${sM}` : ''}`} ÷ ${t.p.unitMW} MW = ${n} units + N+1 per block of ${req.blockSize} (+${extra}) = ${units} units (${r1(prime.mw)} MW).`);
+      }
     } else {
       const frac = v.C4 === 'chp' ? t.p.sizeFraction : 1.0;
       const target = frac * avgMW;
@@ -177,9 +247,14 @@ export function sizeOption(ctx, v) {
     let S = 0;
     let sMonth = -1;
     const horizon = v.C1 === 'islanded' ? ctx.nMonthsTimeline : Math.min(T, ctx.nMonthsTimeline);
-    for (let m = 0; m < Math.max(horizon, 1); m++) {
+    // Realism rebuild (OPEN-QUESTIONS 248), second pass only: the bridging duty is the gap in the months the plant
+    // can serve (from hint.bridgeFrom, the month it is ready), less the firm plant already on line. Bridging units
+    // with nothing to bridge are not bought.
+    const dutyFrom = hint && hint.bridgeFrom != null && v.C1 === 'bridge' ? Math.max(0, hint.bridgeFrom) : 0;
+    const primeOn = (m) => (hint && hint.bridgeFrom != null && prime && prime.fuelMonth !== Infinity && m >= (prime.earliestMonth ?? prime.availMonth) && m >= prime.fuelMonth ? prime.mw : 0);
+    for (let m = dutyFrom; m < Math.max(horizon, 1); m++) {
       const cap = v.C1 === 'islanded' ? 0 : gridByMonth[m];
-      const s = Math.max(0, designByMonth[m] - cap);
+      const s = Math.max(0, designByMonth[m] - cap - primeOn(m));
       if (s > S) { S = s; sMonth = m; }
     }
     if (v.C1 === 'islanded') S = Math.max(S, designMW);
@@ -263,9 +338,13 @@ export function sizeOption(ctx, v) {
     if (v.C1 === 'bridge' && v.C3 === 'split' && v.C2 !== 'bessSolar') {
       const t = bridgeTech(v.C2);
       let SP = 0, spM = -1;
-      for (let m = Math.max(0, T); m < ctx.nMonthsTimeline; m++) { const s = designByMonth[m] - gridByMonth[m]; if (s > SP) { SP = s; spM = m; } }
+      // Realism rebuild (OPEN-QUESTIONS 248): the kept share is what the firm plant leaves uncovered (before, the firm
+      // plant was ignored, so a leased plant and the kept share both covered the same shortfall).
+      const primeEnd = prime ? plantEndMonth(ctx, TECH[prime.tech]) : 0;
+      const primeAt = (m) => (R && prime && prime.fuelMonth !== Infinity && m < primeEnd ? prime.mw : 0);
+      for (let m = Math.max(0, T); m < ctx.nMonthsTimeline; m++) { const s = designByMonth[m] - gridByMonth[m] - primeAt(m); if (s > SP) { SP = s; spM = m; } }
       const nP = Math.ceil(SP / t.p.unitMW - 1e-9);
-      const keep = t.existingPlant ? plantUnits(t, nP) : nP + Math.ceil(nP / req.blockSize);
+      const keep = nP <= 0 ? 0 : t.existingPlant ? plantUnits(t, nP) : nP + Math.ceil(nP / req.blockSize);
       if (!bridge) bridge = { role: 'bridge', tech: t.id, mw: 0, units: 0, nUnits: 0, unitMW: t.p.unitMW, availMonth: techAvailMonth(ctx, t), fuelMonth: fuelAvailMonth(ctx, t.fuel), shortfallMW: 0, shortfallMonth: -1 };
       if (keep > bridge.units) {
         sentences.push(`Bridging ${t.name} enlarged to its kept share: ${keep} units (${r1(keep * t.p.unitMW)} MW) cover the permanent shortfall, more than the ${bridge.units} units sized for bridging.`);
@@ -408,16 +487,24 @@ export function sizeOption(ctx, v) {
 
   // --- Programme: ordered from day one; permitting allowance only under the IED or Seveso (OPEN-QUESTIONS 44, 45, 56) ---
   const permits = permittingTriggers({ prime, bridge, backup }, v, req);
+  const cFacts = R ? consentFacts({ prime, bridge }) : null;
   for (const p of [prime, bridge]) {
     if (!p) continue;
     const t = TECH[p.tech];
     p.permitRegimes = permitRegimes(p, permits);
     p.permitM = p.permitRegimes.length ? req.permitAllowanceM : 0;
+    // Realism rebuild (OPEN-QUESTIONS 249): the consent step by size and country (programme.js).
+    const cs = R ? consentFor(ctx, p, p.permitRegimes, cFacts) : null;
+    if (cs) {
+      p.consent = cs; p.permitM = cs.months;
+      for (const st of cs.steps) if ((st.id === 'EIA' || st.id === 'DCO') && !p.permitRegimes.includes(st.id)) p.permitRegimes.push(st.id);
+    }
     p.availMonth = techAvailMonth(ctx, t, p.permitM);
     const steps = t.existingPlant
       ? `${t.plantKey === 'manual' ? 'the date entered for the existing plant' : 'an existing plant, available now'} (${t.p.planM}`
       : t.ownConsent
       ? `${t.p.planM} planning and consent + ${t.p.procM} procurement + ${t.p.buildM} construction`
+      : cs && cs.months ? `${cs.months} of consent (${cs.steps.map((x) => x.text).join('; ')}) + ${t.p.procM} procurement + ${t.p.buildM} construction`
       : `${p.permitM ? `${p.permitM} permitting allowance (${p.permitRegimes.join(', ')}) + ` : 'ordered from day one: '}${t.p.procM} procurement + ${t.p.buildM} construction`;
     const early = t.p.earliestYear && p.availMonth > programmeMonths(t, p.permitM) ? `, not before ${t.p.earliestYear}` : '';
     sentences.push(`${t.name} (${p.role === 'prime' ? (p.sizing === 'shortfall' ? 'firm top-up' : 'firm prime') : 'bridging'}) available from month ${p.availMonth}: ${steps} months${t.existingPlant ? ')' : ''}${early}${p.fuelMonth === Infinity ? '; fuel not available at current inputs, so it does not run' : p.fuelMonth > p.availMonth ? ` (fuel from month ${p.fuelMonth})` : ''}.`);
@@ -513,6 +600,50 @@ export function sizeOption(ctx, v) {
     bp.availMonth = techAvailMonth(ctx, bt, bp.permitRegimes.length ? req.permitAllowanceM : 0);
     const it = permitOutlookItem(bp, ctx.country, loadM);
     if (it) permitOutlook.push(it);
+    if (R) { backup.availMonth = bp.availMonth; backup.permitRegimes = bp.permitRegimes; }
+  }
+  // Realism rebuild (OPEN-QUESTIONS 248): the month the standby plant of the first building is ready; no building
+  // starts before it. Gensets: their programme (with BESS-augmented UPS, the battery's too). Retained bridging plant:
+  // when that plant can first be on site. No backup: no wait (the option fails the resilience check instead).
+  let standbyReadyM = 0;
+  if (R) {
+    // Gensets chosen but none needed (retired bridging plant covers the critical load): the wait is for that plant.
+    const covered = backup.tech && !(backup.units > 0) && !(backup.bessMW > 0) && bridge && bridge.units > 0;
+    if (backup.tech && !covered) standbyReadyM = backup.units > 0 || backup.bessMW > 0 ? Math.max(backup.availMonth || 0, backup.bessMW > 0 ? techAvailMonth(ctx, TECH.bess) : 0) : 0;
+    else if (covered) standbyReadyM = bridge.earliestMonth ?? bridge.availMonth;
+    else if (v.C5 === 'retained') standbyReadyM = v.C2 === 'bessSolar' ? bridgeBess.availMonth : bridge ? (bridge.earliestMonth ?? bridge.availMonth) : 0;
+  }
+  // Realism rebuild (OPEN-QUESTIONS 248): an owned top-up plant is bought in step with the need: the units the
+  // shortfall needs, a ramp ahead of the load, never before the plant can be ready. Before, the whole plant was bought
+  // at its earliest date, years before the load, while a leased plant started a month before it was needed.
+  if (R && prime && prime.sizing === 'shortfall' && !TECH[prime.tech].existingPlant && !TECH[prime.tech].lease && prime.units > 0) {
+    // One step per building: when a building starts, the units in place cover the largest shortfall up to the start
+    // of the next building (the last building: to the end of the timeline). With bridging plant, from the full grid
+    // date (the bridge covers before); otherwise from the start, so the plant carries what it can as soon as it is ready.
+    const from = v.C1 === 'bridge' ? Math.max(0, T) : 0;
+    const last = ctx.nMonthsTimeline - 1;
+    const needAt = (m) => Math.max(0, designByMonth[m] - (v.C1 === 'islanded' ? 0 : gridByMonth[m]));
+    const steps = [];
+    let have = 0, run = 0, m0 = from;
+    const ph = ctx.phases;
+    for (let k = 0; k < ph.length && have < prime.units; k++) {
+      const end = k + 1 < ph.length ? Math.min(last, ph[k + 1].m - 1) : last;
+      for (let m = m0; m <= end; m++) run = Math.max(run, needAt(m));
+      m0 = Math.max(m0, end + 1);
+      const n = run > 1e-9 ? Math.ceil(run / prime.unitMW - 1e-9) : 0;
+      const want = Math.min(prime.units, n > 0 ? n + Math.ceil(n / req.blockSize) : 0);
+      if (want > have) {
+        const month = Math.max(ph[k].m, from, prime.availMonth);
+        const lastStep = steps[steps.length - 1];
+        if (lastStep && lastStep.month === month) lastStep.units += want - have; else steps.push({ month, units: want - have, building: k + 1 });
+        have = want;
+      }
+    }
+    if (have < prime.units) { const month = Math.max(ph.length ? ph[ph.length - 1].m : 0, from, prime.availMonth); const ls = steps[steps.length - 1]; if (ls && ls.month === month) ls.units += prime.units - have; else steps.push({ month, units: prime.units - have, building: ph.length }); }
+    if (steps.length > 1 || (steps.length === 1 && steps[0].month > prime.availMonth)) {
+      prime.steps = steps;
+      sentences.push(`${TECH[prime.tech].name} bought in step with the need: ${steps.map((x) => `${x.units} unit${x.units === 1 ? '' : 's'} in month ${x.month}`).join(', ')}.`);
+    }
   }
 
   // --- Area budget (site areas, land take). Ground solar is sized from the ground area for PV the engineer
@@ -620,7 +751,7 @@ export function sizeOption(ctx, v) {
   const firmByMonth = new Float64Array(ctx.nMonths);
   for (let m = 0; m < ctx.nMonths; m++) {
     let f = 0;
-    if (prime && m >= prime.availMonth && m >= prime.fuelMonth && m < (prime.endMonth ?? Infinity)) f += prime.mw;
+    if (prime && m >= prime.availMonth && m >= prime.fuelMonth && m < (prime.endMonth ?? Infinity)) f += primeMWAt(prime, m);
     if (bridge && m >= bridge.availMonth && m >= bridge.fuelMonth && m < (bridge.endMonth ?? Infinity)) f += bridgeMWAt(v, m, T, bridge);
     firmByMonth[m] = f;
   }
@@ -700,22 +831,8 @@ export function sizeOption(ctx, v) {
     sentences,
     T,
     rejectedMW,
+    ...(R ? { standbyReadyM, consentFacts: cFacts, ...(topUpDropped ? { topUpDropped } : {}), ...(twin ? { plantTwin: twin } : {}) } : {}),
   };
-}
-
-// Bridging plant MW running in month m (before availability and fuel checks): the whole plant while bridgeActive; the
-// kept share after the full grid date for C3 = Keep shortfall share as prime (OPEN-QUESTIONS 59).
-export function bridgeMWAt(v, m, T, bridge) {
-  if (bridgeActive(v, m, T)) return bridge.mw;
-  if (v.C1 === 'bridge' && v.C3 === 'split' && m >= T) return bridge.primeMW || 0;
-  return 0;
-}
-
-export function bridgeActive(v, m, T) {
-  if (v.C1 === 'islanded') return true;
-  if (v.C1 !== 'bridge') return false;
-  if (m < T) return true;
-  return v.C3 === 'prime';
 }
 
 // Dispatch mode per month: 0 = off/unavailable, 1 = economic + cover grid shortfall, 2 = must-run serving all residual load.
@@ -730,9 +847,15 @@ function makePlant(ctx, s, v, role, T) {
     else if (role === 'bridgeKept') { if (m >= T) mode[m] = 1; }
     else if (bridgeActive(v, m, T)) mode[m] = 1;
   }
-  return {
+  const out = {
     role, tech: s.tech, mw: s.mw, unitMW: s.unitMW, msl: t.p.msl || 0, eff: t.p.eff || 1, fuel: t.fuel || null, endMonth: s.endMonth ?? Infinity,
     mode,
   };
+  // Firm plant bought in step with the need (realism rebuild): the MW in place month by month.
+  if (role === 'prime' && s.steps) {
+    out.mwByMonth = new Float64Array(ctx.nMonths); for (let m = 0; m < ctx.nMonths; m++) out.mwByMonth[m] = primeMWAt(s, m);
+    out.stepKey = s.steps.map((x) => `${x.month}:${x.units}`).join(','); out.lastStepM = s.steps[s.steps.length - 1].month;
+  }
+  return out;
 }
 

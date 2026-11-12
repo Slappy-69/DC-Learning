@@ -4,6 +4,8 @@
 // "Hide dominated options" and brushing are applied AFTER scoring in applyView() and never
 // change any score or rank.
 
+import { realismOn } from './defaults.js';
+
 export function effectiveWeights(raw) {
   const keys = ['cost', 'carbon', 'ttp', 'deliverability'];
   const sum = keys.reduce((s, k) => s + Math.max(0, Number(raw[k]) || 0), 0);
@@ -39,10 +41,20 @@ export function scoreOptions(options, inputs, opts = {}) {
   const { w, equal } = effectiveWeights(inputs.weights);
   const keys = SCORE_KEYS;
   for (const o of options) o.metrics = axisMetrics(o, inputs.settings);
+  // Realism rebuild (OPEN-QUESTIONS 251): the rank keys of every option, and the axis scales taken over the options
+  // that can lead (the best group), so that an option that could never lead no longer stretches a scale.
+  const R = realismOn(inputs) && options.some((o) => o.deliv && o.deliv.buildability);
+  let scaleSet = options;
+  if (R) {
+    let best = -Infinity;
+    for (const o of options) { o.rankKeys = rankKeys(o, inputs); o.groupRank = groupValue(o.rankKeys); if (o.groupRank > best) best = o.groupRank; }
+    scaleSet = options.filter((o) => o.groupRank === best);
+    for (const o of options) o.rankNote = o.groupRank === best ? null : rankNote(o.rankKeys, scaleSet[0].rankKeys, inputs);
+  }
   const range = {};
   for (const k of keys) {
     let lo = Infinity, hi = -Infinity;
-    for (const o of options) {
+    for (const o of scaleSet) {
       const x = o.metrics[k];
       if (!Number.isFinite(x)) continue;
       if (x < lo) lo = x;
@@ -50,20 +62,82 @@ export function scoreOptions(options, inputs, opts = {}) {
     }
     range[k] = { lo, hi };
   }
+  if (R) {
+    // The delay and buildability axes are scored on fixed scales, not on the spread of the run (min to max over a
+    // narrow spread made three months on one building of nine worth as much as €28/MWh at Pego): no delay = 100 and an
+    // average delay equal to the latest acceptable start = 0; the buildability score is used as it is.
+    range.ttp = { lo: 0, hi: Math.max(0, (inputs.requirements && inputs.requirements.lateAllowanceM) ?? 12), fixed: true };
+    range.deliverability = { lo: 0, hi: 100, fixed: true };
+  }
   for (const o of options) {
     o.axisScores = {};
-    let ws = 0;
+    let ws = 0, wr = 0;
     for (const k of keys) {
       const { lo, hi } = range[k];
-      const s = axisScore(k, o.metrics[k], lo, hi);
+      // Outside the leading group's scale an option is shown at the ends (0 or 100); the order inside the groups below
+      // the leading one uses the score before it is held there, so the cheapest of them still comes first.
+      const raw = axisScore(k, o.metrics[k], lo, hi);
+      const s = R ? Math.max(0, Math.min(100, raw)) : raw;
       o.axisScores[k] = s;
-      ws += w[k] * s;
+      ws += w[k] * s; wr += w[k] * raw;
     }
     o.score = ws;
+    if (R) o.orderScore = wr;
   }
   if (!opts.keepDominance) markDominance(options);
-  rankOptions(options, inputs.settings.rankCompliantFirst);
-  return { weights: w, equalWeightsUsed: equal, ranges: range, scope: options.length };
+  if (R) rankRealism(options); else rankOptions(options, inputs.settings.rankCompliantFirst);
+  return { weights: w, equalWeightsUsed: equal, ranges: range, scope: options.length, ...(R ? { realism: true, scaleScope: scaleSet.length } : {}) };
+}
+
+// ---------------------------------------------------------------------------
+// Realism rebuild (2026-11-11, OPEN-QUESTIONS 251): what is ranked first.
+//   1. Power adequacy (owner, 2026-10-22): an option that serves every hour ranks above one that does not.
+//   2. Buildability: tier A and B rank above tier C ("unlikely to be built as it stands").
+//   3. Resilience (owner, 2026-11-08, row 244): "Does not meet" ranks below the others.
+//   4. IT delivered: more powered IT first (the tool's main question is the strategy that maximises the IT load).
+//   5. The latest acceptable start (owner, 2026-11-11): every building within the allowance first.
+//   6. The weighted score.
+// Scores never change with the keys. Nothing is hidden: an option that ranks below says why (o.rankNote).
+// ---------------------------------------------------------------------------
+export function rankKeys(o, inputs) {
+  const sz = o.sizing || o.sz || null;
+  const en = sz && sz.energise ? sz.energise : null;
+  const res = o.resilience || o.res || null;
+  const allow = (inputs.requirements && inputs.requirements.lateAllowanceM) ?? 12;
+  return {
+    adequate: !(o.adequacy && o.adequacy.adequate === false),
+    likely: !(o.deliv && o.deliv.tier === 'C'),
+    resilient: !(res && res.status === 'Does not meet'),
+    poweredIT: en ? en.poweredIT : sz ? sz.itMW : 0,
+    onTime: !en || en.maxLate <= allow,
+  };
+}
+// One number per group, higher is better (the keys in order).
+export function groupValue(k) {
+  return (k.adequate ? 4e9 : 0) + (k.likely ? 2e9 : 0) + (k.resilient ? 1e9 : 0) + Math.min(9.9e7, Math.round(k.poweredIT * 100)) * 10 + (k.onTime ? 1 : 0);
+}
+// The group of an option or of a re-run option (option.js evaluateOption), for the modules that rebuild the order
+// (breakeven, Monte Carlo, summary). Before the rebuild: compliance, when "rank requirement-compliant options first" is on.
+export function groupRank(o, inputs) {
+  if (realismOn(inputs) && o.deliv && o.deliv.buildability) return groupValue(rankKeys(o, inputs));
+  const res = o.resilience || o.res || null;
+  return inputs.settings && inputs.settings.rankCompliantFirst ? (res && res.status === 'Does not meet' ? 0 : 1) : 0;
+}
+function rankNote(k, best, inputs) {
+  const allow = (inputs.requirements && inputs.requirements.lateAllowanceM) ?? 12;
+  if (k.adequate !== best.adequate) return 'does not serve its load in every hour';
+  if (k.likely !== best.likely) return 'unlikely to be built as it stands';
+  if (k.resilient !== best.resilient) return 'does not meet the resilience requirement';
+  if (Math.abs(k.poweredIT - best.poweredIT) > 1e-6) return `powers ${Math.round(k.poweredIT)} MW of IT; the leading options power ${Math.round(best.poweredIT)} MW`;
+  if (k.onTime !== best.onTime) return `starts a building more than ${allow} months after its planned date`;
+  return null;
+}
+function rankRealism(options) {
+  // Equal scores: the option that names no plant it does not buy comes first (a bridge that is not bought gives the
+  // figures of the same option without one), then the option code.
+  const plain = (o) => (o.sizing && o.sizing.bridgeDropped ? 1 : 0);
+  const sorted = options.slice().sort((a, b) => (b.groupRank - a.groupRank) || (b.orderScore - a.orderScore) || (plain(a) - plain(b)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  sorted.forEach((o, i) => { o.rank = i + 1; });
 }
 
 function statusRank(o) {

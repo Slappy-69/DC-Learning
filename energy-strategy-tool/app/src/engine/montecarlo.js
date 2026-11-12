@@ -15,7 +15,7 @@ import { buildContext } from './context.js';
 import { normalizeInputs, registryValue } from './defaults.js';
 import { buildSiteModel, siteKey } from './site.js';
 import { evaluateOption } from './option.js';
-import { axisMetrics, axisScore, SCORE_KEYS } from './scoring.js';
+import { axisMetrics, axisScore, SCORE_KEYS, groupRank } from './scoring.js';
 import { TORNADO_DRIVERS } from './sensitivity.js';
 import { driverBase } from './breakeven.js';
 import { representativeHours } from './dispatch.js';
@@ -128,7 +128,7 @@ export function* monteCarloSteps(run, { site = null, samples = mcSamples(), nOpt
     for (const o of opts) {
       const e = evaluateOption(ctx, o.v, { rep, skipLayout });
       const m = axisMetrics({ eco: e.eco, carbon: e.carb, ttp: e.ttp, deliv: e.deliv }, settings);
-      const r = { o, line: lineScore(m), adequate: e.adequacy ? e.adequacy.adequate !== false : true, compliant: !(e.res && e.res.status === 'Does not meet') };
+      const r = { o, line: lineScore(m), adequate: e.adequacy ? e.adequacy.adequate !== false : true, compliant: !(e.res && e.res.status === 'Does not meet'), group: groupRank(e, inputs) };
       const p = per.get(o.id);
       p.lcoe.push(e.eco.lcoe); p.npv.push(e.eco.npvCost); p.capex.push(e.eco.capex); p.carbon.push(e.carb.locationG);
       p.firstPowerM.push(e.ttp.firstPowerM ?? NaN); p.fullLoadM.push(e.ttp.fullLoadM ?? NaN); p.score.push(r.line);
@@ -138,12 +138,12 @@ export function* monteCarloSteps(run, { site = null, samples = mcSamples(), nOpt
       yield { done, total, label: `sample ${i + 1} of ${samples}: #${o.rank}` };
     }
     // The ranking's order in this sample: adequacy, compliance (when that setting is on), score, option code.
-    res.sort((a, b) => (b.adequate - a.adequate) || (compliantFirst ? (b.compliant - a.compliant) : 0) || (b.line - a.line) || (a.o.id < b.o.id ? -1 : 1));
+    res.sort((a, b) => (b.adequate - a.adequate) || (b.group - a.group) || (b.line - a.line) || (a.o.id < b.o.id ? -1 : 1));
     per.get(res[0].o.id).rank1++;
     for (const r of res.slice(0, 3)) per.get(r.o.id).top3++;
     // Robust: within the band of the best score among the options in the sample's first group.
     const best = res[0];
-    const head = res.filter((r) => r.adequate === best.adequate && (!compliantFirst || r.compliant === best.compliant));
+    const head = res.filter((r) => r.adequate === best.adequate && r.group === best.group);
     for (const r of head) if (r.line >= best.line - mcRobustBand() * Math.abs(best.line)) per.get(r.o.id).robust++;
     if (i < 3) firstSamples.push({ values: vals, lcoe: Object.fromEntries(opts.map((o) => [o.id, per.get(o.id).lcoe[i]])), score: Object.fromEntries(opts.map((o) => [o.id, per.get(o.id).score[i]])), order: res.map((r) => r.o.id) });
     if ((i + 1) % every === 0 && i + 1 < samples) yield { done, total, label: `sample ${i + 1} of ${samples}`, partial: summarise(i + 1) };

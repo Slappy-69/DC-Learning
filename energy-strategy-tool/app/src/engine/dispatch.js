@@ -112,7 +112,7 @@ function ppaShape(ctx, type, Dyear) {
 
 // Build the dispatch configuration from sizing: everything the hourly loop needs.
 export function dispatchConfig(ctx, v, sz) {
-  ctx = ctxFor(ctx, v); // work package 19: a taken-over grid connection
+  ctx = ctxFor(ctx, v, sz); // the option's own context: a taken-over grid connection (work package 19), its own building dates (realism rebuild)
   const inputs = ctx.inputs;
   // Supply available month of each renewable source (sizing.js techAvailMonth: ordered from day one; wind and ground
   // solar keep their own consent months, OPEN-QUESTIONS 44, 56).
@@ -149,6 +149,8 @@ export function dispatchConfig(ctx, v, sz) {
   };
   // Work package 19: the option's own grid offer when it takes over a plant's connection (dispatch reads cfg.gridCap).
   if (ctx.takeover) { cfg.gridCap = ctx.gridCap; cfg.fullGridM = ctx.fullGridM; cfg.takeover = `${ctx.takeover.value}|${ctx.takeover.month}|${+ctx.takeover.mw.toFixed(6)}`; }
+  // Realism rebuild (OPEN-QUESTIONS 248): the option's own building dates. Dispatch reads the demand of cfg.octx.
+  if (ctx.energise) { cfg.octx = ctx; cfg.energise = ctx.energise.key; }
   return cfg;
 }
 
@@ -156,18 +158,21 @@ export function dispatchKey(cfg) {
   return JSON.stringify([cfg.coolingId, cfg.islanded, cfg.exportMW, cfg.exceedance, cfg.respectRunHours, cfg.maxRunHours,
     +cfg.solarMWp.toFixed(6), cfg.solarAvailM, +cfg.windMW.toFixed(6), cfg.windAvailM, +cfg.bessMW.toFixed(6), +cfg.bessMWh.toFixed(6), cfg.bessAvailM, cfg.bessRole,
     cfg.ppaType, cfg.ppaCoverage, cfg.flex, cfg.reYield, cfg.gridLimit < Infinity ? cfg.gridLimit : null,
-    cfg.plants.map((p) => [p.role, p.tech, +p.mw.toFixed(6), Array.from(p.mode).join(''), p.hourMask ? p.hourMask.count : 0]),
+    cfg.plants.map((p) => [p.role, p.tech, +p.mw.toFixed(6), Array.from(p.mode).join(''), p.hourMask ? p.hourMask.count : 0, ...(p.stepKey ? [p.stepKey] : [])]),
+    ...(cfg.energise ? [`e:${cfg.energise}`] : []),
     ...(cfg.takeover ? [cfg.takeover] : []), ...(cfg.nrMW > 0 ? [[+cfg.nrMW.toFixed(6), cfg.nrProfile, cfg.nrCF, cfg.nrGrid, cfg.nrAvailM, cfg.nrEndM]] : [])]);
 }
 
 // Which model years must be dispatched explicitly? Years after the last change repeat (steady state).
 export function dispatchYears(ctx, cfg) {
+  ctx = cfg.octx || ctx;
   const gc = cfg.gridCap || ctx.gridCap;
   let lastChangeM = Math.max(ctx.lastPhaseM + ctx.inputs.load.rampMonths, cfg.fullGridM ?? ctx.fullGridM);
   for (let m = 1; m < gc.length; m++) if (gc[m] !== gc[m - 1]) lastChangeM = Math.max(lastChangeM, m);
   for (const m of [cfg.solarAvailM, cfg.windAvailM, cfg.bessAvailM]) if (Number.isFinite(m)) lastChangeM = Math.max(lastChangeM, m);
   for (const p of cfg.plants) {
     for (let m = 1; m < p.mode.length; m++) if (p.mode[m] !== p.mode[m - 1]) lastChangeM = Math.max(lastChangeM, m);
+    if (p.lastStepM != null) lastChangeM = Math.max(lastChangeM, p.lastStepM); // firm plant bought in steps (realism rebuild)
   }
   // The first model year that starts after the last change is the steady one that repeats (known issue 1, work package 11):
   // a change mid-year leaves that year still ramping.
@@ -181,8 +186,9 @@ export function dispatchYears(ctx, cfg) {
 // Model years an option needs dispatched before nothing changes (full load, grid steps, plant changes), whatever the
 // cap: compared with dispatchYears for the "dispatch stops early" flag (known issue 17).
 export function dispatchYearsNeeded(ctx, cfg) {
-  const settings = { ...ctx.inputs.settings, maxDispatchYears: Infinity };
-  return dispatchYears({ ...ctx, inputs: { ...ctx.inputs, settings } }, cfg);
+  const c = cfg.octx || ctx;
+  const settings = { ...c.inputs.settings, maxDispatchYears: Infinity };
+  return dispatchYears({ ...c, inputs: { ...c.inputs, settings } }, cfg.octx ? { ...cfg, octx: null } : cfg);
 }
 
 function emptyYear() {
@@ -200,6 +206,7 @@ function emptyYear() {
 
 // Dispatch one model year. Returns aggregates and (optionally) hourly arrays.
 export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
+  ctx = cfg.octx || ctx;
   const dem = demandYear(ctx, cfg.coolingId, y);
   const { D, M, IT } = dem;
   const p = ctx.prof;
@@ -251,6 +258,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
   const pSolar = p.solar, pWind = p.wind, pPrice = p.price, pCarbon = p.carbon;
   const plants = cfg.plants;
   const pMode = plants.map((pl) => pl.mode), pMW = plants.map((pl) => pl.mw), pMC = plants.map((pl) => pl.mc);
+  const pMWm = plants.map((pl) => pl.mwByMonth || null); // firm plant bought in steps (realism rebuild): MW in place by month
   const pChpK = plants.map((pl) => pl.chpK), pMsl = plants.map((pl) => pl.msl * pl.unitMW), pEff = plants.map((pl) => pl.eff);
   const pIsSmr = plants.map((pl) => pl.tech === 'smr');
   const pHourMask = plants.map((pl) => pl.hourMask || null);
@@ -363,7 +371,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
 
     // Firm capacity available this hour (for the BESS shortfall rule)
     let firmAvail = 0;
-    for (let i = 0; i < nP; i++) if (pMode[i][m] > 0 && !(respectRH && plantHours[i] >= maxRH)) firmAvail += pMW[i];
+    for (let i = 0; i < nP; i++) if (pMode[i][m] > 0 && !(respectRH && plantHours[i] >= maxRH)) firmAvail += pMWm[i] ? pMWm[i][m] : pMW[i];
 
     // 3. BESS discharge per role
     let dis = disResp;
@@ -405,7 +413,7 @@ export function dispatchYear(ctx, cfg, y, socIn, record = false, rep = null) {
       else { P = capRem === Infinity ? 0 : R - capRem; needed = true; }
       if (P <= 1e-12) continue;
       let credit = 0;
-      const cap = pMW[i];
+      const cap = pMWm[i] ? pMWm[i][m] : pMW[i];
       if (pChpK[i] > 0) {
         // Trigeneration: recovered heat drives absorption chillers that displace mechanical chiller power.
         // credit = P × (heat/power × COP_abs) / COP_mech, limited to the mechanical cooling load this hour.
@@ -645,6 +653,7 @@ export function representativeHours(ctx) {
 // Dispatch all explicit years (chronological SOC); steady-state year repeats afterwards. rep: representative hours
 // (screening model) or null for the full year.
 export function dispatchAll(ctx, cfg, recordYears = null, rep = null) {
+  ctx = cfg.octx || ctx;
   const nY = dispatchYears(ctx, cfg);
   const years = [];
   let soc = null;

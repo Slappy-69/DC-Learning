@@ -45,6 +45,10 @@ When a work package of `../BUILD-PLAN.md` is built:
 
 Each script says at the top what it reads and writes. On 2026-10-22 every script was run from this folder against `main` (commit 441635e) and reproduced the stored files exactly; the only difference was the run time recorded in `data/t1-scoring.json`.
 
+## Not in the guide yet: the realism rebuild (2026-11-11)
+
+The realism rebuild is in `main` since 2026-11-12. The guide still describes the tool without it. What it changes for an engineer is in `../REALISM-REBUILD-2026-11-11.md`. These parts of the guide need new text and pictures: how an option's buildings get their dates; the late-start highlight; the consent step and the lead times of 2026; the buildability tiers and their tests; the ranking in groups; the cards (strategies, "Step down", "Stands on its own"); the plan check; the country rules for data centres; the new inputs (latest acceptable start, gas network capacity, distance to a protected nature site, the two ticks per nearby plant); and the run setting "Realism rebuild". Appendices: export the registry again (step 4), since 16 defaults were added and 5 lead times changed.
+
 ## Fonts and data
 
 The PDF uses Source Serif 4, Inter and JetBrains Mono, all under the SIL Open Font Licence, fetched from npm into `build/fonts`. The data files are outputs of the tool's own engine; the country data in them are the program's synthetic calibration targets, labelled indicative and unverified.

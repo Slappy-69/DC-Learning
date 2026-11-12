@@ -5,7 +5,10 @@ import { TECH, FUEL, PPA, COUNTRIES, choiceLabel, GAS_PRICE_WB } from './default
 import { decarbFactor, contractedCap, contractLimit, ctxFor } from './context.js';
 import { assumedFlags } from './assumed.js';
 import { fuelPrice, fuelEF, contractPrice, avgWholesale, plantMarginalCost } from './dispatch.js';
-import { bridgeActive, techAvailMonth } from './sizing.js';
+import { bridgeActive, techAvailMonth, primeMWAt } from './sizing.js';
+import { realismOn } from './defaults.js';
+import { buildabilityTests, TIER_TEXT } from './buildability.js';
+import { lateBits, notBuiltText } from './energise.js';
 import { permittingTriggers } from './permitting.js';
 import { NA } from './generator.js';
 import { adequacyOf, adequacyText } from './adequacy.js';
@@ -26,7 +29,7 @@ export function flag(id, severity, category, message, extra = {}) {
 // Time-to-power (§9.8)
 // ---------------------------------------------------------------------------
 export function timeToPower(ctx, v, sz) {
-  ctx = ctxFor(ctx, v); // work package 19: a taken-over grid connection
+  ctx = ctxFor(ctx, v, sz); // the option's own context: a taken-over grid connection (work package 19), its own building dates (realism rebuild)
   const n = ctx.nMonthsTimeline;
   const supply = new Float64Array(n);
   const cc = contractedCap(ctx, v.C1);
@@ -72,6 +75,20 @@ export function timeToPower(ctx, v, sz) {
   // campus, so plant bought years early ranked better on a phased campus.
   const metric = delayFirst + delayFull + (0.5 * gapMWm) / Math.max(1e-9, sz.designMW);
   void cp;
+  // Realism rebuild (OPEN-QUESTIONS 248, 251): buildings start when they can be powered (sz.energise), so the measure
+  // is the delay against the plan: months late, averaged over the planned IT (a building that is never built counts
+  // as late to the end of the timeline). The power gap term stays for a supply that still falls short.
+  const en = sz.energise;
+  if (en) {
+    const lateFirst = en.late[0] == null ? n - en.planned[0] : en.late[0];
+    const lastK = en.buildings - 1;
+    const lateLast = en.late[lastK] == null ? n - en.planned[lastK] : en.late[lastK];
+    return {
+      firstPowerM: en.starts[0], supplyReadyM, fullLoadM, reachedFull: en.powered === en.buildings, monthsToFull, gapMWm, gapMonths,
+      metric: en.avgLate + (0.5 * gapMWm) / Math.max(1e-9, sz.designMW), delayFirst: lateFirst, delayFull: lateLast, supplyByMonth: supply,
+      avgLate: en.avgLate, maxLate: en.maxLate, buildings: en.buildings, powered: en.powered,
+    };
+  }
   return { firstPowerM, supplyReadyM, fullLoadM, reachedFull, monthsToFull, gapMWm, gapMonths, metric, delayFirst, delayFull, supplyByMonth: supply };
 }
 
@@ -82,7 +99,7 @@ export function timeToPower(ctx, v, sz) {
 function yearOfMonth(m) { return Math.max(0, Math.floor(m / 12)); }
 
 export function economics(ctx, v, sz, disp, ttp) {
-  ctx = ctxFor(ctx, v); // work package 19: a taken-over grid connection
+  ctx = ctxFor(ctx, v, sz); // the option's own context: a taken-over grid connection (work package 19), its own building dates (realism rebuild)
   const eco = economicsFor(ctx, v, sz, disp, ttp);
   // Further evaluation periods shown beside the scoring period (work package 2, OPEN-QUESTIONS 21): the same ledger
   // rule over each period; the scoring period alone sets the cost axis.
@@ -177,10 +194,18 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     const t = TECH[sz.prime.tech];
     // A bought existing plant (work package 19) is used until it stops (endMonth): no replacement, no value left.
     const primeEnd = t.existingPlant && sz.prime.endMonth < Infinity ? yearOfMonth(sz.prime.endMonth) : null;
-    addCapex(`${t.name} (prime)`, yearOfMonth(sz.prime.availMonth), sz.prime.mw * 1000 * t.p.capexPerKW, t.p.life, { removeYear: primeEnd });
+    if (sz.prime.steps) {
+      // Bought in step with the need (realism rebuild, OPEN-QUESTIONS 248): each step in the year its units are in place.
+      const byYear = new Map();
+      for (const st of sz.prime.steps) byYear.set(yearOfMonth(st.month), (byYear.get(yearOfMonth(st.month)) || 0) + st.units * sz.prime.unitMW);
+      for (const [yr, mw] of byYear) {
+        addCapex(`${t.name} (prime)`, yr, mw * 1000 * t.p.capexPerKW, t.p.life, { removeYear: primeEnd });
+        if (t.p.stackLife) assets.push({ item: `${t.name} stack replacement`, year: yr, amount: mw * 1000 * t.p.capexPerKW * t.p.stackFraction * capF, life: t.p.stackLife, stackOnly: true });
+      }
+    } else addCapex(`${t.name} (prime)`, yearOfMonth(sz.prime.availMonth), sz.prime.mw * 1000 * t.p.capexPerKW, t.p.life, { removeYear: primeEnd });
     // Existing plant (work package 12): the one-off connection to the campus, when the lease starts.
     if (t.p.linkCapex) addCapex(`${t.name}: connection to the campus`, yearOfMonth(sz.prime.availMonth), t.p.linkCapex, t.p.life, { removeYear: primeEnd }); // ends with the plant (finding 11)
-    if (t.p.stackLife) assets.push({ item: `${t.name} stack replacement`, year: yearOfMonth(sz.prime.availMonth), amount: sz.prime.mw * 1000 * t.p.capexPerKW * t.p.stackFraction * capF, life: t.p.stackLife, stackOnly: true });
+    if (t.p.stackLife && !sz.prime.steps) assets.push({ item: `${t.name} stack replacement`, year: yearOfMonth(sz.prime.availMonth), amount: sz.prime.mw * 1000 * t.p.capexPerKW * t.p.stackFraction * capF, life: t.p.stackLife, stackOnly: true });
   }
   // Bridging plant
   const T = sz.T;
@@ -274,7 +299,7 @@ function economicsFor(ctx, v, sz, disp, ttp) {
     if (y >= avail('wind')) L.fom += sz.windMW * 1000 * TECH.wind.p.fomPerKW;
     if (y >= bessYear) L.fom += bessCapex(sz.storage.mw, sz.storage.mwh) * bp.fomPct;
     if (sz.reserve && sz.reserve.mwh > 0) L.fom += itShareYear(y) * sz.reserve.mwh * 1000 * ur.capexPerKWh * ur.fomPct;
-    if (sz.prime && y >= yearOfMonth(sz.prime.availMonth) && y * 12 < (sz.prime.endMonth ?? Infinity)) L.fom += sz.prime.mw * 1000 * TECH[sz.prime.tech].p.fomPerKW;
+    if (sz.prime && y >= yearOfMonth(sz.prime.availMonth) && y * 12 < (sz.prime.endMonth ?? Infinity)) L.fom += (sz.prime.steps ? primeMWAt(sz.prime, y * 12 + 11) : sz.prime.mw) * 1000 * TECH[sz.prime.tech].p.fomPerKW;
     if (sz.replacementBackup && y >= yearOfMonth(sz.replacementBackup.fromMonth)) L.fom += sz.replacementBackup.mw * 1000 * TECH[sz.replacementBackup.tech].p.fomPerKW;
     if (sz.bridge && !TECH[sz.bridge.tech].lease && y >= yearOfMonth(sz.bridge.availMonth) && (bridgeRemoveYear === null || y < bridgeRemoveYear)) L.fom += bridgeOwnedMW(y) * 1000 * TECH[sz.bridge.tech].p.fomPerKW;
     if (sz.backup.tech) {
@@ -560,7 +585,7 @@ export function carbon(ctx, sz, eco, disp) {
 // ---------------------------------------------------------------------------
 const TOPO_RANK = { N: 0, 'N+1': 1, catcher: 1, '2N': 2 };
 export function resilience(ctx, v, sz) {
-  ctx = ctxFor(ctx, v); // work package 19: a taken-over grid connection
+  ctx = ctxFor(ctx, v, sz); // the option's own context: a taken-over grid connection (work package 19), its own building dates (realism rebuild)
   const req = ctx.inputs.requirements;
   const items = [];
   const flags = [];
@@ -588,8 +613,10 @@ export function resilience(ctx, v, sz) {
     parts.push(`retained bridging ${TECH[sz.bridge.tech].name} ${cap.toFixed(1)} MW (redundant units removed)`);
     if (TECH[sz.bridge.tech].fuel === 'gas') gasDependent = true; else nonGasFirm += cap;
   }
-  // Firm prime
-  if (sz.prime && sz.prime.fuelMonth !== Infinity) {
+  // Firm prime. A leased or contracted existing plant is never the campus's standby in this role either (known issue
+  // 39, fixed with the realism rebuild of 2026-11-11; rule (m), OPEN-QUESTIONS 79).
+  const primeLeasedExisting = sz.prime && TECH[sz.prime.tech].existingPlant && TECH[sz.prime.tech].lease && realismOn(ctx.inputs);
+  if (sz.prime && sz.prime.fuelMonth !== Infinity && !primeLeasedExisting) {
     const n = TOPO_RANK[req.topology] >= 1 ? Math.max(0, sz.prime.units - Math.ceil(sz.prime.units / bs)) : sz.prime.units;
     const cap = n * sz.prime.unitMW;
     firmMW += cap;
@@ -700,7 +727,7 @@ export function expectedConnectionCharge(inputs, C1 = 'wait', band = null) {
 }
 
 export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
-  ctx = ctxFor(ctx, v); // work package 19: a taken-over grid connection
+  ctx = ctxFor(ctx, v, sz); // the option's own context: a taken-over grid connection (work package 19), its own building dates (realism rebuild)
   const inputs = ctx.inputs;
   const req = inputs.requirements;
   const flags = [...res.flags];
@@ -771,10 +798,13 @@ export function optionFlags(ctx, v, sz, disp, ttp, eco, carb, res) {
   // Permitting
   // The same triggers set the permitting allowance in the programme (permitting.js, OPEN-QUESTIONS 45).
   const { combustion, thermal, fuelT, h2t } = permittingTriggers(sz, v, req);
-  if (thermal >= req.iedMWth) flags.push(flag('permit-ied', 'major', 'Permitting', `Aggregated combustion thermal input ${Math.round(thermal)} MWth ≥ ${req.iedMWth} MWth (IED threshold).${permitSuffix}`, { permitting: true, value: thermal, threshold: req.iedMWth }));
+  // Realism rebuild (OPEN-QUESTIONS 250): with standby gensets only, the 50 MW line is a standard consent of any large
+  // campus (minor); with plant that runs it stays major. The fuel store line is a standard consent too.
+  const routine = realismOn(inputs) && !(sz.consentFacts && sz.consentFacts.runningMWth > 0);
+  if (thermal >= req.iedMWth) flags.push(flag('permit-ied', routine ? 'minor' : 'major', 'Permitting', `Aggregated combustion thermal input ${Math.round(thermal)} MWth ≥ ${req.iedMWth} MWth (IED threshold).${permitSuffix}`, { permitting: true, value: thermal, threshold: req.iedMWth }));
   const mcp = combustion.filter((c) => c.unitMW / c.eff >= req.mcpMinMWth && c.unitMW / c.eff < req.mcpMaxMWth);
   if (mcp.length) flags.push(flag('permit-mcp', 'minor', 'Permitting', `Individual combustion units of ${mcp.map((c) => `${(c.unitMW / c.eff).toFixed(1)} MWth (${c.name})`).join(', ')} are within ${req.mcpMinMWth}–${req.mcpMaxMWth} MWth (medium combustion plant rules).${permitSuffix}`, { permitting: true }));
-  if (fuelT >= req.sevesoFuelT) flags.push(flag('permit-seveso-fuel', 'major', 'Permitting', `Hazardous substance storage above threshold: ${Math.round(fuelT).toLocaleString('en-GB')} t diesel/HVO ≥ ${req.sevesoFuelT.toLocaleString('en-GB')} t.${permitSuffix}`, { permitting: true }));
+  if (fuelT >= req.sevesoFuelT) flags.push(flag('permit-seveso-fuel', realismOn(inputs) ? 'minor' : 'major', 'Permitting', `Hazardous substance storage above threshold: ${Math.round(fuelT).toLocaleString('en-GB')} t diesel/HVO ≥ ${req.sevesoFuelT.toLocaleString('en-GB')} t.${permitSuffix}`, { permitting: true }));
   if (sz.prime && sz.prime.tech === 'hydrogen') {
     flags.push(flag('permit-h2', h2t >= req.sevesoH2t ? 'major' : 'minor', 'Permitting', `Hydrogen storage ${h2t.toFixed(0)} t on site${h2t >= req.sevesoH2t ? ` ≥ ${req.sevesoH2t} t (hazardous substance storage above threshold)` : ''}; large separation distances, hazardous-substance flag always raised.${permitSuffix}`, { permitting: true }));
   }
@@ -929,8 +959,16 @@ function irelandFlag(ctx, v, sz) {
 // (sitefit.js; none carries permitting: true, so they never enter deliverability) and the data flag on every option
 // (all defaults are C-tagged). Shared by the run and by evaluateOption (option.js), so both give the same list.
 export function allOptionFlags(ctx, v, sz, disp, ttp, eco, carb, res, siteFit) {
-  ctx = ctxFor(ctx, v); // work package 19: a taken-over grid connection
+  ctx = ctxFor(ctx, v, sz); // the option's own context: a taken-over grid connection (work package 19), its own building dates (realism rebuild)
   const flags = optionFlags(ctx, v, sz, disp, ttp, eco, carb, res);
+  // Realism rebuild (OPEN-QUESTIONS 248; owner: "Building starts late, this will need to be highlighted though"): the
+  // option's own building dates against the plan.
+  if (sz.energise) {
+    const en = sz.energise, allow = ctx.inputs.requirements.lateAllowanceM ?? 12;
+    const ym = (m) => addMonths(ctx.inputs.project.analysisStart, m);
+    if (en.powered < en.buildings) flags.push(flag('not-built', 'major', 'Programme', `Powers ${en.powered} of ${en.buildings} buildings (${Math.round(en.poweredIT)} of ${Math.round(en.plannedIT)} MW IT): ${notBuiltText(en)}`, { value: en.poweredIT, threshold: en.plannedIT }));
+    if (en.maxLate > 0) flags.push(flag('late-start', en.maxLate > allow ? 'major' : 'minor', 'Programme', `Late against the plan: ${lateBits(en, ym).join('; ')}${en.maxLate > allow ? `. Later than the latest acceptable start (${allow} months)` : ''}`, { value: en.maxLate, threshold: allow }));
+  }
   if (siteFit) flags.push(...siteFit.flags);
   flags.push(flag('data-unverified', 'info', 'Data', 'Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles'));
   // Assumed defaults (work package 2, AC 16): one info flag per key input not entered that the option uses.
@@ -952,6 +990,8 @@ export function unmetSummary(disp) {
 const MATURITY = (id) => (TECH[id] ? TECH[id].maturity : 'Commercial');
 
 export function deliverability(ctx, v, sz, disp, flags, siteFit = null) {
+  const R = realismOn(ctx.inputs);
+  if (R) ctx = ctxFor(ctx, v, sz);
   const P = ctx.inputs.deliverability;
   // Capacity shares
   const cap = [];
@@ -977,13 +1017,13 @@ export function deliverability(ctx, v, sz, disp, flags, siteFit = null) {
   items.push({ item: 'Nascent technology share', value: nascent, points: -P.nascentPenalty * nascent });
   const majors = flags.filter((f) => f.permitting && f.severity === 'major').length;
   const minors = flags.filter((f) => f.permitting && f.severity === 'minor').length;
-  items.push({ item: `Permitting flags: ${majors} major, ${minors} minor`, value: majors + minors, points: -P.majorFlagPenalty * majors - P.minorFlagPenalty * minors });
+  if (!R) items.push({ item: `Permitting flags: ${majors} major, ${minors} minor`, value: majors + minors, points: -P.majorFlagPenalty * majors - P.minorFlagPenalty * minors });
   // Owner's decision, 2026-11-08 (OPEN-QUESTIONS 244): a held plant whose permit outlook is "unlikely" is penalised here,
   // so the score tells likely permits from unlikely ones. The outlook is still shown as its own flag.
   const unlikelyPermits = (sz.permitOutlook || []).filter((x) => x.outlook === 'unlikely' && x.regimes && x.regimes.length);
-  if (unlikelyPermits.length) items.push({ item: `Permit unlikely: ${unlikelyPermits.map((x) => x.name).join(', ')}`, value: unlikelyPermits.length, points: -P.unlikelyPermitPenalty * unlikelyPermits.length });
+  if (unlikelyPermits.length && !R) items.push({ item: `Permit unlikely: ${unlikelyPermits.map((x) => x.name).join(', ')}`, value: unlikelyPermits.length, points: -P.unlikelyPermitPenalty * unlikelyPermits.length });
   const usesGas = [sz.prime, sz.bridge].some((p) => p && TECH[p.tech].fuel === 'gas' && !TECH[p.tech].offsite) || (sz.backup.tech && TECH[sz.backup.tech].fuel === 'gas');
-  if (usesGas && ctx.inputs.utilities.gasAvailable === 'Unknown') items.push({ item: 'Gas used with availability "Unknown"', value: 1, points: -P.gasUnknownPenalty });
+  if (usesGas && ctx.inputs.utilities.gasAvailable === 'Unknown' && !R) items.push({ item: 'Gas used with availability "Unknown"', value: 1, points: -P.gasUnknownPenalty });
   if (sz.prime && sz.prime.tech === 'hydrogen') items.push({ item: 'Hydrogen fuel dependency', value: 1, points: -P.hydrogenPenalty });
   const techIds = new Set(cap.map((c) => c[0]).filter((id) => TECH[id] && TECH[id].p.procM !== undefined));
   const longLead = [...techIds].filter((id) => TECH[id].p.procM > P.leadTimeThresholdM);
@@ -1000,6 +1040,19 @@ export function deliverability(ctx, v, sz, disp, flags, siteFit = null) {
   if (penaltyOn && siteFit && siteFit.status !== 'Fits') {
     const pts = siteFit.status === 'Does not fit' ? P.siteFitNoFitPenalty : P.siteFitFlagsPenalty;
     items.push({ item: `Site fit: ${siteFit.status} (optional site-fit penalty on)`, value: 1, points: -pts });
+  }
+  // Realism rebuild (OPEN-QUESTIONS 250): the buildability tests take the place of the count of permitting flags.
+  if (R) {
+    const b = buildabilityTests(ctx, v, sz, disp, flags);
+    for (const u of b.unlikely) items.push({ item: `Unlikely: ${u.text}`, value: 1, points: -(u.points ?? P.unlikelyPenalty), kind: 'unlikely' });
+    for (const c of b.conditions) items.push({ item: `Condition: ${c.text}`, value: 1, points: -(c.points ?? P.conditionPenalty), kind: 'condition' });
+    const score = Math.max(0, Math.min(100, 100 + items.reduce((s, i) => s + i.points, 0)));
+    // The tier as a flag of its own, so it is seen wherever flags are (once: the flags array is the option's).
+    if (!flags.some((f) => f.id === 'tier-unlikely' || f.id === 'tier-conditions')) {
+      if (b.tier === 'C') flags.push(flag('tier-unlikely', 'major', 'Buildability', `Unlikely to be built as it stands: ${b.unlikely.map((u) => u.text).join('; ')}`, { items: b.unlikely.length }));
+      if (b.conditions.length) flags.push(flag('tier-conditions', 'minor', 'Buildability', `Depends on ${b.conditions.length} condition${b.conditions.length === 1 ? '' : 's'}: ${b.conditions.map((c) => c.text).join('; ')}`, { items: b.conditions.length }));
+    }
+    return { score, items, emergingShare: emerging, nascentShare: nascent, includesSiteFit: penaltyOn, buildability: true, tier: b.tier, tierText: TIER_TEXT[b.tier], unlikely: b.unlikely, conditions: b.conditions, standard: b.standard };
   }
   const score = Math.max(0, Math.min(100, 100 + items.reduce((s, i) => s + i.points, 0)));
   return { score, items, emergingShare: emerging, nascentShare: nascent, includesSiteFit: penaltyOn };

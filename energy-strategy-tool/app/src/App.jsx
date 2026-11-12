@@ -1,5 +1,7 @@
 /* global __HOSTED__ */
 import { setStations, setStationsMissing, nearestStations, stationWeather } from './engine/stations.js';
+import { realismOn } from './engine/defaults.js';
+import { lateInfo, lateLine } from './engine/labels.js';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputsPanel from './components/InputsPanel.jsx';
 import RankedList from './components/RankedList.jsx';
@@ -411,6 +413,15 @@ export default function App() {
           <div className="header-strip" role="region" aria-label="Results header">
             <div className="hs-item"><span className="hs-k">Options</span><span className="hs-v">{run ? `${shown.toLocaleString('en-GB')} shown / ${run.options.length.toLocaleString('en-GB')} screened / ${run.generation.totalCombinations.toLocaleString('en-GB')} combinations · ${dominated.toLocaleString('en-GB')} dominated` : '—'}</span></div>
             <div className="hs-item"><span className="hs-k">Leader</span><span className="hs-v">{leader ? <>{leader.name} <strong>{leader.score.toFixed(1)}</strong></> : '—'}</span><span className="hs-sub">{(() => { const mc = run ? latestMonteCarlo(run) : null; const r = mc && leader ? mc.rows.find((x) => x.id === leader.id) : null; return r ? `Leads in ${Math.round(r.pRank1 * 100)} % of ${mc.samples.toLocaleString('en-GB')} samples, top ${mc.rows.length}` : 'Rank probability: run the Monte Carlo (Sensitivity tab)'; })()}</span></div>
+            {run && run.scoring && run.scoring.realism && leader && leader.sizing.energise ? (() => {
+              const x = lateInfo(leader, run.inputs.project.analysisStart), en = leader.sizing.energise;
+              return (
+                <div className="hs-item hs-plan"><span className="hs-k">Leader against the plan</span>
+                  <span className="hs-v"><span className="hs-plan-long">{en.powered} of {en.buildings} buildings · {Math.round(en.poweredIT).toLocaleString('en-GB')} MW IT · tier {leader.deliv.tier}{x.onPlan ? ' · on plan' : ''}</span><span className="hs-plan-short">Plan: {en.powered}/{en.buildings} buildings · tier {leader.deliv.tier}{x.onPlan ? ' · on plan' : ''}</span></span>
+                  {x.onPlan ? null : <span className="hs-sub flag-text"><span className="badge badge-late">Late</span> <span className="hs-late-long">{x.worst ? lateLine(x.worst) : `Building ${x.notBuilt.from} not built: ${x.notBuilt.why}`}{x.late.length > 1 ? `; ${x.late.length - 1} more late` : ''}</span><span className="hs-late-short">{x.worst ? `building ${x.worst.building}: ${x.worst.months} month${x.worst.months === 1 ? '' : 's'}` : `building ${x.notBuilt.from} not built`}{x.late.length > 1 ? `; ${x.late.length - 1} more` : ''}</span></span>}
+                </div>
+              );
+            })() : null}
             <div className="hs-item"><span className="hs-k">Power adequacy</span><span className="hs-v">{run ? <>✓ {adequate.toLocaleString('en-GB')} adequate · ✗ {(run.options.length - adequate).toLocaleString('en-GB')} not adequate</> : '—'}</span><span className="hs-sub">Adequate options rank first; none is hidden.</span></div>
             {siteBeta ? <div className="hs-item"><span className="hs-k">Site fit (Beta)</span><span className="hs-v">{run ? <>✓ {fitCounts.Fits.toLocaleString('en-GB')} fit · ! {fitCounts['Fits with flags'].toLocaleString('en-GB')} with flags · ✗ {fitCounts['Does not fit'].toLocaleString('en-GB')} do not fit</> : '—'}</span><span className="hs-sub">{penaltyOn ? 'Site-fit penalty on: deliverability includes site fit.' : 'Status only: it changes no score or rank.'} Site inputs set the POC and gas-main route costs.</span></div> : null}
             <div className="hs-item"><span className="hs-k">Model</span><span className="hs-v">{run && run.verification ? `Screening (representative days); best ${run.verification.verified} verified with the full year` : 'Full-year hourly (8760 h)'}</span><span className="hs-sub">Synthetic profiles · {run ? COUNTRIES[run.country].name : ''}</span></div>
@@ -420,7 +431,7 @@ export default function App() {
               {inputs.settings.rankCompliantFirst ? <> · <strong>Requirement-compliant options ranked first</strong></> : null}
               {penaltyOn ? <> · <strong>Site-fit penalty in deliverability: on</strong></> : null}
             </span></div>
-            <div className="hs-item"><span className="hs-k">Weights</span><span className="hs-v">Cost {(w.cost * 100).toFixed(0)} · Carbon {(w.carbon * 100).toFixed(0)} · TTP {(w.ttp * 100).toFixed(0)} · {penaltyOn ? 'Deliverability (incl. site fit)' : 'Deliv.'} {(w.deliverability * 100).toFixed(0)} %</span></div>
+            <div className="hs-item"><span className="hs-k">Weights</span><span className="hs-v">Cost {(w.cost * 100).toFixed(0)} · Carbon {(w.carbon * 100).toFixed(0)} · {realismOn(inputs) ? 'Delay' : 'TTP'} {(w.ttp * 100).toFixed(0)} · {realismOn(inputs) ? 'Buildability' : penaltyOn ? 'Deliverability (incl. site fit)' : 'Deliv.'} {(w.deliverability * 100).toFixed(0)} %</span></div>
             <div className="hs-item"><span className="hs-k">Unverified defaults</span><span className="hs-v">{unverifiedCount} of {recordCount} default records are <span className="tag tag-unverified">{LABEL}</span>{recordCount - unverifiedCount > 0 ? <> · {recordCount - unverifiedCount} <span className="tag tag-sourced">sourced — not independently checked</span></> : null}</span><span className="hs-sub">The count affecting the leader needs a per-option record map (not in this slice)</span></div>
           </div>
 

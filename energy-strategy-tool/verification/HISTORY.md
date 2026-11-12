@@ -135,3 +135,10 @@ Fixed on `feature/weather-fixes` with the owner's decision OPEN-QUESTIONS 115 (k
 | H3, bundled data and offline (`existing-plant/H3-data.md`) | Haiku | 15 verified, 0 failed, 1 not verifiable. Credit link added |
 | Opus review (`existing-plant/OPUS-review.md`) | Opus | 3 high, 9 medium, 10 low. Fixed: 1–11, 13, 14, 16, 17, 19, 22 (known issue 33); accepted: 18, 20; to the owner: OPEN-QUESTIONS 124–130 |
 
+
+## Realism rebuild (2026-11-11, branch feature/realism-rebuild; merged 2026-11-12)
+
+| Check | Model | Result |
+|---|---|---|
+| Builder's own checks (`realism-rebuild/SELF-CHECK-2026-11-11.md`) | Builder (Claude Fable 5.2) | Node 121 of 121 (13 new tests, 67 to 79); browser 44 of 44 in four parts (B44 new); study runs on Pego and Eemshaven. Eight faults found and fixed, among them known issue 40 |
+| Haiku checks, Opus review | — | **Not run**: they need helper sessions, which the owner did not ask for. To do before a release |

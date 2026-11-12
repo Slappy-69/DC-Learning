@@ -7,6 +7,8 @@ import { NA } from '../engine/generator.js';
 import { sig, money, monthLabel, pct, perMWh } from '../format.js';
 import { visibleFlags } from '../engine/view.js';
 import { adequacyText } from '../engine/adequacy.js';
+import { axisLabels, isRealismOption } from '../engine/labels.js';
+import { RealismDetail } from './Realism.jsx';
 
 function FitBadge({ s }) {
   const cls = s === 'Fits' ? 'ok' : s === 'Fits with flags' ? 'warn' : s === 'Not laid out' ? 'arch' : 'bad';
@@ -134,6 +136,7 @@ export default function OptionDetail({ o: o0, run = null, start, onClose, domina
           ? <>Dominated by #{dominator ? dominator.rank : '?'} {dominator ? dominator.name : o.dominatedBy}: equal or better on cost, carbon, time-to-power and deliverability, and better on at least one, with no worse resilience status. Still ranked and shown.</>
           : 'Not dominated on cost, carbon, time-to-power and deliverability.'}
       </p>
+      {isRealismOption(o) ? <RealismDetail o={o} start={start} /> : null}
       {o.adequacy ? <AdequacySummary a={o.adequacy} /> : null}
       <div className="detail-grid">
         <div>
@@ -143,8 +146,8 @@ export default function OptionDetail({ o: o0, run = null, start, onClose, domina
               <tr><th scope="row">Weighted score</th><td className="num">{o.score.toFixed(1)}</td></tr>
               <tr><th scope="row">Cost</th><td className="num">{o.axisScores.cost.toFixed(0)}</td></tr>
               <tr><th scope="row">Carbon</th><td className="num">{o.axisScores.carbon.toFixed(0)}</td></tr>
-              <tr><th scope="row">Time-to-power</th><td className="num">{o.axisScores.ttp.toFixed(0)}</td></tr>
-              <tr><th scope="row">{o.deliv.includesSiteFit ? 'Deliverability (incl. site fit)' : 'Deliverability'}</th><td className="num">{o.axisScores.deliverability.toFixed(0)}</td></tr>
+              <tr><th scope="row">{axisLabels(isRealismOption(o)).ttp}</th><td className="num">{o.axisScores.ttp.toFixed(0)}</td></tr>
+              <tr><th scope="row">{isRealismOption(o) ? 'Buildability' : o.deliv.includesSiteFit ? 'Deliverability (incl. site fit)' : 'Deliverability'}</th><td className="num">{o.axisScores.deliverability.toFixed(0)}</td></tr>
             </tbody>
           </table>
           {siteBeta ? <SiteFitSummary o={o} onShowSite={onShowSite} /> : null}
@@ -207,7 +210,7 @@ export default function OptionDetail({ o: o0, run = null, start, onClose, domina
           {o.sizing.permitOutlook && o.sizing.permitOutlook.length ? <PermitOutlook items={o.sizing.permitOutlook} start={start} /> : null}
           <h4>Resilience: {o.resilience.status}</h4>
           <ul className="plain small">{o.resilience.items.map((i) => <li key={i.item}>{i.ok ? '✓' : '✗'} <strong>{i.item}:</strong> {i.text}</li>)}</ul>
-          <h4>{o.deliv.includesSiteFit ? 'Deliverability (incl. site fit)' : 'Deliverability'} {sig(o.deliv.score, 2)}</h4>
+          <h4>{isRealismOption(o) ? 'Buildability score' : o.deliv.includesSiteFit ? 'Deliverability (incl. site fit)' : 'Deliverability'} {sig(o.deliv.score, 2)}</h4>
           <ul className="plain small">{o.deliv.items.map((i) => <li key={i.item}>{i.item}: {i.points.toFixed(1)}</li>)}</ul>
         </div>
       </div>

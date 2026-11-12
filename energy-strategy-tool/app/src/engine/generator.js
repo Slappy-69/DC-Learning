@@ -14,7 +14,7 @@
 //    cap-sampling in the run event log. Switching sampling off screens them all.
 
 import { parseRenewValue } from './renewplants.js';
-import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel, existingEntered, plantPowerValues, plantTakeoverValues, plantCandidates, registryValue, renewPlants } from './defaults.js';
+import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel, existingEntered, plantPowerValues, plantTakeoverValues, plantCandidates, registryValue, renewPlants, realismOn } from './defaults.js';
 import { parsePlantValue, isPlantPower, isTakeover } from './plants.js';
 import { mulberry32, subSeed, shuffle, hashString } from './prng.js';
 import { permanentShortfallCoolings, shortfallAnalysis } from './adequacy.js';
@@ -148,6 +148,17 @@ export const RULES = [
   { id: 'n', name: '(n) Existing plant as firm plant is sized once',
     detail: 'C4 = Existing plant is the units offered whatever the sizing rule, so only one C4 sizing is generated: Permanent shortfall where there is one (islanded included), otherwise Average load.',
     fails: (v, inputs) => isPlantPower(v.C4) && v.C4s === 'average' && (v.C1 === 'islanded' || permSet(inputs).has(COOLING_ID)) },
+  // Realism rebuild (2026-11-11, OPEN-QUESTIONS 252): combinations a developer would not build. They apply with
+  // settings.realism on; each one is counted in the generation summary like the rules above.
+  { id: 'R1', name: '(R1) Rented generation is temporary plant',
+    detail: 'C2 = Rented generation is generated only as a bridge that leaves when the grid arrives (C1 = Bridge with C3 = Remove): never for an islanded campus, and never kept as backup, as prime or in part. Before, the leading option at Pego kept 110 rented sets for 20 years.',
+    fails: (v, inputs) => realismOn(inputs) && v.C2 === 'rented' && (v.C1 === 'islanded' || (v.C1 === 'bridge' && v.C3 !== 'remove')) },
+  { id: 'R2', name: '(R2) The whole bridging plant is not kept running beside a top-up plant',
+    detail: 'C3 = Retain as prime is not generated with a firm plant sized to the permanent shortfall (C4 sizing = Permanent shortfall): two plants would cover the same shortfall, and one of them would stand idle in a running role.',
+    fails: (v, inputs) => realismOn(inputs) && v.C1 === 'bridge' && v.C3 === 'prime' && v.C4 !== 'none' && v.C4s === 'shortfall' },
+  { id: 'R3', name: '(R3) The kept share repeats an owned top-up plant',
+    detail: 'C3 = Keep shortfall share as prime is not generated with an owned firm plant sized to the permanent shortfall: the kept share is what the firm plant leaves uncovered, which is nothing. It is generated beside an existing plant near the site, whose units are fixed and may leave part of the shortfall.',
+    fails: (v, inputs) => realismOn(inputs) && v.C1 === 'bridge' && v.C3 === 'split' && v.C4 !== 'none' && v.C4s === 'shortfall' && !(isPlantPower(v.C4) || v.C4 === 'existing' || v.C4 === PLANT_TOKEN) },
 ];
 export const RULE_D = { id: 'd', name: '(d) Choices that are n/a collapse to "n/a" rather than multiplying options',
   detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, the backup arrangement when there are no gensets, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets, C21 when islanded.' };
@@ -540,15 +551,24 @@ export function optionName(v, s) {
   const parts = [];
   if (v.C1 === 'wait') parts.push('Grid');
   const c2 = isPlantPower(v.C2) ? choiceLabel('C2', v.C2) : choiceLabel('C2', v.C2).toLowerCase(); // plant names keep their case
-  if (v.C1 === 'bridge') parts.push(`Grid + ${c2} bridge → ${choiceLabel('C3', v.C3).toLowerCase()}`);
+  // Realism rebuild: a bridging plant that cannot be ready before the grid has nothing to bridge and is not bought
+  // (sizing.js); the name says so, with what is kept of it.
+  if (v.C1 === 'bridge' && s && s.bridgeDropped) {
+    const late = s.bridgeDropped.reason === 'late';
+    parts.push(s.bridge && s.bridge.units > 0
+      ? `Grid + ${c2} for the shortfall left${late ? ' (too late to bridge)' : ''}`
+      : late ? `Grid (${c2} bridge too late: ready after the grid)` : s.bridgeDropped.reason === 'none' ? 'Grid (no bridge needed)' : `Grid (${c2} bridge not needed)`);
+  } else if (v.C1 === 'bridge') parts.push(`Grid + ${c2} bridge → ${choiceLabel('C3', v.C3).toLowerCase()}`);
   else if (v.C1 === 'islanded') parts.push(`Islanded ${c2}`);
   else if (v.C1 === 'export') parts.push('Grid + export');
-  if (v.C4 !== 'none') parts.push(`${choiceLabel('C4', v.C4)}${v.C4s === 'shortfall' ? ' top-up' : ''}`);
+  // Realism rebuild: a top-up with no shortfall to cover is not bought (sizing.js), and a battery for the shortfall
+  // with no shortfall has no size: the name leaves both out.
+  if (v.C4 !== 'none' && !(s && s.topUpDropped)) parts.push(`${choiceLabel('C4', v.C4)}${v.C4s === 'shortfall' ? ' top-up' : ''}`);
   const backup = v.C5 === 'none' ? 'no backup' : v.C5 === 'retained' ? 'retained-plant backup' : `${choiceLabel('C5', v.C5).replace(' gensets', '')} ${v.C6}${v.C5a === 'pooled' ? ' pooled' : ''}`;
   parts.push(backup);
   if (s && s.solarMWp > 0) parts.push(`PV ${s.solarMWp.toFixed(s.solarMWp < 10 ? 1 : 0)} MWp`);
   if (s && s.windMW > 0) parts.push(`Wind ${s.windMW.toFixed(0)} MW`);
-  if (v.C12 === 'shortfall') parts.push('BESS for the shortfall');
+  if (v.C12 === 'shortfall') { if (!(s && s.energise && !(s.shortfallBess && s.shortfallBess.mw > 0))) parts.push('BESS for the shortfall'); }
   else if (v.C12 === 'trigger') parts.push('BESS for the trigger hours');
   else if (v.C12 !== 'none') parts.push(`BESS ${v.C12.slice(0, 2).replace('h', ' h')}`);
   if (v.C13 !== 'none') parts.push(`PPA ${choiceLabel('C13', v.C13).toLowerCase()} ${v.C14} %`);

@@ -100,6 +100,7 @@ import { reportReviewTests } from './report-review-tests.mjs';
 import { screenAllTests } from './screen-all-tests.mjs';
 import { detailTests } from './detail-tests.mjs';
 import { agreedTests } from './agreed-tests.mjs';
+import { realismTests } from './realism-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1336,6 +1337,8 @@ await screenAllTests(test, siteRuns);
 await detailTests(test, siteRuns);
 // 56 onwards. Work packages 24 to 32: everything agreed in OPEN-QUESTIONS 155–235 (tests/agreed-tests.mjs).
 await agreedTests(test, siteRuns);
+// 67 onwards. The realism rebuild of 2026-11-11 (OPEN-QUESTIONS 247 onward) (tests/realism-tests.mjs).
+await realismTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

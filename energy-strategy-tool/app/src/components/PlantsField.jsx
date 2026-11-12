@@ -96,6 +96,11 @@ export default function PlantsField({ inputs, norm, update }) {
               </div>
               {p.mergedFrom.length ? <ToggleField label="Keep the merged entries apart" checked={!!val(p.id, 'split')} onCommit={(v) => { const ids = [p.id, ...p.mergedFrom.map((m) => m.id)]; const next = { ...edits }; for (const id of ids) { const e = { ...(next[id] || {}) }; if (v) e.split = true; else delete e.split; if (Object.keys(e).length) next[id] = e; else delete next[id]; } update('plants.edits', next); resetChoices(); }}
                 hint="The list may hold one plant twice; the tool merges entries that are close, of the same type and of similar size. Tick to treat them as separate plants." /> : null}
+              {/* Realism rebuild (OPEN-QUESTIONS 250): an agreement in principle with the plant's owner. */}
+              <ToggleField label="Its owner has agreed in principle" checked={!!(P.agreed && P.agreed[p.id])} onCommit={(v) => { const next = { ...(P.agreed || {}) }; if (v) next[p.id] = true; else delete next[p.id]; update('plants.agreed', next); }}
+                hint="Unticked: every option that leases, buys or contracts this plant, or takes over its grid connection, carries the condition 'agreement with the plant's owner' and is tier B at best. Tick when the owner has agreed in principle." />
+              <ToggleField label="The grid operator has confirmed import on its connection" checked={!!(P.importConfirmed && P.importConfirmed[p.id])} onCommit={(v) => { const next = { ...(P.importConfirmed || {}) }; if (v) next[p.id] = true; else delete next[p.id]; update('plants.importConfirmed', next); }}
+                hint="A plant's connection is a right to feed in; the campus needs a right to take power. Unticked: every option that takes over this plant's grid connection carries that finding: a condition, or 'unlikely' in Spain, Portugal, Great Britain, Ireland and Norway, where the research found the route closed. Tick when the grid operator has confirmed it." />
               <PlantUses p={p} val={val} edit={edit} />
             </details>
           ))}

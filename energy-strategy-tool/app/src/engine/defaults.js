@@ -43,6 +43,14 @@ const SRC = {
   wbGas: { source: 'World Bank Commodity Price Data ("Pink Sheet"), series "Natural gas, Europe" (TTF): July 2026 US$18.06/mmbtu, as reported by APA (5 Aug 2026); the World Bank file itself could not be opened in the session, and later months were not read. At 0.293071 MWh/mmbtu and 1.1181 $/€: €55.1/MWh_th. 2025 average for comparison: €42.9/MWh_th', year: '2026-07', url: 'https://en.apa.az/energy-and-industry/world-bank-releases-natural-gas-price-data-for-europe-and-the-us-519077', accessed: '2026-11-08', approved: '2026-11-07' },
   dea: { source: 'Danish Energy Agency, Technology Data for Generation of Electricity and District Heating, sheet 06 (spark ignition engine, natural gas, 1–10 MWe), 2020 column, in 2015 € (not escalated: OPEN-QUESTIONS 231)', year: '2015 €', url: 'https://ens.dk/media/3283/download', accessed: '2026-11-08', approved: '2026-11-07' },
   escalation: { source: 'World Bank, Commodity Markets Outlook (April 2026): natural gas Europe US$15.0/mmbtu in 2026 and 12.0 in 2027 (€45.8 and €36.6/MWh); then ENTSOG and ENTSO-E, TYNDP 2026 scenarios methodology (June 2026), Table 6, 2024 money: gas €33.1/MWh in 2030, €35.3 in 2035, €37.4 in 2040; CO2 €97.5/t in 2030, €197.5 in 2035, €297.5 in 2040', year: '2026', url: 'https://www.worldbank.org/en/research/commodity-markets', accessed: '2026-11-07', approved: '2026-11-07' },
+  // Realism rebuild (2026-11-11): found by Claude on 2026-11-11 and adopted under the owner's carte blanche of that day
+  // (OPEN-QUESTIONS 249); not independently checked. Mostly United States figures.
+  leadEngines: { source: 'economy.ac (28 Aug 2026), lead times of large gas engines in the second quarter of 2026: Wärtsilä 34SG 18–24 months, 50SG 24–30 months, MAN 51/60G 22–28 months', year: '2026-Q2', url: 'https://economy.ac/news/2026/08/202608289699', accessed: '2026-11-11', approved: '2026-11-11' },
+  leadTurbines: { source: 'Savrn, data centre supply chain tracker (2026), citing Pipeline & Gas Journal: new aeroderivative gas turbines about 40 months; Power Engineering on GE Vernova, first quarter 2026: heavy-duty turbines about three years, slots for 2029 to 2031', year: '2026', url: 'https://savrn.com/research/data-center-supply-chain-crisis', accessed: '2026-11-11', approved: '2026-11-11' },
+  leadFuelCells: { source: 'Avanza Energy (2026): behind-the-meter fuel cells 16 to 18 months to power', year: '2026', url: 'https://avanzaenergy.substack.com/p/data-centers-are-killing-the-grid', accessed: '2026-11-11', approved: '2026-11-11' },
+  eiaDirective: { source: 'Directive 2011/92/EU (environmental impact assessment), Annex I, point 2(a): thermal power stations and other combustion installations with a heat output of 300 MW or more', year: '2011 (as amended 2014)', url: 'https://www.legislation.gov.uk/eudr/2011/92/annex/I/data.pdf', accessed: '2026-11-11', approved: '2026-11-11' },
+  mcpd500: { source: 'Directive (EU) 2015/2193 (medium combustion plants), Article 6: plants that operate no more than 500 hours a year may be exempted from the emission limit values', year: '2015', url: 'https://www.legislation.gov.uk/eudr/2015/2193/article/6', accessed: '2026-11-11', approved: '2026-11-11' },
+  nsip: { source: 'Planning Act 2008, sections 14 and 15 (England: an onshore generating station of more than 50 MW needs a development consent order); Planning Inspectorate and National Grid factsheet: about 16 to 18 months from application to decision, after the pre-application stage', year: '2026', url: 'https://www.gov.uk/government/publications/overarching-national-policy-statement-for-energy-en-1/overarching-national-policy-statement-for-energy-en-1', accessed: '2026-11-11', approved: '2026-11-11' },
   fx: { source: 'European Central Bank euro foreign exchange reference rates', year: '2026-10-22', url: 'https://www.ecb.europa.eu/stats/shared/pdf/eurofxref.pdf', accessed: '2026-10-22', approved: '2026-10-22' },
 };
 
@@ -143,6 +151,15 @@ export const COUNTRIES = {
 // The Node test suite keeps the indicative adders its pinned figures were set with (tests/test-env.mjs); the app and the
 // Windows program always use the researched ones.
 export const LEGACY_ADDERS = (() => { try { return typeof process !== 'undefined' && process.env && process.env.ESTOOL_LEGACY_ADDERS === '1'; } catch { return false; } })();
+// The realism rebuild of 2026-11-11 (OPEN-QUESTIONS 247 onward, taken by Claude under the owner's carte blanche). The Node
+// test suite pins figures of the engine as merged on 2026-11-11, so it sets ESTOOL_LEGACY_ENGINE=1 (tests/test-env.mjs):
+// settings.realism then defaults to off and the lead times keep their earlier values. The app and the Windows program
+// always run with the rebuild on; tests/realism-tests.mjs checks it.
+export const LEGACY_ENGINE = (() => { try { return typeof process !== 'undefined' && process.env && process.env.ESTOOL_LEGACY_ENGINE === '1'; } catch { return false; } })();
+export function realismOn(inputs) {
+  const x = inputs && inputs.settings ? inputs.settings.realism : undefined;
+  return x === undefined || x === null ? !LEGACY_ENGINE : !!x;
+}
 // Grid adder by country (work package 24, owner 2026-11-08; OPEN-QUESTIONS 201–205, 233): network + levies and taxes where
 // both are published and clear (research run of November 2026), at the normal rate where a data centre rate depends on
 // conditions. Other countries keep the indicative value (OPEN-QUESTIONS 202). One record per country.
@@ -198,7 +215,9 @@ export const CHOICES = [
     ['split', 'Keep shortfall share as prime, rest as backup']] },
   { id: 'C4', name: 'Primary firm on-site generation', values: [
     ['none', 'None'], ['chp', 'Gas CHP-trigen'], ['gasRecip', 'Gas recips'], ['fuelCell', 'Fuel cells'], ['smr', 'SMR'], ['hydrogen', 'Hydrogen'],
-    ['existing', 'Existing plant (lease)']] },
+    ['existing', 'Existing plant (lease)'],
+    // Realism rebuild (2026-11-11, OPEN-QUESTIONS 252): owned gas turbines as firm plant, not only as bridging plant.
+    ['gasTurbine', 'Gas turbines']] },
   // OPEN-QUESTIONS 58 (2026-10-23): each C4 technology sized two ways, so the ranking compares a baseload plant with
   // a top-up plant that closes the permanent shortfall.
   { id: 'C4s', name: 'Firm generation sizing', values: [['average', 'Average load (baseload)'], ['shortfall', 'Permanent shortfall (top-up)']] },
@@ -306,9 +325,15 @@ function defaultChoiceState0(id, inputs) {
     case 'C2': return { state: 'open', values: ['gasRecip', 'gasTurbine', 'fuelCell', 'dieselPrime', 'rented', ...(inputs ? plantPowerValues(inputs) : [])] };
     // Retain for grid services is out of the default set (work package 14, OPEN-QUESTIONS 85): with grid-service revenue not
     // modelled it repeats Retain as backup, and revenue options are off by default (walkthrough 2026-10-21).
-    case 'C3': return { state: 'open', values: ['remove', 'backup', 'prime', 'split'] };
-    case 'C4': return { state: 'open', values: ['none', 'chp', 'fuelCell', ...(inputs ? plantPowerValues(inputs) : [])] };
-    case 'C5': return { state: 'open', values: ['hvo', 'diesel', 'retained'] };
+    // Realism rebuild (2026-11-11, OPEN-QUESTIONS 252): "Retain as prime" keeps the whole bridging plant running after the
+    // grid arrives; the split keeps only the share the permanent shortfall needs, so the whole-plant value leaves the
+    // default set (still one tick away). Firm plant gains gas engines and gas turbines sized to the shortfall. Diesel
+    // standby sets leave the default set: the same machines as HVO sets, a near-copy of every option.
+    case 'C3': return realismOn(inputs) ? { state: 'open', values: ['remove', 'backup', 'split'] } : { state: 'open', values: ['remove', 'backup', 'prime', 'split'] };
+    case 'C4': return realismOn(inputs)
+      ? { state: 'open', values: ['none', 'gasRecip', 'gasTurbine', 'chp', 'fuelCell', ...(inputs ? plantPowerValues(inputs) : [])] }
+      : { state: 'open', values: ['none', 'chp', 'fuelCell', ...(inputs ? plantPowerValues(inputs) : [])] };
+    case 'C5': return realismOn(inputs) ? { state: 'open', values: ['hvo', 'retained'] } : { state: 'open', values: ['hvo', 'diesel', 'retained'] };
     case 'C5a': return { state: 'open', values: ['perBuilding', 'pooled'] };
     case 'C6': return { state: 'locked', values: [inputs ? inputs.requirements.topology : 'N+1'] };
     case 'C7': return { state: 'locked', values: [inputs ? String(inputs.requirements.autonomyH) : '48'] };
@@ -632,6 +657,22 @@ export function plantCandidates(inputs) {
   const out = { plants: all.filter((c) => c.include), all, nearby: near.length, source: PLANT_SOURCE };
   CAND.set(inputs, { sig, out });
   return out;
+}
+// A plant entered by hand that looks like a plant of the bundled list (realism rebuild, OPEN-QUESTIONS 251): the rule
+// that merges the list's own duplicates (OPEN-QUESTIONS 118): the same type, the smaller at least 75 % of the larger,
+// within a kilometre (of the site: a plant entered by hand has no position). The options still offer both; the cards
+// treat them as one plant and the plan check says so. Returns { manual, list } or null.
+export function plantTwin(inputs) {
+  const c = plantCandidates(inputs).plants;
+  const m = c.find((x) => x.manual && x.offersPower);
+  if (!m) return null;
+  let best = null;
+  for (const x of c) {
+    if (x.manual || !x.offersPower || x.type !== m.type) continue;
+    if (Math.min(x.mw, m.mw) < (1 - PLANT_DEFAULTS.mergeSizeFrac) * Math.max(x.mw, m.mw) || Math.abs((x.km || 0) - (m.km || 0)) > PLANT_DEFAULTS.mergeKm) continue;
+    if (!best || Math.abs(x.mw - m.mw) < Math.abs(best.mw - m.mw)) best = x;
+  }
+  return best ? { manual: m, list: best } : null;
 }
 // Bought whole is a value of its own only for a list plant of more than one unit (otherwise it is the same as in part).
 export const plantPowerValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersPower).flatMap((c) => [c.values.lease, c.values.buy, ...(!c.manual && c.units > 1 ? [c.values.buyWhole] : []), ...(!c.manual && c.uses && c.uses.contract.offered ? [c.values.contract] : [])]);
@@ -973,6 +1014,24 @@ if (LEGACY_ADDERS) {
   Object.assign(TECH.substation.p, { cablePerKm_mv: 1.5e6, cablePerKm_hv: 1.5e6, cablePerKm_ehv: 1.5e6 });
   TECH.gasConnection.p.pipePerKm = 800000;
 }
+// Realism rebuild (2026-11-11, OPEN-QUESTIONS 249): procurement lead times of 2026 for plant that runs, from the research
+// of that day (docs/research/data-centre-rules-2026-11.md, section 9). The earlier values were set before the 2025–2026
+// order boom: gas engines 9 months, turbines 12, CHP 12, fuel cells 6 + 3.
+if (!LEGACY_ENGINE) {
+  const LEAD = [
+    ['tech.gasRecip.procM', 21, 18, 30, SRC.leadEngines, 'Wärtsilä 34SG 18–24 months in the second quarter of 2026 (larger engines 22–30); the middle of the 34SG range. Was 9 months.'],
+    ['tech.chp.procM', 21, 18, 30, SRC.leadEngines, 'The same gas engines as the engine plant, with heat recovery. Was 12 months.'],
+    ['tech.gasTurbine.procM', 40, 15, 48, SRC.leadTurbines, 'New aeroderivative turbines about 40 months in 2026; refurbished units have been contracted for about 15 months. Was 12 months.'],
+    ['tech.fuelCell.procM', 12, 9, 15, SRC.leadFuelCells, '16 to 18 months to power in all: 12 months procurement and 5 months construction here. Was 6 + 3 months.'],
+    ['tech.fuelCell.buildM', 5, 3, 8, SRC.leadFuelCells, 'See tech.fuelCell.procM.'],
+  ];
+  for (const [path, value, low, high, src, note] of LEAD) {
+    const [, id, k] = path.split('.');
+    TECH[id].p[k] = value;
+    Object.assign(REGISTRY[path], { value, low, high, note });
+    applySource(REGISTRY[path], src);
+  }
+}
 // Gas engine minimum stable load (owner 2026-11-07, OPEN-QUESTIONS 230): kept at 30 % as judgement.
 Object.assign(REGISTRY['tech.gasRecip.msl'], { basis: 'judgement', note: 'Owner 2026-11-07 (OPEN-QUESTIONS 230): 30 % kept as judgement, the lower end of the Danish Energy Agency\'s 30–50 % range; its central value 50 % shown for comparison.' });
 Object.assign(REGISTRY['tech.substation.cablePerKm_mv'], { basis: 'judgement', note: 'Owner 2026-11-07 (OPEN-QUESTIONS 226): ACER has no figure below 110 kV, so €1.5 m/km stays as judgement.' });
@@ -1094,6 +1153,8 @@ export function buildDefaultInputs(opts = {}) {
       pvGroundHa: rec('site.pvGroundHa', 0, 'ha of ground available for PV', { low: 0, high: null, basis: 'judgement', ref: '§5.2, §8 C10', note: 'OPEN-QUESTIONS 53 (2026-10-22): 0 = no ground solar. An entered area makes C10 "Roof + ground" available and sizes ground PV at solarGround.haPerMWp; with the Site tab (Beta) on it is placed as one block of that area.' }),
       offsiteLandHa: rec('site.offsiteLandHa', 0, 'ha', { basis: 'judgement', ref: '§5.2' }),
       offsiteDistanceKm: rec('site.offsiteDistanceKm', 2, 'km private-wire distance', { low: 0.5, high: 10, basis: 'judgement', ref: '§5.2', note: 'Used only when off-site land or off-site plant exists; replace with the real route length.' }),
+      // Realism rebuild (2026-11-11, OPEN-QUESTIONS 250): distance to the nearest protected nature site.
+      natureSiteKm: rec('site.natureSiteKm', null, 'km to the nearest protected nature site (Natura 2000), blank = not known', { basis: 'judgement', ref: '§5.2', note: 'Used by the buildability tests for plant that runs: in the Netherlands the nitrogen rules make a nature permit hard to get near a protected site.' }),
       groundConditions: rec('site.groundConditions', 'assumed suitable', 'free text', { basis: 'judgement', ref: '§5.2', note: 'Note only; no geotechnical modelling (flat site, §10.1).' }),
     },
     load: {
@@ -1184,6 +1245,8 @@ export function buildDefaultInputs(opts = {}) {
       gasAvailable: rec('utilities.gasAvailable', 'Unknown', '', { basis: 'judgement', ref: '§5.4' }),
       gasDateMonths: rec('utilities.gasDateMonths', 18, 'months from project start', { low: 12, high: 36, basis: 'judgement', ref: '§5.4', note: 'Gas capacity unlimited from this date.' }),
       gasPrice: rec('utilities.gasPrice', 'by country', '€/MWh_th', { basis: 'source', derived: true, verify: 'TTF/NBP forward curves; national tariffs', ref: '§5.4' }),
+      // Realism rebuild (2026-11-11, OPEN-QUESTIONS 250): gas supply as a capacity, tested against each option's gas plant.
+      gasCapacityMWth: rec('utilities.gasCapacityMWth', null, 'MW of gas (thermal) the network can supply, blank = not confirmed', { basis: 'judgement', ref: '§5.4', note: 'Blank: gas plant on site carries the condition "gas supply not confirmed". Entered: an option whose gas plant needs more is treated as unlikely.' }),
       hydrogenAvailable: rec('utilities.hydrogenAvailable', 'No', '', { basis: 'judgement', ref: '§5.4' }),
       waterAvailable: rec('utilities.waterAvailable', 'Unknown', 'm³/day', { basis: 'judgement', ref: '§5.4' }),
       districtHeating: rec('utilities.districtHeating', 'No', '', { basis: 'judgement', ref: '§5.4' }),
@@ -1210,6 +1273,17 @@ export function buildDefaultInputs(opts = {}) {
       sevesoH2t: rec('requirements.sevesoH2t', 5, 't hydrogen stored', { basis: 'source', verify: 'Directive 2012/18/EU (Seveso III) Annex I lower tier', ref: '§5.5' }),
       permitAllowanceM: rec('requirements.permitAllowanceM', 6, 'months before ordering plant that needs significant environmental permitting (IED, Seveso)', { low: 0, high: 18, basis: 'judgement', ref: '§9.8', note: "Owner's decision 2026-10-22 (OPEN-QUESTIONS 44, 45): plant is ordered from day one; only plant under the IED or Seveso waits this allowance. Wind, ground solar and SMRs keep their own planning months (OPEN-QUESTIONS 56)." }),
       sevesoFuelT: rec('requirements.sevesoFuelT', 2500, 't diesel/HVO stored', { basis: 'source', verify: 'Directive 2012/18/EU (Seveso III) Annex I lower tier', ref: '§5.5' }),
+      // Realism rebuild (2026-11-11, OPEN-QUESTIONS 248–251): the consent step, the run-hours classes and the latest
+      // acceptable start.
+      eiaMWth: rec('requirements.eiaMWth', 300, 'MW heat of running combustion plant on site', { basis: 'source', ref: '§9.8', src: SRC.eiaDirective, note: 'At or above this, the plant needs an environmental impact assessment before consent. Counted on plant that runs (firm and bridging plant), not on standby gensets (not tested for them: a limit).' }),
+      eiaAllowanceM: rec('requirements.eiaAllowanceM', 18, 'months before ordering plant that needs an environmental impact assessment', { low: 12, high: 30, basis: 'judgement', ref: '§9.8', note: 'Judgement: scoping, a year of surveys, the statement and the decision. Not researched by country (OPEN-QUESTIONS 249).' }),
+      dcoMWe: rec('requirements.dcoMWe', 50, 'MW of generating capacity on site (England)', { basis: 'source', ref: '§9.8', src: SRC.nsip, note: 'England only (the tool applies it to Great Britain, and says so): above this a generating station needs a development consent order.' }),
+      dcoAllowanceM: rec('requirements.dcoAllowanceM', 30, 'months before ordering plant that needs a development consent order', { low: 24, high: 42, basis: 'judgement', ref: '§9.8', note: 'About 16 to 18 months from application to decision (sourced, see requirements.dcoMWe) after about a year of pre-application work (judgement).' }),
+      limitedRunHours: rec('requirements.limitedRunHours', 500, 'h/yr', { basis: 'source', ref: '§9.8', src: SRC.mcpd500, note: 'Plant that runs no more than this many hours a year can be exempted from the emission limits. Plant that runs longer is treated as prime plant by the buildability tests.' }),
+      lateAllowanceM: rec('requirements.lateAllowanceM', 12, 'months a building may start after its planned date', { low: 0, high: 36, basis: 'judgement', ref: '§11', note: 'Latest acceptable start (owner, 2026-11-11: "Yes"). An option that starts any building later than this ranks below every option that does not. The value is Claude\'s judgement until the owner sets one.' }),
+      rentalConditionM: rec('requirements.rentalConditionM', 24, 'months of rented generation before it is a condition', { low: 12, high: 36, basis: 'judgement', ref: '§9.9', note: 'Rented generation on site longer than this is a named condition (permit and contract for long-running temporary plant). Judgement.' }),
+      rentalUnlikelyM: rec('requirements.rentalUnlikelyM', 60, 'months of rented generation before it is unlikely', { low: 36, high: 96, basis: 'judgement', ref: '§9.9', note: 'Rented generation on site longer than this is treated as unlikely to be built. Judgement.' }),
+      unitCountCondition: rec('requirements.unitCountCondition', 60, 'running units on site before it is a condition', { low: 30, high: 120, basis: 'judgement', ref: '§9.9', note: 'More running units than this (engines, turbines, fuel cells, rented sets) is a named condition: a plant of that many units is rare. The largest engine plant found for a data centre in 2026 has 40 engines (Wärtsilä, 412 MW). Judgement.' }),
       testRunHours: rec('requirements.testRunHours', 6, 'h/yr per unit', { low: 3, high: 24, basis: 'judgement', ref: '§5.5, §9.4', verify: 'NFPA 110 (monthly exercise runs)', note: 'Walkthrough 2026-10-21: 6 h a year per generator (replaces 12 h), about monthly 30-minute exercise runs.' }),
       gensetPrimaryHours: rec('requirements.gensetPrimaryHours', 0, 'h/yr', { low: 0, high: 500, basis: 'judgement', ref: '§5.5, §9.4', note: 'Walkthrough 2026-10-21: backup gensets can run as primary power for a set number of hours a year, dispatched and costed. Default 0: they never run in normal dispatch. Hours chosen: the most expensive grid-price hours of each year.' }),
       testRunLoad: rec('requirements.testRunLoad', 0.75, 'fraction of rating', { low: 0.5, high: 1, basis: 'judgement', ref: '§5.5, §9.4', note: 'Walkthrough 2026-10-21: test load 75 %, a separate editable input.' }),
@@ -1250,6 +1324,9 @@ export function buildDefaultInputs(opts = {}) {
       minorFlagPenalty: rec('deliverability.minorFlagPenalty', 3, 'points per minor permitting flag', { basis: 'judgement', ref: '§9.9' }),
       // Owner's decision, 2026-11-08 (OPEN-QUESTIONS 244): a held plant whose permit outlook is "unlikely" costs the same as a major flag.
       unlikelyPermitPenalty: rec('deliverability.unlikelyPermitPenalty', 8, 'points per held plant whose permit outlook is unlikely', { basis: 'judgement', ref: '§9.9' }),
+      // Realism rebuild (2026-11-11, OPEN-QUESTIONS 250): points taken off the buildability score.
+      conditionPenalty: rec('deliverability.conditionPenalty', 6, 'points per named condition', { basis: 'judgement', ref: '§9.9', note: 'Judgement (OPEN-QUESTIONS 250): a condition is something another party must still agree. Six points each: at the default weights one condition weighs about as much as €4 to €7/MWh of LCOE in the four study runs of 2026-11-11 (the cost scale is relative to each run), so a much cheaper option with conditions still leads, and says what it rests on.' }),
+      unlikelyPenalty: rec('deliverability.unlikelyPenalty', 30, 'points per test that says "unlikely"', { basis: 'judgement', ref: '§9.9', note: 'Judgement (OPEN-QUESTIONS 250). The points matter little: an option with an "unlikely" finding is tier C and ranks below every option of tier A or B whatever its score.' }),
       gasUnknownPenalty: rec('deliverability.gasUnknownPenalty', 10, 'points', { basis: 'judgement', ref: '§9.9' }),
       hydrogenPenalty: rec('deliverability.hydrogenPenalty', 10, 'points', { basis: 'judgement', ref: '§9.9' }),
       leadTimePenalty: rec('deliverability.leadTimePenalty', 5, 'points per technology', { basis: 'judgement', ref: '§9.9' }),
@@ -1260,6 +1337,8 @@ export function buildDefaultInputs(opts = {}) {
       siteFitNoFitPenalty: rec('deliverability.siteFitNoFitPenalty', 25, 'points for "Does not fit"', { basis: 'judgement', ref: '§9.9', note: 'Applies only when the site-fit penalty is on.' }),
     },
     settings: {
+      // Realism rebuild (2026-11-11; OPEN-QUESTIONS 247 onward, taken by Claude under the owner's carte blanche).
+      realism: rec('settings.realism', !LEGACY_ENGINE, 'toggle', { basis: 'run setting', ref: '§7, §9, §11', note: 'On: buildings start when their power and standby are ready, plant is bought in step with the need, the consent step and the 2026 lead times set the programme, every option gets buildability tests and a tier, and the ranking puts options that are likely to be built first. Off: the engine as merged on 2026-11-11.' }),
       generationCap: rec('settings.generationCap', 2000, 'options', { basis: 'run setting', ref: '§7.2' }),
       // Work package 23 (owner 2026-11-02, OPEN-QUESTIONS 153): screen every combination below this many, sample above it.
       screenAllBelow: rec('settings.screenAllBelow', SCREEN_ALL_DEFAULT, 'combinations', { basis: 'run setting', ref: '§7.2', note: 'A run screens every valid combination when there are no more than this many, and samples up to the generation cap above it; 0 always samples. Owner, 2026-11-02, after a trial in which the 2,000-option sample missed the best option on T1 and T3 (docs/research/local-search-trial-2026-11-02.md). The Node test suite sets 0 through ESTOOL_SCREEN_ALL_BELOW so its sampled reference runs keep their figures.' }),
@@ -1340,6 +1419,9 @@ export function buildDefaultInputs(opts = {}) {
     renewEdits: rec('plants.renewEdits', {}, 'uses and corrections per renewable plant', { basis: 'judgement', ref: '§5.4', note: 'Supply contract price (fixed, or wholesale ± an adder), purchase price, rent, route, surplus shares; every value blank by default.' }),
     renewMinMW: rec('plants.renewMinMW', null, 'MW, smallest renewable plant listed (blank = none listed)', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 196): the engineer sets both the size and the distance, with no default; no renewable plant appears until both are entered. The bundled list holds plants of 5 MW or more (OPEN-QUESTIONS 240).' }),
     renewRadiusKm: rec('plants.renewRadiusKm', null, 'km from the site (blank = none listed)', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 196).' }),
+    // Realism rebuild (2026-11-11, OPEN-QUESTIONS 250): an agreement in principle with a nearby plant's owner.
+    agreed: rec('plants.agreed', {}, 'plant id → true when its owner has agreed in principle', { basis: 'judgement', ref: '§9.9', note: 'Empty: every option that leases, buys or contracts a nearby plant, or takes over its grid connection, carries the condition "agreement with the plant\'s owner". Tick a plant to remove it.' }),
+    importConfirmed: rec('plants.importConfirmed', {}, 'plant id → true when the grid operator has confirmed that the campus can import on the plant\'s connection', { basis: 'judgement', ref: '§9.9', note: 'Empty: every option that takes over a nearby plant\'s grid connection carries the finding "import right on the plant\'s connection": a condition, or unlikely where the country research found the route closed (Spain, Portugal, Great Britain, Ireland, Norway). Tick a plant to remove it.' }),
     edits: rec('plants.edits', {}, 'corrections per plant', { basis: 'judgement', ref: '§5.4', derived: true, note: 'Empty = the values of the bundled list and the defaults, each flagged with its source.' }),
   };
   // Measured hourly weather (owner 2026-10-30, OPEN-QUESTIONS 106–107): an uploaded EPW file or a NOAA station year.
@@ -1384,6 +1466,15 @@ export function normalizeInputs(inputs) {
   if (out.plants) { if (!Array.isArray(out.plants.renewables)) out.plants.renewables = []; if (!out.plants.renewEdits) out.plants.renewEdits = {}; }
   // Inputs saved before the weather work have none: the synthetic profile.
   if (!out.weather || typeof out.weather !== 'object') out.weather = { source: 'none' };
+  // Inputs saved before the realism rebuild (2026-11-11): the rebuild is on, with the default tests and allowances.
+  if (out.settings.realism === undefined || out.settings.realism === null) out.settings.realism = !LEGACY_ENGINE;
+  out.requirements = { eiaMWth: 300, eiaAllowanceM: 18, dcoMWe: 50, dcoAllowanceM: 30, limitedRunHours: 500, lateAllowanceM: 12, rentalConditionM: 24, rentalUnlikelyM: 60, unitCountCondition: 60, ...out.requirements };
+  out.deliverability = { conditionPenalty: 6, unlikelyPenalty: 30, ...out.deliverability };
+  if (out.utilities.gasCapacityMWth === undefined) out.utilities.gasCapacityMWth = null;
+  if (out.site.natureSiteKm === undefined) out.site.natureSiteKm = null;
+  // Agreements with the owners of nearby plants (OPEN-QUESTIONS 250): none unless ticked.
+  if (!out.plants.agreed || typeof out.plants.agreed !== 'object') out.plants.agreed = {};
+  if (!out.plants.importConfirmed || typeof out.plants.importConfirmed !== 'object') out.plants.importConfirmed = {};
   out.choices = out.choices || {};
   for (const c of CHOICES) {
     if (!out.choices[c.id]) out.choices[c.id] = defaultChoiceState(c.id, out);

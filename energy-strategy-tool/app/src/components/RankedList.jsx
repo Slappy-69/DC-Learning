@@ -5,6 +5,9 @@ import { sig, money, monthLabel, pct, cur } from '../format.js';
 import OptionDetail from './OptionDetail.jsx';
 import FilterChips from './FilterChips.jsx';
 import { UnverifiedTag } from './Field.jsx';
+import { axisLabels, isRealismRun } from '../engine/labels.js';
+import { TierBadge, ItBadge, LateBlock, PlanCheck } from './Realism.jsx';
+import { strategyKey } from '../engine/cards.js';
 import TopFive from './TopFive.jsx';
 import { identicalResults } from '../engine/cards.js';
 
@@ -87,13 +90,26 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
   const FLAG_FILTERS = flagFilters(siteBeta);
   const [page, setPage] = useState(0);
   const [openId, setOpenId] = useState(null);
-  const { list, hiddenDominated } = useMemo(() => applyView(run.options, view), [run, view]);
+  // Realism rebuild (OPEN-QUESTIONS 251): "One row per strategy" keeps the best-ranked option of each permanent supply
+  // (the strategy of the cards); a view filter like the others, it never changes a score or a rank.
+  const [oneRow, setOneRow] = useState(false);
+  const { list: fullList, hiddenDominated } = useMemo(() => applyView(run.options, view), [run, view]);
+  const list = useMemo(() => {
+    if (!oneRow) return fullList;
+    const best = new Map();
+    for (const o of run.options) { const k = strategyKey(o); const b = best.get(k); if (!b || o.rank < b.rank) best.set(k, o); }
+    const keep = new Set([...best.values()].map((o) => o.id));
+    return fullList.filter((o) => keep.has(o.id));
+  }, [fullList, oneRow, run]);
   const dominatedCount = useMemo(() => run.options.filter((o) => o.dominatedBy).length, [run]);
   const PAGE = tablePageSize();
   const hdDefault = defaultView().hideDominated;
   const pages = Math.max(1, Math.ceil(list.length / PAGE));
   const p = Math.min(page, pages - 1);
   const rows = list.slice(p * PAGE, p * PAGE + PAGE);
+  const realism = isRealismRun(run);
+  const AX = axisLabels(realism);
+  const allowance = run.inputs.requirements.lateAllowanceM ?? null;
   const nameById = useMemo(() => new Map(run.options.map((o) => [o.id, o])), [run]);
   const sameAs = useMemo(() => identicalResults(run.options), [run]); // KNOWN-ISSUES item 5
   const adequateCount = useMemo(() => run.options.filter((o) => !o.adequacy || o.adequacy.adequate).length, [run]);
@@ -113,6 +129,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
   return (
     <div className="ranked">
       {summary}
+      {realism ? <PlanCheck run={run} /> : null}
       <TopFive run={run} onOpen={(id) => { const i = list.findIndex((x) => x.id === id); if (i >= 0) setPage(Math.floor(i / PAGE)); setOpenId(id); }} onCompare={onCompare} compareIds={compareIds} />
       <div className="filters" role="group" aria-label="View filters (never change score or rank)">
         <span className="filters-label">View filters</span>
@@ -152,6 +169,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
           </select>
         </label>
         <button type="button" className={`chip ${view.archetypesOnly ? 'on' : ''}`} aria-pressed={view.archetypesOnly} onClick={() => { setPage(0); setView({ ...view, archetypesOnly: !view.archetypesOnly }); }}>Archetypes only</button>
+        {isRealismRun(run) ? <button type="button" className={`chip ${oneRow ? 'on' : ''}`} aria-pressed={oneRow} onClick={() => { setPage(0); setOneRow(!oneRow); }}>One row per strategy</button> : null}
         <label className="inline-check">
           <input type="checkbox" checked={view.hideDominated} onChange={(e) => { setPage(0); setView({ ...view, hideDominated: e.target.checked }); }}
             aria-describedby={view.hideDominated === hdDefault ? 'ranked-hd-basis' : undefined} />
@@ -165,7 +183,9 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
       </div>
       <FilterChips view={view} setView={setView} hiddenDominated={hiddenDominated} onChange={() => setPage(0)} clearAll />
       <p className="note">Showing {list.length.toLocaleString('en-GB')} of {run.options.length.toLocaleString('en-GB')} screened options ({dominatedCount.toLocaleString('en-GB')} dominated, all shown unless hidden). Scores are relative to the scoring set (all screened options); filters change only what is shown.</p>
-      <p className="note">Power adequacy first: {adequateCount.toLocaleString('en-GB')} of {run.options.length.toLocaleString('en-GB')} options serve their load in every hour and rank above the {(run.options.length - adequateCount).toLocaleString('en-GB')} that do not. Within each group the order is by weighted score. Options that are not adequate stay in the list.</p>
+      {realism
+        ? <p className="note">Ranked first: options that serve their load in every hour, are likely to be built (tier A or B), meet the resilience requirement, power the most IT, and start every building within the latest acceptable start ({allowance} months); within each group the order is by weighted score, on scales taken over the {(run.scoring.scaleScope || 0).toLocaleString('en-GB')} options of the leading group. Options that rank below stay in the list and say why.</p>
+        : <p className="note">Power adequacy first: {adequateCount.toLocaleString('en-GB')} of {run.options.length.toLocaleString('en-GB')} options serve their load in every hour and rank above the {(run.options.length - adequateCount).toLocaleString('en-GB')} that do not. Within each group the order is by weighted score. Options that are not adequate stay in the list.</p>}
 
       <div className="table-wrap" role="region" aria-label="Ranked options" tabIndex={0}>
         <table className="rank-table">
@@ -174,7 +194,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
               {th('rank', 'Rank', 'num')}
               {th('name', 'Option')}
               {th('score', 'Score', 'num')}
-              <th scope="col" className="num">Cost · Carbon · TTP · Deliv.</th>
+              <th scope="col" className="num">Cost · Carbon · {AX.ttpShort} · {AX.delivShort}</th>
               {th('lcoe', `LCOE ${cur().trim()}/MWh`, 'num')}
               {th('capex', 'Capex', 'num')}
               {th('carbon', 'Carbon', 'num')}
@@ -195,7 +215,10 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
               const open = openId === o.id;
               return (
                 <React.Fragment key={o.id}>
-                  {p * PAGE + i === firstShortIdx ? (
+                  {realism && rankOrder && o.rankNote && (p * PAGE + i === 0 || list[p * PAGE + i - 1].groupRank !== o.groupRank) ? (
+                    <tr className="adequacy-divider group-divider"><th scope="rowgroup" colSpan={cols}><span className="adequacy-divider-text">Ranked below the options above: {o.rankNote}.</span></th></tr>
+                  ) : null}
+                  {!realism && p * PAGE + i === firstShortIdx ? (
                     <tr className="adequacy-divider"><th scope="rowgroup" colSpan={cols}><span className="adequacy-divider-text">Not adequate: these options do not serve their load in every hour, or their firm supply falls short of the design load in some months. They rank below every adequate option.</span></th></tr>
                   ) : null}
                   <tr className={open ? 'row-open' : ''}>
@@ -203,14 +226,16 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
                     <td className="name-cell">
                       <button type="button" className="row-btn" aria-expanded={open} onClick={() => setOpenId(open ? null : o.id)}>{o.name}</button>
                       <div className="row-tags">
+                        {realism ? <><TierBadge o={o} /> <ItBadge o={o} /></> : null}
                         {o.archetype ? <span className="badge badge-arch">{o.archetype} {o.archetypeName}</span> : null}
                         {sameAs.has(o.id) ? <span className="badge badge-arch" title="Every figure equals a better-ranked option's: the choices that differ change no number">Same results as #{sameAs.get(o.id).rank}</span> : null}
                         {o.dominatedBy ? (() => { const d = nameById.get(o.dominatedBy); const t = `Dominated by #${d?.rank} ${d?.name}`; return <span className="badge badge-dom" title={t}>{t}</span>; })() : null}
                       </div>
+                      {realism && o.sizing.energise && o.sizing.energise.shifted ? <LateBlock o={o} start={start} allowance={allowance} /> : null}
                     </td>
                     <td className="num strong">{o.score.toFixed(1)}</td>
                     <td className="num axis-cell">
-                      <span className="axis-bars" role="img" aria-label={`Axis scores: cost ${o.axisScores.cost.toFixed(0)}, carbon ${o.axisScores.carbon.toFixed(0)}, time-to-power ${o.axisScores.ttp.toFixed(0)}, deliverability ${o.axisScores.deliverability.toFixed(0)}`}>
+                      <span className="axis-bars" role="img" aria-label={`Axis scores: cost ${o.axisScores.cost.toFixed(0)}, carbon ${o.axisScores.carbon.toFixed(0)}, ${AX.ttp.toLowerCase()} ${o.axisScores.ttp.toFixed(0)}, ${AX.deliverability.toLowerCase()} ${o.axisScores.deliverability.toFixed(0)}`}>
                         {['cost', 'carbon', 'ttp', 'deliverability'].map((k) => (
                           <span key={k} className={`axis-bar ax-${k}`} title={`${k} ${o.axisScores[k].toFixed(0)}`}><span style={{ width: `${o.axisScores[k]}%` }} /></span>
                         ))}

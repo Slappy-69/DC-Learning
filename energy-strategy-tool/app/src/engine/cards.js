@@ -8,7 +8,29 @@
 import { perMWh, money } from '../format.js';
 
 export const STRATEGY_KEYS = ['C1', 'C2', 'C4', 'C5'];
-export const strategyKey = (o) => STRATEGY_KEYS.map((k) => o.v[k]).join('|');
+// Realism rebuild (2026-11-11, OPEN-QUESTIONS 251): a strategy is the campus's permanent supply: islanded or on the grid,
+// the firm plant and how it is sized, the bridging plant that keeps running after the grid arrives, and a grid
+// connection taken over. How the first buildings are bridged, the standby fuel, solar, batteries and PPAs are variants
+// of one strategy: the card shows the best-ranked one. Before, the key held the bridging plant, so five cards could
+// show one permanent supply five times.
+export function supplyKey(o) {
+  const v = o.v, sz = o.sizing || {};
+  // What is sized, not what was chosen: bridging plant with nothing to bridge is not kept, and a top-up with no
+  // shortfall to cover is not a firm plant.
+  const bridged = sz.bridge && sz.bridge.units > 0;
+  const kept = v.C1 === 'islanded' ? v.C2 : v.C1 === 'bridge' && bridged && (v.C3 === 'prime' || (v.C3 === 'split' && sz.bridge.primeMW > 0)) ? v.C2 : '-';
+  const firm = v.C4 !== 'none' && (!o.sizing || (sz.prime && sz.prime.mw > 0)) ? v.C4 : 'none';
+  // A nearby plant is one strategy whether it is leased, bought or contracted: the plant, not the deal.
+  // A plant entered by hand that is also in the bundled list counts as that plant (sizing.plantTwin).
+  const plantId = (x) => { const m = /^x[lbwc]:(.+)$/.exec(String(x)); const id = m ? m[1] : x === 'existing' ? 'manual' : null; return id ? `plant:${id === 'manual' && sz.plantTwin ? sz.plantTwin : id}` : x; };
+  // A connection taken over is one strategy whether it replaces part of the new connection or adds to it.
+  const take = v.C21 && v.C21 !== 'n/a' && v.C21 !== 'none' ? `take:${String(v.C21).replace(/^t[ak]:/, '')}` : '-';
+  return [v.C1 === 'islanded' ? 'islanded' : 'grid', plantId(firm), firm === 'none' ? '-' : v.C4s, plantId(kept), take].join('|');
+}
+// Does the option need someone else's plant or grid connection (a finding of the buildability tests)?
+const OTHERS = new Set(['third-party', 'takeover-import']);
+export const dependsOnOthers = (o) => !!(o.deliv && [...(o.deliv.conditions || []), ...(o.deliv.unlikely || [])].some((c) => OTHERS.has(c.id)));
+export const strategyKey = (o) => (o.deliv && o.deliv.buildability ? supplyKey(o) : STRATEGY_KEYS.map((k) => o.v[k]).join('|'));
 
 const near = (a, b) => (a === b) || (Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)));
 const FIGS = [(o) => o.eco.lcoe, (o) => o.eco.npvCost, (o) => o.eco.capex, (o) => o.carbon.locationG, (o) => o.carbon.marketG, (o) => o.carbon.cfePct, (o) => o.ttp.metric, (o) => o.deliv.score, (o) => o.unmet.mwh];
@@ -104,9 +126,15 @@ export function prosCons(o, options, sortedCache = new Map()) {
     const pct = Math.round(share * 100);
     // A pro must set the option apart: the share as good or better (ties included) is within the best 10 %. Without
     // this, a value most options share (for example no delay at all) was a pro for every one of them.
-    if (share <= PRO_SHARE && asGoodShare(s, x, m.higher) <= PRO_SHARE) pros.push({ id: m.id, share, text: share === 0 ? `Best ${m.label} in the run (${m.fmt(x)})` : `${m.label[0].toUpperCase() + m.label.slice(1)} in the best ${Math.max(1, pct)} % (${m.fmt(x)})` });
+    // Realism rebuild: the third and fourth axes have their new names, and the delay is an average over the planned IT
+    // (a card also shows the months of its latest building, which is a different number).
+    const R = !!(o.deliv && o.deliv.buildability);
+    const label = R && m.id === 'ttp' ? 'delay against the plan' : R && m.id === 'deliverability' ? 'buildability' : m.label;
+    const val = R && m.id === 'ttp' ? `${Number(x.toPrecision(3))} months on average over the planned IT` : m.fmt(x);
+    const cap = label[0].toUpperCase() + label.slice(1);
+    if (share <= PRO_SHARE && asGoodShare(s, x, m.higher) <= PRO_SHARE) pros.push({ id: m.id, share, text: share === 0 ? `${R && m.id === 'ttp' ? 'Least' : 'Best'} ${label} in the run (${val})` : `${cap} in the best ${Math.max(1, pct)} % (${val})` });
     // Rounded down and capped at 99 %, so the worst option never reads "worse than 100 %" (Haiku check H3, L1).
-    else if (share >= CON_SHARE) cons.push({ id: m.id, share, text: `${m.label[0].toUpperCase() + m.label.slice(1)} worse than ${Math.min(99, Math.floor(share * 100))} % of the run (${m.fmt(x)})` });
+    else if (share >= CON_SHARE) cons.push({ id: m.id, share, text: `${cap} worse than ${Math.min(99, Math.floor(share * 100))} % of the run (${val})` });
   }
   pros.sort((a, b) => a.share - b.share);
   cons.sort((a, b) => b.share - a.share);
@@ -118,6 +146,63 @@ export function cardOptions(options, n = 5) {
   const same = identicalResults(options);
   const seen = new Set();
   const out = [];
+  // Realism rebuild (OPEN-QUESTIONS 251): the cards as a ladder. Options that power more IT rank first, so five cards
+  // of the leading strategies could hide a sound strategy that powers one building fewer. The first cards are the
+  // leading strategies; the last cards (up to two) are the best-ranked option of each lower level of IT, so the price
+  // of the last buildings can be read off the cards.
+  const ranked = byRank(options);
+  const itOf = (o) => (o.sizing && o.sizing.energise ? Math.round(o.sizing.energise.poweredIT * 100) / 100 : null);
+  if (ranked.length && ranked[0].deliv && ranked[0].deliv.buildability && itOf(ranked[0]) != null) {
+    const topIT = itOf(ranked[0]);
+    const steps = [];
+    const seenIT = new Set([topIT]);
+    for (const o of ranked) {
+      const it = itOf(o);
+      if (it == null || it >= topIT || it <= 0 || seenIT.has(it) || same.has(o.id)) continue;
+      // Only a step a developer could build: adequate, tier A or B, resilience met.
+      if (!(o.rankKeys && o.rankKeys.adequate && o.rankKeys.likely && o.rankKeys.resilient)) continue;
+      seenIT.add(it); steps.push(o);
+    }
+    // A step down is worth a card only when it is cheaper than every step above it (less IT at a higher cost is
+    // no one's choice).
+    steps.sort((a, b) => itOf(b) - itOf(a));
+    let floor = ranked[0].metrics ? ranked[0].metrics.cost : Infinity;
+    for (let i = 0; i < steps.length;) { const c = steps[i].metrics ? steps[i].metrics.cost : Infinity; if (c < floor) { floor = c; i++; } else steps.splice(i, 1); }
+    const nSteps = Math.min(2, steps.length);
+    for (const o of ranked) {
+      if (out.length >= n - nSteps) break;
+      if (same.has(o.id) || itOf(o) !== topIT) continue;
+      const k = strategyKey(o);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push({ o, strategy: k });
+    }
+    // The fallback card: when every leading card needs someone else's plant or grid connection, the best-ranked
+    // buildable option that needs neither takes the last leading place, so the cards show what stands if the deal
+    // does not happen.
+    if (out.length && out.every((x) => dependsOnOthers(x.o))) {
+      const fb = ranked.find((o) => !same.has(o.id) && !dependsOnOthers(o) && o.rankKeys && o.rankKeys.adequate && o.rankKeys.likely && o.rankKeys.resilient && itOf(o) > 0);
+      if (fb) {
+        const at = steps.indexOf(fb);
+        if (!(at >= 0 && at < nSteps)) { // otherwise it is already a step-down card, marked below
+          if (out.length > 1 && out.length >= n - nSteps) out.pop();
+          out.push({ o: fb, strategy: strategyKey(fb), fallback: true, stepIT: itOf(fb), topIT });
+          seen.add(strategyKey(fb));
+        }
+      }
+    }
+    for (const o of steps.slice(0, n - out.length)) out.push({ o, strategy: strategyKey(o), step: true, stepIT: itOf(o), topIT, fallback: !dependsOnOthers(o) && out.every((x) => dependsOnOthers(x.o)) });
+    // Fewer leading strategies than cards: further options in rank order fill the rest.
+    if (out.length < n) for (const o of ranked) {
+      if (out.length >= n) break;
+      if (same.has(o.id) || out.some((x) => x.o === o)) continue;
+      const k = `${strategyKey(o)}|${itOf(o)}`;
+      if (seen.has(k) || seen.has(strategyKey(o))) continue;
+      seen.add(k);
+      out.push({ o, strategy: strategyKey(o) });
+    }
+    return out;
+  }
   for (const o of byRank(options)) {
     if (same.has(o.id)) continue;
     const k = strategyKey(o);
@@ -132,7 +217,7 @@ export function cardOptions(options, n = 5) {
 // The top-five cards. `sortedCache`: the run's figures sorted for the pros and cons; they do not change with the weights, so the app keeps
 // one per run (work package 23: six sorts of 17,344 figures on every weight change otherwise).
 export function topCards(options, n = 5, sortedCache = new Map()) {
-  const out = cardOptions(options, n).map(({ o, strategy }) => ({ o, strategy, ...prosCons(o, options, sortedCache), majorFlags: o.flags.filter((f) => f.severity === 'major') }));
+  const out = cardOptions(options, n).map(({ o, strategy, step = false, fallback = false, stepIT = null, topIT = null }) => ({ o, strategy, step, fallback, stepIT, topIT, ...prosCons(o, options, sortedCache), majorFlags: o.flags.filter((f) => f.severity === 'major') }));
   return { cards: out, comparison: `against the ${options.length.toLocaleString('en-GB')} options in this run`, identical: identicalResults(options) };
 }
 
