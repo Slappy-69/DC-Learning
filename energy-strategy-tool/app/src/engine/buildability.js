@@ -19,14 +19,15 @@
 // Pure: no UI, no browser APIs.
 
 import { TECH } from './defaults.js';
+import { takeoverRule, takeoverOutlook, TAKEOVER_GENERAL } from './countryrules.js';
 import { dcRule, ruleSource, isEUMember } from './dcrules.js';
 
 export const TIER_TEXT = { A: 'Buildable: no conditions', B: 'Buildable with conditions', C: 'Unlikely to be built as it stands' };
 // Judgement thresholds of the tests that have no input of their own (recorded in BUILD-NOTES).
 export const NL_NITROGEN_KM = 25;     // the Netherlands: running plant within this distance of a Natura 2000 site
 export const HABITATS_KM = 5;         // other EU states: an appropriate assessment is likely within this distance
-export const GAS_CAPACITY_ASK_MWTH = 100; // above this, a gas supply with no capacity entered is a condition
-export const LAND_TIGHT = 0.10;       // land take within 10 % over the net site: a condition; beyond: unlikely
+export const GAS_CAPACITY_ASK_MWTH = 50; // from this size (the 50 MW thermal line), a gas supply with no capacity entered is a condition
+export const LAND_TIGHT = 0.25;       // land take up to 25 % over the net site: a condition (the footprints are indicative); beyond: unlikely
 export const PT_GAS_SHARE = 0.5;      // Portugal's planned decree: a supply that is mostly gas
 
 const onSite = (p) => p && !TECH[p.tech].offsite && !TECH[p.tech].existingPlant;
@@ -65,7 +66,22 @@ export function buildabilityTests(ctx, v, sz, disp, flags) {
   if (sz.renewPlant) note(`r:${sz.renewPlant.id}`, sz.renewPlant.name, sz.renewPlant.mode === 'contract' ? 'a supply contract' : 'its purchase', sz.renewPlant.route !== 'grid');
   for (const [id, x] of third) {
     if (agreed[id] === true) continue;
-    C('third-party', `Agreement with the owner of ${x.name} (${x.uses.join(' and ')}): not agreed yet${x.wire ? '; the private wire also needs a direct-line authorisation' : ''}`, { plant: id });
+    // A connection taken over from a plant with no closure date: the month it comes free is a guess (OPEN-QUESTIONS 125).
+    const guess = ctx.takeover && ctx.takeover.plant.id === id && ctx.takeover.plant.defaultPassed ? `; ${x.name} has no closure date, so month ${ctx.takeover.month} for its connection is a guess to settle with its owner` : '';
+    C('third-party', `Agreement with the owner of ${x.name} (${x.uses.join(' and ')}): not agreed yet${x.wire ? '; the private wire also needs a direct-line authorisation' : ''}${guess}`, { plant: id });
+  }
+
+  // 1b. A grid connection taken over from a plant: the plant's connection is a right to feed in, and the campus needs
+  // a right to take power. The country research (countryrules.js, OPEN-QUESTIONS 155, 214, 215) says where the route
+  // looks closed; elsewhere the grid operator must confirm it. Ticked as confirmed (plants.importConfirmed): no finding.
+  if (ctx.takeover && ctx.takeover.mw > 0) {
+    const k = ctx.takeover;
+    const confirmed = ((inputs.plants && inputs.plants.importConfirmed) || {})[k.plant.id] === true;
+    if (!confirmed) {
+      const text = `${k.plant.name}'s grid connection (${r0(k.mw)} MW from month ${k.month}): ${takeoverRule(cc)} ${TAKEOVER_GENERAL.replace(/ \(OPEN-QUESTIONS 215\)/, '')}`;
+      if (takeoverOutlook(cc) === 'unlikely') U('takeover-import', `Taking over ${text}`, { plant: k.plant.id });
+      else C('takeover-import', `The grid operator's agreement to an import right on ${text}`, { plant: k.plant.id });
+    }
   }
 
   // 2. Consent for plant that runs on the campus.
@@ -93,6 +109,13 @@ export function buildabilityTests(ctx, v, sz, disp, flags) {
     const months = Math.max(0, end - bridge.availMonth);
     if (months > req.rentalUnlikelyM) U('rental-long', `Rented generation stays on site for ${months} months (${(months / 12).toFixed(1)} years): rented sets are temporary plant; longer than ${req.rentalUnlikelyM} months is treated as unlikely`);
     else if (months > req.rentalConditionM) C('rental-long', `Rented generation stays on site for ${months} months: a permit and a contract for long-running temporary plant (longer than ${req.rentalConditionM} months)`);
+  }
+
+  // 3b. Owned bridging plant that leaves when the grid arrives: the ledger credits its remaining book value (the
+  // salvage fraction), which assumes a buyer.
+  if (bridge && v.C1 === 'bridge' && v.C3 === 'remove' && bridge.units > 0 && onSite(bridge) && !TECH[bridge.tech].lease) {
+    const months = Math.max(0, sz.T - bridge.availMonth);
+    C('resale', `${TECH[bridge.tech].name} (${bridge.units} units, ${r0(bridge.mw)} MW) is bought to bridge for ${months} months and sold when the grid arrives: the figures credit ${Math.round((inputs.economics.salvageFraction ?? 0) * 100)} % of its remaining book value, which assumes a buyer`);
   }
 
   // 4. Number of running units.

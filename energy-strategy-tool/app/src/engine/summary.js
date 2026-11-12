@@ -25,6 +25,7 @@ import { NA } from './generator.js';
 import { sameFigures } from './cards.js';
 import { SCORE_KEYS, isRequirementCompliant } from './scoring.js';
 import { lateInfo, lateLine, isRealismOption } from './labels.js';
+import { supplyKey } from './cards.js';
 import { visibleFlags } from './view.js';
 import { sortRows, measureById } from './sensitivity.js';
 import { nearestFlips } from './breakeven.js';
@@ -218,7 +219,27 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
       for (const o of run.options) { const e = o.sizing && o.sizing.energise; if (e && e.powered === e.buildings && e.maxLate === 0 && o.groupRank !== undefined && (!alt || o.rank < alt.rank)) alt = o; }
       fork = alt ? opt(`The best-ranked option that keeps every planned date is #${alt.rank}, ${alt.name}: LCOE ${perMWh(alt.eco.lcoe)} against ${perMWh(L.eco.lcoe)}.`, 2.5) : opt('No option keeps every planned date (see the plan check).', 2.5);
     }
-    add('plan', 'Against the plan', [keep(lateS), keep(tierS), fork], more);
+    // The other way to start: with a bridge the leader is compared with the best-ranked option of the same permanent
+    // supply that waits for the grid, and the other way round.
+    let start2 = null;
+    {
+      const real = (o) => o.v.C1 === 'bridge' && o.sizing.bridge && o.sizing.bridge.shortfallMW > 0 && !o.sizing.bridgeDropped;
+      const key = supplyKey(L), lb = real(L);
+      let alt = null;
+      for (const o of run.options) {
+        if (o === L || o.groupRank === undefined || !o.sizing.energise || supplyKey(o) !== key || Math.abs(o.sizing.energise.poweredIT - en.poweredIT) > 1e-6) continue;
+        if (real(o) === lb || o.v.C1 === 'islanded') continue;
+        if (!alt || o.rank < alt.rank) alt = o;
+      }
+      if (alt) {
+        const a = alt.sizing.energise.late[0] ?? 0, b = en.late[0] ?? 0;
+        start2 = opt(lb
+          ? `Waiting for the grid instead (#${alt.rank}) starts building 1 ${plural(Math.max(0, a - b), 'month')} later and costs ${perMWh(alt.eco.lcoe)} against ${perMWh(L.eco.lcoe)}.`
+          : `Bridging instead (#${alt.rank}, ${alt.name.split(' · ')[0]}) starts building 1 ${plural(Math.max(0, b - a), 'month')} earlier and costs ${perMWh(alt.eco.lcoe)} against ${perMWh(L.eco.lcoe)}.`, 2.6);
+        more.push(`The other way to start, with the same permanent supply: #${alt.rank} ${alt.name}.`);
+      }
+    }
+    add('plan', 'Against the plan', [keep(lateS), keep(tierS), start2, fork], more);
   }
 
   // 1. Leading option.

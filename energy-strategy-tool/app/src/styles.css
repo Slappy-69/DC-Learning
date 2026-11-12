@@ -765,6 +765,8 @@ ul.plain ol { margin: 4px 0; padding-left: 20px; }
 /* Realism rebuild (2026-11-11): late badge, tier, conditions, plan check. */
 .badge-late { background: var(--bad); color: #fff; font-weight: 600; }
 .badge-tier { font-weight: 600; }
+.badge-step { background: var(--surface-2); color: var(--ink); border: 1px solid var(--control-border); font-weight: 600; }
+.tc-kind { margin: 0 0 0.35rem; }
 .late-block { margin: 4px 0; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
 .late-block .late-list { flex-basis: 100%; margin: 2px 0 0; }
 .late-list li { color: var(--bad); }

@@ -142,6 +142,12 @@ export const TAKEOVER_RULE = {
   DE: 'Not confirmed: an assumed right. No rule found; transmission connections are allocated by a maturity procedure from 2026, and a closing plant may be held in the grid reserve.',
 };
 export const takeoverRule = (cc) => TAKEOVER_RULE[cc] || 'Not confirmed: an assumed right. Not researched for this country.';
+// Realism rebuild (2026-11-11, OPEN-QUESTIONS 250): how the buildability tests read the table above. Where the
+// research found the route closed ("looks unavailable", "likely not available") an option that takes a plant's
+// connection over is unlikely to be built as it stands; elsewhere the import right is a condition to confirm with the
+// grid operator. The engineer can tick a plant as confirmed (plants.importConfirmed).
+export const TAKEOVER_UNLIKELY = new Set(['ES', 'PT', 'GB', 'IE', 'NO']);
+export const takeoverOutlook = (cc) => (TAKEOVER_UNLIKELY.has(cc) ? 'unlikely' : 'condition');
 
 // Ireland's large energy user policy (owner 2026-11-07, OPEN-QUESTIONS 198, 210–213): a minor flag on every Irish run.
 // De-rating factors from the latest T-4 capacity auction information pack (SEMO, IAIP3031T-4 v1.0, 2030/31, 4 August

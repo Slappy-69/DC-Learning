@@ -328,7 +328,9 @@ function takeoverCtx(ctx, v) {
   let fullGridM = ctx.fullGridM;
   for (let m = month; m < gridCap.length && m < fullGridM; m++) if (gridCap[m] + 1e-9 >= full) { fullGridM = m; break; }
   const takeover = { value: v.C21, plant, month, mw, needMW: need, offeredMW: plant.takeoverMW, costPerMW: plant.takeoverCostPerMW, cost: mw * plant.takeoverCostPerMW, ownPower: own ? own.mode : null, closeM, add, newMW };
-  const d = { ...ctx, gridCap, fullGridM, contractCache: new Map(), takeover, baseCtx: ctx, contractApplied: !add };
+  // Its own cache of building-date contexts (realism rebuild): the spread would otherwise hand it the base context's,
+  // and an option with a takeover would then be dispatched on the grid of an option without one (known issue 40).
+  const d = { ...ctx, gridCap, fullGridM, contractCache: new Map(), energiseCache: null, takeover, baseCtx: ctx, contractApplied: !add };
   ctx.takeoverCache.set(key, d);
   return d;
 }

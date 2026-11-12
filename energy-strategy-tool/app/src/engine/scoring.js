@@ -71,15 +71,18 @@ export function scoreOptions(options, inputs, opts = {}) {
   }
   for (const o of options) {
     o.axisScores = {};
-    let ws = 0;
+    let ws = 0, wr = 0;
     for (const k of keys) {
       const { lo, hi } = range[k];
-      // Outside the leading group's scale an option is held at the ends (0 or 100).
-      const s = R ? Math.max(0, Math.min(100, axisScore(k, o.metrics[k], lo, hi))) : axisScore(k, o.metrics[k], lo, hi);
+      // Outside the leading group's scale an option is shown at the ends (0 or 100); the order inside the groups below
+      // the leading one uses the score before it is held there, so the cheapest of them still comes first.
+      const raw = axisScore(k, o.metrics[k], lo, hi);
+      const s = R ? Math.max(0, Math.min(100, raw)) : raw;
       o.axisScores[k] = s;
-      ws += w[k] * s;
+      ws += w[k] * s; wr += w[k] * raw;
     }
     o.score = ws;
+    if (R) o.orderScore = wr;
   }
   if (!opts.keepDominance) markDominance(options);
   if (R) rankRealism(options); else rankOptions(options, inputs.settings.rankCompliantFirst);
@@ -133,7 +136,7 @@ function rankRealism(options) {
   // Equal scores: the option that names no plant it does not buy comes first (a bridge that is not bought gives the
   // figures of the same option without one), then the option code.
   const plain = (o) => (o.sizing && o.sizing.bridgeDropped ? 1 : 0);
-  const sorted = options.slice().sort((a, b) => (b.groupRank - a.groupRank) || (b.score - a.score) || (plain(a) - plain(b)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const sorted = options.slice().sort((a, b) => (b.groupRank - a.groupRank) || (b.orderScore - a.orderScore) || (plain(a) - plain(b)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   sorted.forEach((o, i) => { o.rank = i + 1; });
 }
 

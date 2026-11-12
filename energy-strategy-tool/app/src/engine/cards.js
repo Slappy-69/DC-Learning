@@ -14,12 +14,22 @@ export const STRATEGY_KEYS = ['C1', 'C2', 'C4', 'C5'];
 // of one strategy: the card shows the best-ranked one. Before, the key held the bridging plant, so five cards could
 // show one permanent supply five times.
 export function supplyKey(o) {
-  const v = o.v;
-  const kept = v.C1 === 'islanded' ? v.C2 : v.C1 === 'bridge' && (v.C3 === 'prime' || v.C3 === 'split') ? v.C2 : '-';
+  const v = o.v, sz = o.sizing || {};
+  // What is sized, not what was chosen: bridging plant with nothing to bridge is not kept, and a top-up with no
+  // shortfall to cover is not a firm plant.
+  const bridged = sz.bridge && sz.bridge.units > 0;
+  const kept = v.C1 === 'islanded' ? v.C2 : v.C1 === 'bridge' && bridged && (v.C3 === 'prime' || (v.C3 === 'split' && sz.bridge.primeMW > 0)) ? v.C2 : '-';
+  const firm = v.C4 !== 'none' && (!o.sizing || (sz.prime && sz.prime.mw > 0)) ? v.C4 : 'none';
   // A nearby plant is one strategy whether it is leased, bought or contracted: the plant, not the deal.
-  const plantId = (x) => { const m = /^x[lbw]:(.+)$/.exec(String(x)); return m ? `plant:${m[1]}` : x === 'existing' ? 'plant:manual' : x; };
-  return [v.C1 === 'islanded' ? 'islanded' : 'grid', plantId(v.C4), v.C4 === 'none' ? '-' : v.C4s, plantId(kept), v.C21 && v.C21 !== 'n/a' ? v.C21 : '-'].join('|');
+  // A plant entered by hand that is also in the bundled list counts as that plant (sizing.plantTwin).
+  const plantId = (x) => { const m = /^x[lbwc]:(.+)$/.exec(String(x)); const id = m ? m[1] : x === 'existing' ? 'manual' : null; return id ? `plant:${id === 'manual' && sz.plantTwin ? sz.plantTwin : id}` : x; };
+  // A connection taken over is one strategy whether it replaces part of the new connection or adds to it.
+  const take = v.C21 && v.C21 !== 'n/a' && v.C21 !== 'none' ? `take:${String(v.C21).replace(/^t[ak]:/, '')}` : '-';
+  return [v.C1 === 'islanded' ? 'islanded' : 'grid', plantId(firm), firm === 'none' ? '-' : v.C4s, plantId(kept), take].join('|');
 }
+// Does the option need someone else's plant or grid connection (a finding of the buildability tests)?
+const OTHERS = new Set(['third-party', 'takeover-import']);
+export const dependsOnOthers = (o) => !!(o.deliv && [...(o.deliv.conditions || []), ...(o.deliv.unlikely || [])].some((c) => OTHERS.has(c.id)));
 export const strategyKey = (o) => (o.deliv && o.deliv.buildability ? supplyKey(o) : STRATEGY_KEYS.map((k) => o.v[k]).join('|'));
 
 const near = (a, b) => (a === b) || (Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)));
@@ -161,7 +171,21 @@ export function cardOptions(options, n = 5) {
       seen.add(k);
       out.push({ o, strategy: k });
     }
-    for (const o of steps.slice(0, n - out.length)) out.push({ o, strategy: strategyKey(o), step: true, stepIT: itOf(o), topIT });
+    // The fallback card: when every leading card needs someone else's plant or grid connection, the best-ranked
+    // buildable option that needs neither takes the last leading place, so the cards show what stands if the deal
+    // does not happen.
+    if (out.length && out.every((x) => dependsOnOthers(x.o))) {
+      const fb = ranked.find((o) => !same.has(o.id) && !dependsOnOthers(o) && o.rankKeys && o.rankKeys.adequate && o.rankKeys.likely && o.rankKeys.resilient && itOf(o) > 0);
+      if (fb) {
+        const at = steps.indexOf(fb);
+        if (!(at >= 0 && at < nSteps)) { // otherwise it is already a step-down card, marked below
+          if (out.length > 1 && out.length >= n - nSteps) out.pop();
+          out.push({ o: fb, strategy: strategyKey(fb), fallback: true, stepIT: itOf(fb), topIT });
+          seen.add(strategyKey(fb));
+        }
+      }
+    }
+    for (const o of steps.slice(0, n - out.length)) out.push({ o, strategy: strategyKey(o), step: true, stepIT: itOf(o), topIT, fallback: !dependsOnOthers(o) && out.every((x) => dependsOnOthers(x.o)) });
     // Fewer leading strategies than cards: further options in rank order fill the rest.
     if (out.length < n) for (const o of ranked) {
       if (out.length >= n) break;
@@ -187,7 +211,7 @@ export function cardOptions(options, n = 5) {
 // The top-five cards. `sortedCache`: the run's figures sorted for the pros and cons; they do not change with the weights, so the app keeps
 // one per run (work package 23: six sorts of 17,344 figures on every weight change otherwise).
 export function topCards(options, n = 5, sortedCache = new Map()) {
-  const out = cardOptions(options, n).map(({ o, strategy, step = false, stepIT = null, topIT = null }) => ({ o, strategy, step, stepIT, topIT, ...prosCons(o, options, sortedCache), majorFlags: o.flags.filter((f) => f.severity === 'major') }));
+  const out = cardOptions(options, n).map(({ o, strategy, step = false, fallback = false, stepIT = null, topIT = null }) => ({ o, strategy, step, fallback, stepIT, topIT, ...prosCons(o, options, sortedCache), majorFlags: o.flags.filter((f) => f.severity === 'major') }));
   return { cards: out, comparison: `against the ${options.length.toLocaleString('en-GB')} options in this run`, identical: identicalResults(options) };
 }
 

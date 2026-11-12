@@ -4,6 +4,7 @@ import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
 import { sig, money, monthLabel, pct, perMWh } from '../format.js';
 import OptionDetail from './OptionDetail.jsx';
+import { isRealismOption, lateInfo, lateLine, TIER_SHORT } from '../engine/labels.js';
 
 // Compare (BRIEF §12.7; work package 7): up to three options side by side, chosen from the cards, the options table or
 // the trade-off chart; the headline figures, the choices on which they differ, and a deep-dive card each.
@@ -24,6 +25,12 @@ const ROWS = [
   ['Unmet load (dispatched years)', (o) => `${sig(o.unmet.mwh, 2)} MWh`],
   ['Flags (major · minor · info)', (o) => ['major', 'minor', 'info'].map((s) => o.flags.filter((f) => f.severity === s && !f.assumed).length).join(' · ')],
   ['Assumed defaults (key inputs not entered)', (o) => String(o.flags.filter((f) => f.assumed && f.path).length)],
+];
+// Realism rebuild (2026-11-11): the tier, the IT delivered and any late start, in words, at the head of the table.
+const REALISM_ROWS = [
+  ['Buildability tier', (o) => `${TIER_SHORT[o.deliv.tier]}${o.deliv.conditions.length ? `: ${o.deliv.conditions.length} condition${o.deliv.conditions.length === 1 ? '' : 's'}` : ''}${o.deliv.unlikely.length ? `: ${o.deliv.unlikely.map((u) => u.text.split(':')[0]).join('; ')}` : ''}`],
+  ['IT delivered', (o) => { const en = o.sizing.energise; return `${sig(en.poweredIT, 3)} of ${sig(en.plannedIT, 3)} MW · ${en.powered} of ${en.buildings} buildings`; }],
+  ['Against the plan', (o, start) => { const x = lateInfo(o, start); return x.onPlan ? 'Every building on its planned date' : [...x.late.map(lateLine), x.notBuilt ? `Building${x.notBuilt.to > x.notBuilt.from ? `s ${x.notBuilt.from} to ${x.notBuilt.to}` : ` ${x.notBuilt.from}`} not built: ${x.notBuilt.why}` : null].filter(Boolean).join('. '); }],
 ];
 
 export default function CompareView({ run, ids, onRemove, onClear, start }) {
@@ -54,9 +61,15 @@ export default function CompareView({ run, ids, onRemove, onClear, start }) {
             ))}</tr>
           </thead>
           <tbody>
-            {ROWS.map(([label, f]) => (
+            {opts.every(isRealismOption) ? REALISM_ROWS.map(([label, f]) => (
               <tr key={label}>
                 <th scope="row">{label}</th>
+                {opts.map((o) => <td key={o.id} className={label === 'Against the plan' && o.sizing.energise.shifted ? 'flag-text' : ''}>{f(o, start)}</td>)}
+              </tr>
+            )) : null}
+            {ROWS.map(([label, f]) => (
+              <tr key={label}>
+                <th scope="row">{opts.every(isRealismOption) ? label.replace('TTP · deliverability', 'delay · buildability').replace(/^Deliverability$/, 'Buildability score') : label}</th>
                 {opts.map((o) => <td key={o.id}>{f ? f(o) : `${monthLabel(start, o.ttp.firstPowerM)} · ${monthLabel(start, o.ttp.fullLoadM)}`}</td>)}
               </tr>
             ))}

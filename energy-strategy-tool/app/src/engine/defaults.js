@@ -658,6 +658,22 @@ export function plantCandidates(inputs) {
   CAND.set(inputs, { sig, out });
   return out;
 }
+// A plant entered by hand that looks like a plant of the bundled list (realism rebuild, OPEN-QUESTIONS 251): the rule
+// that merges the list's own duplicates (OPEN-QUESTIONS 118): the same type, the smaller at least 75 % of the larger,
+// within a kilometre (of the site: a plant entered by hand has no position). The options still offer both; the cards
+// treat them as one plant and the plan check says so. Returns { manual, list } or null.
+export function plantTwin(inputs) {
+  const c = plantCandidates(inputs).plants;
+  const m = c.find((x) => x.manual && x.offersPower);
+  if (!m) return null;
+  let best = null;
+  for (const x of c) {
+    if (x.manual || !x.offersPower || x.type !== m.type) continue;
+    if (Math.min(x.mw, m.mw) < (1 - PLANT_DEFAULTS.mergeSizeFrac) * Math.max(x.mw, m.mw) || Math.abs((x.km || 0) - (m.km || 0)) > PLANT_DEFAULTS.mergeKm) continue;
+    if (!best || Math.abs(x.mw - m.mw) < Math.abs(best.mw - m.mw)) best = x;
+  }
+  return best ? { manual: m, list: best } : null;
+}
 // Bought whole is a value of its own only for a list plant of more than one unit (otherwise it is the same as in part).
 export const plantPowerValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersPower).flatMap((c) => [c.values.lease, c.values.buy, ...(!c.manual && c.units > 1 ? [c.values.buyWhole] : []), ...(!c.manual && c.uses && c.uses.contract.offered ? [c.values.contract] : [])]);
 export const plantTakeoverValues = (inputs) => plantCandidates(inputs).plants.filter((c) => c.offersTakeover).flatMap((c) => [c.values.takeover, c.values.takeoverAdd]);
@@ -1405,6 +1421,7 @@ export function buildDefaultInputs(opts = {}) {
     renewRadiusKm: rec('plants.renewRadiusKm', null, 'km from the site (blank = none listed)', { basis: 'judgement', ref: '§5.4', note: 'Owner, 2026-11-07 (OPEN-QUESTIONS 196).' }),
     // Realism rebuild (2026-11-11, OPEN-QUESTIONS 250): an agreement in principle with a nearby plant's owner.
     agreed: rec('plants.agreed', {}, 'plant id → true when its owner has agreed in principle', { basis: 'judgement', ref: '§9.9', note: 'Empty: every option that leases, buys or contracts a nearby plant, or takes over its grid connection, carries the condition "agreement with the plant\'s owner". Tick a plant to remove it.' }),
+    importConfirmed: rec('plants.importConfirmed', {}, 'plant id → true when the grid operator has confirmed that the campus can import on the plant\'s connection', { basis: 'judgement', ref: '§9.9', note: 'Empty: every option that takes over a nearby plant\'s grid connection carries the finding "import right on the plant\'s connection": a condition, or unlikely where the country research found the route closed (Spain, Portugal, Great Britain, Ireland, Norway). Tick a plant to remove it.' }),
     edits: rec('plants.edits', {}, 'corrections per plant', { basis: 'judgement', ref: '§5.4', derived: true, note: 'Empty = the values of the bundled list and the defaults, each flagged with its source.' }),
   };
   // Measured hourly weather (owner 2026-10-30, OPEN-QUESTIONS 106–107): an uploaded EPW file or a NOAA station year.
@@ -1457,6 +1474,7 @@ export function normalizeInputs(inputs) {
   if (out.site.natureSiteKm === undefined) out.site.natureSiteKm = null;
   // Agreements with the owners of nearby plants (OPEN-QUESTIONS 250): none unless ticked.
   if (!out.plants.agreed || typeof out.plants.agreed !== 'object') out.plants.agreed = {};
+  if (!out.plants.importConfirmed || typeof out.plants.importConfirmed !== 'object') out.plants.importConfirmed = {};
   out.choices = out.choices || {};
   for (const c of CHOICES) {
     if (!out.choices[c.id]) out.choices[c.id] = defaultChoiceState(c.id, out);

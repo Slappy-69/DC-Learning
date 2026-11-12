@@ -22,6 +22,7 @@ import { weatherSummary } from '../engine/weather.js';
 import { topCards, cardOptions } from '../engine/cards.js';
 import { measureById, sortRows } from '../engine/sensitivity.js';
 import { plainSummary, summaryKey, shortFlag } from '../engine/summary.js';
+import { isRealismOption, lateInfo, lateLine } from '../engine/labels.js';
 import { nearestFlips, gridDateAt } from '../engine/breakeven.js';
 import { itInstalledByMonth, gridCapByMonth, monthOf } from '../engine/context.js';
 import { recommendations, gapFacts, runnerUp } from '../engine/recommend.js';
@@ -265,6 +266,16 @@ export function buildReport(run0, view = {}) {
     const rS = R && rec.items.some((x) => x.id === 'runner-up') ? ` #${R.rank} is close behind, ${(lead.score - R.score) < 0.995 ? (lead.score - R.score).toFixed(2) : sig(lead.score - R.score, 2)} points below it on the weighted score.` : '';
     const adeqS = lead.adequacy && lead.adequacy.adequate === false ? ' No option meets the power need in every hour, so this is the best of a set that falls short.' : '';
     P(`**The answer.** The leading option is **#1 ${lead.name}**. It supplies the campus at **${perMWh(lead.eco.lcoe, 3)}** with ${sig(lead.carbon.locationG, 3)} gCO2e/kWh and reaches full load in ${ml(lead.ttp.fullLoadM)}${late}; its capex is ${money(lead.eco.capex, 3)}.${gapS}${permS}${wS}${rS}${adeqS}`, { size: 10.5, lead: 1.45, gap: 12 });
+    // Realism rebuild (2026-11-11; owner: "Building starts late, this will need to be highlighted though"): the IT the
+    // leader powers, every late start with its building, months, new date and cause, and its buildability tier.
+    if (isRealismOption(lead)) {
+      const li = lateInfo(lead, start), en = lead.sizing.energise, d = lead.deliv;
+      const itS = en.powered === en.buildings ? `all ${plural(en.buildings, 'building')} (${sig(en.poweredIT, 3)} MW IT)` : `${en.powered} of ${en.buildings} buildings (${sig(en.poweredIT, 3)} of ${sig(en.plannedIT, 3)} MW IT)`;
+      const lateS = li.onPlan ? 'Every building starts on its planned date.' : `${li.late.length ? `**Late against the plan:** ${li.late.map(lateLine).join('. ')}.` : ''}${li.notBuilt ? ` **Not built:** building${li.notBuilt.to > li.notBuilt.from ? `s ${li.notBuilt.from} to ${li.notBuilt.to}` : ` ${li.notBuilt.from}`}: ${li.notBuilt.why}.` : ''}`;
+      const tierS = d.tier === 'A' ? 'Tier A: buildable with no conditions beyond the standard consents.' : d.tier === 'B' ? `Tier B: buildable with ${plural(d.conditions.length, 'condition')}, each someone else's decision: ${d.conditions.map((c) => c.text).join('; ')}.` : `Tier C: unlikely to be built as it stands: ${d.unlikely.map((c) => c.text).join('; ')}.`;
+      P(`**Against the plan.** The leading option powers ${itS}. ${lateS}`, { size: 10, lead: 1.4, gap: 6 });
+      P(`**Buildability.** ${tierS}`, { size: 10, lead: 1.4, gap: 10 });
+    }
     doc.tiles(frontTiles({ lead, g, Wref, gs, ml, I, lastPhase }));
     if (sm) {
       doc.heading('What decides it', 2);
@@ -430,6 +441,26 @@ export function buildReport(run0, view = {}) {
     if (sorted.length) doc.list(sorted.map((f) => `**${f.category || 'Other'} (${f.severity}).** ${flagHeadline(f, start)}.`), { size: 9.5 });
     if (sorted.length) doc.caption('Each flag in a line; the full wording, with its thresholds and caveats, is in Appendix F.', { gap: 6 });
     P('**Land.** The Site tab (Beta) is not part of this report, so whether the plant and buildings fit the site is not checked here; land flags raised without the site plan are in the list above.', { size: 9.5 });
+    // Realism rebuild (2026-11-11): the plan check, the leader's conditions and standard consents, and the country's rules.
+    if (isRealismOption(lead)) {
+      if (run.planCheck) {
+        doc.heading('Plan check', 2);
+        P(`Can the phasing plan be met at all? Worked out over every screened option. Latest acceptable start: ${plural(run.planCheck.allowanceM, 'month')} after a building's planned date.`, { size: 9.5 });
+        doc.list(run.planCheck.items.map((i) => `${i.severity === 'major' ? '**Check.** ' : i.severity === 'minor' ? '**Note.** ' : ''}${i.text}`), { size: 9 });
+        doc.table([{ label: 'Building', w: 0.5 }, { label: 'MW IT', w: 0.5, align: 'right' }, { label: 'Planned', w: 0.6 }, { label: 'Earliest start, any option', w: 1 }, { label: 'Months late', w: 0.6, align: 'right' }, { label: 'What holds it', w: 2.6 }],
+          run.planCheck.buildings.map((b) => [String(b.building), sig(b.itMW, 3), b.planned, b.earliest || 'no option powers it', b.late == null ? '-' : String(b.late), b.reason || '-']), { size: 7.8, headSize: 7.8 });
+      }
+      doc.heading("The leader's conditions and consents", 2);
+      const d = lead.deliv;
+      const lines = [...d.unlikely.map((x) => `**Unlikely.** ${x.text}.${x.source ? ` Source: ${x.source}.` : ''}`), ...d.conditions.map((x) => `**Condition.** ${x.text}.${x.source ? ` Source: ${x.source}.` : ''}`), ...d.standard.map((x) => `**Standard consent.** ${x.text}.`)];
+      if (lines.length) doc.list(lines, { size: 9 }); else P('No conditions and no standard consents were found by the tests.', { size: 9.5 });
+      doc.caption('Buildability tests are a screening view: not a planning, permitting or legal determination.', { gap: 6 });
+      if (run.countryRules && run.countryRules.rules.length) {
+        doc.heading(`Rules for data centres to check in ${run.countryRules.country}`, 2);
+        P(`${run.countryRules.note} Found on ${run.countryRules.accessed}; ${run.countryRules.label}.`, { size: 9 });
+        doc.list(run.countryRules.rules.map((x) => `**${x.status[0].toUpperCase()}${x.status.slice(1)}.** ${x.text}${x.applies ? ` ${x.applies}` : ''} Source: ${x.source}.`), { size: 8.5 });
+      }
+    }
     const others = alts.filter((o) => o !== lead).slice(0, 6);
     if (others.length) {
       doc.heading('The main issue of each other strategy', 2);

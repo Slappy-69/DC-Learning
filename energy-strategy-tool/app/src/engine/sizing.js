@@ -2,7 +2,7 @@
 // and plain sizing sentences. Every option is sized by the same rules before any check.
 // The grid connection is the offered capacity per period and is never resized.
 
-import { TECH, COOLING_ID, SPATIAL, choiceLabel, renewPlants, realismOn } from './defaults.js';
+import { TECH, COOLING_ID, SPATIAL, choiceLabel, renewPlants, realismOn, plantTwin } from './defaults.js';
 import { parseRenewValue, renewLabel } from './renewplants.js';
 import { designDemandByMonth, demandYear, designDayPUE, contractedCap, ctxFor } from './context.js';
 import { NA } from './generator.js';
@@ -127,6 +127,11 @@ export function sizeOption(ctx, v) {
   if (!dropped && v.C1 === 'bridge' && first !== sz && first.bridge && first.bridge.shortfallMW > 0 && !(sz.bridge && sz.bridge.shortfallMW > 0) && sized(first) > sized(sz)) {
     dropped = { tech: first.bridge.tech, units: first.bridge.units, mw: first.bridge.mw, readyMonth: first.bridge.availMonth, gridMonth: first.T, reason: 'late' };
   }
+  // A bridging choice with nothing to bridge from the first sizing (a grid connection taken over early, or a grid that
+  // already carries the ramp): no bridging plant is sized or bought, and the option's name says so.
+  if (!dropped && v.C1 === 'bridge' && !(sz.bridge && sz.bridge.units > 0) && !(sz.bridgeBess && sz.bridgeBess.mw > 0)) {
+    sz.bridgeDropped = { tech: v.C2, units: 0, mw: 0, readyMonth: null, gridMonth: sz.T, reason: 'none' };
+  }
   if (dropped) {
     sz.bridgeDropped = dropped;
     sz.sentences.push(dropped.reason === 'late'
@@ -185,8 +190,12 @@ function sizeOn(ctx, v, hint = null) {
   const fullMW = inputs.grid.fullMW;
   const band = voltageBand(ctx, fullMW);
 
+  // The plant entered by hand, when it is also in the bundled list: the list plant's id (for the strategy cards).
+  const tw = R ? plantTwin(inputs) : null;
+  const twin = tw && [v.C2, v.C4].some((x) => x === 'existing' || x === 'xb:manual') ? tw.list.id : null;
   // --- Firm prime (C4) ---
   let prime = null;
+  let topUpDropped = null;
   if (v.C4 !== 'none') {
     const t = primeTech(v.C4);
     const avail = techAvailMonth(ctx, t);
@@ -200,6 +209,12 @@ function sizeOn(ctx, v, hint = null) {
         const s = designByMonth[m] - (v.C1 === 'islanded' ? 0 : gridByMonth[m]);
         if (s > S) { S = s; sM = m; }
       }
+      if (R && v.C1 !== 'islanded' && S <= 1e-6) {
+        // Realism rebuild (OPEN-QUESTIONS 248): nothing to top up on this option's grid (a connection taken over can
+        // close the shortfall). Before, one unit and its spare were bought all the same.
+        topUpDropped = { tech: t.id };
+        sentences.push(`${t.name} (firm top-up): no permanent shortfall on this option's grid (it carries the design load from month ${T0}), so no top-up plant is bought.`);
+      } else {
       const fixed = t.existingPlant ? plantUnits(t, Math.ceil(S / t.p.unitMW - 1e-9)) : 0;
       const n = fixed || Math.max(1, Math.ceil(S / t.p.unitMW - 1e-9));
       const extra = fixed ? 0 : Math.ceil(n / req.blockSize);
@@ -208,6 +223,7 @@ function sizeOn(ctx, v, hint = null) {
       sentences.push(fixed
         ? `${t.name} (firm top-up): permanent shortfall ${r1(S)} MW${sM >= 0 ? ` in month ${sM}` : ''}; ${units} × ${t.p.unitMW} MW = ${r1(prime.mw)} MW${fixedNote(t)}${prime.mw + 1e-9 < S ? `, ${r1(S - prime.mw)} MW less than the shortfall` : ''}.`
         : `${t.name} (firm top-up): ${v.C1 === 'islanded' ? `design load ${r1(S)} MW (islanded)` : `permanent shortfall (design load − full grid capacity, from month ${T0}) ${r1(S)} MW${sM >= 0 ? ` in month ${sM}` : ''}`} ÷ ${t.p.unitMW} MW = ${n} units + N+1 per block of ${req.blockSize} (+${extra}) = ${units} units (${r1(prime.mw)} MW).`);
+      }
     } else {
       const frac = v.C4 === 'chp' ? t.p.sizeFraction : 1.0;
       const target = frac * avgMW;
@@ -591,7 +607,10 @@ function sizeOn(ctx, v, hint = null) {
   // when that plant can first be on site. No backup: no wait (the option fails the resilience check instead).
   let standbyReadyM = 0;
   if (R) {
-    if (backup.tech) standbyReadyM = Math.max(backup.availMonth || 0, backup.bessMW > 0 ? techAvailMonth(ctx, TECH.bess) : 0);
+    // Gensets chosen but none needed (retired bridging plant covers the critical load): the wait is for that plant.
+    const covered = backup.tech && !(backup.units > 0) && !(backup.bessMW > 0) && bridge && bridge.units > 0;
+    if (backup.tech && !covered) standbyReadyM = backup.units > 0 || backup.bessMW > 0 ? Math.max(backup.availMonth || 0, backup.bessMW > 0 ? techAvailMonth(ctx, TECH.bess) : 0) : 0;
+    else if (covered) standbyReadyM = bridge.earliestMonth ?? bridge.availMonth;
     else if (v.C5 === 'retained') standbyReadyM = v.C2 === 'bessSolar' ? bridgeBess.availMonth : bridge ? (bridge.earliestMonth ?? bridge.availMonth) : 0;
   }
   // Realism rebuild (OPEN-QUESTIONS 248): an owned top-up plant is bought in step with the need: the units the
@@ -812,7 +831,7 @@ function sizeOn(ctx, v, hint = null) {
     sentences,
     T,
     rejectedMW,
-    ...(R ? { standbyReadyM, consentFacts: cFacts } : {}),
+    ...(R ? { standbyReadyM, consentFacts: cFacts, ...(topUpDropped ? { topUpDropped } : {}), ...(twin ? { plantTwin: twin } : {}) } : {}),
   };
 }
 

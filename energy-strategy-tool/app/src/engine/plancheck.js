@@ -6,7 +6,7 @@
 // acceptable start. It is worked out over the whole screened set, so in a pooled run it is recomputed after the merge.
 // Pure: no UI, no browser APIs.
 
-import { TECH, realismOn } from './defaults.js';
+import { TECH, realismOn, plantTwin } from './defaults.js';
 import { addMonths, monthsBetween } from './dates.js';
 import { campusRules, ruleSource, DC_RULES_ACCESSED, DC_RULES_LABEL } from './dcrules.js';
 
@@ -44,7 +44,7 @@ export function planCheck(options, inputs) {
   }
 
   // Standby gensets.
-  const gens = withEn.filter((o) => o.sizing.backup && o.sizing.backup.tech);
+  const gens = withEn.filter((o) => o.sizing.backup && o.sizing.backup.tech && o.sizing.backup.units > 0);
   if (gens.length) {
     const g = gens.reduce((a, b) => ((a.sizing.standbyReadyM || 0) <= (b.sizing.standbyReadyM || 0) ? a : b));
     const ready = g.sizing.standbyReadyM || 0;
@@ -72,6 +72,10 @@ export function planCheck(options, inputs) {
   }
   if (maxIT < en0.plannedIT - 1e-6) items.push({ id: 'it', severity: 'major', text: `No option powers the whole campus: the most is ${maxBuildings} of ${n} buildings (${Math.round(maxIT)} of ${Math.round(en0.plannedIT)} MW IT).` });
   items.push({ id: 'counts', severity: counts.onPlan ? 'info' : 'minor', text: `Of ${counts.options.toLocaleString('en-GB')} options: ${counts.onPlan.toLocaleString('en-GB')} power every building on its planned date; ${counts.lateWithin.toLocaleString('en-GB')} start a building late but within the latest acceptable start (${plural(allow, 'month')}); ${counts.lateBeyond.toLocaleString('en-GB')} start one later than that; ${counts.partial.toLocaleString('en-GB')} do not power every building.` });
+
+  // The plant entered by hand is also in the bundled list.
+  const tw = plantTwin(inputs);
+  if (tw) items.push({ id: 'plant-twice', severity: 'minor', text: `The plant entered by hand (${tw.manual.name}, ${Math.round(tw.manual.mw).toLocaleString('en-GB')} MW) looks like ${tw.list.name} from the plant list (${Math.round(tw.list.mw).toLocaleString('en-GB')} MW, ${tw.list.km.toFixed(1)} km away): the options offer both, with their own prices, and the cards treat them as one plant. Remove one of them to halve the plant options.` });
 
   // The campus substation's transformers against the grid date.
   if (inputs.grid.fullMW > 0 && inputs.grid.fullDate) {

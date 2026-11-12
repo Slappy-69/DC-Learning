@@ -20,11 +20,18 @@ export default function TopFive({ run, onOpen, onCompare, compareIds = [] }) {
     <section className="top5" aria-labelledby="top5-h">
       <h2 id="top5-h">Top five strategies</h2>
       {realism
-        ? <p className="note">The best-ranked option of each of five distinct strategies, in rank order. A strategy is the campus's permanent supply: on the grid or islanded, the firm plant, the bridging plant that keeps running, a grid connection taken over. How the first buildings are bridged, solar, batteries and PPAs are variants of one strategy; the card shows the best-ranked one. Ranked first: options that serve every hour, are likely to be built (tier A or B), meet the resilience requirement, power the most IT and start every building within the latest acceptable start; then the weighted score. Pros and cons are judged {comparison}. Every default is {LABEL}.</p>
+        ? <p className="note">The best-ranked option of each of five distinct strategies, in rank order. A strategy is the campus's permanent supply: on the grid or islanded, the firm plant, the bridging plant that keeps running, a grid connection taken over. How the first buildings are bridged, solar, batteries and PPAs are variants of one strategy; the card shows the best-ranked one. The last cards can be a ladder: a card marked "Step down" is the best buildable option that powers fewer buildings, shown when it is cheaper; a card marked "Stands on its own" is the best buildable option that needs no other owner's plant or grid connection, shown when every leading card needs one. Ranked first: options that serve every hour, are likely to be built (tier A or B), meet the resilience requirement, power the most IT and start every building within the latest acceptable start; then the weighted score. Pros and cons are judged {comparison}. Every default is {LABEL}.</p>
         : <p className="note">The best-ranked option of each of five distinct strategies (grid strategy, bridging plant, firm generation and backup), in rank order. Pros and cons are judged {comparison}. Every default is {LABEL}.</p>}
       <ol className="top5-list">
-        {cards.map(({ o, pros, cons, majorFlags }) => (
+        {cards.map(({ o, pros, cons, majorFlags, step, fallback, stepIT, topIT }) => (
           <li key={o.id} className="top5-card">
+            {realism && (step || fallback) ? (
+              <p className="tc-kind small">
+                {step ? <span className="badge badge-step">Step down</span> : null}{step && fallback ? ' ' : null}{fallback ? <span className="badge badge-step">Stands on its own</span> : null}{' '}
+                {step ? `The best-ranked buildable option that powers ${sig(stepIT, 3)} MW of IT; the leading cards power ${sig(topIT, 3)} MW.` : ''}{step && fallback ? ' ' : ''}
+                {fallback ? 'It needs no other owner\u2019s plant or grid connection: what stands if the leading cards\u2019 agreements do not happen.' : ''}
+              </p>
+            ) : null}
             <div className="tc-head">
               <span className="tc-rank">#{o.rank}</span>
               <button type="button" className="row-btn tc-name" onClick={() => onOpen && onOpen(o.id)}>{o.name}</button>

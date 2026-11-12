@@ -557,16 +557,18 @@ export function optionName(v, s) {
     const late = s.bridgeDropped.reason === 'late';
     parts.push(s.bridge && s.bridge.units > 0
       ? `Grid + ${c2} for the shortfall left${late ? ' (too late to bridge)' : ''}`
-      : late ? `Grid (${c2} bridge too late: ready after the grid)` : `Grid (${c2} bridge not needed)`);
+      : late ? `Grid (${c2} bridge too late: ready after the grid)` : s.bridgeDropped.reason === 'none' ? 'Grid (no bridge needed)' : `Grid (${c2} bridge not needed)`);
   } else if (v.C1 === 'bridge') parts.push(`Grid + ${c2} bridge → ${choiceLabel('C3', v.C3).toLowerCase()}`);
   else if (v.C1 === 'islanded') parts.push(`Islanded ${c2}`);
   else if (v.C1 === 'export') parts.push('Grid + export');
-  if (v.C4 !== 'none') parts.push(`${choiceLabel('C4', v.C4)}${v.C4s === 'shortfall' ? ' top-up' : ''}`);
+  // Realism rebuild: a top-up with no shortfall to cover is not bought (sizing.js), and a battery for the shortfall
+  // with no shortfall has no size: the name leaves both out.
+  if (v.C4 !== 'none' && !(s && s.topUpDropped)) parts.push(`${choiceLabel('C4', v.C4)}${v.C4s === 'shortfall' ? ' top-up' : ''}`);
   const backup = v.C5 === 'none' ? 'no backup' : v.C5 === 'retained' ? 'retained-plant backup' : `${choiceLabel('C5', v.C5).replace(' gensets', '')} ${v.C6}${v.C5a === 'pooled' ? ' pooled' : ''}`;
   parts.push(backup);
   if (s && s.solarMWp > 0) parts.push(`PV ${s.solarMWp.toFixed(s.solarMWp < 10 ? 1 : 0)} MWp`);
   if (s && s.windMW > 0) parts.push(`Wind ${s.windMW.toFixed(0)} MW`);
-  if (v.C12 === 'shortfall') parts.push('BESS for the shortfall');
+  if (v.C12 === 'shortfall') { if (!(s && s.energise && !(s.shortfallBess && s.shortfallBess.mw > 0))) parts.push('BESS for the shortfall'); }
   else if (v.C12 === 'trigger') parts.push('BESS for the trigger hours');
   else if (v.C12 !== 'none') parts.push(`BESS ${v.C12.slice(0, 2).replace('h', ' h')}`);
   if (v.C13 !== 'none') parts.push(`PPA ${choiceLabel('C13', v.C13).toLowerCase()} ${v.C14} %`);

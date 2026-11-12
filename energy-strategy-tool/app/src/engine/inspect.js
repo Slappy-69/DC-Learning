@@ -9,7 +9,7 @@
 import { ctxFor, buildContext, contractedCap } from './context.js';
 import { normalizeInputs } from './defaults.js';
 import { siteKey } from './site.js';
-import { bridgeActive, bridgeMWAt } from './sizing.js';
+import { bridgeActive, bridgeMWAt, primeMWAt } from './sizing.js';
 import { SOURCE_OF_TECH } from './blocks.js';
 import { evaluateOption } from './option.js';
 import { H } from './profiles.js';
@@ -113,8 +113,9 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
   const allYears = Array.from({ length: Math.max(1, inputs.settings.maxDispatchYears || 8) }, (_, i) => i);
   const e = evaluateOption(ctx, v, { recordYears: allYears });
   // The option's own grid: with a taken-over connection (work package 19) it differs from the run's (Opus review finding 8).
-  const octx = ctxFor(ctx, v);
   const { sz, ttp, disp, cfg } = e;
+  // With the realism rebuild the option also has its own building dates (energise.js).
+  const octx = ctxFor(ctx, v, sz);
 
   // Monthly phasing timeline: the supply time-to-power counts, split by source (§12.6).
   const n = ctx.nMonthsTimeline;
@@ -127,7 +128,7 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
     const grid = islanded ? 0 : contractedCap(octx, v.C1)[m];
     for (const p of plantsTl) {
       const on = m >= p.availMonth && m >= p.fuelMonth && m < (p.plant.endMonth ?? Infinity);
-      p.values[m] = !on ? 0 : p.role === 'prime' ? p.mw : bridgeMWAt(v, m, sz.T, p.plant);
+      p.values[m] = !on ? 0 : p.role === 'prime' ? primeMWAt(p.plant, m) : bridgeMWAt(v, m, sz.T, p.plant);
     }
     const firm = sz.firmByMonth[m];
     const bess = (v.C2 === 'bessSolar' && bridgeActive(v, m, sz.T) && m >= sz.bridgeBess.availMonth ? sz.bridgeBess.mw : 0)
@@ -157,8 +158,8 @@ export function inspectOption(rawInputs, v, { site = null } = {}) {
     exceedance: !!cfg.exceedance,
     fullGridM: octx.fullGridM,
     takeover: octx.takeover ? { plant: octx.takeover.plant.name, month: octx.takeover.month, mw: octx.takeover.mw } : null,
-    firstPhaseM: ctx.firstPhaseM,
-    lastPhaseM: ctx.lastPhaseM,
+    firstPhaseM: octx.firstPhaseM,
+    lastPhaseM: octx.lastPhaseM,
     designMW: sz.designMW,
     bess: { mw: cfg.bessMW, mwh: cfg.bessMWh, availMonth: Number.isFinite(cfg.bessAvailM) ? cfg.bessAvailM : null, bridgeMW: sz.bridgeBess.mw, bridgeAvailMonth: sz.bridgeBess.availMonth },
     plants: cfg.plants.map((p) => ({ role: p.role, tech: p.tech, source: plantSource(p.tech), mw: p.mw })),
