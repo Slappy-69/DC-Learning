@@ -2,7 +2,7 @@
 
 Checkpoint, updated after every completed step so any session can resume from here. New sessions: read `../CLAUDE.md` first.
 
-**Last updated: 2026-11-12 (later)**: the latest acceptable start is now 24 months (owner: "Make it 24 months" (2026-11-12, 11:44 local); OPEN-QUESTIONS 257), on `feature/late-allowance-24`.
+**Last updated: 2026-11-12 (later)**: the latest acceptable start is now 24 months (owner: "Make it 24 months" (2026-11-12, 11:44 local); OPEN-QUESTIONS 257), merged. The hand-over branch of 2026-11-08 (known issue 38, video scripts) is merged too (owner: "Yes merge", 2026-11-12, 13:05 local).
 
 **2026-11-12**: the **realism rebuild** is **merged into `main`** with the owner's yes, "Merge into main when everything is passing and ready" (2026-11-12, 09:39 local), after GitHub's checks passed on `feature/realism-rebuild`. The owner also said "Drop the phone build I don't care" (2026-11-12, 09:48 local): the phone page is no longer republished.
 
@@ -15,21 +15,24 @@ Checkpoint, updated after every completed step so any session can resume from he
 - **`main` holds everything built:** work packages 0 to 22 and 3b, the hourly weather work, the phone version, the Eemshaven study, the local search trial and the takeover research. Each was merged with the owner's yes (dates under "Work packages"). Nothing is built and waiting on another branch.
 - **Merged on 2026-11-11 (owner: "Yes, merge into main"):** the permit-outlook penalty (`feature/permit-outlook-penalty`, commit 73b6244, merged as ec731cf): a held plant whose permit outlook is "unlikely" costs 8 deliverability points (OPEN-QUESTIONS 245).
 - **Merged 2026-11-12: the realism rebuild** (`feature/realism-rebuild`, built 2026-11-11; owner: "Merge into main when everything is passing and ready" (2026-11-12, 09:39 local)). Engine 0.4.0; with the rebuild's run setting off it gives the figures of the engine in `main` (0.3.0). It builds decision 244 (the resilience gate) as one of its rank keys and fixes known issues 39 and 40. The single-file page in this folder holds it. The Windows program was not rebuilt (it is built by hand or on a `v*` tag).
-- **Not merged, owner has not decided:** `feature/handover-2026-11-08` (4987989: known issue 38 record and the video walkthrough scripts). `feature/resilience-gate` (f3248f0) holds only the record of decision 244; its code is not built.
+- **Merged 2026-11-12 (owner: "Yes merge"):** `feature/handover-2026-11-08` (4987989: known issue 38 record and the video walkthrough scripts), combined with `main` on `feature/merge-handover`.
+- **Merged 2026-11-12 (owner: "Make it 24 months"):** the latest acceptable start defaults to 24 months (`feature/late-allowance-24`, OPEN-QUESTIONS 257).
+- **Not merged, nothing lost:** `feature/resilience-gate` (f3248f0) holds only the record of decision 244, which is copied into `main` (OPEN-QUESTIONS 244) and built with the realism rebuild.
 - **Built, not merged (earlier note):** nothing. `feature/map-markers` (known issues 36 and 37: the map's markers and pin drew large white rings when zoomed in; a reopened study dropped renewable plant edits, flag comments and Ireland derating) merged on 2026-11-08 (owner: "Merge to main"), a fast-forward after GitHub's checks passed on b935214 (CI run 42481981183). Work packages 24 to 33 merged on 2026-11-08 (owner: "Yes"). Work package 23 merged on 2026-11-06 (owner: "Merge"). The planning round (OPEN-QUESTIONS 155–200) and the research run of November 2026 (OPEN-QUESTIONS 201–235, `docs/research/`) are records only, merged on 2026-11-08 (owner: "Merge"); every decision in them is "not built yet".
 - **GitHub checks (CI):** passed on `main` at 39442fb (run 41474468291, 2026-11-02: Node tests, build, installable web app tests and browser tests). The earlier runs on the merge (3b607e8) and the next note (991e85e) were cancelled, each by the next push.
 - **Windows program:** rebuilt from bff54b7 (work packages 24 to 33) on 2026-11-08: "Desktop builds" run 42477621814 passed on Windows and Linux. Download: GitHub → Actions → Desktop builds → that run → Artifacts → `desktop-win32-x64`. It does not yet have the fixes for known issues 36 and 37 (merged later the same day).
 - **Phone page:** version 8 (2026-10-30), left as it is. **Dropped by the owner:** "Drop the phone build I don't care" (2026-11-12, 09:48 local). It is not republished; it lacks everything after 2026-10-30.
 - **Eemshaven study:** made before the plant list, so its figures leave out existing plants. The re-run is dropped for now (owner, 2026-11-02).
-- **Known issues:** 1 to 34 resolved; 35 open; 36 and 37 fixed and merged; 38 recorded on `feature/handover-2026-11-08`; 39 and 40 fixed on `feature/realism-rebuild`; 41 to 44 open (`docs/KNOWN-ISSUES.md`).
-- **Waiting for the owner:** the next step (candidates under "Next"), the fix for known issue 35, and the rest of the notes on the user guide ("Open items").
+- **Known issues:** 1 to 34, 36 and 37 resolved; 35 and 38 open; 39 and 40 fixed with the realism rebuild; 41 to 44 open (`docs/KNOWN-ISSUES.md`). Known issue 38 (a saved study can lose its result record after a flag comment or a weight change) was logged on 2026-11-08 at the owner's request; its fix is not decided.
+- **Video walkthroughs (2026-11-08):** two narrated videos of a Pego study (750 MW IT; 5 min 10 s with the grid rising to 1,200 MW in 2031, and 7 min 45 s with 300 MW of grid for life) were made and sent to the owner in the chat; the files are not in the repository. The tools that made them are in `video-walkthrough/` (README there). They were made before the realism rebuild.
+- **Waiting for the owner:** the next step (candidates under "Next"), the fixes for known issues 35 and 38, a Windows rebuild (it lacks the fixes for known issues 36 and 37 and the realism rebuild), and the rest of the notes on the user guide ("Open items").
 
 ## Where to look
 
 - **Brief (authoritative):** `brief-v2/BRIEF.md` (revision 5), with `CHANGELOG.md`, `ASSUMPTIONS.md` and `OPEN-QUESTIONS.md` (1–130).
 - **Decision log of the walkthrough:** `docs/walkthrough-decisions-2026-10-21.md`. Where this file or the brief disagrees with it, the log is newer.
 - **Build plan:** `docs/BUILD-PLAN.md`: each work package with its questions, acceptance tests and guide chapters, and the "Not scheduled" list.
-- **Known issues:** `docs/KNOWN-ISSUES.md` (37 items: 35 open, the rest resolved).
+- **Known issues:** `docs/KNOWN-ISSUES.md` (44 items: 35, 38 and 41 to 44 open, the rest resolved).
 - **Build notes:** `app/BUILD-NOTES.md`: architecture, every default with its label, decisions and test runs.
 - **Verification:** `verification/HISTORY.md`, with one folder of reports per slice.
 - **User guide:** `docs/user-guide/` (text, figures, mock-ups of the agreed screens, and the tools that build the EPUB and PDF).
