@@ -301,6 +301,13 @@ Each technology is a record with the parameters below. All are editable per proj
 | Heat rejection (dry / adiabatic coolers, chillers) | Cooling plant | Commercial | Roof or ground (open choice) | Footprint from heat rejected; affects roof PV and site fit |
 | UPS + batteries | Resilience | Commercial | In building | Inside the gross-up factor; not placed separately. The resilience reserve battery (walkthrough, 2026-10-21), §5.5 |
 
+### 6.2a Equipment classes and the equipment catalogue (owner, 2026-11-13; OPEN-QUESTIONS 261–269; work package 36, not built yet)
+
+- **Classes in the run.** Gas engines split into high-speed (2–4.5 MW units) and medium-speed (10–20 MW); gas turbines into aeroderivative or industrial (17–60 MW) and heavy-duty combined cycle (90 MW and above, firm plant only); rented plant into gas and HVO. The run and the ranking work by class only (OPEN-QUESTIONS 261, 263). Defaults: OPEN-QUESTIONS 266 and 268.
+- **Editable.** Every class figure is editable in an "Equipment" section of the inputs, folded shut, and a changed figure is flagged on each option that uses it (OPEN-QUESTIONS 267).
+- **Flags.** "Needs SCR" for combustion plant above the country's exemption hours (264); "Step loads need a battery or flywheel" when batteries are below 30 % of the MW of gas or fuel-cell plant that runs (265). Flags only, no cost.
+- **Catalogue and best fit.** A bundled catalogue of named models from the research (`docs/research/generation-equipment-2026-11.md`). For each plant in an option the tool suggests the 3 best-fit models (rule: 262), and for rented plant the 3 best-fit rental providers for the country (269), in the option detail and the PDF report. Advice only: nothing in the option changes.
+
 ### 6.3 Indicative spatial defaults (all indicative — unverified)
 
 The builder must verify each against the named source type and record source, year and range. Until verified, the UI shows the "indicative — unverified" label.
