@@ -834,6 +834,12 @@ The flags register (all flags across the shortlist) is a view and an export sect
 - **Undo/redo** for all input, choice and layout changes (at least 50 steps).
 - **Snapshot:** the user can save named snapshots of the whole state within a project (e.g. "Before grid offer") and compare the leader and metrics between snapshots.
 
+### 16.1 Visual rework (owner, 2026-11-13; OPEN-QUESTIONS 270–275; work packages 37–40, not built yet)
+
+- **Planned, not built.** The owner accepted seven of eight visual improvements (270), asked for an app-wide review (271) and took all of its suggestions (272–275). Review and mock-ups: `docs/visual-rework/`. Work packages 37 to 40 in `docs/BUILD-PLAN.md`.
+- **The rule.** Layout, drawing and wording only: no figure, rule or ranking changes, and nothing hidden, demoted or resized (principle 5). Every default keeps its flag and source; every chart keeps its table.
+- **What changes.** One colour per technology on every screen and in the PDF, with gas orange so that red means only a problem (275); five status levels, each a mark and a word; results first, with a verdict panel and the map beside it (274); the phasing chart redrawn as stacked blocks with the spare shown pale and milestone lanes (272); "Late" amber inside the latest acceptable start and red only beyond it, the plan check staying red (273); compact cards, table, option detail and analysis tabs; a settings panel. Charts use plain fills without hatching: names on the chart, a key and a table carry the meaning instead, which replaces the chart part of the "signature element" point above once built.
+
 ---
 
 ## 17. Performance and quality targets
