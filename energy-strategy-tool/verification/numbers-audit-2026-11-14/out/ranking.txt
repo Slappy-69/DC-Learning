@@ -1,0 +1,29 @@
+leading group size 3205 cost range [ 208.99009354597456, 261.7688835836139 ] carbon range [ 168.48561904253538, 369.86314073916157 ]
+options 6170 rank mismatches (beyond ties) 0 score differences 0
+top 20 identical order: true
+groups [adequate, likely, resilient, poweredIT, onTime] -> count
+  [true,true,true,100,true] 3205
+  [true,true,true,100,false] 502
+  [true,true,true,75,true] 517
+  [true,true,true,75,false] 64
+  [true,false,true,100,true] 636
+  [true,false,true,100,false] 1214
+  [true,false,true,75,false] 32
+places where the shown score rises going down the list: 464 first [ 3205, '31.9', 3206, '66.4' ]
+options ranked below the leader with a higher shown score: 0
+options with lower LCOE than leader: 5 [
+  '3:209.0:100MW:Grid + gas recips bridge → keep shortfal',
+  '5:209.1:100MW:Grid + gas recips bridge → keep shortfal',
+  '6:209.1:100MW:Grid + gas recips bridge → keep shortfal',
+  '8:209.4:100MW:Grid + gas recips bridge → keep shortfal',
+  '3708:181.6:75MW:Grid · SMR · HVO N+1'
+]
+tiers { A: 516, B: 3772, C: 1882 }
+options sized for less than the 100 MW entered: 613 generated 6170 6170 validCombinations 6164
+leader vs #9: plants [["bridge","gasRecip",40],["bridgeKept","gasRecip",40]] [["prime","gasRecip",40,"steps"]] prime {"mw":40,"steps":[{"month":54,"units":4,"building":4}],"avail":39}
+steady year firm MWh 169351.24314681147 169351.24314681147 hours [ 0, 4934 ] [ 4934 ] grid 128482.58693472827 128482.58693472827 ppa 607537.6032214492 607537.6032214492
+mc [
+  [ 'bridge', 170.4, 0.3, 10, 4 ],
+  [ 'bridgeKept', 170.4, 0.3, 10, 4 ]
+] [ [ 'prime', 170.4, 0.3, 10, 4 ] ]
+SMR, timeline 132 months: undefined 183.31885500904067 undefined

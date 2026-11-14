@@ -142,3 +142,11 @@ Fixed on `feature/weather-fixes` with the owner's decision OPEN-QUESTIONS 115 (k
 |---|---|---|
 | Builder's own checks (`realism-rebuild/SELF-CHECK-2026-11-11.md`) | Builder (Claude Fable 5.2) | Node 121 of 121 (13 new tests, 67 to 79); browser 44 of 44 in four parts (B44 new); study runs on Pego and Eemshaven. Eight faults found and fixed, among them known issue 40 |
 | Haiku checks, Opus review | — | **Not run**: they need helper sessions, which the owner did not ask for. To do before a release |
+
+## Numbers audit and realism review (2026-11-14, `main` at 3d34390; recorded on branch feature/audit-findings)
+
+| Check | Model | Result |
+|---|---|---|
+| Independent audit of the numbers on the T1 run (`numbers-audit-2026-11-14/AUDIT.md`, scripts beside it) | Claude Fable 5.2, finished by Claude Opus 5.5 | Three options rebuilt by hand from the inputs: 81 of 82 figures within 1 % (the 82nd, engine hours, 1.5 %, a simpler minimum-load rule); ranking of the top 20 re-derived exactly; the saved PDF matches the engine in pounds. 29 findings: 6 A (wrong statements or figures a client sees), 9 B (screens or PDF disagree), 9 C (plausibility), 5 D (cosmetic). Known issues 49 to 72; 42 and 45 to 48 confirmed |
+| Realism of the top options on T1, Pego (900 and 500 MW) and a private client case (`realism-review-2026-11-14/REALISM.md`, public copy without the private case) | Claude Fable 5.2, finished by Claude Opus 5.5 | "Not yet": one or two of each top five credible, not five. Eight root causes with decisions for the owner (OPEN-QUESTIONS 277 to 284); faults logged as known issues 73 to 77 |
+| Fix package | — | Work package 41, to be built before 36 to 40 (owner, "Yes log all of those", 2026-11-14) |

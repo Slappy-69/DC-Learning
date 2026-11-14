@@ -1,0 +1,135 @@
+
+=== LEADER: Grid + gas recips bridge → keep shortfall share as prime, rest as backup · HVO N+1 · PV 6.7 MWp · PPA hybrid 100 % (rank 1, O1WG4BI8) ===
+    Design load MW                                             mine          150.000  engine          150.000            +0.00 %
+    Standby gensets, units                                     mine           64.000  engine           64.000            +0.00 %
+    Standby gensets MW                                         mine          176.000  engine          176.000            +0.00 %
+    Fuel store m3                                              mine        1,872.000  engine        1,872.000            +0.00 %
+    UPS reserve MWh                                            mine            8.333  engine            8.333            +0.00 %
+    Rooftop PV MWp                                             mine            6.667  engine            6.667            +0.00 %
+    Capex incl. contingency, EUR m                             mine          152.878  engine          152.878            +0.00 %
+      the same in pounds, GBP m                                mine          128.066  engine          128.066            +0.00 %
+    PV of capex (with replacement, residual), EUR m            mine          118.635  engine          118.635            +0.00 %
+    PV of opex, EUR m                                          mine        1,321.980  engine        1,322.038            -0.00 %
+    NPV of cost, EUR m                                         mine        1,440.615  engine        1,440.673            -0.00 %
+    LCOE EUR/MWh                                               mine          209.530  engine          209.539            -0.00 %
+      the same in pounds, GBP/MWh                              mine          175.524  engine          175.531            -0.00 %
+    Carbon, location based g/kWh                               mine          177.586  engine          177.651            -0.04 %
+    Carbon, market based g/kWh                                 mine           84.538  engine           84.624            -0.10 %
+    Residual value at year 20, EUR m                           mine          -49.194  engine          -49.194            +0.00 %
+    Opex in the last year, EUR m                               mine          181.685  engine          181.697            -0.01 %
+    Weighted score (shown)                                     mine           94.368  engine           94.355            +0.01 %
+      axis score cost                                          mine           98.976  engine           98.960            +0.02 %
+      axis score carbon                                        mine           95.481  engine           95.449            +0.03 %
+      axis score ttp                                           mine           90.625  engine           90.625            +0.00 %
+      axis score deliverability                                mine           88.000  engine           88.000            +0.00 %
+    Gas engines, units                                         mine            4.000  engine            4.000            +0.00 %
+    Engines ready, month                                       mine           39.000  engine           39.000            +0.00 %
+    Steady year: demand MWh                                    mine      911,704.766  engine      911,704.767            -0.00 %
+    Steady year: check 100 MW x 0.8 x 8760 x PUE 1.3           mine      911,040.000  engine      911,704.767            -0.07 %
+    Steady year: PPA delivered MWh                             mine      607,857.392  engine      607,537.603            +0.05 %
+    Steady year: engine output MWh                             mine      169,130.449  engine      169,351.243            -0.13 %
+    Steady year: grid import MWh                               mine      128,383.591  engine      128,482.587            -0.08 %
+    Steady year: engine hours                                  mine        5,008.000  engine        4,934.000            +1.50 %  <-- DIFFERS
+    Steady year: gas burned MWh(th)                            mine      375,845.443  engine      376,336.096            -0.13 %
+    Steady year: unmet MWh                                     mine            0.000  engine            0.000            +0.00 %
+    capex by item (EUR m, before contingency):
+      year 0:    0.007  Grid cable route
+      year 0:    9.600  Substation 120 MW HV AIS
+      year 0:    6.000  Rooftop PV
+      year 2:    1.042  UPS reserve battery
+      year 2:   20.240  HVO gensets
+      year 2:    0.562  Fuel store
+      year 2:    1.042  UPS reserve battery
+      year 2:   20.240  HVO gensets
+      year 2:    0.562  Fuel store
+      year 3:    1.042  UPS reserve battery
+      year 3:   20.240  HVO gensets
+      year 3:    0.562  Fuel store
+      year 4:    1.042  UPS reserve battery
+      year 4:   20.240  HVO gensets
+      year 4:    0.562  Fuel store
+      year 3:   36.000  Gas engines 4 x 10 MW
+    engine running cost used for dispatch: gas 59.1/0.45 + O&M 5.4 + carbon 75 x 0.202/0.45 = 170.4 EUR/MWh (start-year prices)
+    WHAT IF engines run on each year's own prices: running cost 145 (2027) -> 164 (2033) -> 226 EUR/MWh (2040 on); average grid price 210.6
+      LCOE 209.24 against 209.53 EUR/MWh (-0.14 %); carbon 164.5 against 177.6 g/kWh; engine hours in 2040: 2836 against 5008
+
+=== ISLANDED: Islanded gas recips · retained-plant backup · PV 6.7 MWp (rank 3346, O16HAJCQ) ===
+    Design load MW                                             mine          150.000  engine          150.000            +0.00 %
+    UPS reserve MWh                                            mine            8.333  engine            8.333            +0.00 %
+    Rooftop PV MWp                                             mine            6.667  engine            6.667            +0.00 %
+    Capex incl. contingency, EUR m                             mine          190.043  engine          190.043            +0.00 %
+      the same in pounds, GBP m                                mine          159.199  engine          159.199            +0.00 %
+    PV of capex (with replacement, residual), EUR m            mine          122.390  engine          122.390            +0.00 %
+    PV of opex, EUR m                                          mine        1,114.936  engine        1,114.936            -0.00 %
+    NPV of cost, EUR m                                         mine        1,237.326  engine        1,237.326            -0.00 %
+    LCOE EUR/MWh                                               mine          223.929  engine          223.929            +0.00 %
+      the same in pounds, GBP/MWh                              mine          187.586  engine          187.586            +0.00 %
+    Carbon, location based g/kWh                               mine          445.658  engine          445.658            -0.00 %
+    Carbon, market based g/kWh                                 mine          445.658  engine          445.658            -0.00 %
+    Residual value at year 20, EUR m                           mine          -76.212  engine          -76.212            -0.00 %
+    Opex in the last year, EUR m                               mine          206.525  engine          206.525            -0.00 %
+    Weighted score (shown)                                     mine           36.493  engine           36.493            -0.00 %
+      axis score cost                                          mine           71.695  engine           71.695            -0.00 %
+      axis score carbon                                        mine            0.000  engine            0.000            +0.00 %
+      axis score ttp                                           mine            0.000  engine            0.000            +0.00 %
+      axis score deliverability                                mine           76.000  engine           76.000            +0.00 %
+    Gas engines, units                                         mine           17.000  engine           17.000            +0.00 %
+    Consent months (IED 6, EIA 18, DCO 30: the longest)        mine           30.000  engine           30.000            +0.00 %
+    Engines ready, month                                       mine           63.000  engine           63.000            +0.00 %
+    Steady year: engine output MWh                             mine      905,371.432  engine      905,371.433            -0.00 %
+    Steady year: gas burned MWh(th)                            mine    2,011,936.516  engine    2,011,936.518            -0.00 %
+    Steady year: unmet MWh                                     mine            0.000  engine            0.000            +0.00 %
+    Heat in running plant, MW(th)                              mine          377.778  engine          377.778            +0.00 %
+    capex by item (EUR m, before contingency):
+      year 0:    9.600  Substation 120 MW HV AIS
+      year 0:    6.000  Rooftop PV
+      year 5:    4.167  UPS reserve battery
+      year 5:  153.000  Gas engines 17 x 10 MW
+    gas use at full load: 230 MW(th) average; heat rate 8000 kJ/kWh (45 % efficiency, LHV basis assumed); carbon 449 g/kWh at the engine
+
+=== STEP DOWN, SMR: Grid · SMR · HVO N+1 (rank 3708, O1J82PZ7) ===
+    Design load MW                                             mine          112.500  engine          112.500            +0.00 %
+    Standby gensets, units                                     mine           48.000  engine           48.000            +0.00 %
+    Standby gensets MW                                         mine          132.000  engine          132.000            +0.00 %
+    Fuel store m3                                              mine        1,404.000  engine        1,404.000            +0.00 %
+    UPS reserve MWh                                            mine            6.250  engine            6.250            +0.00 %
+    Capex incl. contingency, EUR m                             mine          786.650  engine          786.650            +0.00 %
+      the same in pounds, GBP m                                mine          658.977  engine          658.977            +0.00 %
+    PV of capex (with replacement, residual), EUR m            mine          273.087  engine          273.087            -0.00 %
+    PV of opex, EUR m                                          mine          703.696  engine          703.696            +0.00 %
+    NPV of cost, EUR m                                         mine          976.783  engine          976.783            +0.00 %
+    LCOE EUR/MWh                                               mine          181.614  engine          181.614            -0.00 %
+      the same in pounds, GBP/MWh                              mine          152.138  engine          152.138            -0.00 %
+    Carbon, location based g/kWh                               mine           68.721  engine           68.721            -0.00 %
+    Carbon, market based g/kWh                                 mine           68.721  engine           68.721            -0.00 %
+    Residual value at year 20, EUR m                           mine         -613.107  engine         -613.107            -0.00 %
+    Opex in the last year, EUR m                               mine           22.079  engine           22.079            +0.00 %
+    Weighted score (shown)                                     mine           76.060  engine           76.060            +0.00 %
+      axis score cost                                          mine          100.000  engine          100.000            +0.00 %
+      axis score carbon                                        mine          100.000  engine          100.000            +0.00 %
+      axis score ttp                                           mine           21.875  engine           21.875            +0.00 %
+      axis score deliverability                                mine           70.605  engine           70.605            +0.00 %
+    SMR ready, month                                           mine          120.000  engine          120.000            +0.00 %
+    Last year: SMR output MWh                                  mine      669,261.001  engine      669,261.001            +0.00 %
+    Last year: grid import MWh                                 mine       14,517.574  engine       14,517.574            -0.00 %
+    capex by item (EUR m, before contingency):
+      year 0:    0.007  Grid cable route
+      year 0:    9.600  Substation 120 MW HV AIS
+      year 2:    1.042  UPS reserve battery
+      year 2:   20.240  HVO gensets
+      year 2:    0.562  Fuel store
+      year 2:    1.042  UPS reserve battery
+      year 2:   20.240  HVO gensets
+      year 2:    0.562  Fuel store
+      year 3:    1.042  UPS reserve battery
+      year 3:   20.240  HVO gensets
+      year 3:    0.562  Fuel store
+      year 10:  640.000  SMR 1 x 80 MW
+    SMR: bought year 10 for EUR 704 m with contingency; EUR 587 m (83 %) is credited back at year 20 as value left (life 60 years).
+    SMR load factor in the model: 95.5 % (no refuelling or outage)
+    WHAT IF no value is credited for the SMR at year 20: LCOE 209.8 EUR/MWh against 181.6; the leader is 209.5
+    Grid alone can carry the three buildings (113 MW design load against 120 MW of grid): the SMR is not needed to power them.
+    SMR ready in month 120; the timeline has 120 months (0 to 119). Grid 120 + SMR 80 = 200 MW >= 150 MW: building 4 could start in month 120.
+
+82 figures compared; 1 differ by more than 1 %:
+    Steady year: engine hours +1.50 %

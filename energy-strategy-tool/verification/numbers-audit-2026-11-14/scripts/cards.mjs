@@ -1,0 +1,14 @@
+import { E, runT1 } from './lib.mjs';
+import { topCards, cardOptions } from '../app/src/engine/cards.js';
+const { run, inputs } = runT1();
+const sorted = [...run.options].sort((a, b) => a.rank - b.rank);
+console.log('scoring', JSON.stringify(run.scoring, null, 0).slice(0, 1500));
+console.log('country', run.country, 'fx', JSON.stringify(inputs.project.fx), E.displayCurrencyCode(inputs));
+const cards = cardOptions(run.options, 5);
+console.log(JSON.stringify(cards, (k, v) => (k === 'o' || k === 'option') && v && v.id ? `${v.rank} ${v.id} ${v.name}` : (v && v.id && v.v ? `${v.rank} ${v.id} ${v.name}` : v), 1).slice(0, 4000));
+for (const o of sorted.slice(0, 25)) console.log(o.rank, o.id, o.groupRank, JSON.stringify(o.rankKeys), o.score.toFixed(2), 'lcoe', o.eco.lcoe.toFixed(2), 'capex', (o.eco.capex / 1e6).toFixed(1), 'c', JSON.stringify(o.metrics), '|', o.name, '|', o.rankNote || '');
+const smr = sorted.filter((o) => /smr/i.test(o.key)).slice(0, 5);
+for (const o of smr) console.log('SMR', o.rank, o.id, o.score.toFixed(2), o.eco.lcoe.toFixed(1), o.name, o.rankNote);
+const isl = sorted.filter((o) => o.v.C1 === 'island' || /island/i.test(o.v.C1)).slice(0, 5);
+for (const o of isl) console.log('ISL', o.rank, o.id, o.score.toFixed(2), o.eco.lcoe.toFixed(1), o.name, o.rankNote);
+const c1 = {}; for (const o of sorted) c1[o.v.C1 + '/' + o.v.C2 + '/' + o.v.C4] = (c1[o.v.C1 + '/' + o.v.C2 + '/' + o.v.C4] || 0) + 1; console.log(c1);
