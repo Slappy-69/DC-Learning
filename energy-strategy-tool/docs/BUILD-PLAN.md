@@ -365,7 +365,7 @@ The common points, rule and tests are under package 37.
 - **Effort and risk:** about a week of building (M to L). Medium risk: the PDF wording, three report test files and several browser tests change; 52 changes figures in every gas option.
 - **Files likely to change:** `app/src/engine/evaluate.js`, `dispatch.js`, `sizing.js`, `cards.js`, `generator.js`, `summary.js`, `scoring.js`, `countryrules.js`; `app/src/report/report.js`, `plain.js`; `app/src/components/RankedList.jsx`, `SensitivityView.jsx`, `CompareView.jsx`, `TopFive.jsx`, `InputsPanel.jsx`; tests in `app/tests/`; the user guide where wording changes.
 - **Not in this package** (decisions needed first): the realism review's design changes (OPEN-QUESTIONS 277 to 284) and the plausibility points (known issues 60 to 66, 70). Cosmetic points 68, 69, 71 and 72 go with the visual rework.
-- **Progress:** recorded 2026-11-14 on `feature/audit-findings`. Not built.
+- **Progress:** recorded 2026-11-14; merged into `main` 2026-11-15 (records only). Not built.
 
 ### Next, chosen by the owner (2026-11-02)
 
