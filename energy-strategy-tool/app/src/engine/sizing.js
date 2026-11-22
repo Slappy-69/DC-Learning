@@ -671,7 +671,13 @@ function sizeOn(ctx, v, hint = null) {
   const fuelM2 = backup.fuelM3 * TECH.fuelStorage.p.m2PerM3;
   const bessM2 = (storage.mwh + backup.bessMWh) * TECH.bess.p.m2PerMWh;
   const primeM2 = prime && TECH[prime.tech].p.m2PerMW ? prime.mw * TECH[prime.tech].p.m2PerMW : 0;
-  const bridgeM2 = bridge ? bridge.mw * TECH[bridge.tech].p.m2PerMW : 0;
+  // Known issue 76 (realism review, root cause 7): a bridge that leaves when the grid arrives holds its land only for
+  // those months, so it is counted on its own (area.temporaryM2), not against the permanent site. With C3 = Keep
+  // shortfall share the kept units stay; with Retain as backup, as prime or for grid services, and islanded, all stay.
+  const bridgeAllM2 = bridge ? bridge.mw * TECH[bridge.tech].p.m2PerMW : 0;
+  const bridgeKeptMW = !bridge ? 0 : v.C1 !== 'bridge' ? bridge.mw : v.C3 === 'remove' ? 0 : v.C3 === 'split' ? Math.min(bridge.mw, bridge.primeMW || 0) : bridge.mw;
+  const bridgeM2 = bridge ? bridgeKeptMW * TECH[bridge.tech].p.m2PerMW : 0;
+  const bridgeTempM2 = bridgeAllM2 - bridgeM2;
   const rejectedMW = itMW * (1 + cp.coolPeak + cp.lossFrac);
   const hrGroundShare = v.C9 === 'ground' ? 1 : v.C9 === 'split' ? 0.5 : 0;
   const hrM2 = rejectedMW * TECH.heatRejection.p.m2PerMW * hrGroundShare;
@@ -825,7 +831,7 @@ function sizeOn(ctx, v, hint = null) {
     solarMWp, solarRoofMWp, solarGroundMWp, roofPvOverFreeM2, windMW, windTurbines, ppa, renewPlant,
     grid: { band, fullMW, byMonth: gridByMonth, shortfalls: shortfalls.map((p) => ({ from: p.from, to: p.to, mw: p.maxShort })), cableKm },
     gasConnection,
-    area: { grossM2, netM2, landTakeM2, residualM2: netM2 - landTakeM2, parts: { building: footprint, substation: subM2, backup: backupM2, fuel: fuelM2, bess: bessM2, prime: primeM2, bridge: bridgeM2, heatRejection: hrM2, wind: windM2, groundSolar: groundSolarM2 } },
+    area: { grossM2, netM2, landTakeM2, residualM2: netM2 - landTakeM2, temporaryM2: bridgeTempM2, parts: { building: footprint, substation: subM2, backup: backupM2, fuel: fuelM2, bess: bessM2, prime: primeM2, bridge: bridgeM2, heatRejection: hrM2, wind: windM2, groundSolar: groundSolarM2 } },
     firmByMonth, designByMonth,
     plants,
     sentences,

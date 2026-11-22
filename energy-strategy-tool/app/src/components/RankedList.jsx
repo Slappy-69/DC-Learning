@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { applyView } from '../engine/scoring.js';
 import { defaultView, tablePageSize, flagFilters, visibleFlags } from '../engine/view.js';
-import { sig, money, monthLabel, pct, cur } from '../format.js';
+import { sig, money, monthLabel, pct, cur, displayCurrency } from '../format.js';
 import OptionDetail from './OptionDetail.jsx';
 import FilterChips from './FilterChips.jsx';
 import { UnverifiedTag } from './Field.jsx';
@@ -43,9 +43,11 @@ export function SiteFitBadge({ s }) {
   return <span className={`badge badge-${cls}`}><span aria-hidden="true">{icon}</span> {s}</span>;
 }
 
-// Capex ceiling view filter (§11), in € m; commits on blur or Enter; empty = no ceiling.
+// Capex ceiling view filter (§11). Stored in euro (the engine's currency); typed and shown in the display currency,
+// so a ceiling read off the table filters at that level (known issue 46). Commits on blur or Enter; empty = no ceiling.
 function CapexFilter({ value, onCommit }) {
-  const shown = value == null ? '' : String(+(value / 1e6).toPrecision(10));
+  const rate = displayCurrency().rate;
+  const shown = value == null ? '' : String(+((value * rate) / 1e6).toPrecision(10));
   const [draft, setDraft] = useState(shown);
   useEffect(() => setDraft(shown), [shown]);
   const commit = () => {
@@ -53,11 +55,12 @@ function CapexFilter({ value, onCommit }) {
     if (t === '') { if (value != null) onCommit(null); return; }
     const x = Number(t);
     if (!Number.isFinite(x) || x < 0) { setDraft(shown); return; }
-    if (x * 1e6 !== value) onCommit(x * 1e6);
+    const eur = (x * 1e6) / rate;
+    if (value == null || Math.abs(eur - value) > 1e-6 * Math.max(1, Math.abs(value))) onCommit(eur);
   };
   return (
     <label className="inline-number">
-      <span>Capex at most (€ m)</span>
+      <span>Capex at most ({cur().trim()} m)</span>
       <input type="number" min={0} step="any" inputMode="decimal" placeholder="none" value={draft}
         onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); }} />
     </label>
@@ -130,7 +133,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
     <div className="ranked">
       {summary}
       {realism ? <PlanCheck run={run} /> : null}
-      <TopFive run={run} onOpen={(id) => { const i = list.findIndex((x) => x.id === id); if (i >= 0) setPage(Math.floor(i / PAGE)); setOpenId(id); }} onCompare={onCompare} compareIds={compareIds} />
+      <TopFive run={run} siteBeta={siteBeta} onOpen={(id) => { const i = list.findIndex((x) => x.id === id); if (i >= 0) setPage(Math.floor(i / PAGE)); setOpenId(id); }} onCompare={onCompare} compareIds={compareIds} />
       <div className="filters" role="group" aria-label="View filters (never change score or rank)">
         <span className="filters-label">View filters</span>
         {RES_STATUSES.map((s) => (
@@ -184,7 +187,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
       <FilterChips view={view} setView={setView} hiddenDominated={hiddenDominated} onChange={() => setPage(0)} clearAll />
       <p className="note">Showing {list.length.toLocaleString('en-GB')} of {run.options.length.toLocaleString('en-GB')} screened options ({dominatedCount.toLocaleString('en-GB')} dominated, all shown unless hidden). Scores are relative to the scoring set (all screened options); filters change only what is shown.</p>
       {realism
-        ? <p className="note">Ranked first: options that serve their load in every hour, are likely to be built (tier A or B), meet the resilience requirement, power the most IT, and start every building within the latest acceptable start ({allowance} months); within each group the order is by weighted score, on scales taken over the {(run.scoring.scaleScope || 0).toLocaleString('en-GB')} options of the leading group. Options that rank below stay in the list and say why.</p>
+        ? <p className="note">Ranked first: options that serve their load in every hour, are likely to be built (tier A or B), meet the resilience requirement, power the most IT, and start every building within the latest acceptable start ({allowance} months); within each group the order is by weighted score, on scales taken over the {(run.scoring.scaleScope || 0).toLocaleString('en-GB')} options of the leading group. Options that rank below stay in the list and say why. Below the leading group an axis can fall off its scale: the score shown holds each axis to 0–100, while the order uses the score before it is held, so a shown score can rise a little down the list.</p>
         : <p className="note">Power adequacy first: {adequateCount.toLocaleString('en-GB')} of {run.options.length.toLocaleString('en-GB')} options serve their load in every hour and rank above the {(run.options.length - adequateCount).toLocaleString('en-GB')} that do not. Within each group the order is by weighted score. Options that are not adequate stay in the list.</p>}
 
       <div className="table-wrap" role="region" aria-label="Ranked options" tabIndex={0}>
@@ -241,7 +244,7 @@ export default function RankedList({ run, view, setView, start, onShowSite, onSh
                         ))}
                       </span>
                     </td>
-                    <td className="num">{sig(o.eco.lcoe)}</td>
+                    <td className="num">{sig(o.eco.lcoe * displayCurrency().rate)}</td>
                     <td className="num">{money(o.eco.capex, 2)}</td>
                     <td className="num">{sig(o.metrics.carbon, 2)}{run.inputs.settings.carbonMetric === 'cfe' ? '' : ' g'}</td>
                     <td className="num">{pct(o.carbon.cfePct)}</td>

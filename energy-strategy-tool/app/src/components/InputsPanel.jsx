@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { NumberField, TextField, SelectField, ToggleField, Section, UnverifiedTag } from './Field.jsx';
-import { gridChargeData, CONDITIONAL_RATE, DC_TAX, GB_RESIDUAL, GB_FEE, IE_POLICY } from '../engine/countryrules.js';
+import { gridChargeData, CONDITIONAL_RATE, DC_TAX, GB_RESIDUAL, GB_FEE, IE_POLICY, carbonPathFactor } from '../engine/countryrules.js';
 import { nearbyRenewables } from '../engine/renewables.js';
 import { plantCandidates, TECH_TICKS, techTicked , realismOn } from '../engine/defaults.js';
 import { PLANT_DEFAULTS, COUNTRIES, CHOICES, PRESETS, defaultChoiceState, normalizeInputs, isAtDefault, countCombinations, countryFromPin, pinCountryInfo, effectiveWeights, expectedConnectionCharge, FX } from '../engine/index.js';
@@ -9,6 +9,15 @@ import WeatherField from './WeatherField.jsx';
 import PlantsField, { RenewablePlantsField } from './PlantsField.jsx';
 
 const YM = '^\\d{4}-(0[1-9]|1[0-2])$';
+
+// The carbon path in the prices the engine uses for this site (known issue 59): the TYNDP 2026 path is an EU ETS path
+// (€88.3/t today); for another starting price, such as the UK ETS default or an entered price, the engine keeps its
+// ratios, so the help text gives the scaled values.
+function carbonPathHint(p0, country) {
+  const v = (y) => Math.round(p0 * carbonPathFactor(y) * 10) / 10;
+  const scaled = Math.abs(p0 - 88.3) > 0.05;
+  return `Empty = the published forecast (OPEN-QUESTIONS 232): from today's price, €${p0}/t for ${country}, along the TYNDP 2026 path to €${v(2030)}/t in 2030, €${v(2035)} in 2035 and €${v(2040)} in 2040, flat after${scaled ? ' (the TYNDP values, €97.5, €197.5 and €297.5, are for the EU ETS at €88.3/t; this price keeps their ratios)' : ''}. A number replaces it with a constant real rate.`;
+}
 
 export default function InputsPanel({ inputs, update, setWeights, siteBeta = false, report = {}, onReport = null }) {
   const set = (path) => (val) => update(path, val);
@@ -285,7 +294,7 @@ export default function InputsPanel({ inputs, update, setWeights, siteBeta = fal
             hint="Empty = the published forecast (OPEN-QUESTIONS 232): World Bank outlook (April 2026) for 2026 and 2027, then the TYNDP 2026 path to 2040, flat after; applied relative to the gas price's own date. A number replaces it with a constant real rate." />
         </div>
         <NumberField label="Carbon price escalation (real)" unit="%/yr" scale={100} value={typeof inputs.economics.carbonEscalation === 'number' ? inputs.economics.carbonEscalation : null} onCommit={set('economics.carbonEscalation')} path="economics.carbonEscalation" inputs={inputs} min={-0.1} max={0.2} nullable placeholder="Published forecast"
-          hint="Empty = the published forecast (OPEN-QUESTIONS 232): from today's price to the TYNDP 2026 values (€97.5/t in 2030, €197.5 in 2035, €297.5 in 2040), flat after. A number replaces it with a constant real rate." />
+          hint={carbonPathHint(typeof inputs.economics.carbonPrice === 'number' ? inputs.economics.carbonPrice : COUNTRIES[countryNow].carbonPrice, COUNTRIES[countryNow].name)} />
         <p className="note">Currency: euro ({COUNTRIES[countryNow].name} profile; prices are converted to € in the country data). Revenue options are off by default and are opened in the choices below: export income (C1 = Grid + export), battery grid services (C12r role) and heat reuse (C15). The gas price is in section 4; the grid connection charge is with the grid.</p>
       </Section>
 

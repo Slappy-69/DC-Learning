@@ -28,9 +28,10 @@ import { planCheck, countryRulesFor } from './plancheck.js';
 import { triggerAnalysis } from './triggers.js';
 
 // Raised when results change (Opus review N-11): 0.3.0 for the fixes of 2026-10-30 (capex factor, delivered energy).
-// 0.4.0 for the realism rebuild of 2026-11-11. One plain string: the packaging reads it from the bundle
+// 0.4.0 for the realism rebuild of 2026-11-11. 0.4.1 for work package 41, part 1 (2026-11-22: rule R4, a temporary
+// bridge's land counted on its own). One plain string: the packaging reads it from the bundle
 // (packaging/lib/common.mjs, engineVersionFromHtml). The rebuild's run setting does not change the version.
-export const ENGINE_VERSION = '0.4.0';
+export const ENGINE_VERSION = '0.4.1';
 
 // Items between "progress" events for the per-option stages other than dispatch (dispatch reports
 // every option). Count-based, so the log content does not depend on machine speed.

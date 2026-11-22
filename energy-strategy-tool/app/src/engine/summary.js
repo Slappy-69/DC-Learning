@@ -172,8 +172,16 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
   // A set for membership: with every combination screened (work package 23, 17,344 options on T1) an array lookup
   // inside the loop over all options below cost about 200 ms per summary.
   const inGroup = new Set(group);
-  const kind = `${adequate(L) ? 'adequate ' : ''}${settings.rankCompliantFirst ? 'requirement-compliant ' : ''}`;
-  const groupName = `${kind}options`;
+  // With the realism rebuild the leader's group is its rank group, not every adequate option (known issue 56): name
+  // it so, and say once which options it holds.
+  const realGroup = L.groupRank !== undefined && !!L.rankKeys;
+  const kind = realGroup ? '' : `${adequate(L) ? 'adequate ' : ''}${settings.rankCompliantFirst ? 'requirement-compliant ' : ''}`;
+  const groupName = realGroup ? 'options in its rank group' : `${kind}options`;
+  const groupDef = realGroup ? (() => {
+    const k = L.rankKeys;
+    const bits = [k.adequate ? 'serve the load in every hour' : 'do not serve the load in every hour', k.likely ? 'are likely to be built (tier A or B)' : 'are unlikely to be built (tier C)', k.resilient ? 'meet the resilience requirement' : 'do not meet the resilience requirement', `power ${sig(k.poweredIT, 3)} MW of IT`, k.onTime ? 'start every building within the latest acceptable start' : 'start a building after the latest acceptable start'];
+    return `Its rank group: the ${group.length.toLocaleString('en-GB')} option${group.length === 1 ? '' : 's'} that ${list(bits)}. Options outside it rank below it whatever their score.`;
+  })() : null;
   const tor = sensitivity && sensitivity.optionId === L.id && Array.isArray(sensitivity.allRows) ? sensitivity : null;
   // Monte Carlo (work package 18) finished for this leader: ranges, rank probability and the robust pick.
   const mc = monteCarlo && monteCarlo.complete && monteCarlo.leaderId === L.id && Array.isArray(monteCarlo.rows) ? monteCarlo : null;
@@ -332,6 +340,7 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     } else if (bestOn.every((x) => x.gap <= 1e-9)) none = `It is the best of the ${groupName} on every axis, so it gives up nothing to them.`;
     else none = `On every axis it is within ${GAP} points (of 100) of the best of the ${groupName}.`;
     for (const x of outside) { const f = axisFigure(x.k, settings); gMore.push(`Outside its group: #${x.best.rank} ${x.best.name} does better on ${figureName(x.k, f)} (${f.fmt(f.get(x.best), 3)} against ${f.fmt(f.get(L), 3)}).`); }
+    if (groupDef) gMore.unshift(groupDef);
     add('gives-up', 'What it gives up', g.length ? g : [req(none)], gMore);
   }
 
@@ -350,7 +359,7 @@ export function plainSummary(run, { sensitivity = null, breakevens = null, monte
     const within = [0.1, 1, 5].map((d) => [d, group.filter((o) => o !== L && L.score - o.score <= d + 1e-12).length]);
     more.push(`Other ${groupName} close to the leader: ${within.map(([d, n]) => `${n.toLocaleString('en-GB')} within ${d} point${d === 1 ? '' : 's'}`).join(', ')}.`);
     add('confidence', 'Confidence', [
-      req(close ? `${plural(close, `other ${kind}option`)} score${close === 1 ? 's' : ''} within 1 point of it.` : `No other ${kind}option scores within 1 point of it.`),
+      req(close ? `${plural(close, `other ${kind}option`)}${realGroup ? ' in its rank group' : ''} score${close === 1 ? 's' : ''} within 1 point of it.` : `No other ${kind}option${realGroup ? ' in its rank group' : ''} scores within 1 point of it.`),
       mcL ? keep(`In ${mc.samples.toLocaleString('en-GB')} Monte Carlo samples (top ${mc.rows.length} options) it leads in ${Math.round(mcL.pRank1 * 100)} % and is in the top three in ${Math.round(mcL.pTop3 * 100)} %; ${(() => { const rb = mc.rows.find((r) => r.id === mc.robustPickId); return rb && rb.id !== L.id ? `the robust pick (most often within ${Math.round(mc.band * 100)} % of the best) is #${rb.rank}, not the leader (${rb.nRobust} of ${mc.samples.toLocaleString('en-GB')} samples against ${mcL.nRobust})` : (mc.robustLevelWithId ? `it is also the robust pick (most often within ${Math.round(mc.band * 100)} % of the best), level with another option within the noise of sampling` : `it is also the robust pick (most often within ${Math.round(mc.band * 100)} % of the best)`); })()}.`)
         : opt('Rank probability and the robust pick come from the Monte Carlo, not run for this result.', 3),
       req(`${assumed.length ? `It uses ${plural(assumed.length, 'key input')} left at ${assumed.length === 1 ? 'its default' : 'their defaults'}` : 'No key input it uses is left at its default'}; ${unv.toLocaleString('en-GB')} of ${reg.length.toLocaleString('en-GB')} default records are ${LABEL}.`),

@@ -56,3 +56,19 @@ export function pct(x, n = 0) {
   if (x == null || !Number.isFinite(x)) return '—';
   return `${(x * 100).toFixed(n)} %`;
 }
+
+// Euro amounts inside engine texts (flags, run notes) in the display currency (known issue 47). The engine writes
+// its texts in euro; when results are shown in another currency, each "€12.3 m", "€26.35/MWh" or "€1,200" gets the
+// display figure first and keeps the euro figure in brackets: "£10.3 m (€12.3 m)". Tariffs quoted after the number
+// ("8.77 €/kVA") are published figures and stay as written. In euro the text is returned unchanged.
+const EURO_AMOUNT = /\u20AC(\d[\d,]*(?:\.\d+)?)(\s?(?:bn|m|k)\b)?((?:\/[A-Za-z]+)+)?/g;
+export function inDisplayCurrency(text) {
+  if (DISPLAY.code === 'EUR' || text == null) return text;
+  return String(text).replace(EURO_AMOUNT, (all, num, unit = '', per = '') => {
+    const x = Number(num.replace(/,/g, ''));
+    if (!Number.isFinite(x)) return all;
+    const y = x * DISPLAY.rate;
+    const shown = Math.abs(y) >= 1000 && !unit ? Math.round(y).toLocaleString('en-GB') : sig(y, 3);
+    return x === 0 ? `${DISPLAY.symbol}0${unit}${per}` : `${DISPLAY.symbol}${shown}${unit}${per} (${all})`;
+  });
+}

@@ -102,6 +102,7 @@ import { detailTests } from './detail-tests.mjs';
 import { agreedTests } from './agreed-tests.mjs';
 import { realismTests } from './realism-tests.mjs';
 import { resolveTests } from './resolve-tests.mjs';
+import { correctnessTests } from './correctness-tests.mjs';
 import { getViewBundle } from './view-bundle.mjs';
 
 const START = '2027-01';
@@ -1341,6 +1342,8 @@ await agreedTests(test, siteRuns);
 // 67 onwards. The realism rebuild of 2026-11-11 (OPEN-QUESTIONS 247 onward) (tests/realism-tests.mjs).
 await realismTests(test, siteRuns);
 await resolveTests(test);
+// 83 onwards. Work package 41: correctness fixes from the numbers audit and the realism review (tests/correctness-tests.mjs).
+await correctnessTests(test, siteRuns);
 
 const passed = results.filter((r) => r.ok).length;
 console.log(`\n${passed}/${results.length} tests passed.`);

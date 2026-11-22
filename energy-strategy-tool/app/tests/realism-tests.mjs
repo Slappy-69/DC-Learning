@@ -533,7 +533,7 @@ export async function realismTests(test, ctxRuns) {
     return out.join('; ');
   });
 
-  await test('78. Realism rebuild: outside the test suite the rebuild is on: the lead times of 2026 with their sources (gas engines 21 months, turbines 40, fuel cells 12 + 5), engine 0.4.0, and a T1 run in which every option balances hour by hour, has a tier and building dates, and none has a power gap', () => {
+  await test('78. Realism rebuild: outside the test suite the rebuild is on: the lead times of 2026 with their sources (gas engines 21 months, turbines 40, fuel cells 12 + 5), engine 0.4.1, and a T1 run in which every option balances hour by hour, has a tier and building dates, and none has a power gap', () => {
     const env = { ...process.env }; delete env.ESTOOL_LEGACY_ENGINE; delete env.ESTOOL_LEGACY_ADDERS; env.ESTOOL_SCREEN_ALL_BELOW = '0';
     const durl = new URL('../src/engine/defaults.js', import.meta.url).href, rurl = new URL('../src/engine/run.js', import.meta.url).href;
     const code = `import { referenceT1, normalizeInputs, TECH, getRegistry, LABEL_SOURCED } from '${durl}'; import { runModel, ENGINE_VERSION } from '${rurl}';
@@ -548,7 +548,7 @@ export async function realismTests(test, ctxRuns) {
         judgement: ['requirements.lateAllowanceM', 'requirements.eiaAllowanceM', 'requirements.dcoAllowanceM'].map((p) => reg[p] && reg[p].basis),
         c3: n.choices.C3.values, options: r.options.length, bal, gap, noTier, noEn, leader: L.name, tier: L.deliv.tier, late: L.sizing.energise.late, adequate: r.options.filter((o) => o.adequacy.adequate).length, plan: !!r.planCheck, rules: r.countryRules.rules.length }));`;
     const x = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', code], { env, maxBuffer: 1 << 26 }).toString());
-    assert.equal(x.realism, true); assert.equal(x.version, '0.4.0');
+    assert.equal(x.realism, true); assert.equal(x.version, '0.4.1');
     assert.deepEqual(x.lead, [21, 40, 21, 12, 5]);
     assert.ok(x.sourced.every(Boolean), `sourced records: ${x.sourced}`);
     assert.deepEqual(x.judgement, ['judgement', 'judgement', 'judgement']);

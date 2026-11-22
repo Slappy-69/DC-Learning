@@ -2,7 +2,7 @@ import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } f
 import { tornadoSteps, TORNADO_DRIVERS, DEFAULT_DRIVER_IDS, TORNADO_MEASURES, measureById, sortRows } from '../engine/sensitivity.js';
 import { normalizeInputs, LABEL } from '../engine/defaults.js';
 import { UnverifiedTag } from './Field.jsx';
-import { sig, money, perMWh, cur, curUnit } from '../format.js';
+import { sig, money, perMWh, cur, curUnit, displayCurrency } from '../format.js';
 import { siteFor } from './SiteView.jsx';
 import BreakevenPanel from './BreakevenPanel.jsx';
 import UncertaintyPanel from './UncertaintyPanel.jsx';
@@ -55,7 +55,9 @@ export function TornadoChart({ result, rows: rowsIn = null, measure = 'score', i
   const m = measureById(measure);
   const rows = rowsIn || result.rows;
   const val = (s) => m.get(s);
-  const scale = m.id === 'npv' ? 1e-6 : 1;
+  // Money measures are drawn in the display currency, like their labels (known issue 45).
+  const rate = displayCurrency().rate;
+  const scale = m.id === 'npv' ? 1e-6 * rate : m.id === 'lcoe' ? rate : 1;
   const narrow = W < 560;
   const labelW = narrow ? 0 : Math.min(Math.round(W * 0.4), Math.round(Math.max(...rows.map((r) => r.label.length)) * 6.6 + 16));
   const rowH = narrow ? 46 : 30;

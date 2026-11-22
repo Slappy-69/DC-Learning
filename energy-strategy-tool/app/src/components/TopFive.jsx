@@ -1,15 +1,16 @@
 import React, { useMemo } from 'react';
 import { topCards } from '../engine/cards.js';
-import { sig, money, perMWh } from '../format.js';
+import { sig, money, perMWh, inDisplayCurrency } from '../format.js';
 import { LABEL } from '../engine/defaults.js';
 import { axisLabels, isRealismRun } from '../engine/labels.js';
+import { isSiteFlag } from '../engine/view.js';
 import { TierBadge, ItBadge, LateBlock, ConditionList } from './Realism.jsx';
 
 // Top five cards (BRIEF §12; work package 6; OPEN-QUESTIONS 24): five distinct strategies, the best-ranked option of
 // each, in rank order; pros and cons judged against every option in the run.
 const resCls = (s) => (s === 'Meets' ? 'ok' : s === 'Meets with flags' ? 'warn' : 'bad');
 
-export default function TopFive({ run, onOpen, onCompare, compareIds = [] }) {
+export default function TopFive({ run, onOpen, onCompare, compareIds = [], siteBeta = false }) {
   const { cards, comparison } = useMemo(() => topCards(run.options, 5, run.sortedFigures), [run]);
   if (!cards.length) return null;
   const realism = isRealismRun(run);
@@ -23,7 +24,7 @@ export default function TopFive({ run, onOpen, onCompare, compareIds = [] }) {
         ? <p className="note">The best-ranked option of each of five distinct strategies, in rank order. A strategy is the campus's permanent supply: on the grid or islanded, the firm plant, the bridging plant that keeps running, a grid connection taken over. How the first buildings are bridged, solar, batteries and PPAs are variants of one strategy; the card shows the best-ranked one. The last cards can be a ladder: a card marked "Step down" is the best buildable option that powers fewer buildings, shown when it is cheaper; a card marked "Stands on its own" is the best buildable option that needs no other owner's plant or grid connection, shown when every leading card needs one. Ranked first: options that serve every hour, are likely to be built (tier A or B), meet the resilience requirement, power the most IT and start every building within the latest acceptable start; then the weighted score. Pros and cons are judged {comparison}. Every default is {LABEL}.</p>
         : <p className="note">The best-ranked option of each of five distinct strategies (grid strategy, bridging plant, firm generation and backup), in rank order. Pros and cons are judged {comparison}. Every default is {LABEL}.</p>}
       <ol className="top5-list">
-        {cards.map(({ o, pros, cons, majorFlags, step, fallback, stepIT, topIT }) => (
+        {cards.map(({ o, pros, cons, majorFlags: allMajor, step, fallback, stepIT, topIT }) => { const majorFlags = siteBeta ? allMajor : allMajor.filter((f) => !isSiteFlag(f)); return (
           <li key={o.id} className="top5-card">
             {realism && (step || fallback) ? (
               <p className="tc-kind small">
@@ -58,14 +59,14 @@ export default function TopFive({ run, onOpen, onCompare, compareIds = [] }) {
               <ul className="plain small tc-pros" aria-label="Pros">{pros.length ? pros.map((p) => <li key={p.id}><span aria-hidden="true">+</span> {p.text}</li>) : <li><span aria-hidden="true">+</span> n/a: not in the best 10 % of the run on any listed figure</li>}</ul>
               <ul className="plain small tc-cons" aria-label="Cons">{cons.length ? cons.map((p) => <li key={p.id}><span aria-hidden="true">−</span> {p.text}</li>) : <li><span aria-hidden="true">−</span> n/a: not in the worse half of the run on any listed figure</li>}</ul>
             </div>
-            {majorFlags.length ? <p className="small flag-text">Main flags: {majorFlags.slice(0, 3).map((f) => f.message.split(':')[0].split('.')[0]).join(' · ')}{majorFlags.length > 3 ? ` · +${majorFlags.length - 3} more` : ''}</p> : <p className="small">No major flags.</p>}
+            {majorFlags.length ? <p className="small flag-text">Main flags: {majorFlags.slice(0, 3).map((f) => inDisplayCurrency(f.message.split(':')[0].split('.')[0])).join(' · ')}{majorFlags.length > 3 ? ` · +${majorFlags.length - 3} more` : ''}</p> : <p className="small">No major flags.</p>}
             {(() => {
               const as = o.flags.filter((f) => f.assumed && f.path);
-              return as.length ? <p className="small top5-assumed" title={as.map((f) => f.message).join('\n')}>Assumed defaults ({as.length}): {as.slice(0, 4).map((f) => f.message.replace(/^Assumed /, '').split(':')[0]).join(' · ')}{as.length > 4 ? ` · +${as.length - 4} more (option detail)` : ''}</p> : <p className="small">No key input assumed.</p>;
+              return as.length ? <p className="small top5-assumed" title={as.map((f) => inDisplayCurrency(f.message)).join('\n')}>Assumed defaults ({as.length}): {as.slice(0, 4).map((f) => f.message.replace(/^Assumed /, '').split(':')[0]).join(' · ')}{as.length > 4 ? ` · +${as.length - 4} more (option detail)` : ''}</p> : <p className="small">No key input assumed.</p>;
             })()}
             {onCompare ? <label className="inline-check small"><input type="checkbox" checked={compareIds.includes(o.id)} onChange={() => onCompare(o.id)} /> <span>Compare</span></label> : null}
           </li>
-        ))}
+        ); })}
       </ol>
     </section>
   );

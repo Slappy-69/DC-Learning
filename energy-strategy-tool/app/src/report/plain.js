@@ -2,7 +2,7 @@
 // OPEN-QUESTIONS 147–152). A one-line headline for each flag (its full engine wording stays in Appendix F), plain names
 // for the inputs, and which inputs apply to a run. Pure: no browser APIs.
 
-import { monthLabel } from '../format.js';
+import { monthLabel, inDisplayCurrency } from '../format.js';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const monthText = (start, m) => { const [y, k] = String(monthLabel(start, Number(m))).split('-').map(Number); return y && k ? `${MON[k - 1]} ${y}` : `month ${m}`; };
@@ -15,7 +15,7 @@ import { noteText } from '../engine/flagnotes.js';
 
 // The headline of a flag, with the engineer's comment beside it (work package 27, OPEN-QUESTIONS 176).
 export function flagHeadline(f, start) {
-  const h = flagHeadline0(f, start);
+  const h = inDisplayCurrency(flagHeadline0(f, start));
   const n = noteText(f);
   return n ? `${h}. ${n}` : h;
 }

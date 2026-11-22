@@ -446,11 +446,12 @@ await check('B7. axe (WCAG 2.0/2.1/2.2 A and AA rules), light theme: Trade-offs 
 await check('B8. Removable filter chips: each filter shows a chip with its own remove button; removing it by keyboard keeps focus in the chip row', async () => {
   const { page } = main;
   await page.getByRole('group', { name: 'View filters (never change score or rank)' }).getByRole('button', { name: 'Meets', exact: true }).click();
-  await page.getByLabel('Capex at most (€ m)').fill('150');
-  await page.getByLabel('Capex at most (€ m)').press('Enter');
+  // Work package 41 (known issue 46): the ceiling is typed and named in the display currency (pounds for T1).
+  await page.getByLabel(/^Capex at most \((€|£) m\)$/).fill('150');
+  await page.getByLabel(/^Capex at most \((€|£) m\)$/).press('Enter');
   await page.waitForTimeout(200);
   const chips = await page.locator('.chip-row .active-chip').allInnerTexts();
-  ok(chips.some((c) => /Resilience: Meets/.test(c)) && chips.some((c) => /Capex ≤ €150 m/.test(c)), `chips: ${chips.join(' | ')}`);
+  ok(chips.some((c) => /Resilience: Meets/.test(c)) && chips.some((c) => /Capex ≤ [€£]150 m/.test(c)), `chips: ${chips.join(' | ')}`);
   const header = await page.locator('.header-strip').innerText();
   ok(/View filters: 2/.test(header) && / shown \/ /.test(header), `header strip: ${header.replace(/\s+/g, ' ').slice(0, 200)}`);
   const removeMeets = page.getByRole('button', { name: 'Remove filter: Resilience: Meets' });

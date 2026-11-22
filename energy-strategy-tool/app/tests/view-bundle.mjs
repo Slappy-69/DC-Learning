@@ -48,6 +48,27 @@ export async function getViewBundle() {
       export function renderSensitivity(result) {
         return renderToStaticMarkup(React.createElement(SensitivityResult, { result, ms: 0, chartWidth: 900 }));
       }
+      // Work package 41 (known issues 45 to 48, 54): the options table, the cards, Compare and the tornado, with the
+      // bundle's own display currency.
+      import RankedList from ${src('src/components/RankedList.jsx')};
+      import CompareView from ${src('src/components/CompareView.jsx')};
+      import TopFive from ${src('src/components/TopFive.jsx')};
+      import { TornadoChart } from ${src('src/components/SensitivityView.jsx')};
+      import { defaultView as dv } from ${src('src/engine/view.js')};
+      export { setDisplayCurrency, inDisplayCurrency } from ${src('src/format.js')};
+      export { activeFilterChips } from ${src('src/engine/view.js')};
+      export function renderRankedList(run, siteBeta = false) {
+        return renderToStaticMarkup(React.createElement(RankedList, { run, view: dv(), setView: () => {}, start: run.inputs.project.analysisStart, onShowSite: () => {}, siteBeta }));
+      }
+      export function renderCompare(run, ids, siteBeta = false) {
+        return renderToStaticMarkup(React.createElement(CompareView, { run, ids, onRemove: () => {}, onClear: () => {}, start: run.inputs.project.analysisStart, siteBeta }));
+      }
+      export function renderTopFive(run, siteBeta = false) {
+        return renderToStaticMarkup(React.createElement(TopFive, { run, onOpen: () => {}, onCompare: null, siteBeta }));
+      }
+      export function renderTornado(result, measure) {
+        return renderToStaticMarkup(React.createElement(TornadoChart, { result, measure, initialWidth: 900 }));
+      }
       export function renderDispatch(run, option, I, initialYear = null) {
         return renderToStaticMarkup(React.createElement(DispatchPanel, { run, option, I, ms: 0, chartWidth: 900, initialYear }));
       }`);

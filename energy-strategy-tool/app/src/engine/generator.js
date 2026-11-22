@@ -14,7 +14,7 @@
 //    cap-sampling in the run event log. Switching sampling off screens them all.
 
 import { parseRenewValue } from './renewplants.js';
-import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel, existingEntered, plantPowerValues, plantTakeoverValues, plantCandidates, registryValue, renewPlants, realismOn } from './defaults.js';
+import { CHOICES, CHOICE_BY_ID, defaultChoiceState, choiceLabel, existingEntered, plantPowerValues, plantTakeoverValues, plantCandidates, registryValue, renewPlants, realismOn, plantTwin } from './defaults.js';
 import { parsePlantValue, isPlantPower, isTakeover } from './plants.js';
 import { mulberry32, subSeed, shuffle, hashString } from './prng.js';
 import { permanentShortfallCoolings, shortfallAnalysis } from './adequacy.js';
@@ -159,7 +159,25 @@ export const RULES = [
   { id: 'R3', name: '(R3) The kept share repeats an owned top-up plant',
     detail: 'C3 = Keep shortfall share as prime is not generated with an owned firm plant sized to the permanent shortfall: the kept share is what the firm plant leaves uncovered, which is nothing. It is generated beside an existing plant near the site, whose units are fixed and may leave part of the shortfall.',
     fails: (v, inputs) => realismOn(inputs) && v.C1 === 'bridge' && v.C3 === 'split' && v.C4 !== 'none' && v.C4s === 'shortfall' && !(isPlantPower(v.C4) || v.C4 === 'existing' || v.C4 === PLANT_TOKEN) },
+  // Work package 41 (known issue 73; realism review, root cause 6): a plant entered by hand and the bundled list's entry
+  // for the same station (sizing.plantTwin) are one plant. Rule (l) stops one plant being both bridge and firm plant;
+  // this stops it through its twin. Pego: 1,464 options used about 1,690 MW from one 855 MW station.
+  { id: 'R4', name: '(R4) A plant and its twin are not used twice',
+    detail: 'A plant entered by hand that is also in the bundled plant list (same type, the smaller at least 75 % of the larger, within a kilometre) is one station: it is not generated as the bridging plant under one name and the firm plant under the other.',
+    fails: (v, inputs) => {
+      if (!realismOn(inputs) || !isPlantPower(v.C2) || !isPlantPower(v.C4)) return false;
+      const tw = twinOf(inputs);
+      if (!tw) return false;
+      const a = parsePlantValue(v.C2).id, b = parsePlantValue(v.C4).id;
+      return (a === tw.manual.id && b === tw.list.id) || (a === tw.list.id && b === tw.manual.id);
+    } },
 ];
+// plantTwin once per inputs object: the rules run for every combination.
+const TWIN = new WeakMap();
+function twinOf(inputs) {
+  if (!TWIN.has(inputs)) TWIN.set(inputs, plantTwin(inputs));
+  return TWIN.get(inputs);
+}
 export const RULE_D = { id: 'd', name: '(d) Choices that are n/a collapse to "n/a" rather than multiplying options',
   detail: 'C2 and C3 when there is no bridging, C4 sizing when there is no firm plant, the backup arrangement when there are no gensets, C14 when there is no PPA, BESS role when there is no BESS, C6/C7/C18 when there are no gensets, C21 when islanded.' };
 

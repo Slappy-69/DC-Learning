@@ -150,3 +150,10 @@ Fixed on `feature/weather-fixes` with the owner's decision OPEN-QUESTIONS 115 (k
 | Independent audit of the numbers on the T1 run (`numbers-audit-2026-11-14/AUDIT.md`, scripts beside it) | Claude Fable 5.2, finished by Claude Opus 5.5 | Three options rebuilt by hand from the inputs: 81 of 82 figures within 1 % (the 82nd, engine hours, 1.5 %, a simpler minimum-load rule); ranking of the top 20 re-derived exactly; the saved PDF matches the engine in pounds. 29 findings: 6 A (wrong statements or figures a client sees), 9 B (screens or PDF disagree), 9 C (plausibility), 5 D (cosmetic). Known issues 49 to 72; 42 and 45 to 48 confirmed |
 | Realism of the top options on T1, Pego (900 and 500 MW) and a private client case (`realism-review-2026-11-14/REALISM.md`, public copy without the private case) | Claude Fable 5.2, finished by Claude Opus 5.5 | "Not yet": one or two of each top five credible, not five. Eight root causes with decisions for the owner (OPEN-QUESTIONS 277 to 284); faults logged as known issues 73 to 77 |
 | Fix package | — | Work package 41, to be built before 36 to 40 (owner, "Yes log all of those", 2026-11-14) |
+
+## Work package 41, part 1 (2026-11-22, `feature/correctness-fixes`, not merged)
+
+| Check | Model | Result |
+|---|---|---|
+| Builder's own checks: Node suite with the new tests 83 to 87; browser checks; T1 before and after (realism on, every combination) | Claude Opus 5.5 (builder) | Node 129/129; browser 45 checks, all pass after B8 was updated for the capex ceiling in pounds (B38's 300 ms timing missed once at 321 ms and passed at 173 ms on the rerun); T1: no LCOE changes, top 60 unchanged, 110 options tier C → B |
+| Haiku checks and Opus review | — | Not run yet (CLAUDE.md: Haiku verifier, an Opus review after three checks). Suggested before merging |

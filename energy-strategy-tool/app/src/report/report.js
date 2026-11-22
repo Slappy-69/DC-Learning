@@ -22,14 +22,15 @@ import { weatherSummary } from '../engine/weather.js';
 import { topCards, cardOptions } from '../engine/cards.js';
 import { measureById, sortRows } from '../engine/sensitivity.js';
 import { plainSummary, summaryKey, shortFlag } from '../engine/summary.js';
-import { isRealismOption, lateInfo, lateLine } from '../engine/labels.js';
+import { isRealismOption, isRealismRun, lateInfo, lateLine } from '../engine/labels.js';
 import { nearestFlips, gridDateAt } from '../engine/breakeven.js';
 import { itInstalledByMonth, gridCapByMonth, monthOf } from '../engine/context.js';
 import { recommendations, gapFacts, runnerUp } from '../engine/recommend.js';
 import { flagHeadline, inputName, inputApplies } from './plain.js';
 import { noteText } from '../engine/flagnotes.js';
 import { ensureDetail, detailIds } from '../engine/detail.js';
-import { GUARDRAIL, sig, money, monthLabel, pct, perMWh, cur, displayCurrency } from '../format.js';
+import { isSiteFlag } from '../engine/view.js';
+import { GUARDRAIL, sig, money, monthLabel, pct, perMWh, cur, displayCurrency, inDisplayCurrency } from '../format.js';
 
 // Input sections in the order of the inputs panel; site geometry belongs to the Site tab (Beta) and is left out.
 const SECTIONS = [
@@ -102,7 +103,30 @@ function choiceRows(inputs) {
 
 const resText = (o) => (o.resilience ? o.resilience.status : '—');
 const adeqText = (o) => (o.adequacy ? o.adequacy.status : '—');
-const flagCount = (o, s) => o.flags.filter((f) => f.severity === s && !f.assumed).length;
+// Known issue 51: the reference is the best option with no bridging plant (it waits for the grid). The comparison is
+// on the months the buildings start, not on the "full load" month, and it says where a cost difference comes from.
+export function againstNoBridge(lead, W) {
+  const d = lead.eco.npvCost - W.eco.npvCost;
+  const dCap = (lead.eco.pvCapex || 0) - (W.eco.pvCapex || 0), dRun = (lead.eco.pvOpex || 0) - (W.eco.pvOpex || 0);
+  const a = lead.sizing && lead.sizing.energise, b = W.sizing && W.sizing.energise;
+  if (!a || !b || !a.starts || !b.starts) return { d, dCap, dRun, dated: false };
+  const more = a.powered - b.powered;
+  const same = more === 0 && a.starts.length === b.starts.length && a.starts.every((x, k) => x === b.starts[k]);
+  const avgEarlier = (b.avgLate || 0) - (a.avgLate || 0);
+  // IT handed over earlier, in MW-months: only when both power the same buildings (otherwise the count says more).
+  const itMWm = more === 0 ? (b.lateMWm || 0) - (a.lateMWm || 0) : null;
+  return { d, dCap, dRun, dated: true, same, more, avgEarlier, itMWm };
+}
+
+// The ranking rule in the PDF's words, as the brief lists it (known issue 57): with the realism rebuild on, the order
+// has more groups than power adequacy and some combinations are not generated.
+export function rankingRuleText(run) {
+  if (!isRealismRun(run)) return 'Flags never hide, demote or resize an option (the one exception agreed by the owner: power-adequate options rank first).';
+  return 'Flags never hide or resize an option, with these exceptions, which are part of the realism rebuild and reversible with its run setting: options are ranked in groups (likely to be built, tier A or B, above unlikely; meeting the resilience requirement above not; powering more IT above less; starting every building within the latest acceptable start above not), and only then by score; each building starts when its power and standby are ready, so an option whose supply cannot carry every building is sized for less IT; and four generation rules (R1 to R4) leave out combinations no developer would build or that use one plant twice, each counted in the run notes. Nothing is hidden, and each option below the leading group says why.';
+}
+
+// The PDF leaves the Site (Beta) out, so its counts leave the Site flags out too, like the options table (known issue 48).
+const flagCount = (o, s) => o.flags.filter((f) => f.severity === s && !f.assumed && !isSiteFlag(f)).length;
 
 // Energy balance of one dispatched year of an option (MWh).
 export function energyBalance(o, yi = null) {
@@ -150,7 +174,7 @@ function plantText(o) {
 }
 // The first major flag (else the first minor one) as a few words.
 function mainIssue(o, start) {
-  const fl = o.flags.filter((f) => !f.assumed && !f.siteFit);
+  const fl = o.flags.filter((f) => !f.assumed && !isSiteFlag(f));
   const f = fl.find((x) => x.severity === 'major') || fl.find((x) => x.severity === 'minor');
   return f ? `${f.severity === 'major' ? 'Major' : 'Minor'}: ${flagHeadline(f, start)}` : 'No major or minor flag';
 }
@@ -222,7 +246,7 @@ export function buildReport(run0, view = {}) {
   const tc5 = topCards(run.options, 5);
   const R = lead ? runnerUp(ranked) : null;
   const alts0 = () => { const a = cards.map((c) => c.o); if (Wref && !a.includes(Wref)) a.push(Wref); return a; };
-  // The best option that waits for the grid: the reference for "what keeping the programme costs".
+  // The best option with no bridging plant (it waits for the grid): the reference for "what keeping the programme costs".
   const W = ranked.find((o) => o.v.C1 === 'wait') || null;
   const Wref = W && W !== lead ? W : null;
   const rows = inputRows(run.inputs);
@@ -262,7 +286,13 @@ export function buildReport(run0, view = {}) {
       ? ` The grid leaves a gap of up to ${sig(g.temporary.peakMW, 3)} MW at design for ${plural(g.temporary.months, 'month')} from ${ml(g.temporary.firstMonth)}${lead.sizing.bridge && lead.sizing.bridge.mw > 0 ? `, which the leader bridges with ${sig(lead.sizing.bridge.mw, 3)} MW of ${lower(techName(lead.sizing.bridge.tech))}` : ''}.`
       : g ? ' The grid import carries the design load in every month of the programme.' : '';
     const permS = g && g.permanent.months > 0 ? ` At full build the design load is above the grid import by up to ${sig(g.permanent.peakMW, 3)} MW for the life of the campus.` : '';
-    const wS = Wref ? ` Against waiting for the grid (#${Wref.rank}), it costs ${money(Math.abs(lead.eco.npvCost - Wref.eco.npvCost), 3)} ${lead.eco.npvCost >= Wref.eco.npvCost ? 'more' : 'less'} in present value${Number.isFinite(Wref.ttp.fullLoadM) && Number.isFinite(lead.ttp.fullLoadM) && Wref.ttp.fullLoadM > lead.ttp.fullLoadM ? ` and reaches full load ${plural(Wref.ttp.fullLoadM - lead.ttp.fullLoadM, 'month')} earlier` : ''}.` : '';
+    const wS = Wref ? (() => {
+      const c = againstNoBridge(lead, Wref);
+      const cost = `costs ${money(Math.abs(c.d), 3)} ${c.d >= 0 ? 'more' : 'less'} in present value`;
+      if (!c.dated) return ` Against the best option with no bridging plant (#${Wref.rank}, which waits for the grid), it ${cost}.`;
+      const dates = c.same ? 'starts every building in the same month' : c.more > 0 ? `powers ${plural(c.more, 'more building')}` : c.more < 0 ? `powers ${plural(-c.more, 'building')} fewer` : c.avgEarlier > 0 ? `starts its buildings ${sig(c.avgEarlier, 2)} months earlier on average` : `starts its buildings ${sig(-c.avgEarlier, 2)} months later on average`;
+      return ` Against the best option with no bridging plant (#${Wref.rank}, which waits for the grid), it ${dates} and ${cost}${c.same ? `: ${money(Math.abs(c.dCap), 3)} ${c.dCap >= 0 ? 'more' : 'less'} capex and ${money(Math.abs(c.dRun), 3)} ${c.dRun >= 0 ? 'more' : 'less'} running cost, energy, fuel and carbon` : ''}.`;
+    })() : '';
     const rS = R && rec.items.some((x) => x.id === 'runner-up') ? ` #${R.rank} is close behind, ${(lead.score - R.score) < 0.995 ? (lead.score - R.score).toFixed(2) : sig(lead.score - R.score, 2)} points below it on the weighted score.` : '';
     const adeqS = lead.adequacy && lead.adequacy.adequate === false ? ' No option meets the power need in every hour, so this is the best of a set that falls short.' : '';
     P(`**The answer.** The leading option is **#1 ${lead.name}**. It supplies the campus at **${perMWh(lead.eco.lcoe, 3)}** with ${sig(lead.carbon.locationG, 3)} gCO2e/kWh and reaches full load in ${ml(lead.ttp.fullLoadM)}${late}; its capex is ${money(lead.eco.capex, 3)}.${gapS}${permS}${wS}${rS}${adeqS}`, { size: 10.5, lead: 1.45, gap: 12 });
@@ -361,12 +391,12 @@ export function buildReport(run0, view = {}) {
   const alts = cards.map((c) => c.o);
   if (Wref && !alts.includes(Wref)) alts.push(Wref);
   const ref = Wref || lead;
-  P(`The best-ranked option of each distinct strategy (grid approach, bridging, permanent on-site generation and backup), skipping options with the same results as a better-ranked one. Figure ${fig.n + 1} shows what each costs against ${Wref ? `waiting for the grid (#${Wref.rank}, the best option that does)` : 'the leader'}, as the present value of net cost over ${I.economics.periodYears} years.`);
+  P(`The best-ranked option of each distinct strategy (grid approach, bridging, permanent on-site generation and backup), skipping options with the same results as a better-ranked one. Figure ${fig.n + 1} shows what each costs against ${Wref ? `the best option with no bridging plant (#${Wref.rank}, which waits for the grid)` : 'the leader'}, as the present value of net cost over ${I.economics.periodYears} years.`);
   fig.n++;
   doc.figure(Math.max(120, alts.length * 21 + 40), (x0, y0, w, h) => drawAlternatives(doc, alts, ref, lead, x0, y0, w, h));
-  doc.caption(`Figure ${fig.n}. Present value of net cost of each strategy's best option minus that of ${Wref ? 'waiting for the grid' : 'the leader'} (${I.economics.periodYears} years at ${pct(I.economics.wacc, 1)} real). The leading option is the dark bar.${Wref ? ' A strategy that keeps the programme supplies more energy in the early years, so part of its extra cost buys energy the waiting option does not supply.' : ''}`);
+  doc.caption(`Figure ${fig.n}. Present value of net cost of each strategy's best option minus that of ${Wref ? 'the best option with no bridging plant' : 'the leader'} (${I.economics.periodYears} years at ${pct(I.economics.wacc, 1)} real). The leading option is the dark bar.${Wref ? ' A strategy that starts its buildings earlier supplies more energy in the early years, so part of its extra cost buys energy the reference does not supply.' : ''}`);
   doc.table([{ label: 'Option', w: 1.9 }, { label: 'On-site plant', w: 1.5 }, { label: 'LCOE', w: 0.6, align: 'right' }, { label: 'Carbon g/kWh', w: 0.55, align: 'right' }, { label: 'Full load', w: 0.6 }, { label: 'Main issue', w: 1.6 }, { label: 'Rank', w: 0.4, align: 'right' }],
-    alts.map((o) => [`${o === lead ? '**' : ''}${o.name}${o === lead ? '** (leading)' : ''}${o === Wref ? ' (waiting for the grid)' : ''}`, plantText(o), perMWh(o.eco.lcoe, 3), sig(o.carbon.locationG, 3), ml(o.ttp.fullLoadM), mainIssue(o, start), `#${o.rank}`]),
+    alts.map((o) => [`${o === lead ? '**' : ''}${o.name}${o === lead ? '** (leading)' : ''}${o === Wref ? ' (no bridging plant)' : ''}`, plantText(o), perMWh(o.eco.lcoe, 3), sig(o.carbon.locationG, 3), ml(o.ttp.fullLoadM), mainIssue(o, start), `#${o.rank}`]),
     { size: 7, headSize: 7.5, zebra: false, highlight: new Set([alts.indexOf(lead)]), headFill: HEAD_FILL });
   doc.caption(`LCOE: present value of all energy costs ÷ present value of energy supplied. Carbon: location-based, Scope 1 and 2. Rank: the tool's, out of ${run.options.length.toLocaleString('en-GB')}; the full list is in Appendix C.`);
 
@@ -376,10 +406,12 @@ export function buildReport(run0, view = {}) {
     const e = lead.eco;
     P(`The leader's present value of net cost over ${I.economics.periodYears} years is **${money(e.npvCost, 3)}**: ${money(e.pvCapex, 3)} of capex (${pct(e.pvCapex / e.npvCost, 0)}) and ${money(e.pvOpex, 3)} of running costs, energy, fuel and carbon. That gives an LCOE of ${perMWh(e.lcoe, 3)}. Its capex is ${money(e.capex, 3)}, between ${money(e.capexLow, 2)} and ${money(e.capexHigh, 2)} on the capex range, or ${money(e.capexPerMWIT, 3)} per MW of IT.`);
     if (Wref) {
-      const d = lead.eco.npvCost - Wref.eco.npvCost;
-      const dMWm = (Wref.ttp.gapMWm || 0) - (lead.ttp.gapMWm || 0);
-      const itMWm = dMWm / gs.perMWIT;
-      P(`**Against waiting for the grid.** The best option that waits (#${Wref.rank}, ${Wref.name}) has a present value of net cost of ${money(Wref.eco.npvCost, 3)}, so the leader costs ${money(Math.abs(d), 3)} ${d >= 0 ? 'more' : 'less'}${Number.isFinite(Wref.ttp.fullLoadM) && Wref.ttp.fullLoadM > lead.ttp.fullLoadM ? ` and reaches full load ${plural(Wref.ttp.fullLoadM - lead.ttp.fullLoadM, 'month')} earlier` : ''}.${d > 0 && itMWm > 1 ? ` Waiting leaves about ${Math.round(itMWm).toLocaleString('en-GB')} MW-months of IT without power at design; keeping the programme costs about ${money(d / itMWm, 3)} per MW-month of IT handed over on time. If the value of earlier IT to the customer is above that, keeping the programme pays for itself.` : ''}`);
+      const c = againstNoBridge(lead, Wref);
+      const d = c.d;
+      const itMWm = c.dated ? c.itMWm : ((Wref.ttp.gapMWm || 0) - (lead.ttp.gapMWm || 0)) / gs.perMWIT;
+      const dates = !c.dated ? '' : c.same ? ' Both start every building in the same month, so the programme is the same and the difference is not time to power.' : c.more > 0 ? ` The leader powers ${plural(c.more, 'more building')}.` : c.more < 0 ? ` The leader powers ${plural(-c.more, 'building')} fewer.` : ` The leader starts its buildings ${sig(Math.abs(c.avgEarlier), 2)} months ${c.avgEarlier >= 0 ? 'earlier' : 'later'} on average.`;
+      const split = ` Of the difference, ${money(Math.abs(c.dCap), 3)} is ${c.dCap >= 0 ? 'more' : 'less'} capex and ${money(Math.abs(c.dRun), 3)} is ${c.dRun >= 0 ? 'more' : 'less'} running cost, energy, fuel and carbon, in present value.`;
+      P(`**Against no bridging plant.** The best option with no bridging plant (#${Wref.rank}, ${Wref.name}, which waits for the grid) has a present value of net cost of ${money(Wref.eco.npvCost, 3)}, so the leader costs ${money(Math.abs(d), 3)} ${d >= 0 ? 'more' : 'less'}.${dates}${split}${d > 0 && itMWm > 1 && !(c.dated && c.same) ? ` The reference leaves about ${Math.round(itMWm).toLocaleString('en-GB')} MW-months of IT ${c.dated ? 'handed over later' : 'without power at design'}; the leader's extra cost is about ${money(d / itMWm, 3)} per MW-month of IT handed over on time. If the value of earlier IT to the customer is above that, keeping the programme pays for itself.` : ''}`);
     }
     // Capex of the leader by line.
     const by = new Map();
@@ -392,7 +424,7 @@ export function buildReport(run0, view = {}) {
     if (bu.length) {
       fig.n++;
       doc.figure(60 + bu.length * 34, (x0, y0, w, h) => drawBuildUp(doc, bu, lead, Wref, x0, y0, w, h));
-      doc.caption(`Figure ${fig.n}. What makes up the LCOE (present value of each cost ÷ present value of energy supplied, ${I.economics.periodYears} years at ${pct(I.economics.wacc, 1)} real), for the leader${R ? `, #${R.rank}` : ''}${Wref && Wref !== R ? ` and waiting for the grid (#${Wref.rank})` : ''}. Grid import includes the network charges and levies. The parts add up to each option's LCOE, from the same ledger.`);
+      doc.caption(`Figure ${fig.n}. What makes up the LCOE (present value of each cost ÷ present value of energy supplied, ${I.economics.periodYears} years at ${pct(I.economics.wacc, 1)} real), for the leader${R ? `, #${R.rank}` : ''}${Wref && Wref !== R ? ` and the best option with no bridging plant (#${Wref.rank})` : ''}. Grid import includes the network charges and levies. The parts add up to each option's LCOE, from the same ledger.`);
     }
     doc.heading("The leader's capex", 2);
     doc.table([{ label: 'Item', w: 2.6 }, { label: 'Capex', w: 0.8, align: 'right' }, { label: 'Share', w: 0.6, align: 'right' }],
@@ -425,16 +457,16 @@ export function buildReport(run0, view = {}) {
       P(`**Carbon.** The leader's location-based carbon goes from ${sig(a0.g, 3)} gCO2e/kWh in its first year with load to ${sig(a1.g, 3)} gCO2e/kWh in year ${a1.k + 1} of the evaluation period, as the grid decarbonises and its on-site plant ${lead.sizing.bridge && lead.sizing.bridge.mw > 0 && lead.v.C3 === 'remove' ? 'leaves the site' : 'runs less or keeps running'}. Over the period it averages ${sig(lead.carbon.locationG, 3)} gCO2e/kWh; its hourly carbon-free energy is ${pct(lead.carbon.cfePct, 0)}.`);
       fig.n++;
       doc.figure(190, (x0, y0, w, h) => drawCarbon(doc, series, lead, start, x0, y0, w, h));
-      doc.caption(`Figure ${fig.n}. Location-based carbon intensity (Scope 1 and 2) each year of the evaluation period, for the leader${R ? `, #${R.rank}` : ''}${Wref && Wref !== R ? ` and waiting for the grid (#${Wref.rank})` : ''}.`);
+      doc.caption(`Figure ${fig.n}. Location-based carbon intensity (Scope 1 and 2) each year of the evaluation period, for the leader${R ? `, #${R.rank}` : ''}${Wref && Wref !== R ? ` and the best option with no bridging plant (#${Wref.rank})` : ''}.`);
     }
   }
 
   // ---------------- 6 · Permitting, land and resilience ----------------
   H1(REPORT_SECTIONS[5], true);
   if (lead) {
-    const fl = lead.flags.filter((f) => !f.assumed && !f.siteFit && (f.severity === 'major' || f.severity === 'minor'));
+    const fl = lead.flags.filter((f) => !f.assumed && !isSiteFlag(f) && (f.severity === 'major' || f.severity === 'minor'));
     const nMaj = fl.filter((f) => f.severity === 'major').length;
-    P(`**The leader.** Resilience: ${lower(resText(lead))}; power adequacy: ${lower(adeqText(lead))}. It carries ${plural(nMaj, 'major flag')} and ${plural(fl.length - nMaj, 'minor flag')}${fl.length ? ', listed below by subject' : ''}. Flags never hide, demote or resize an option.`);
+    P(`**The leader.** Resilience: ${lower(resText(lead))}; power adequacy: ${lower(adeqText(lead))}. It carries ${plural(nMaj, 'major flag')} and ${plural(fl.length - nMaj, 'minor flag')}${fl.length ? ', listed below by subject' : ''}. ${rankingRuleText(run)}`);
     const ORDER = ['Permitting', 'Site', 'Resilience', 'Fuel and utilities', 'Grid', 'Technology', 'Targets and ceilings', 'Generation', 'Existing plant', 'Load', 'Adequacy', 'Model', 'Data', 'Design check'];
     const rank = (c) => { const i = ORDER.indexOf(c); return i < 0 ? ORDER.length : i; };
     const sorted = fl.slice().sort((a, b) => rank(a.category) - rank(b.category) || (a.severity === b.severity ? 0 : a.severity === 'major' ? -1 : 1));
@@ -573,7 +605,7 @@ export function buildReport(run0, view = {}) {
   if (lead) {
     const ka = lead.flags.filter((f) => f.assumed && f.path && String(f.id).startsWith('assumed:'));
     doc.heading('Key inputs the leader takes from the defaults', 3);
-    if (ka.length) doc.table([{ label: 'Key input', w: 1.4 }, { label: 'Value and basis', w: 3.4 }], ka.map((f) => { const m = /^Assumed (.+?): (.*)$/.exec(f.message) || [null, inputName(f.path), f.message]; return [m[1], m[2]]; }), { size: 7.3, headSize: 7.5, zebra: false, headFill: HEAD_FILL });
+    if (ka.length) doc.table([{ label: 'Key input', w: 1.4 }, { label: 'Value and basis', w: 3.4 }], ka.map((f) => { const m = /^Assumed (.+?): (.*)$/.exec(f.message) || [null, inputName(f.path), f.message]; return [m[1], inDisplayCurrency(m[2])]; }), { size: 7.3, headSize: 7.5, zebra: false, headFill: HEAD_FILL });
     else doc.para('None: every key input was entered.', { size: 8.5, color: MUTED });
   }
 
@@ -591,8 +623,8 @@ export function buildReport(run0, view = {}) {
       [[sig(o.score, 4), sig(o.eco.lcoe * displayCurrency().rate, 3), money(o.eco.capex, 3), sig(o.carbon.locationG, 3), monthLabel(start, o.ttp.firstPowerM), monthLabel(start, o.ttp.fullLoadM), resText(o), adeqText(o)]], { size: 7.3, headSize: 7.3, zebra: false, headFill: HEAD_FILL });
     if (c.pros.length) doc.bullets(c.pros.map((p) => `Pro: ${p.text}`), { size: 8 });
     if (c.cons.length) doc.bullets(c.cons.map((p) => `Con: ${p.text}`), { size: 8 });
-    const major = c.majorFlags.filter((f) => !f.siteFit);
-    doc.para(major.length ? `Main flags: ${major.slice(0, 4).map((f) => f.message.split(':')[0].split('.')[0]).join(' · ')}${major.length > 4 ? ` · +${major.length - 4} more` : ''}` : 'No major flags.', { size: 8, color: major.length ? FLAG : MUTED, gap: 8 });
+    const major = c.majorFlags.filter((f) => !isSiteFlag(f));
+    doc.para(major.length ? `Main flags: ${major.slice(0, 4).map((f) => inDisplayCurrency(f.message.split(':')[0].split('.')[0])).join(' · ')}${major.length > 4 ? ` · +${major.length - 4} more` : ''}` : 'No major flags.', { size: 8, color: major.length ? FLAG : MUTED, gap: 8 });
   }
   doc.heading('Ranked list (top 20)', 3);
   doc.table([{ label: '#', w: 0.3, align: 'right' }, { label: 'Option', w: 3 }, { label: 'Score', w: 0.55, align: 'right' }, { label: `LCOE ${cur().trim()}/MWh`, w: 0.55, align: 'right' }, { label: 'Capex', w: 0.7, align: 'right' }, { label: 'g/kWh', w: 0.55, align: 'right' }, { label: 'Full load', w: 0.75 }, { label: 'Adequate', w: 0.6 }],
@@ -631,24 +663,26 @@ export function buildReport(run0, view = {}) {
       return [c.o, energyBalance(c.o, yi)];
     }).filter(([, b]) => b);
     const yr = (b) => `model year ${b.year + 1}, from ${monthLabel(start, 12 * b.year)}`;
-    doc.heading(which === 'last' ? `Last modelled year, steady state${er.length ? ` (${yr(er[0][1])})` : ''}` : 'First year with load (each option, see the first column)', 3);
+    // Each row names its own year (known issue 55): options are dispatched over different numbers of years.
+    const oneYear = er.length && er.every(([, x]) => x.year === er[0][1].year);
+    doc.heading(which === 'last' ? `Last modelled year, steady state${oneYear ? ` (${yr(er[0][1])})` : ' (each option, see the first column)'}` : 'First year with load (each option, see the first column)', 3);
     doc.table([{ label: 'Option', w: 2.2 }, { label: 'Demand', align: 'right' }, { label: 'Grid', align: 'right' }, { label: 'PPA', align: 'right' }, { label: 'On-site RE', align: 'right' }, { label: 'Plant', align: 'right' }, { label: 'Battery', align: 'right' }, { label: 'Flex', align: 'right' }, { label: 'Unmet', align: 'right' }],
-      er.map(([o, b]) => [`#${o.rank} ${o.name}${which === 'first' ? ` (${yr(b)})` : ''}`, mwh(b.demand), mwh(b.grid), mwh(b.ppa), mwh(b.re), mwh(b.plant), mwh(b.battery), mwh(b.flex), mwh(b.unmet)]), { size: 6.8, headSize: 7.3, headFill: HEAD_FILL });
+      er.map(([o, b]) => [`#${o.rank} ${o.name}${which === 'first' || !oneYear ? ` (${yr(b)})` : ''}`, mwh(b.demand), mwh(b.grid), mwh(b.ppa), mwh(b.re), mwh(b.plant), mwh(b.battery), mwh(b.flex), mwh(b.unmet)]), { size: 6.8, headSize: 7.3, headFill: HEAD_FILL });
   }
 
   // ---------------- Appendix F · Flags ----------------
   H1(REPORT_SECTIONS[14], true);
-  doc.para('Every flag on the leader, and the major and minor flags of the other four top strategies, in the full wording of the tool. Flags never hide, demote or resize an option (the one exception agreed by the owner: power-adequate options rank first). Site-fit flags (Site tab, Beta) are not listed.', { size: 8.5 });
+  doc.para(`Every flag on the leader, and the major and minor flags of the other four top strategies, in the full wording of the tool. ${rankingRuleText(run)} Site-fit flags (Site tab, Beta) are not listed.`, { size: 8.5 });
   for (const c of tc5.cards) {
-    const fl = c.o.flags.filter((f) => !f.siteFit && (c.o === lead || f.severity !== 'info'));
+    const fl = c.o.flags.filter((f) => !isSiteFlag(f) && (c.o === lead || f.severity !== 'info'));
     doc.heading(`#${c.o.rank} ${c.o.name}`, 3);
     if (!fl.length) { doc.para('No flags.', { size: 8.5, color: MUTED }); continue; }
     const order = { major: 0, minor: 1, info: 2 };
-    doc.table([{ label: 'Severity', w: 0.55 }, { label: 'Category', w: 0.8 }, { label: 'Flag', w: 3.6 }], fl.slice().sort((a, b) => (order[a.severity] ?? 3) - (order[b.severity] ?? 3)).map((f) => [f.originalSeverity && f.originalSeverity !== f.severity ? `${f.severity} (was ${f.originalSeverity})` : f.severity, f.category || '', noteText(f) ? `${f.message} ${noteText(f)}` : f.message]), { size: 6.8, headSize: 7.3, headFill: HEAD_FILL });
+    doc.table([{ label: 'Severity', w: 0.55 }, { label: 'Category', w: 0.8 }, { label: 'Flag', w: 3.6 }], fl.slice().sort((a, b) => (order[a.severity] ?? 3) - (order[b.severity] ?? 3)).map((f) => [f.originalSeverity && f.originalSeverity !== f.severity ? `${f.severity} (was ${f.originalSeverity})` : f.severity, f.category || '', noteText(f) ? `${inDisplayCurrency(f.message)} ${noteText(f)}` : inDisplayCurrency(f.message)]), { size: 6.8, headSize: 7.3, headFill: HEAD_FILL });
   }
   if (run.runFlags && run.runFlags.length) {
     doc.heading('Run notes', 3);
-    doc.bullets(run.runFlags.map((f) => f.message), { size: 7.8 });
+    doc.bullets(run.runFlags.map((f) => inDisplayCurrency(f.message)), { size: 7.8 });
   }
 
   // ---------------- Appendix G · Summary and method ----------------
@@ -668,7 +702,7 @@ export function buildReport(run0, view = {}) {
     'Economics: one yearly cash-flow ledger per option gives the LCOE, the NPV and every cost breakdown (real terms, at the WACC).',
     'Carbon: location-based and market-based Scope 1 and 2, and hourly carbon-free energy (a PPA counts only against grid energy used in the same hour).',
     'Time-to-power: first power and full load from the programme of each technology (ordered from day one, with a six-month permitting allowance for plant that needs significant environmental permitting); the axis counts the months late against the phasing plan (first power against phase 1, full load against the last phase) plus half the power gap in months of design load. Rented bridging plant is hired a month before it is first needed.',
-    'Ranking: power-adequate options first, then by the weighted score of the four axes, each scaled 0-100 across the run.',
+    isRealismRun(run) ? 'Ranking: in groups (power-adequate; likely to be built, tier A or B; meeting the resilience requirement; more IT powered; every building within the latest acceptable start), then within each group by the weighted score of the four axes, each scaled 0-100 across the leading group. Below the leading group an axis score can fall outside 0-100: the score shown holds each axis to 0-100, while the order uses the score before it is held, so the shown score can rise a little down the list.' : 'Ranking: power-adequate options first, then by the weighted score of the four axes, each scaled 0-100 across the run.',
     'Recommendations (section 8): fixed rules from the run\'s figures (the leader, a runner-up within 3 points or 2 % of LCOE, the bridging plant, the grid margin, the major flags, the key inputs left at default, the nearest breakeven, a more robust Monte Carlo pick, measured weather and tests not run); no judgement.',
     `Profiles: ${run.profileLabel || 'synthetic hourly profiles'}.`,
     `Run settings: generation cap ${I.settings.generationCap}; grid handling "${I.settings.gridHandling}"; run-hour handling "${I.settings.runHourHandling}"; evaluation period ${I.economics.periodYears} years; WACC ${pct(I.economics.wacc, 1)}.`,
@@ -849,10 +883,11 @@ function frontTiles({ lead, g, Wref, gs, ml, I, lastPhase }) {
     t.push({ big: `${sig(br.mw, 3)} MW`, caption: `${lower(techName(br.tech))} bridging the gap${br.units ? ` (${br.units} × ${sig(br.unitMW, 3)} MW)` : ''}${after ? `, ${after}` : ''}` });
   }
   if (Wref) {
-    const d = lead.eco.npvCost - Wref.eco.npvCost;
-    const itMWm = ((Wref.ttp.gapMWm || 0) - (lead.ttp.gapMWm || 0)) / gs.perMWIT;
+    const c = againstNoBridge(lead, Wref);
+    const d = c.d;
+    const itMWm = c.dated ? (c.same ? 0 : c.itMWm) : ((Wref.ttp.gapMWm || 0) - (lead.ttp.gapMWm || 0)) / gs.perMWIT;
     if (d > 0 && itMWm > 1) t.push({ big: money(d / itMWm, 3), caption: `per MW-month of IT handed over on time: the extra present value of keeping the programme (${money(d, 3)}) over ${Math.round(itMWm).toLocaleString('en-GB')} MW-months` });
-    else t.push({ big: `${money(Math.abs(d), 3)} ${d >= 0 ? 'more' : 'less'}`, caption: `present value of net cost than waiting for the grid (#${Wref.rank}), over ${I.economics.periodYears} years` });
+    else t.push({ big: `${money(Math.abs(d), 3)} ${d >= 0 ? 'more' : 'less'}`, caption: `present value of net cost than the best option with no bridging plant (#${Wref.rank}), over ${I.economics.periodYears} years${c.dated && c.same ? ', with the same building dates' : ''}` });
   }
   t.push({ big: plural(Math.round(lead.ttp.delayFull || 0), 'month'), caption: `late at full load against the programme (full load ${ml(lead.ttp.fullLoadM)}, last handover ${monthName(lastPhase)})` });
   const fill = [
@@ -911,7 +946,7 @@ function drawTimeline(doc, rows, gs, I, start, x0, y0, w, h) {
       }
     } else {
       const o = r.o;
-      const lab = wrap(`#${o.rank} ${firstPart(o.name)}${r.wait ? ' (waiting)' : ''}`, L - 8, 6.6, r.lead ? 'F2' : 'F1');
+      const lab = wrap(`#${o.rank} ${firstPart(o.name)}${r.wait ? ' (no bridge)' : ''}`, L - 8, 6.6, r.lead ? 'F2' : 'F1');
       lab.slice(0, 2).forEach((l, j) => doc.text(x0, yc + (lab.length > 1 ? 1.5 - j * 7.5 : -2.4), j === 1 && lab.length > 2 ? `${l.replace(/\s*\S{0,2}$/, '')}\x85` : l, 6.6, r.lead ? 'F2' : 'F1', INK));
       r.plants.forEach((q, j) => {
         const yy = yc + (r.plants.length - 1) * 3 - j * 6;
@@ -964,7 +999,7 @@ function drawBuildUp(doc, opts, lead, Wref, x0, y0, w, h) {
   const rowH = (h - B - T) / opts.length;
   opts.forEach((o, i) => {
     const yc = y0 + h - T - (i + 0.5) * rowH, b = bus[i];
-    const lab = wrap(`#${o.rank} ${firstPart(o.name)}${o === Wref ? ' (waiting)' : ''}`, L - 10, 6.8, o === lead ? 'F2' : 'F1');
+    const lab = wrap(`#${o.rank} ${firstPart(o.name)}${o === Wref ? ' (no bridge)' : ''}`, L - 10, 6.8, o === lead ? 'F2' : 'F1');
     lab.slice(0, 2).forEach((l0, j) => { const l = j === 1 && lab.length > 2 ? `${l0.replace(/\s*\S{0,2}$/, '')}\x85` : l0; doc.text(x0 + L - 8 - textWidth(l, 6.8, o === lead ? 'F2' : 'F1'), yc + (lab.length > 1 ? 1.5 - j * 8 : -2.4), l, 6.8, o === lead ? 'F2' : 'F1', INK); });
     let at = 0;
     for (const [k, , c] of BUILD_UP) {

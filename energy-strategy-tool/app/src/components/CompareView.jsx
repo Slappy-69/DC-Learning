@@ -5,6 +5,7 @@ import { NA } from '../engine/generator.js';
 import { sig, money, monthLabel, pct, perMWh } from '../format.js';
 import OptionDetail from './OptionDetail.jsx';
 import { isRealismOption, lateInfo, lateLine, TIER_SHORT } from '../engine/labels.js';
+import { visibleFlags } from '../engine/view.js';
 
 // Compare (BRIEF §12.7; work package 7): up to three options side by side, chosen from the cards, the options table or
 // the trade-off chart; the headline figures, the choices on which they differ, and a deep-dive card each.
@@ -23,7 +24,8 @@ const ROWS = [
   ['Deliverability', (o) => sig(o.deliv.score, 2)],
   ['Resilience', (o) => o.resilience.status],
   ['Unmet load (dispatched years)', (o) => `${sig(o.unmet.mwh, 2)} MWh`],
-  ['Flags (major · minor · info)', (o) => ['major', 'minor', 'info'].map((s) => o.flags.filter((f) => f.severity === s && !f.assumed).length).join(' · ')],
+  // The same flags as the options table and the detail: Site (Beta) flags only with the Site tab on (known issue 48).
+  ['Flags (major · minor · info)', (o, siteBeta) => { const fl = visibleFlags(o, siteBeta); return ['major', 'minor', 'info'].map((s) => fl.filter((f) => f.severity === s && !f.assumed).length).join(' · '); }],
   ['Assumed defaults (key inputs not entered)', (o) => String(o.flags.filter((f) => f.assumed && f.path).length)],
 ];
 // Realism rebuild (2026-11-11): the tier, the IT delivered and any late start, in words, at the head of the table.
@@ -33,7 +35,7 @@ const REALISM_ROWS = [
   ['Against the plan', (o, start) => { const x = lateInfo(o, start); return x.onPlan ? 'Every building on its planned date' : [...x.late.map(lateLine), x.notBuilt ? `Building${x.notBuilt.to > x.notBuilt.from ? `s ${x.notBuilt.from} to ${x.notBuilt.to}` : ` ${x.notBuilt.from}`} not built: ${x.notBuilt.why}` : null].filter(Boolean).join('. '); }],
 ];
 
-export default function CompareView({ run, ids, onRemove, onClear, start }) {
+export default function CompareView({ run, ids, onRemove, onClear, start, siteBeta = false }) {
   const [openId, setOpenId] = useState(null);
   // Work package 23: a compared option outside the best 2,000 is rebuilt with the run's own chain.
   const opts = useMemo(() => ids.map((id) => run.options.find((o) => o.id === id)).filter(Boolean).map((o) => (o.light ? rebuildOption(run, o) : o)), [ids, run]);
@@ -70,7 +72,7 @@ export default function CompareView({ run, ids, onRemove, onClear, start }) {
             {ROWS.map(([label, f]) => (
               <tr key={label}>
                 <th scope="row">{opts.every(isRealismOption) ? label.replace('TTP · deliverability', 'delay · buildability').replace(/^Deliverability$/, 'Buildability score') : label}</th>
-                {opts.map((o) => <td key={o.id}>{f ? f(o) : `${monthLabel(start, o.ttp.firstPowerM)} · ${monthLabel(start, o.ttp.fullLoadM)}`}</td>)}
+                {opts.map((o) => <td key={o.id}>{f ? f(o, siteBeta) : `${monthLabel(start, o.ttp.firstPowerM)} · ${monthLabel(start, o.ttp.fullLoadM)}`}</td>)}
               </tr>
             ))}
           </tbody>

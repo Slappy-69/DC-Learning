@@ -27,7 +27,7 @@ import { viewSetting, withoutSiteFilters } from './engine/view.js';
 import { UnverifiedTag } from './components/Field.jsx';
 import { scoreOptions, effectiveWeights, applyView } from './engine/scoring.js';
 import { describeWeightChange } from './engine/cards.js';
-import { GUARDRAIL, sig, setDisplayCurrency } from './format.js';
+import { GUARDRAIL, sig, setDisplayCurrency, inDisplayCurrency } from './format.js';
 import { displayCurrencyCode, FX } from './engine/index.js';
 
 // Inputs that only affect scoring/ranking: changing them re-scores without re-running dispatch (§4).
@@ -338,7 +338,7 @@ export default function App() {
     <>
       <RunSummary run={run} open={summaryOpen} onToggle={setSummaryOpen} onInclude={onInclude} onSamplingOff={() => update('settings.sampleAboveCap', false)} siteBeta={siteBeta} />
       {run.runFlags.length ? (
-        <ul className="run-flags">{run.runFlags.map((f) => <li key={f.id} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {f.message}</li>)}</ul>
+        <ul className="run-flags">{run.runFlags.map((f) => <li key={f.id} className={`sev-${f.severity}`}><span className="sev">{f.severity}</span> <span className="cat">{f.category}</span> {inDisplayCurrency(f.message)}</li>)}</ul>
       ) : null}
     </>
   ) : null;
@@ -489,7 +489,7 @@ export default function App() {
                   summary={<SummaryPanel run={run} sensitivity={latestSensitivity(run) ? latestSensitivity(run).result : null} breakevens={latestBreakevens(run)} monteCarlo={latestMonteCarlo(run)} siteBeta={siteBeta} note={summaryNote} onSaveNote={setSummaryNote} onDiscardNote={() => setSummaryNote(null)}
                     onShowSensitivity={() => { setSensOptionId(null); setTab('sensitivity'); setTimeout(() => document.getElementById('tab-sensitivity')?.focus(), 0); }} open={summaryShown} onToggle={setSummaryShown} />} />
                   : tab === 'tradeoffs' ? <ParetoView run={run} view={view} setView={setView} start={start} focusChart={focusChart} onChartFocused={() => setFocusChart(false)} onShowSite={showSite} onShowDispatch={showDispatch} siteBeta={siteBeta} onCompare={toggleCompare} compareIds={compareIds} />
-                    : tab === 'compare' ? <CompareView run={run} ids={compareIds} onRemove={toggleCompare} onClear={() => setCompareIds([])} start={start} />
+                    : tab === 'compare' ? <CompareView run={run} ids={compareIds} onRemove={toggleCompare} onClear={() => setCompareIds([])} start={start} siteBeta={siteBeta} />
                     : tab === 'site' && siteBeta ? <SiteView run={run} inputs={inputs} update={update} optionId={siteOptionId} setOptionId={setSiteOptionId} computing={compute.status === 'running'} focusPlan={focusPlan} onPlanFocused={() => setFocusPlan(false)} />
                       : tab === 'dispatch' ? <DispatchView run={run} optionId={dispatchOptionId} setOptionId={setDispatchOptionId} />
                         : <SensitivityView run={run} optionId={sensOptionId} setOptionId={setSensOptionId} onResult={() => setExtras((x) => x + 1)} />}

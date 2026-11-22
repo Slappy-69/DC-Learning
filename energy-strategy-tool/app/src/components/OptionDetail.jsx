@@ -4,7 +4,7 @@ import { annotateFlags, optionNoteKey } from '../engine/flagnotes.js';
 import { rebuildOption } from '../engine/detail.js';
 import { CHOICES, choiceLabel } from '../engine/defaults.js';
 import { NA } from '../engine/generator.js';
-import { sig, money, monthLabel, pct, perMWh } from '../format.js';
+import { sig, money, monthLabel, pct, perMWh, inDisplayCurrency } from '../format.js';
 import { visibleFlags } from '../engine/view.js';
 import { adequacyText } from '../engine/adequacy.js';
 import { axisLabels, isRealismOption } from '../engine/labels.js';
@@ -217,10 +217,10 @@ export default function OptionDetail({ o: o0, run = null, start, onClose, domina
       <h4>Sizing</h4>
       <ul className="sizing">{sz.sentences.map((s, i) => <li key={i}>{s}</li>)}</ul>
       <h4>Flags ({shownFlags.filter((f) => !f.assumed).length})</h4>
-      <ul className="flags-list">{shownFlags.filter((f) => !f.assumed).map((f, i) => <li key={i} className={`sev-${f.severity}`}><span className="sev">{f.severity}{f.originalSeverity && f.originalSeverity !== f.severity ? ` (was ${f.originalSeverity})` : ''}</span> <span className="cat">{f.category}</span> {f.message}<FlagWithNote f={f} o={o} /></li>)}</ul>
+      <ul className="flags-list">{shownFlags.filter((f) => !f.assumed).map((f, i) => <li key={i} className={`sev-${f.severity}`}><span className="sev">{f.severity}{f.originalSeverity && f.originalSeverity !== f.severity ? ` (was ${f.originalSeverity})` : ''}</span> <span className="cat">{f.category}</span> {inDisplayCurrency(f.message)}<FlagWithNote f={f} o={o} /></li>)}</ul>
       <h4>Assumed defaults ({shownFlags.filter((f) => f.assumed && f.path).length})</h4>
       <p className="small">Values you did not enter that this option uses, with their source. Entering a value removes its flag from every option (§15).</p>
-      <ul className="flags-list assumed-list">{shownFlags.filter((f) => f.assumed).map((f, i) => <li key={i} className="sev-info" data-assumed={f.path || 'records'}><span className="sev">info</span> {f.message.replace(/^Assumed /, '')}</li>)}</ul>
+      <ul className="flags-list assumed-list">{shownFlags.filter((f) => f.assumed).map((f, i) => <li key={i} className="sev-info" data-assumed={f.path || 'records'}><span className="sev">info</span> {inDisplayCurrency(f.message.replace(/^Assumed /, ''))}</li>)}</ul>
       <h4>Choice vector</h4>
       <table className="mini choice-vector">
         <tbody>{CHOICES.map((c) => <tr key={c.id}><th scope="row">{c.id} {c.name}</th><td>{o.v[c.id] === NA ? 'n/a' : choiceLabel(c.id, o.v[c.id])}</td></tr>)}</tbody>

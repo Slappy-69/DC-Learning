@@ -252,7 +252,7 @@ Since 23 October 2026 the economic inputs have their own section, **5 · Economi
 | Carbon price (Scope 1) | country default | €/t CO₂e (EU ETS or UK ETS) |
 | Electricity, gas and carbon escalation | 0 %, 0 %, 2 % a year real | Price change per year over the period |
 
-The currency is the euro; revenue options (export, battery grid services, heat reuse) stay off unless opened in the choices. Capex range (−30 %/+50 %) and salvage value (50 %) have no field.
+The currency is the euro; revenue options (export, battery grid services, heat reuse) stay off unless opened in the choices. When the results are shown in the site's currency (pounds for a UK site), every result screen converts: the options table's LCOE, the tornado's axis and the capex filter, which takes and shows its ceiling in that currency. Flag texts are written in euro; each euro amount in them is shown with the converted figure first and the euro figure in brackets, for example "£12.4 m (€14.8 m)". Tariffs quoted from a published price list ("8.77 €/kVA a year") stay as published (work package 41, known issues 45 to 47). Capex range (−30 %/+50 %) and salvage value (50 %) have no field.
 
 ::: {.callout .agreed}
 **Agreed, not built yet: the rest of the economics section.**

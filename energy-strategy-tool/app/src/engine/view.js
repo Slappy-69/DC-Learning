@@ -10,6 +10,7 @@
 //     remove itself. activeFilterCount() counts filter kinds the same way applyView() does (test 8h).
 
 import { DEFAULT_VIEW } from './scoring.js';
+import { displayCurrency } from '../format.js';
 import { registryValue } from './defaults.js';
 
 // Initial view state: no filter, "Hide dominated options" at its registered default (off).
@@ -61,8 +62,10 @@ export function withoutSiteFilters(v) {
     sortKey: v.sortKey === 'siteFit' || v.sortKey === 'landTake' ? 'rank' : v.sortKey };
 }
 
+// In the display currency, like the filter it names (known issue 46).
 function moneyM(x) {
-  return `€${Number((x / 1e6).toPrecision(4)).toLocaleString('en-GB')} m`;
+  const d = displayCurrency();
+  return `${d.symbol}${Number(((x * d.rate) / 1e6).toPrecision(4)).toLocaleString('en-GB')} m`;
 }
 
 // Removable chips for the active view filters, in applyView() order. "Hide dominated options" is not

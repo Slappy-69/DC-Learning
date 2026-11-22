@@ -969,6 +969,13 @@ export function allOptionFlags(ctx, v, sz, disp, ttp, eco, carb, res, siteFit) {
     if (en.powered < en.buildings) flags.push(flag('not-built', 'major', 'Programme', `Powers ${en.powered} of ${en.buildings} buildings (${Math.round(en.poweredIT)} of ${Math.round(en.plannedIT)} MW IT): ${notBuiltText(en)}`, { value: en.poweredIT, threshold: en.plannedIT }));
     if (en.maxLate > 0) flags.push(flag('late-start', en.maxLate > allow ? 'major' : 'minor', 'Programme', `Late against the plan: ${lateBits(en, ym).join('; ')}${en.maxLate > allow ? `. Later than the latest acceptable start (${allow} months)` : ''}`, { value: en.maxLate, threshold: allow }));
   }
+  // Known issue 76: a bridge that leaves when the grid arrives is not counted against the permanent site. Say so when,
+  // while it stands, it and the permanent plant together need more than the net site (land beside it, or a later
+  // building plot, until it leaves). Information only: no condition, no tier change.
+  const ar = sz.area;
+  if (ar && ar.temporaryM2 > 0 && ar.netM2 > 0 && ar.landTakeM2 + ar.temporaryM2 > ar.netM2) {
+    flags.push(flag('land-temporary', 'info', 'Site and utilities', `Temporary land: the bridging plant needs ${(ar.temporaryM2 / 1e4).toFixed(1)} ha while it stands; with the permanent buildings and plant (${(ar.landTakeM2 / 1e4).toFixed(1)} ha) that is ${((ar.landTakeM2 + ar.temporaryM2) / 1e4).toFixed(1)} ha against a net site of ${(ar.netM2 / 1e4).toFixed(1)} ha, so until it leaves it needs land beside the site or a building plot not yet in use. It is not counted against the permanent site.`));
+  }
   if (siteFit) flags.push(...siteFit.flags);
   flags.push(flag('data-unverified', 'info', 'Data', 'Result depends on C-tagged (indicative — unverified) parameters and synthetic profiles'));
   // Assumed defaults (work package 2, AC 16): one info flag per key input not entered that the option uses.
