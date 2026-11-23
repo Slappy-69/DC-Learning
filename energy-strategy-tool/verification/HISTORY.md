@@ -156,4 +156,4 @@ Fixed on `feature/weather-fixes` with the owner's decision OPEN-QUESTIONS 115 (k
 | Check | Model | Result |
 |---|---|---|
 | Builder's own checks: Node suite with the new tests 83 to 87; browser checks; T1 before and after (realism on, every combination) | Claude Opus 5.5 (builder) | Node 129/129; browser 45 checks, all pass after B8 was updated for the capex ceiling in pounds (B38's 300 ms timing missed once at 321 ms and passed at 173 ms on the rerun); T1: no LCOE changes, top 60 unchanged, 110 options tier C → B |
-| Haiku checks and Opus review | — | Not run yet (CLAUDE.md: Haiku verifier, an Opus review after three checks). Suggested before merging |
+| Haiku checks and Opus review | — | Not run: the owner chose to merge without them ("Merge", 2026-11-23) |
